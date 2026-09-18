@@ -3,615 +3,1349 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TurboNetwork • ISP SaaS Platform</title>
+  <title id="page-title">TurboNetwork • ISP Enterprise Platform</title>
+  
+  <!-- Favicon dinámico en SVG vectorial puro (cero emojis) -->
+  <link rel="icon" id="dynamic-favicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'%3E%3C/polygon%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" id="pwa-apple-icon" href="https://api.dicebear.com/7.x/shapes/svg?seed=TurboNetPro">
+
+  <!-- Fuentes profesionales de alta legibilidad -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['-apple-system', 'BlinkMacSystemFont', '"Plus Jakarta Sans"', 'SF Pro Text', 'Helvetica Neue', 'sans-serif'],
+          screens: {
+            '3xl': '1920px',
+            '4xl': '2560px',
           },
           colors: {
-            apple: {
-              gray: '#86868b',
-              darkBg: '#0b0c10',
-              cardDark: '#16181f',
-              borderDark: '#232733',
-              blue: '#0071e3',
-              green: '#30d158',
-              orange: '#ff9f0a',
-              red: '#ff453a',
-              purple: '#bf5af2'
+            brand: {
+              primary: 'var(--brand-primary, #2563eb)',
+              accent: 'var(--brand-accent, #059669)',
+              surfaceDark: 'var(--surface-dark, #0e121b)',
+              surfaceDarkSubtle: 'var(--surface-dark-subtle, #141925)',
+              borderDark: 'var(--border-dark, rgba(255, 255, 255, 0.08))',
+              surfaceLight: 'var(--surface-light, #ffffff)',
+              borderLight: 'var(--border-light, rgba(0, 0, 0, 0.08))',
             }
           }
         }
       }
     }
   </script>
+  
   <style>
+    :root {
+      --brand-primary: #2563eb;
+      --brand-accent: #059669;
+      --bg-dark: #090a0f;
+      --surface-dark: #0e121b;
+      --surface-dark-subtle: #141925;
+      --border-dark: rgba(255, 255, 255, 0.08);
+      --bg-light: #f8fafc;
+      --surface-light: #ffffff;
+      --surface-light-subtle: #f1f5f9;
+      --border-light: rgba(0, 0, 0, 0.08);
+      font-size: 15px;
+    }
+
     body {
-      background-color: #0b0c10;
-      color: #f5f5f7;
+      background-color: var(--bg-dark);
+      color: #f1f5f9;
       font-feature-settings: "cv02", "cv03", "cv04", "cv11";
       -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease, font-size 0.15s ease;
     }
-    .glass-panel {
-      background: rgba(22, 24, 31, 0.8);
-      backdrop-filter: blur(28px);
-      -webkit-backdrop-filter: blur(28px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+
+    html:not(.dark) body {
+      background-color: var(--bg-light);
+      color: #0f172a;
     }
-    .glass-card {
-      background: rgba(26, 29, 38, 0.65);
+
+    /* Superficies de cristal profesional */
+    .pro-sidebar {
+      background: rgba(14, 18, 27, 0.94);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border-dark);
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .glass-card:hover {
-      border-color: rgba(255, 255, 255, 0.14);
-      transform: translateY(-2px);
+    html:not(.dark) .pro-sidebar {
+      background: rgba(255, 255, 255, 0.95);
+      border-right: 1px solid var(--border-light);
     }
-    .keypad-btn {
-      background: rgba(255, 255, 255, 0.05);
+
+    .pro-header {
+      background: rgba(9, 10, 15, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-dark);
+    }
+    html:not(.dark) .pro-header {
+      background: rgba(248, 250, 252, 0.9);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .pro-card {
+      background: var(--surface-dark);
+      border: 1px solid var(--border-dark);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    html:not(.dark) .pro-card {
+      background: var(--surface-light);
+      border: 1px solid var(--border-light);
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    }
+    .pro-card:hover {
+      border-color: rgba(255, 255, 255, 0.16);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    html:not(.dark) .pro-card:hover {
+      border-color: rgba(0, 0, 0, 0.15);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Teclado numérico de alta precisión */
+    .pin-btn {
+      background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(12px);
-      transition: all 0.15s ease;
+      transition: all 0.12s ease;
     }
-    .keypad-btn:active {
-      background: rgba(255, 255, 255, 0.18);
-      transform: scale(0.94);
+    .pin-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
     }
-    .pin-dot {
-      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    .pin-btn:active {
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(0.96);
     }
-    .pin-dot.filled {
-      background-color: #3b82f6;
-      box-shadow: 0 0 12px rgba(59, 130, 246, 0.8);
-      transform: scale(1.15);
+
+    .security-dot {
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+    .security-dot.active {
+      background-color: var(--brand-primary);
+      box-shadow: 0 0 10px var(--brand-primary);
+      transform: scale(1.2);
+    }
+
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-8px); }
-      40%, 80% { transform: translateX(8px); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
     }
-    .shake {
-      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    .shake-error {
+      animation: shake 0.35s ease-in-out both;
     }
-    /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+
+    /* Scrollbars discretos */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+    html:not(.dark) ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
+    html:not(.dark) ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
   </style>
 </head>
-<body class="min-h-screen flex flex-col font-sans selection:bg-apple-blue selection:text-white">
+<body class="min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white antialiased">
 
   <!-- ======================================================== -->
-  <!-- 1. PANTALLA DE LOGIN CON TECLADO NUMÉRICO 8 DÍGITOS TIPO APPLE -->
+  <!-- 1. LOGIN DE SEGURIDAD CON PIN DE 8 DÍGITOS               -->
   <!-- ======================================================== -->
-  <div id="pin-login-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#07080b]/90 backdrop-blur-2xl px-4">
+  <div id="pin-login-screen" class="fixed inset-0 z-[200] flex items-center justify-center bg-[#07080d]/95 backdrop-blur-2xl px-4">
     <div class="w-full max-w-sm flex flex-col items-center text-center">
       
-      <!-- Apple Logo / App Icon -->
-      <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-2xl shadow-blue-500/25 mb-5 border border-white/10">
-        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      <!-- Vector Brand Crest -->
+      <div id="login-logo-wrapper" class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-600/20 mb-4 border border-white/15 overflow-hidden">
+        <svg id="login-default-icon" class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         </svg>
+        <img id="login-custom-img" class="w-full h-full object-cover hidden" alt="Brand Logo">
       </div>
 
-      <h1 class="text-xl font-semibold tracking-tight text-white">TurboNetwork Engine</h1>
-      <p class="text-xs text-apple-gray mt-1">Ingrese su PIN de seguridad de 8 dígitos</p>
-
-      <!-- 8-Digit Indicator Dots -->
-      <div id="pin-dots-container" class="flex items-center justify-center space-x-3 my-7">
-        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-0"></div>
-        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-1"></div>
-        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-2"></div>
-        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-3"></div>
-        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-4"></div>
-        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-5"></div>
-        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-6"></div>
-        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-7"></div>
+      <div class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-slate-300 mb-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+        <span>TERMINAL AUTORIZADA</span>
       </div>
 
-      <!-- Error / Feedback Message -->
-      <div id="login-feedback" class="text-xs min-h-[20px] text-rose-400 font-medium mb-2"></div>
+      <h1 id="login-system-title" class="text-lg font-semibold tracking-tight text-white">TurboNetwork Enterprise</h1>
+      <p id="login-system-tagline" class="text-xs text-slate-400 mt-0.5">Ingrese el PIN de acceso de 8 dígitos</p>
 
-      <!-- Modern On-Screen Tactile Keypad -->
-      <div class="grid grid-cols-3 gap-3.5 w-full max-w-[270px]">
-        <button onclick="pressDigit('1')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
-          1<span class="text-[9px] text-white/30 font-light tracking-widest">&nbsp;</span>
+      <!-- 8-Digit Security Dots -->
+      <div id="pin-dots-container" class="flex items-center justify-center space-x-2.5 my-6">
+        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-0"></div>
+        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-1"></div>
+        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-2"></div>
+        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-3"></div>
+        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-4"></div>
+        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-5"></div>
+        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-6"></div>
+        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-7"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div id="login-feedback" class="text-xs min-h-[20px] text-rose-400 font-medium mb-3"></div>
+
+      <!-- Precision Numeric Keypad -->
+      <div class="grid grid-cols-3 gap-2.5 w-full max-w-[260px]">
+        <button onclick="pressDigit('1')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          1<span class="text-[8px] text-slate-500 font-normal tracking-widest">&nbsp;</span>
         </button>
-        <button onclick="pressDigit('2')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
-          2<span class="text-[9px] text-white/40 font-light tracking-widest">ABC</span>
+        <button onclick="pressDigit('2')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          2<span class="text-[8px] text-slate-400 font-normal tracking-wider">ABC</span>
         </button>
-        <button onclick="pressDigit('3')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
-          3<span class="text-[9px] text-white/40 font-light tracking-widest">DEF</span>
+        <button onclick="pressDigit('3')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          3<span class="text-[8px] text-slate-400 font-normal tracking-wider">DEF</span>
         </button>
         
-        <button onclick="pressDigit('4')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
-          4<span class="text-[9px] text-white/40 font-light tracking-widest">GHI</span>
+        <button onclick="pressDigit('4')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          4<span class="text-[8px] text-slate-400 font-normal tracking-wider">GHI</span>
         </button>
-        <button onclick="pressDigit('5')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
-          5<span class="text-[9px] text-white/40 font-light tracking-widest">JKL</span>
+        <button onclick="pressDigit('5')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          5<span class="text-[8px] text-slate-400 font-normal tracking-wider">JKL</span>
         </button>
-        <button onclick="pressDigit('6')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
-          6<span class="text-[9px] text-white/40 font-light tracking-widest">MNO</span>
-        </button>
-
-        <button onclick="pressDigit('7')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
-          7<span class="text-[9px] text-white/40 font-light tracking-widest">PQRS</span>
-        </button>
-        <button onclick="pressDigit('8')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
-          8<span class="text-[9px] text-white/40 font-light tracking-widest">TUV</span>
-        </button>
-        <button onclick="pressDigit('9')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
-          9<span class="text-[9px] text-white/40 font-light tracking-widest">WXYZ</span>
+        <button onclick="pressDigit('6')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          6<span class="text-[8px] text-slate-400 font-normal tracking-wider">MNO</span>
         </button>
 
-        <button onclick="clearPin()" class="h-16 rounded-2xl flex items-center justify-center text-xs font-medium text-white/40 hover:text-white transition">
-          Borrar
+        <button onclick="pressDigit('7')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          7<span class="text-[8px] text-slate-400 font-normal tracking-wider">PQRS</span>
         </button>
-        <button onclick="pressDigit('0')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
-          0<span class="text-[9px] text-white/40 font-light tracking-widest">+</span>
+        <button onclick="pressDigit('8')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          8<span class="text-[8px] text-slate-400 font-normal tracking-wider">TUV</span>
         </button>
-        <button onclick="backspacePin()" class="h-16 rounded-2xl flex items-center justify-center text-white/60 hover:text-white transition">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6-6h12a2 2 0 012 2v8a2 2 0 01-2 2H9l-6-6z" />
+        <button onclick="pressDigit('9')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          9<span class="text-[8px] text-slate-400 font-normal tracking-wider">WXYZ</span>
+        </button>
+
+        <button onclick="clearPin()" class="h-13 rounded-xl flex items-center justify-center text-xs font-medium text-slate-400 hover:text-white transition">
+          Limpiar
+        </button>
+        <button onclick="pressDigit('0')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          0<span class="text-[8px] text-slate-400 font-normal tracking-widest">+</span>
+        </button>
+        <button onclick="backspacePin()" class="h-13 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6-6h12a2 2 0 012 2v8a2 2 0 01-2 2H9l-6-6z" />
           </svg>
         </button>
       </div>
 
-      <!-- Quick Demo Credentials Hint -->
-      <div class="mt-6 p-3 rounded-2xl bg-white/[0.03] border border-white/5 text-[11px] text-apple-gray max-w-xs">
-        <div class="font-semibold text-white/80 mb-1">PINs de Demostración:</div>
-        <div class="flex justify-between py-0.5"><span>Superadmin (César):</span> <strong class="text-blue-400 cursor-pointer font-mono" onclick="fillPin('12345678')">12345678</strong></div>
-        <div class="flex justify-between py-0.5"><span>Admin Red / NOC:</span> <strong class="text-blue-400 cursor-pointer font-mono" onclick="fillPin('87654321')">87654321</strong></div>
-        <div class="flex justify-between py-0.5"><span>Cajero / Pagos:</span> <strong class="text-blue-400 cursor-pointer font-mono" onclick="fillPin('11223344')">11223344</strong></div>
+      <!-- Demo Chips -->
+      <div class="mt-6 p-3 rounded-xl bg-white/[0.03] border border-white/5 text-[11px] text-slate-400 max-w-xs w-full text-left">
+        <div class="text-[10px] uppercase font-semibold text-slate-500 tracking-wider mb-1.5">Accesos de Prueba:</div>
+        <div class="flex justify-between py-0.5"><span class="text-slate-400">Superadmin:</span> <code class="text-blue-400 cursor-pointer font-mono font-medium" onclick="fillPin('12345678')">12345678</code></div>
+        <div class="flex justify-between py-0.5"><span class="text-slate-400">Ing. NOC:</span> <code class="text-blue-400 cursor-pointer font-mono font-medium" onclick="fillPin('87654321')">87654321</code></div>
+        <div class="flex justify-between py-0.5"><span class="text-slate-400">Cobranzas:</span> <code class="text-blue-400 cursor-pointer font-mono font-medium" onclick="fillPin('11223344')">11223344</code></div>
       </div>
 
     </div>
   </div>
 
   <!-- ======================================================== -->
-  <!-- 2. MODAL TRANSLÚCIDO DE BIENVENIDA / SALUDO TIPO APPLE   -->
+  <!-- 2. MODAL DE AUTORIZACIÓN & BIENVENIDA                    -->
   <!-- ======================================================== -->
-  <div id="welcome-modal" class="fixed inset-0 z-[150] hidden flex items-center justify-center bg-black/60 backdrop-blur-xl px-4 transition duration-300">
-    <div class="glass-card max-w-sm w-full p-8 rounded-3xl text-center flex flex-col items-center border border-white/15 shadow-2xl relative overflow-hidden">
-      <!-- Glow background accent -->
-      <div class="absolute -top-12 -left-12 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl pointer-events-none"></div>
-      <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
-
-      <!-- Avatar with checkmark -->
+  <div id="welcome-modal" class="fixed inset-0 z-[250] hidden flex items-center justify-center bg-black/70 backdrop-blur-xl px-4 transition duration-200">
+    <div class="pro-card max-w-sm w-full p-7 rounded-2xl text-center flex flex-col items-center border border-white/10 shadow-2xl relative overflow-hidden">
       <div class="relative mb-4">
-        <img id="welcome-avatar" class="w-20 h-20 rounded-full object-cover border-2 border-white/20 shadow-xl" src="" alt="Avatar">
-        <div class="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-emerald-500 border-2 border-[#16181f] flex items-center justify-center">
-          <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+        <img id="welcome-avatar" class="w-16 h-16 rounded-full object-cover border border-white/20 shadow-md" src="" alt="Avatar">
+        <div class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#0e121b] flex items-center justify-center">
+          <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
       </div>
 
-      <span id="welcome-role" class="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold uppercase tracking-wider mb-2"></span>
-      <h2 id="welcome-title" class="text-xl font-bold text-white tracking-tight"></h2>
-      <p class="text-xs text-apple-gray mt-1">Conexión autorizada. Cargando tu espacio de trabajo...</p>
+      <span id="welcome-role" class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-semibold tracking-wide uppercase mb-2"></span>
+      <h2 id="welcome-title" class="text-base font-semibold tracking-tight text-white"></h2>
+      <p class="text-xs text-slate-400 mt-0.5">Identidad verificada. Iniciando sesión de trabajo...</p>
 
-      <!-- Smooth Progress Bar -->
-      <div class="w-full bg-white/10 rounded-full h-1.5 mt-6 overflow-hidden">
-        <div id="welcome-progress" class="bg-gradient-to-r from-blue-500 to-emerald-400 h-1.5 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+      <div class="w-full bg-white/10 rounded-full h-1 mt-5 overflow-hidden">
+        <div id="welcome-progress" class="bg-blue-500 h-1 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
       </div>
     </div>
   </div>
 
   <!-- ======================================================== -->
-  <!-- 3. PLATAFORMA PRINCIPAL (APP SAAS)                       -->
+  <!-- 3. WORKSPACE PRINCIPAL CON SIDEBAR MODERNO               -->
   <!-- ======================================================== -->
-  <header class="sticky top-0 z-50 glass-panel border-b border-white/10">
-    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        </div>
-        <div>
-          <span class="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
-            TurboNetwork
-            <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/10 text-white/70">v1.0 SaaS</span>
-          </span>
-          <p class="text-[11px] text-apple-gray">ISP Core Engine</p>
-        </div>
-      </div>
-
-      <!-- Navigation Tabs -->
-      <nav class="hidden lg:flex items-center space-x-1 p-1 bg-white/5 rounded-full border border-white/5 text-xs font-medium">
-        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-4 py-1.5 rounded-full bg-white/15 text-white shadow-sm transition">Dashboard</button>
-        <button onclick="switchTab('customers')" id="nav-customers" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Clientes</button>
-        <button onclick="switchTab('billing')" id="nav-billing" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Facturación</button>
-        <button onclick="switchTab('network')" id="nav-network" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Red & OLTs</button>
-        <button onclick="switchTab('plans')" id="nav-plans" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Planes</button>
-        <button onclick="switchTab('config')" id="nav-config" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Config & Roles</button>
-        <button onclick="switchTab('system')" id="nav-system" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Sistema & RAM</button>
-      </nav>
-
-      <!-- User Profile & Logout -->
-      <div class="flex items-center space-x-4">
-        <div class="flex items-center space-x-2.5">
-          <img id="header-user-avatar" class="w-8 h-8 rounded-full border border-white/20 object-cover" src="" alt="User">
-          <div class="hidden sm:block text-left">
-            <div id="header-user-name" class="text-xs font-semibold text-white leading-tight"></div>
-            <div id="header-user-role" class="text-[10px] text-apple-gray leading-tight"></div>
-          </div>
-        </div>
-
-        <button onclick="logout()" title="Cerrar sesión" class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Workspace -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
-
-    <!-- TAB 1: DASHBOARD OVERVIEW -->
-    <section id="tab-dashboard" class="space-y-8">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div class="glass-card p-6 rounded-2xl">
-          <div class="flex items-center justify-between text-apple-gray text-xs font-medium">
-            <span>CLIENTES ACTIVOS</span>
-            <span class="text-emerald-400 font-semibold text-[11px]">+8.4% mes</span>
-          </div>
-          <div class="mt-3 flex items-baseline space-x-2">
-            <span class="text-3xl font-semibold tracking-tight text-white">1,195</span>
-            <span class="text-xs text-white/40">/ 1,248 total</span>
-          </div>
-          <div class="mt-3 flex items-center gap-2 text-xs text-apple-gray">
-            <span class="inline-block w-2 h-2 rounded-full bg-apple-green"></span> 38 suspendidos • 15 por instalar
-          </div>
-        </div>
-
-        <div class="glass-card p-6 rounded-2xl">
-          <div class="flex items-center justify-between text-apple-gray text-xs font-medium">
-            <span>RECAUDADO ESTE MES</span>
-            <span class="text-xs text-blue-400 font-semibold">78.7%</span>
-          </div>
-          <div class="mt-3 flex items-baseline space-x-1">
-            <span class="text-xl font-light text-white/70">$</span>
-            <span class="text-3xl font-semibold tracking-tight text-white">22,450.00</span>
-          </div>
-          <div class="mt-3 text-xs text-apple-gray">Cobranza directa nativa</div>
-        </div>
-
-        <div class="glass-card p-6 rounded-2xl">
-          <div class="flex items-center justify-between text-apple-gray text-xs font-medium">
-            <span>PENDIENTE POR COBRAR</span>
-            <span class="text-xs text-amber-400 font-medium">1 mora</span>
-          </div>
-          <div class="mt-3 flex items-baseline space-x-1">
-            <span class="text-xl font-light text-white/70">$</span>
-            <span class="text-3xl font-semibold tracking-tight text-amber-300">6,050.00</span>
-          </div>
-          <div class="mt-3 text-xs text-apple-gray">Cortes automáticos por mora</div>
-        </div>
-
-        <div class="glass-card p-6 rounded-2xl">
-          <div class="flex items-center justify-between text-apple-gray text-xs font-medium">
-            <span>EQUIPOS DE RED</span>
-            <span class="text-xs text-emerald-400 font-semibold">100% Online</span>
-          </div>
-          <div class="mt-3 flex items-baseline space-x-2">
-            <span class="text-3xl font-semibold tracking-tight text-white">14 / 14</span>
-          </div>
-          <div class="mt-3 text-xs text-apple-gray">MikroTik • OLTs Huawei • ZTE • VSOL</div>
-        </div>
-      </div>
-
-      <!-- Live Bandwidth & Activity Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="glass-card lg:col-span-2 p-6 rounded-2xl flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-sm font-semibold text-white tracking-tight">Consumo de Ancho de Banda Agregado</h3>
-              <p class="text-xs text-apple-gray mt-0.5">Tráfico total a través de Core Routers y OLTs</p>
-            </div>
-            <span class="px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-medium">
-              Pico: 4.8 Gbps
-            </span>
-          </div>
-
-          <div class="my-6 grid grid-cols-12 gap-2 h-28 items-end">
-            <div class="bg-blue-500/30 rounded-t h-[45%]"></div>
-            <div class="bg-blue-500/30 rounded-t h-[52%]"></div>
-            <div class="bg-blue-500/40 rounded-t h-[60%]"></div>
-            <div class="bg-blue-500/30 rounded-t h-[40%]"></div>
-            <div class="bg-blue-500/50 rounded-t h-[75%]"></div>
-            <div class="bg-blue-500/60 rounded-t h-[88%]"></div>
-            <div class="bg-blue-500/80 rounded-t h-[94%]"></div>
-            <div class="bg-blue-500 rounded-t h-[100%] shadow-lg shadow-blue-500/30"></div>
-            <div class="bg-blue-500/80 rounded-t h-[92%]"></div>
-            <div class="bg-blue-500/60 rounded-t h-[70%]"></div>
-            <div class="bg-blue-500/40 rounded-t h-[55%]"></div>
-            <div class="bg-blue-500/30 rounded-t h-[48%]"></div>
-          </div>
-
-          <div class="flex items-center justify-between text-xs text-apple-gray border-t border-white/5 pt-4">
-            <span>Horas pico: 20:00 - 22:30 hrs</span>
-            <span>Latencia Core Promedio: 4.2 ms</span>
-          </div>
-        </div>
-
-        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
-          <div>
-            <h3 class="text-sm font-semibold text-white tracking-tight">Actividad en Tiempo Real</h3>
-            <p class="text-xs text-apple-gray mt-0.5">Operaciones y auditoría</p>
-          </div>
-
-          <div class="space-y-4 my-4" id="recent-activity-list">
-            <div class="flex items-start space-x-3 text-xs">
-              <div class="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
-              <div>
-                <p class="text-white font-medium">Pago registrado $35.00</p>
-                <p class="text-apple-gray text-[11px]">Carlos Mendoza (CLI-1001)</p>
-              </div>
-            </div>
-            <div class="flex items-start space-x-3 text-xs">
-              <div class="w-2 h-2 rounded-full bg-blue-400 mt-1.5 flex-shrink-0"></div>
-              <div>
-                <p class="text-white font-medium">Nuevo contrato fibra óptica</p>
-                <p class="text-apple-gray text-[11px]">David Fernández (CLI-1004)</p>
-              </div>
-            </div>
-            <div class="flex items-start space-x-3 text-xs">
-              <div class="w-2 h-2 rounded-full bg-purple-400 mt-1.5 flex-shrink-0"></div>
-              <div>
-                <p class="text-white font-medium">Sincronización OLT Huawei</p>
-                <p class="text-apple-gray text-[11px]">MA5608T (485 ONUs online)</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="border-t border-white/5 pt-3">
-            <button onclick="switchTab('billing')" class="text-xs text-blue-400 hover:text-blue-300 transition">Ver cobros →</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 2: CUSTOMERS -->
-    <section id="tab-customers" class="space-y-6 hidden">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 class="text-xl font-semibold text-white tracking-tight">Gestión de Clientes</h2>
-          <p class="text-xs text-apple-gray mt-1">Directorio de abonados, contratos e IPs asignadas</p>
-        </div>
-        <input 
-          type="text" 
-          placeholder="Buscar por nombre, DNI o código..." 
-          class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-500 w-full sm:w-64 transition"
-          oninput="handleCustomerSearch(this.value)"
-        />
-      </div>
-
-      <div class="glass-card rounded-2xl overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-white/5 text-apple-gray uppercase font-semibold tracking-wider text-[10px] border-b border-white/5">
-              <tr>
-                <th class="px-6 py-3.5">Código / Cliente</th>
-                <th class="px-6 py-3.5">Identificación</th>
-                <th class="px-6 py-3.5">Plan Contratado</th>
-                <th class="px-6 py-3.5">IP Asignada</th>
-                <th class="px-6 py-3.5">Estado</th>
-                <th class="px-6 py-3.5 text-right">Saldo</th>
-              </tr>
-            </thead>
-            <tbody id="customers-table-body" class="divide-y divide-white/5 text-white/90"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 3: BILLING & PAYMENTS -->
-    <section id="tab-billing" class="space-y-6 hidden">
+  <div class="flex-1 flex min-h-screen overflow-x-hidden">
+    
+    <!-- SIDEBAR PROFESIONAL -->
+    <aside id="main-sidebar" class="w-64 pro-sidebar fixed inset-y-0 left-0 z-40 flex flex-col justify-between p-3.5 transition-all duration-200">
+      
       <div>
-        <h2 class="text-xl font-semibold text-white tracking-tight">Facturación & Cobranzas Nativas</h2>
-        <p class="text-xs text-apple-gray mt-1">Control de recibos, liquidación en efectivo y transferencias bancarias</p>
+        <!-- Top Brand Section -->
+        <div class="flex items-center justify-between px-2.5 py-3 mb-3 border-b border-white/5 dark:border-white/5 border-black/5">
+          <div class="flex items-center space-x-3 overflow-hidden">
+            <div id="sidebar-logo-box" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden">
+              <svg id="sidebar-default-icon" class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <img id="sidebar-custom-img" class="w-full h-full object-cover hidden" alt="Brand Logo">
+            </div>
+            <div class="truncate">
+              <span id="brand-system-name" class="text-xs font-semibold tracking-tight text-white dark:text-white text-slate-900 block truncate">
+                TurboNetwork
+              </span>
+              <span id="brand-tagline" class="text-[10px] text-slate-400 block truncate">ISP Enterprise Core</span>
+            </div>
+          </div>
+          <button onclick="toggleSidebarCollapse()" class="p-1 rounded-lg text-slate-400 hover:text-white transition lg:flex hidden">
+            <svg id="sidebar-collapse-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Navigation Rail -->
+        <nav class="space-y-0.5 text-xs font-medium">
+          <div class="text-[10px] uppercase font-semibold text-slate-500 px-3 py-1.5 tracking-wider">Operaciones</div>
+          
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl bg-blue-600/15 text-blue-400 font-semibold transition group">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+            </svg>
+            <span class="nav-label truncate">Dashboard General</span>
+          </button>
+
+          <button onclick="switchTab('customers')" id="nav-customers" class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition group">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+            </svg>
+            <span class="nav-label truncate">Clientes & Contratos</span>
+          </button>
+
+          <button onclick="switchTab('billing')" id="nav-billing" class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition group">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+            <span class="nav-label truncate">Facturación & Pagos</span>
+          </button>
+
+          <div class="text-[10px] uppercase font-semibold text-slate-500 px-3 pt-4 pb-1.5 tracking-wider">Infraestructura</div>
+
+          <button onclick="switchTab('network')" id="nav-network" class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition group">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <rect x="2" y="2" width="20" height="8" rx="2"></rect>
+              <rect x="2" y="14" width="20" height="8" rx="2"></rect>
+              <line x1="6" y1="6" x2="6.01" y2="6"></line>
+              <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            </svg>
+            <span class="nav-label truncate">Red & OLTs Multi-Vendor</span>
+          </button>
+
+          <button onclick="switchTab('plans')" id="nav-plans" class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition group">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 20v-6M6 20V10M18 20V4" />
+            </svg>
+            <span class="nav-label truncate">Planes de Ancho de Banda</span>
+          </button>
+
+          <div class="text-[10px] uppercase font-semibold text-slate-500 px-3 pt-4 pb-1.5 tracking-wider">Gobernanza</div>
+
+          <button onclick="switchTab('config')" id="nav-config" class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition group">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+            </svg>
+            <span class="nav-label truncate">Configuración & Marca</span>
+          </button>
+
+          <button onclick="switchTab('system')" id="nav-system" class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition group">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
+            <span class="nav-label truncate">Diagnóstico & RAM</span>
+          </button>
+        </nav>
       </div>
 
-      <div class="glass-card rounded-2xl overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-white/5 text-apple-gray uppercase font-semibold tracking-wider text-[10px] border-b border-white/5">
-              <tr>
-                <th class="px-6 py-3.5">Nº Recibo</th>
-                <th class="px-6 py-3.5">Cliente</th>
-                <th class="px-6 py-3.5">Periodo</th>
-                <th class="px-6 py-3.5">Vencimiento</th>
-                <th class="px-6 py-3.5">Monto Total</th>
-                <th class="px-6 py-3.5">Estado</th>
-                <th class="px-6 py-3.5 text-right">Acción</th>
-              </tr>
-            </thead>
-            <tbody id="invoices-table-body" class="divide-y divide-white/5 text-white/90"></tbody>
-          </table>
+      <!-- Bottom Profile Section -->
+      <div class="pt-3 border-t border-white/5 dark:border-white/5 border-black/5">
+        <div class="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] border border-white/5">
+          <div class="flex items-center space-x-2.5 overflow-hidden">
+            <img id="sidebar-user-avatar" class="w-7 h-7 rounded-full border border-white/20 object-cover flex-shrink-0" src="" alt="Avatar">
+            <div class="truncate">
+              <div id="sidebar-user-name" class="text-xs font-semibold text-white dark:text-white text-slate-900 truncate">--</div>
+              <div id="sidebar-user-role" class="text-[10px] text-slate-400 truncate">--</div>
+            </div>
+          </div>
+          <button onclick="logout()" title="Cerrar sesión" class="p-1 rounded-lg text-slate-400 hover:text-rose-400 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
         </div>
       </div>
-    </section>
+    </aside>
 
-    <!-- TAB 4: NETWORK & MULTI-VENDOR -->
-    <section id="tab-network" class="space-y-6 hidden">
-      <div>
-        <h2 class="text-xl font-semibold text-white tracking-tight">Topología y Equipos de Red</h2>
-        <p class="text-xs text-apple-gray mt-1">Soporte Multi-Vendor desacoplado (MikroTik, OLTs Huawei, ZTE, VSOL)</p>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="network-devices-container"></div>
-    </section>
+    <!-- CONTENT WRAPPER -->
+    <div id="content-container" class="flex-1 flex flex-col pl-64 transition-all duration-200">
+      
+      <!-- TOP MINIMAL HEADER -->
+      <header class="sticky top-0 z-30 pro-header h-14 flex items-center justify-between px-6 lg:px-10 2xl:px-14">
+        <div class="flex items-center space-x-3">
+          <button onclick="toggleMobileSidebar()" class="lg:hidden p-1.5 rounded-lg bg-white/5 text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          
+          <div class="flex items-center space-x-2 text-xs text-slate-400 font-mono">
+            <span id="breadcrumb-app">TurboNetwork</span>
+            <span class="text-slate-600">/</span>
+            <span id="breadcrumb-section" class="text-white dark:text-white text-slate-900 font-semibold font-sans">Dashboard</span>
+          </div>
+        </div>
 
-    <!-- TAB 5: PLANS -->
-    <section id="tab-plans" class="space-y-6 hidden">
-      <div>
-        <h2 class="text-xl font-semibold text-white tracking-tight">Planes de Internet</h2>
-        <p class="text-xs text-apple-gray mt-1">Tarifas, anchos de banda y ráfagas configuradas</p>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="plans-container"></div>
-    </section>
+        <!-- Right Quick Status & Theme Switcher -->
+        <div class="flex items-center space-x-3">
+          <div class="hidden sm:flex items-center space-x-2 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] font-mono text-blue-400">
+            <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+            <span>4.8 Gbps AGG</span>
+          </div>
 
-    <!-- ======================================================== -->
-    <!-- TAB 6: CONFIGURACIÓN & ROLES GRANULARES (SOLICITADO)       -->
-    <!-- ======================================================== -->
-    <section id="tab-config" class="space-y-8 hidden">
-      <div>
-        <h2 class="text-xl font-semibold text-white tracking-tight">Configuración & Roles Granulares</h2>
-        <p class="text-xs text-apple-gray mt-1">Gestión de operadores del sistema, asignación de PIN de 8 dígitos y matriz de permisos</p>
-      </div>
+          <div class="flex items-center space-x-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-mono text-emerald-400">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>CORE ONLINE</span>
+          </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Formulario: Registrar Nuevo Operador -->
-        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
-          <div>
-            <div class="flex items-center space-x-2 text-blue-400 text-xs font-semibold uppercase tracking-wider">
-              <span>+ Nuevo Operador</span>
+          <!-- Theme Toggle -->
+          <button onclick="toggleThemeMode()" id="theme-toggle-btn" title="Modo Claro / Oscuro" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition border border-white/5">
+            <svg id="theme-icon-sun" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg id="theme-icon-moon" class="w-4 h-4 block dark:hidden text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- MAIN WORKSPACE FLUIDO (30"-35" Y PANTALLAS GRANDES) -->
+      <main class="flex-1 w-full max-w-[2400px] mx-auto px-6 lg:px-10 2xl:px-14 py-6">
+
+        <!-- ======================================================== -->
+        <!-- TAB 1: DASHBOARD GENERAL                                 -->
+        <!-- ======================================================== -->
+        <section id="tab-dashboard" class="space-y-6">
+          
+          <!-- Fluid KPI Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 3xl:grid-cols-5 gap-4">
+            <div class="pro-card p-5 rounded-xl">
+              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
+                <span>Abonados Activos</span>
+                <span class="text-emerald-400 font-mono text-[10px]">+8.4%</span>
+              </div>
+              <div class="mt-2.5 flex items-baseline space-x-2">
+                <span class="text-2xl font-bold tracking-tight">1,195</span>
+                <span class="text-xs text-slate-400 font-mono">/ 1,248</span>
+              </div>
+              <div class="mt-2 text-[11px] text-slate-400">38 en corte • 15 altas pendientes</div>
             </div>
-            <h3 class="text-base font-semibold text-white mt-2">Dar de Alta Usuario</h3>
-            <p class="text-xs text-apple-gray mt-0.5">Asigna nombre, correo, rol y su PIN de 8 dígitos</p>
 
-            <form id="new-user-form" onsubmit="handleCreateUser(event)" class="space-y-4 mt-5">
-              <div>
-                <label class="block text-[11px] font-medium text-apple-gray uppercase tracking-wider mb-1">Nombre Completo</label>
-                <input type="text" id="nu-name" required placeholder="Ej. Juan Pérez" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+            <div class="pro-card p-5 rounded-xl">
+              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
+                <span>Cobranza del Mes</span>
+                <span class="text-blue-400 font-mono text-[10px]">78.7%</span>
               </div>
-
-              <div>
-                <label class="block text-[11px] font-medium text-apple-gray uppercase tracking-wider mb-1">Correo Electrónico</label>
-                <input type="email" id="nu-email" required placeholder="juan@turbonetwork.com" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+              <div class="mt-2.5 flex items-baseline space-x-1">
+                <span class="text-lg font-light text-slate-400">$</span>
+                <span class="text-2xl font-bold tracking-tight">22,450.00</span>
               </div>
+              <div class="mt-2 text-[11px] text-slate-400">Recaudación directa en caja/bancos</div>
+            </div>
 
-              <div>
-                <label class="block text-[11px] font-medium text-apple-gray uppercase tracking-wider mb-1">Rol Asignado</label>
-                <select id="nu-role" class="w-full bg-[#16181f] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                  <!-- Llenado dinámicamente -->
-                </select>
+            <div class="pro-card p-5 rounded-xl">
+              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
+                <span>Cuentas por Cobrar</span>
+                <span class="text-amber-400 font-mono text-[10px]">MORA</span>
               </div>
+              <div class="mt-2.5 flex items-baseline space-x-1">
+                <span class="text-lg font-light text-slate-400">$</span>
+                <span class="text-2xl font-bold tracking-tight text-amber-400">6,050.00</span>
+              </div>
+              <div class="mt-2 text-[11px] text-slate-400">Suspensión técnica programada</div>
+            </div>
 
-              <div>
-                <div class="flex justify-between items-center mb-1">
-                  <label class="text-[11px] font-medium text-apple-gray uppercase tracking-wider">PIN de Seguridad (8 Dígitos)</label>
-                  <button type="button" onclick="generateRandomPin()" class="text-[10px] text-blue-400 hover:text-blue-300">Generar PIN</button>
+            <div class="pro-card p-5 rounded-xl">
+              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
+                <span>Nodos & OLTs</span>
+                <span class="text-emerald-400 font-mono text-[10px]">100% OK</span>
+              </div>
+              <div class="mt-2.5 flex items-baseline space-x-2">
+                <span class="text-2xl font-bold tracking-tight">14 / 14</span>
+              </div>
+              <div class="mt-2 text-[11px] text-slate-400">MikroTik, Huawei, ZTE, VSOL</div>
+            </div>
+
+            <div class="pro-card p-5 rounded-xl hidden 3xl:block">
+              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
+                <span>Huella RAM Node.js</span>
+                <span class="text-emerald-400 font-mono text-[10px]">OPTIMIZADO</span>
+              </div>
+              <div class="mt-2.5 flex items-baseline space-x-2">
+                <span id="dash-ram-metric" class="text-2xl font-bold tracking-tight text-emerald-400">~80 MB</span>
+              </div>
+              <div class="mt-2 text-[11px] text-slate-400">cPanel Passenger & VPS</div>
+            </div>
+          </div>
+
+          <!-- Charts and Activity -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <div class="pro-card lg:col-span-2 p-5 rounded-xl flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Monitoreo de Tráfico Agregado</h3>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Tráfico saliente y entrante a través de Core Routers</p>
                 </div>
-                <input type="text" id="nu-pin" required maxlength="8" pattern="\d{8}" placeholder="Ej. 49201948" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono tracking-widest focus:outline-none focus:border-blue-500">
+                <span class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[11px] font-mono">
+                  Pico: 4.8 Gbps
+                </span>
               </div>
 
-              <div id="create-user-status" class="text-xs min-h-[16px]"></div>
+              <div class="my-6 grid grid-cols-12 gap-2.5 h-32 items-end">
+                <div class="bg-blue-600/30 rounded-t h-[45%]"></div>
+                <div class="bg-blue-600/30 rounded-t h-[52%]"></div>
+                <div class="bg-blue-600/40 rounded-t h-[60%]"></div>
+                <div class="bg-blue-600/30 rounded-t h-[40%]"></div>
+                <div class="bg-blue-600/50 rounded-t h-[75%]"></div>
+                <div class="bg-blue-600/60 rounded-t h-[88%]"></div>
+                <div class="bg-blue-600/80 rounded-t h-[94%]"></div>
+                <div class="bg-blue-600 rounded-t h-[100%] shadow-md shadow-blue-500/30"></div>
+                <div class="bg-blue-600/80 rounded-t h-[92%]"></div>
+                <div class="bg-blue-600/60 rounded-t h-[70%]"></div>
+                <div class="bg-blue-600/40 rounded-t h-[55%]"></div>
+                <div class="bg-blue-600/30 rounded-t h-[48%]"></div>
+              </div>
 
-              <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition shadow-lg shadow-blue-500/20">
-                Registrar Operador
-              </button>
-            </form>
+              <div class="flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 dark:border-white/5 border-black/5 pt-3 font-mono">
+                <span>PICO HORARIO: 20:00 - 22:30</span>
+                <span>LATENCIA MEDIA: 4.2 MS</span>
+              </div>
+            </div>
+
+            <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
+              <div>
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Auditoría en Tiempo Real</h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">Operaciones registradas</p>
+              </div>
+
+              <div class="space-y-3.5 my-4" id="recent-activity-list">
+                <div class="flex items-start space-x-3 text-xs">
+                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
+                  <div>
+                    <p class="font-medium text-slate-200">Cobro liquidado $35.00</p>
+                    <p class="text-slate-400 text-[11px] font-mono">CLI-1001 • Carlos Mendoza</p>
+                  </div>
+                </div>
+                <div class="flex items-start space-x-3 text-xs">
+                  <div class="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0"></div>
+                  <div>
+                    <p class="font-medium text-slate-200">Alta de contrato fibra</p>
+                    <p class="text-slate-400 text-[11px] font-mono">CLI-1004 • David Fernández</p>
+                  </div>
+                </div>
+                <div class="flex items-start space-x-3 text-xs">
+                  <div class="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0"></div>
+                  <div>
+                    <p class="font-medium text-slate-200">Sincronización OLT Huawei</p>
+                    <p class="text-slate-400 text-[11px] font-mono">MA5608T • 485 ONUs online</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="border-t border-white/5 dark:border-white/5 border-black/5 pt-3">
+                <button onclick="switchTab('billing')" class="text-xs text-blue-400 hover:text-blue-300 transition">Ver historial de cobros →</button>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Lista de Usuarios Actuales -->
-        <div class="glass-card lg:col-span-2 p-6 rounded-2xl flex flex-col justify-between">
+        <!-- ======================================================== -->
+        <!-- TAB 2: CLIENTES & CONTRATOS                              -->
+        <!-- ======================================================== -->
+        <section id="tab-customers" class="space-y-5 hidden">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-semibold tracking-tight">Directorio de Clientes</h2>
+              <p class="text-xs text-slate-400 mt-0.5">Gestión de abonados, contratos técnicos y direccionamiento IP</p>
+            </div>
+            <input 
+              type="text" 
+              placeholder="Buscar por cliente, documento o IP..." 
+              class="bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-xl px-3.5 py-1.5 text-xs focus:outline-none focus:border-blue-500 w-full sm:w-72 transition font-mono"
+              oninput="handleCustomerSearch(this.value)"
+            />
+          </div>
+
+          <div class="pro-card rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-white/5 dark:bg-white/5 bg-black/5 text-slate-400 uppercase font-semibold tracking-wider text-[10px] border-b border-white/5">
+                  <tr>
+                    <th class="px-5 py-3.5">Código / Nombre</th>
+                    <th class="px-5 py-3.5">Documento</th>
+                    <th class="px-5 py-3.5">Plan Asignado</th>
+                    <th class="px-5 py-3.5">IP Asignada</th>
+                    <th class="px-5 py-3.5">Estado</th>
+                    <th class="px-5 py-3.5 text-right">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody id="customers-table-body" class="divide-y divide-white/5 dark:divide-white/5 divide-black/5"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 3: FACTURACIÓN & COBRANZAS                           -->
+        <!-- ======================================================== -->
+        <section id="tab-billing" class="space-y-5 hidden">
           <div>
-            <h3 class="text-base font-semibold text-white tracking-tight">Operadores del Sistema Registrados</h3>
-            <p class="text-xs text-apple-gray mt-0.5">Usuarios con acceso mediante PIN al motor SaaS</p>
+            <h2 class="text-lg font-semibold tracking-tight">Facturación & Liquidación de Cobros</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Gestión interna de recibos en efectivo, transferencias y recibos PDF</p>
+          </div>
 
-            <div class="mt-5 space-y-3" id="users-list-container">
-              <!-- Rendered via JS -->
+          <div class="pro-card rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-white/5 dark:bg-white/5 bg-black/5 text-slate-400 uppercase font-semibold tracking-wider text-[10px] border-b border-white/5">
+                  <tr>
+                    <th class="px-5 py-3.5">Nº Recibo</th>
+                    <th class="px-5 py-3.5">Cliente</th>
+                    <th class="px-5 py-3.5">Periodo</th>
+                    <th class="px-5 py-3.5">Vencimiento</th>
+                    <th class="px-5 py-3.5">Total</th>
+                    <th class="px-5 py-3.5">Estado</th>
+                    <th class="px-5 py-3.5 text-right">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="invoices-table-body" class="divide-y divide-white/5 dark:divide-white/5 divide-black/5"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 4: RED & OLTS MULTI-VENDOR                           -->
+        <!-- ======================================================== -->
+        <section id="tab-network" class="space-y-5 hidden">
+          <div>
+            <h2 class="text-lg font-semibold tracking-tight">Equipos de Red & Topología</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Control desacoplado para MikroTik (RouterOS v6/v7), OLTs Huawei, ZTE y VSOL</p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 3xl:grid-cols-3 gap-5" id="network-devices-container"></div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 5: PLANES DE ANCHO DE BANDA                          -->
+        <!-- ======================================================== -->
+        <section id="tab-plans" class="space-y-5 hidden">
+          <div>
+            <h2 class="text-lg font-semibold tracking-tight">Planes de Servicio Comercial</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Velocidades de subida/bajada, ráfagas de aceleración y tarifas</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 3xl:grid-cols-5 gap-5" id="plans-container"></div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 6: CONFIGURACIÓN, ROLES & ESTUDIO DE MARCA           -->
+        <!-- ======================================================== -->
+        <section id="tab-config" class="space-y-6 hidden">
+          
+          <!-- Sub-Nav Segmented Control con Iconos SVG puros -->
+          <div class="flex items-center justify-between flex-wrap gap-4 border-b border-white/5 dark:border-white/5 border-black/5 pb-3">
+            <div>
+              <h2 class="text-lg font-semibold tracking-tight">Configuración de Gobernanza & Marca</h2>
+              <p class="text-xs text-slate-400 mt-0.5">Personalización visual completa, operadores con PIN y matriz RBAC</p>
+            </div>
+
+            <div class="flex items-center p-1 bg-white/5 dark:bg-white/5 bg-black/5 rounded-xl border border-white/5 dark:border-white/5 border-black/5 text-xs font-medium">
+              <button onclick="switchConfigSubTab('branding')" id="subnav-branding" class="subnav-btn px-3.5 py-1.5 rounded-lg bg-blue-600 text-white shadow-sm transition flex items-center space-x-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 2a4.5 4.5 0 000 9 4.5 4.5 0 010 9 1 1 0 01-1-1 9 9 0 011-17"></path>
+                </svg>
+                <span>Personalización & Marca</span>
+              </button>
+              <button onclick="switchConfigSubTab('users')" id="subnav-users" class="subnav-btn px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                </svg>
+                <span>Operadores & PIN</span>
+              </button>
+              <button onclick="switchConfigSubTab('roles')" id="subnav-roles" class="subnav-btn px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                <span>Matriz de Roles</span>
+              </button>
             </div>
           </div>
 
-          <div class="mt-5 pt-4 border-t border-white/5 text-xs text-apple-gray flex justify-between items-center">
-            <span>Autenticación por PIN segura con hash</span>
-            <span class="text-emerald-400">Todos activos</span>
-          </div>
-        </div>
-      </div>
+          <!-- SUBTAB 1: ESTUDIO DE PERSONALIZACIÓN & MARCA -->
+          <div id="config-subtab-branding" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              
+              <!-- 1. Identidad de Marca -->
+              <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center space-x-2 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                      <line x1="8" y1="21" x2="16" y2="21"></line>
+                      <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    <span>Identidad Corporativa</span>
+                  </div>
+                  <h3 class="text-sm font-semibold tracking-tight">Logotipos & Nomenclatura</h3>
+                  <p class="text-xs text-slate-400 mt-0.5">Ajusta el nombre, isotipo y favicon del sistema</p>
 
-      <!-- Matriz de Roles y Permisos Granulares -->
-      <div class="glass-card p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+                  <div class="space-y-3.5 mt-4">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre Comercial</label>
+                      <input type="text" id="cfg-system-name" value="TurboNetwork" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Subtítulo / Tagline</label>
+                      <input type="text" id="cfg-tagline" value="ISP Enterprise Core" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">URL del Logotipo (Header / Sidebar)</label>
+                      <input type="url" id="cfg-logo-url" placeholder="https://ejemplo.com/logo.svg" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">URL del Favicon del Navegador</label>
+                      <input type="url" id="cfg-favicon-url" placeholder="https://ejemplo.com/favicon.ico" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Preview Box -->
+                <div class="mt-5 p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center space-x-3">
+                  <div class="w-9 h-9 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center overflow-hidden">
+                    <svg id="preview-logo-placeholder" class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <img id="preview-logo-img" class="w-full h-full object-cover hidden" alt="Preview">
+                  </div>
+                  <div>
+                    <span class="text-xs font-semibold block">Previsualización de Isotipo</span>
+                    <span class="text-[10px] text-slate-400">Actualización en tiempo real</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. Paleta Cromática -->
+              <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center space-x-2 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"></path>
+                    </svg>
+                    <span>Paleta Cromática</span>
+                  </div>
+                  <h3 class="text-sm font-semibold tracking-tight">Modo Oscuro & Claro</h3>
+                  <p class="text-xs text-slate-400 mt-0.5">Control de contraste y tonos de acento</p>
+
+                  <div class="space-y-3.5 mt-4">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Color de Marca Primario</label>
+                      <div class="flex items-center space-x-2.5">
+                        <input type="color" id="cfg-primary-color" value="#2563eb" class="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0">
+                        <input type="text" id="cfg-primary-color-text" value="#2563eb" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-1.5 text-xs font-mono">
+                      </div>
+                      
+                      <!-- Presets corporativos -->
+                      <div class="flex items-center space-x-2 mt-2">
+                        <button type="button" onclick="setPrimaryPreset('#2563eb')" class="w-4 h-4 rounded-full bg-[#2563eb] border border-white/20" title="Cobalto"></button>
+                        <button type="button" onclick="setPrimaryPreset('#0284c7')" class="w-4 h-4 rounded-full bg-[#0284c7] border border-white/20" title="Cyan"></button>
+                        <button type="button" onclick="setPrimaryPreset('#059669')" class="w-4 h-4 rounded-full bg-[#059669] border border-white/20" title="Esmeralda"></button>
+                        <button type="button" onclick="setPrimaryPreset('#7c3aed')" class="w-4 h-4 rounded-full bg-[#7c3aed] border border-white/20" title="Violeta"></button>
+                        <button type="button" onclick="setPrimaryPreset('#e11d48')" class="w-4 h-4 rounded-full bg-[#e11d48] border border-white/20" title="Carmín"></button>
+                        <button type="button" onclick="setPrimaryPreset('#d97706')" class="w-4 h-4 rounded-full bg-[#d97706] border border-white/20" title="Ámbar"></button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Color de Acento (Estados OK)</label>
+                      <div class="flex items-center space-x-2.5">
+                        <input type="color" id="cfg-accent-color" value="#059669" class="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0">
+                        <input type="text" id="cfg-accent-color-text" value="#059669" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-1.5 text-xs font-mono">
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5 pt-1">
+                      <div>
+                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Base Oscura</label>
+                        <select id="cfg-bg-dark" class="w-full bg-[#11141d] border border-white/10 rounded-lg px-2 py-1.5 text-xs">
+                          <option value="#090a0f">Obsidiana (#090a0f)</option>
+                          <option value="#000000">Negro Puro (#000000)</option>
+                          <option value="#0f172a">Slate Profundo (#0f172a)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Base Clara</label>
+                        <select id="cfg-bg-light" class="w-full bg-[#11141d] border border-white/10 rounded-lg px-2 py-1.5 text-xs">
+                          <option value="#f8fafc">Slate Claro (#f8fafc)</option>
+                          <option value="#ffffff">Blanco Puro (#ffffff)</option>
+                          <option value="#f1f5f9">Gris Neutro (#f1f5f9)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-5">
+                  <button type="button" onclick="toggleThemeMode()" class="w-full py-2 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-medium transition flex items-center justify-center space-x-2">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                    <span>Conmutar Modo Claro / Oscuro</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 3. Tipografía & Pantallas Grandes -->
+              <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center space-x-2 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                      <line x1="9" y1="20" x2="15" y2="20"></line>
+                      <line x1="12" y1="4" x2="12" y2="20"></line>
+                    </svg>
+                    <span>Tipografía & Pantallas 30"-35"</span>
+                  </div>
+                  <h3 class="text-sm font-semibold tracking-tight">Escala & App PWA</h3>
+                  <p class="text-xs text-slate-400 mt-0.5">Adaptabilidad visual para monitores amplios</p>
+
+                  <div class="space-y-3.5 mt-4">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Familia Tipográfica</label>
+                      <select id="cfg-font-family" onchange="previewFontFamily(this.value)" class="w-full bg-[#11141d] border border-white/10 rounded-lg px-2.5 py-2 text-xs">
+                        <option value="inter">Inter (Técnica & Legible)</option>
+                        <option value="jakarta">Plus Jakarta Sans (Geométrica)</option>
+                        <option value="apple">SF Pro / Sistema Nativo</option>
+                        <option value="outfit">Outfit (Moderna)</option>
+                        <option value="poppins">Poppins (Redondeada)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Escala Global de Texto</label>
+                        <span id="cfg-scale-label" class="text-[11px] text-blue-400 font-mono font-medium">15px</span>
+                      </div>
+                      <select id="cfg-font-scale" onchange="previewFontSize(this.value)" class="w-full bg-[#11141d] border border-white/10 rounded-lg px-2.5 py-2 text-xs">
+                        <option value="compact">Compacto (13px) - Densidad de Datos</option>
+                        <option value="normal" selected>Normal (15px) - Estándar</option>
+                        <option value="comfortable">Confort (17px) - Monitores 27"-30"</option>
+                        <option value="large">Amplio / 4K (19px) - Monitores 30", 35" Ultrawide</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Icono PWA (Mobile App Manifest)</label>
+                      <input type="url" id="cfg-pwa-icon" placeholder="https://ejemplo.com/pwa-icon.png" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-5 p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center space-x-3">
+                  <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <img id="preview-pwa-img" class="w-full h-full object-cover hidden" alt="PWA Icon">
+                    <svg id="preview-pwa-placeholder" class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="text-xs font-semibold block">Icono PWA Instalable</span>
+                    <span class="text-[10px] text-slate-400">Acceso directo en smartphone / desktop</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Global Action Toolbar -->
+            <div class="flex items-center justify-end space-x-3 pt-3 border-t border-white/5 dark:border-white/5 border-black/5">
+              <button type="button" onclick="resetBrandingDefaults()" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-slate-400 hover:text-white transition">
+                Restablecer Fábrica
+              </button>
+              <button type="button" onclick="saveBrandingSettings()" class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-md shadow-blue-600/20 transition flex items-center space-x-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Guardar Parámetros de Marca</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SUBTAB 2: OPERADORES CON PIN -->
+          <div id="config-subtab-users" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
+                <div>
+                  <h3 class="text-sm font-semibold tracking-tight">Alta de Operador</h3>
+                  <p class="text-xs text-slate-400 mt-0.5">Asigna nombre, correo, rol y PIN de 8 dígitos</p>
+
+                  <form id="new-user-form" onsubmit="handleCreateUser(event)" class="space-y-3.5 mt-4">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre y Apellido</label>
+                      <input type="text" id="nu-name" required placeholder="Ej. Juan Pérez" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Correo Corporativo</label>
+                      <input type="email" id="nu-email" required placeholder="juan@turbonetwork.com" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Rol Operativo</label>
+                      <select id="nu-role" class="w-full bg-[#11141d] border border-white/10 rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:border-blue-500"></select>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">PIN de 8 Dígitos</label>
+                        <button type="button" onclick="generateRandomPin()" class="text-[10px] text-blue-400 hover:text-blue-300 font-mono">Generar Aleatorio</button>
+                      </div>
+                      <input type="text" id="nu-pin" required maxlength="8" pattern="\d{8}" placeholder="Ej. 49201948" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs font-mono tracking-widest focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div id="create-user-status" class="text-xs min-h-[16px]"></div>
+
+                    <button type="submit" class="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition shadow-sm">
+                      Registrar Operador
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <div class="pro-card lg:col-span-2 p-5 rounded-xl flex flex-col justify-between">
+                <div>
+                  <h3 class="text-sm font-semibold tracking-tight">Operadores Autorizados</h3>
+                  <p class="text-xs text-slate-400 mt-0.5">Usuarios del sistema con acceso por PIN numérico</p>
+                  <div class="mt-4 space-y-2.5" id="users-list-container"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBTAB 3: MATRIZ DE ROLES -->
+          <div id="config-subtab-roles" class="space-y-5 hidden">
+            <div class="pro-card p-5 rounded-xl">
+              <div class="flex items-center justify-between mb-5">
+                <div>
+                  <h3 class="text-sm font-semibold tracking-tight">Matriz de Permisos Granulares (RBAC)</h3>
+                  <p class="text-xs text-slate-400 mt-0.5">Políticas de acceso segmentadas por módulo y función</p>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[11px] font-mono">
+                  RBAC V2
+                </span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="roles-cards-container"></div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB 7: SISTEMA & MONITOREO DE RAM                        -->
+        <!-- ======================================================== -->
+        <section id="tab-system" class="space-y-5 hidden">
           <div>
-            <h3 class="text-base font-semibold text-white tracking-tight">Matriz de Roles Granulares</h3>
-            <p class="text-xs text-apple-gray mt-0.5">Control fino de accesos por categoría de módulo</p>
+            <h2 class="text-lg font-semibold tracking-tight">Diagnóstico del Servidor & Huella de Recursos</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Métricas de ejecución nativa optimizadas para cPanel Passenger y VPS</p>
           </div>
-          <span class="px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-semibold">
-            RBAC Avanzado
-          </span>
-        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5" id="roles-cards-container">
-          <!-- Rendered via JS -->
-        </div>
-      </div>
-    </section>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="pro-card p-5 rounded-xl">
+              <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Memoria Proceso (RSS)</span>
+              <div id="metric-rss" class="text-2xl font-bold font-mono mt-2">-- MB</div>
+              <p class="text-xs text-emerald-400 mt-1.5">Límite cPanel seguro (&lt;100MB)</p>
+            </div>
+            <div class="pro-card p-5 rounded-xl">
+              <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">V8 Heap Utilizado</span>
+              <div id="metric-heap" class="text-2xl font-bold font-mono mt-2">-- MB</div>
+              <p class="text-xs text-slate-400 mt-1.5">Garbage Collector nominal</p>
+            </div>
+            <div class="pro-card p-5 rounded-xl">
+              <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Uptime del Motor</span>
+              <div id="metric-uptime" class="text-2xl font-bold font-mono mt-2">-- seg</div>
+              <p class="text-xs text-blue-400 mt-1.5">Fastify Engine v4.x</p>
+            </div>
+          </div>
 
-    <!-- TAB 7: SYSTEM & RAM METRICS -->
-    <section id="tab-system" class="space-y-6 hidden">
-      <div>
-        <h2 class="text-xl font-semibold text-white tracking-tight">Salud del Motor & Huella de Rendimiento</h2>
-        <p class="text-xs text-apple-gray mt-1">Métricas en tiempo real optimizadas para cPanel (Phusion Passenger) y VPS</p>
-      </div>
+          <div class="pro-card p-5 rounded-xl">
+            <h3 class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Payload de Diagnóstico HTTP</h3>
+            <pre id="system-raw-json" class="mt-3 p-3.5 rounded-xl bg-black/40 text-xs text-slate-400 overflow-x-auto font-mono"></pre>
+          </div>
+        </section>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div class="glass-card p-6 rounded-2xl">
-          <span class="text-xs text-apple-gray font-medium">MEMORIA RAM PROCESO (RSS)</span>
-          <div id="metric-rss" class="text-3xl font-semibold text-white mt-2">-- MB</div>
-          <p class="text-xs text-emerald-400 mt-2">✓ Seguro para cPanel (&lt;100MB)</p>
-        </div>
-        <div class="glass-card p-6 rounded-2xl">
-          <span class="text-xs text-apple-gray font-medium">HEAP UTILIZADO</span>
-          <div id="metric-heap" class="text-3xl font-semibold text-white mt-2">-- MB</div>
-          <p class="text-xs text-apple-gray mt-2">V8 Garbage Collector activo</p>
-        </div>
-        <div class="glass-card p-6 rounded-2xl">
-          <span class="text-xs text-apple-gray font-medium">TIEMPO DE ACTIVIDAD</span>
-          <div id="metric-uptime" class="text-3xl font-semibold text-white mt-2">-- seg</div>
-          <p class="text-xs text-blue-400 mt-2">Fastify Engine v4</p>
-        </div>
-      </div>
+      </main>
 
-      <div class="glass-card p-6 rounded-2xl">
-        <h3 class="text-sm font-semibold text-white">Detalle de Infraestructura</h3>
-        <pre id="system-raw-json" class="mt-4 p-4 rounded-xl bg-black/40 text-xs text-apple-gray overflow-x-auto font-mono"></pre>
-      </div>
-    </section>
+      <footer class="mt-auto py-5 border-t border-white/5 dark:border-white/5 border-black/5 text-center text-xs text-slate-500 font-mono">
+        TurboNetwork Engine • TypeScript • Fastify • PostgreSQL • Drizzle ORM
+      </footer>
+    </div>
+  </div>
 
-  </main>
-
-  <footer class="mt-auto py-6 border-t border-white/5 text-center text-xs text-apple-gray">
-    TurboNetwork Engine • TypeScript • Fastify • PostgreSQL • Drizzle ORM • Multi-Vendor Architecture
-  </footer>
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-[300] hidden px-3.5 py-2.5 rounded-xl bg-[#141925] text-slate-200 border border-white/10 shadow-2xl flex items-center space-x-2.5 text-xs font-medium transition-all duration-200">
+    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+    <span id="toast-message">Parámetros actualizados</span>
+  </div>
 
   <!-- ======================================================== -->
-  <!-- JAVASCRIPT APP LOGIC                                     -->
+  <!-- JAVASCRIPT APP LOGIC (100% LIBRE DE EMOJIS)              -->
   <!-- ======================================================== -->
   <script>
     let currentPin = "";
     let currentUser = null;
+    let isSidebarCollapsed = false;
     let currentCustomers = [];
     let currentInvoices = [];
     let currentDevices = [];
     let currentRoles = [];
     let currentUsers = [];
 
-    // Keypad Logic
+    // Settings State
+    let appSettings = {
+      systemName: "TurboNetwork",
+      tagline: "ISP Enterprise Core",
+      logoUrl: "",
+      faviconUrl: "",
+      pwaIconUrl: "",
+      primaryColor: "#2563eb",
+      accentColor: "#059669",
+      lightBgColor: "#f8fafc",
+      darkBgColor: "#090a0f",
+      fontFamily: "inter",
+      fontSizeScale: "normal",
+      themeMode: "dark"
+    };
+
+    function loadSavedSettings() {
+      const saved = localStorage.getItem('turbonetwork_branding');
+      if (saved) {
+        try {
+          appSettings = { ...appSettings, ...JSON.parse(saved) };
+        } catch (e) {}
+      }
+      applyBranding(appSettings);
+    }
+
+    function applyBranding(settings) {
+      const name = settings.systemName || "TurboNetwork";
+      document.getElementById('brand-system-name').textContent = name;
+      document.getElementById('login-system-title').textContent = name + " Enterprise";
+      document.getElementById('breadcrumb-app').textContent = name;
+      document.getElementById('page-title').textContent = name + " • ISP Enterprise Platform";
+      document.getElementById('brand-tagline').textContent = settings.tagline || "ISP Enterprise Core";
+
+      // Custom Logo
+      if (settings.logoUrl && settings.logoUrl.trim() !== "") {
+        document.getElementById('sidebar-default-icon').classList.add('hidden');
+        const sideImg = document.getElementById('sidebar-custom-img');
+        sideImg.src = settings.logoUrl;
+        sideImg.classList.remove('hidden');
+
+        document.getElementById('login-default-icon').classList.add('hidden');
+        const loginImg = document.getElementById('login-custom-img');
+        loginImg.src = settings.logoUrl;
+        loginImg.classList.remove('hidden');
+
+        document.getElementById('preview-logo-placeholder').classList.add('hidden');
+        const prevImg = document.getElementById('preview-logo-img');
+        prevImg.src = settings.logoUrl;
+        prevImg.classList.remove('hidden');
+      } else {
+        document.getElementById('sidebar-default-icon').classList.remove('hidden');
+        document.getElementById('sidebar-custom-img').classList.add('hidden');
+        document.getElementById('login-default-icon').classList.remove('hidden');
+        document.getElementById('login-custom-img').classList.add('hidden');
+        document.getElementById('preview-logo-placeholder').classList.remove('hidden');
+        document.getElementById('preview-logo-img').classList.add('hidden');
+      }
+
+      // Favicon
+      if (settings.faviconUrl && settings.faviconUrl.trim() !== "") {
+        document.getElementById('dynamic-favicon').href = settings.faviconUrl;
+      }
+
+      // PWA Icon
+      if (settings.pwaIconUrl && settings.pwaIconUrl.trim() !== "") {
+        document.getElementById('pwa-apple-icon').href = settings.pwaIconUrl;
+        document.getElementById('preview-pwa-placeholder').classList.add('hidden');
+        const pwaImg = document.getElementById('preview-pwa-img');
+        pwaImg.src = settings.pwaIconUrl;
+        pwaImg.classList.remove('hidden');
+      }
+
+      // CSS Variables for Colors
+      document.documentElement.style.setProperty('--brand-primary', settings.primaryColor || '#2563eb');
+      document.documentElement.style.setProperty('--brand-accent', settings.accentColor || '#059669');
+      document.documentElement.style.setProperty('--bg-dark', settings.darkBgColor || '#090a0f');
+      document.documentElement.style.setProperty('--bg-light', settings.lightBgColor || '#f8fafc');
+
+      // Font Family & Scale
+      previewFontFamily(settings.fontFamily || 'inter');
+      previewFontSize(settings.fontSizeScale || 'normal');
+
+      // Dark / Light Theme
+      if (settings.themeMode === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+      }
+
+      // Sync form fields
+      const nameInp = document.getElementById('cfg-system-name');
+      if (nameInp) {
+        document.getElementById('cfg-system-name').value = settings.systemName;
+        document.getElementById('cfg-tagline').value = settings.tagline;
+        document.getElementById('cfg-logo-url').value = settings.logoUrl;
+        document.getElementById('cfg-favicon-url').value = settings.faviconUrl;
+        document.getElementById('cfg-pwa-icon').value = settings.pwaIconUrl;
+        document.getElementById('cfg-primary-color').value = settings.primaryColor;
+        document.getElementById('cfg-primary-color-text').value = settings.primaryColor;
+        document.getElementById('cfg-accent-color').value = settings.accentColor;
+        document.getElementById('cfg-accent-color-text').value = settings.accentColor;
+        document.getElementById('cfg-font-family').value = settings.fontFamily;
+        document.getElementById('cfg-font-scale').value = settings.fontSizeScale;
+      }
+    }
+
+    function toggleThemeMode() {
+      const isDark = document.documentElement.classList.contains('dark');
+      if (isDark) {
+        document.documentElement.classList.remove('dark');
+        appSettings.themeMode = 'light';
+      } else {
+        document.documentElement.classList.add('dark');
+        appSettings.themeMode = 'dark';
+      }
+      localStorage.setItem('turbonetwork_branding', JSON.stringify(appSettings));
+      showToast(`Modo ${appSettings.themeMode === 'dark' ? 'Oscuro' : 'Claro'} activado`);
+    }
+
+    function previewFontFamily(font) {
+      appSettings.fontFamily = font;
+      const body = document.body;
+      switch(font) {
+        case 'jakarta':
+          body.style.fontFamily = '"Plus Jakarta Sans", sans-serif';
+          break;
+        case 'inter':
+          body.style.fontFamily = '"Inter", sans-serif';
+          break;
+        case 'outfit':
+          body.style.fontFamily = '"Outfit", sans-serif';
+          break;
+        case 'poppins':
+          body.style.fontFamily = '"Poppins", sans-serif';
+          break;
+        case 'apple':
+        default:
+          body.style.fontFamily = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif';
+          break;
+      }
+    }
+
+    function previewFontSize(scale) {
+      appSettings.fontSizeScale = scale;
+      const root = document.documentElement;
+      const label = document.getElementById('cfg-scale-label');
+      switch(scale) {
+        case 'compact':
+          root.style.fontSize = '13px';
+          if (label) label.textContent = '13px (Compacto)';
+          break;
+        case 'comfortable':
+          root.style.fontSize = '17px';
+          if (label) label.textContent = '17px (Confort 27"-30")';
+          break;
+        case 'large':
+          root.style.fontSize = '19px';
+          if (label) label.textContent = '19px (Ultrawide 30", 35" / 4K)';
+          break;
+        case 'normal':
+        default:
+          root.style.fontSize = '15px';
+          if (label) label.textContent = '15px (Normal)';
+          break;
+      }
+    }
+
+    function setPrimaryPreset(color) {
+      document.getElementById('cfg-primary-color').value = color;
+      document.getElementById('cfg-primary-color-text').value = color;
+      document.documentElement.style.setProperty('--brand-primary', color);
+    }
+
+    async function saveBrandingSettings() {
+      appSettings.systemName = document.getElementById('cfg-system-name').value;
+      appSettings.tagline = document.getElementById('cfg-tagline').value;
+      appSettings.logoUrl = document.getElementById('cfg-logo-url').value;
+      appSettings.faviconUrl = document.getElementById('cfg-favicon-url').value;
+      appSettings.pwaIconUrl = document.getElementById('cfg-pwa-icon').value;
+      appSettings.primaryColor = document.getElementById('cfg-primary-color').value;
+      appSettings.accentColor = document.getElementById('cfg-accent-color').value;
+      appSettings.darkBgColor = document.getElementById('cfg-bg-dark').value;
+      appSettings.lightBgColor = document.getElementById('cfg-bg-light').value;
+      appSettings.fontFamily = document.getElementById('cfg-font-family').value;
+      appSettings.fontSizeScale = document.getElementById('cfg-font-scale').value;
+
+      localStorage.setItem('turbonetwork_branding', JSON.stringify(appSettings));
+      applyBranding(appSettings);
+
+      try {
+        await fetch('/api/settings/branding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(appSettings)
+        });
+      } catch (e) {}
+
+      showToast("Configuración de marca guardada");
+    }
+
+    function resetBrandingDefaults() {
+      if (!confirm("¿Restablecer configuración de marca a valores originales?")) return;
+      localStorage.removeItem('turbonetwork_branding');
+      appSettings = {
+        systemName: "TurboNetwork",
+        tagline: "ISP Enterprise Core",
+        logoUrl: "",
+        faviconUrl: "",
+        pwaIconUrl: "",
+        primaryColor: "#2563eb",
+        accentColor: "#059669",
+        lightBgColor: "#f8fafc",
+        darkBgColor: "#090a0f",
+        fontFamily: "inter",
+        fontSizeScale: "normal",
+        themeMode: "dark"
+      };
+      applyBranding(appSettings);
+      showToast("Valores restablecidos");
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 2500);
+    }
+
+    // Sidebar Collapsible
+    function toggleSidebarCollapse() {
+      const sidebar = document.getElementById('main-sidebar');
+      const content = document.getElementById('content-container');
+      const labels = document.querySelectorAll('.nav-label');
+      const icon = document.getElementById('sidebar-collapse-icon');
+
+      isSidebarCollapsed = !isSidebarCollapsed;
+      if (isSidebarCollapsed) {
+        sidebar.classList.remove('w-64');
+        sidebar.classList.add('w-20');
+        content.classList.remove('pl-64');
+        content.classList.add('pl-20');
+        labels.forEach(l => l.classList.add('hidden'));
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />';
+      } else {
+        sidebar.classList.remove('w-20');
+        sidebar.classList.add('w-64');
+        content.classList.remove('pl-20');
+        content.classList.add('pl-64');
+        labels.forEach(l => l.classList.remove('hidden'));
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />';
+      }
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('main-sidebar');
+      sidebar.classList.toggle('-translate-x-full');
+    }
+
+    // Navigation Switcher
+    function switchTab(tabId) {
+      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('bg-blue-600/15', 'text-blue-400', 'font-semibold');
+        btn.classList.add('text-slate-400');
+      });
+      const activeBtn = document.getElementById('nav-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-blue-600/15', 'text-blue-400', 'font-semibold');
+        activeBtn.classList.remove('text-slate-400');
+      }
+
+      const titles = {
+        dashboard: "Dashboard General",
+        customers: "Clientes & Contratos",
+        billing: "Facturación & Cobranzas",
+        network: "Red & OLTs Multi-Vendor",
+        plans: "Planes de Ancho de Banda",
+        config: "Configuración & Marca",
+        system: "Diagnóstico & RAM"
+      };
+      document.getElementById('breadcrumb-section').textContent = titles[tabId] || tabId;
+
+      if (tabId === 'system') loadSystemMetrics();
+      if (tabId === 'config') loadConfigModule();
+    }
+
+    function switchConfigSubTab(subTabId) {
+      ['branding', 'users', 'roles'].forEach(id => {
+        document.getElementById('config-subtab-' + id).classList.add('hidden');
+        document.getElementById('subnav-' + id).classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+        document.getElementById('subnav-' + id).classList.add('text-slate-400');
+      });
+      document.getElementById('config-subtab-' + subTabId).classList.remove('hidden');
+      const activeBtn = document.getElementById('subnav-' + subTabId);
+      activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+      activeBtn.classList.remove('text-slate-400');
+    }
+
+    // 8-Digit Keypad Functions
     function pressDigit(d) {
       if (currentPin.length < 8) {
         currentPin += d;
         updatePinDots();
-        if (currentPin.length === 8) {
-          submitPinLogin();
-        }
+        if (currentPin.length === 8) submitPinLogin();
       }
     }
 
@@ -637,33 +1371,24 @@
     function updatePinDots() {
       for (let i = 0; i < 8; i++) {
         const dot = document.getElementById(`dot-${i}`);
-        if (i < currentPin.length) {
-          dot.classList.add('filled');
-        } else {
-          dot.classList.remove('filled');
-        }
+        if (i < currentPin.length) dot.classList.add('active');
+        else dot.classList.remove('active');
       }
     }
 
-    // Physical Keyboard Listener
     window.addEventListener('keydown', (e) => {
       const loginScreen = document.getElementById('pin-login-screen');
       if (loginScreen && !loginScreen.classList.contains('hidden')) {
-        if (/^[0-9]$/.test(e.key)) {
-          pressDigit(e.key);
-        } else if (e.key === 'Backspace') {
-          backspacePin();
-        } else if (e.key === 'Escape') {
-          clearPin();
-        }
+        if (/^[0-9]$/.test(e.key)) pressDigit(e.key);
+        else if (e.key === 'Backspace') backspacePin();
+        else if (e.key === 'Escape') clearPin();
       }
     });
 
-    // Submit PIN Login
     async function submitPinLogin() {
       const feedback = document.getElementById('login-feedback');
       feedback.textContent = "Verificando credenciales...";
-      feedback.className = "text-xs min-h-[20px] text-blue-400 font-medium mb-2";
+      feedback.className = "text-xs min-h-[20px] text-blue-400 font-medium mb-3";
 
       try {
         const res = await fetch('/api/auth/pin-login', {
@@ -679,10 +1404,10 @@
           showWelcomeGreeting(currentUser);
         } else {
           feedback.textContent = data.message || "PIN no reconocido";
-          feedback.className = "text-xs min-h-[20px] text-rose-400 font-medium mb-2";
+          feedback.className = "text-xs min-h-[20px] text-rose-400 font-medium mb-3";
           shakeKeypad();
           currentPin = "";
-          setTimeout(updatePinDots, 500);
+          setTimeout(updatePinDots, 450);
         }
       } catch (err) {
         feedback.textContent = "Error al conectar con el servidor";
@@ -692,39 +1417,35 @@
 
     function shakeKeypad() {
       const container = document.getElementById('pin-dots-container');
-      container.classList.add('shake');
-      setTimeout(() => container.classList.remove('shake'), 450);
+      container.classList.add('shake-error');
+      setTimeout(() => container.classList.remove('shake-error'), 400);
     }
 
-    // Apple-Style Welcome Greeting Modal
     function showWelcomeGreeting(user) {
       document.getElementById('pin-login-screen').classList.add('hidden');
       const modal = document.getElementById('welcome-modal');
       modal.classList.remove('hidden');
 
-      document.getElementById('welcome-avatar').src = user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
-      document.getElementById('welcome-title').textContent = `¡Hola, ${user.name}!`;
+      document.getElementById('welcome-avatar').src = user.avatar;
+      document.getElementById('welcome-title').textContent = user.name;
       document.getElementById('welcome-role').textContent = user.roleName;
 
-      // Header info update
-      document.getElementById('header-user-avatar').src = user.avatar;
-      document.getElementById('header-user-name').textContent = user.name;
-      document.getElementById('header-user-role').textContent = user.roleName;
+      document.getElementById('sidebar-user-avatar').src = user.avatar;
+      document.getElementById('sidebar-user-name').textContent = user.name;
+      document.getElementById('sidebar-user-role').textContent = user.roleName;
 
-      // Animate progress bar
       setTimeout(() => {
         document.getElementById('welcome-progress').style.width = '100%';
       }, 50);
 
-      // Auto dismiss after 1.2 seconds
       setTimeout(() => {
         modal.classList.add('opacity-0');
         setTimeout(() => {
           modal.classList.add('hidden');
           modal.classList.remove('opacity-0');
           init();
-        }, 300);
-      }, 1300);
+        }, 200);
+      }, 1200);
     }
 
     function logout() {
@@ -735,26 +1456,7 @@
       document.getElementById('pin-login-screen').classList.remove('hidden');
     }
 
-    // Navigation Switcher
-    function switchTab(tabId) {
-      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
-      document.getElementById('tab-' + tabId).classList.remove('hidden');
-
-      document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('bg-white/15', 'text-white');
-        btn.classList.add('text-white/60');
-      });
-      const activeBtn = document.getElementById('nav-' + tabId);
-      if (activeBtn) {
-        activeBtn.classList.add('bg-white/15', 'text-white');
-        activeBtn.classList.remove('text-white/60');
-      }
-
-      if (tabId === 'system') loadSystemMetrics();
-      if (tabId === 'config') loadConfigModule();
-    }
-
-    // Init data fetching
+    // Data Loaders
     async function init() {
       try {
         await Promise.all([
@@ -765,9 +1467,7 @@
           loadConfigModule(),
           loadSystemMetrics()
         ]);
-      } catch (e) {
-        console.warn("Init error:", e);
-      }
+      } catch (e) {}
     }
 
     async function loadCustomers() {
@@ -780,29 +1480,29 @@
     function renderCustomers(list) {
       const tbody = document.getElementById('customers-table-body');
       tbody.innerHTML = list.map(c => `
-        <tr class="hover:bg-white/[0.02] transition">
-          <td class="px-6 py-4">
-            <div class="font-medium text-white">${c.fullName}</div>
-            <div class="text-[11px] text-apple-gray">${c.customerCode}</div>
+        <tr class="hover:bg-white/[0.02] dark:hover:bg-white/[0.02] hover:bg-black/[0.02] transition font-sans">
+          <td class="px-5 py-3.5">
+            <div class="font-medium">${c.fullName}</div>
+            <div class="text-[10px] text-slate-400 font-mono">${c.customerCode}</div>
           </td>
-          <td class="px-6 py-4 text-white/80">${c.identification}</td>
-          <td class="px-6 py-4">
-            <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[11px] font-medium">
-              ${c.planName || 'Fibra Estándar'}
+          <td class="px-5 py-3.5 text-slate-400 font-mono">${c.identification}</td>
+          <td class="px-5 py-3.5">
+            <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-medium">
+              ${c.planName || 'Fibra GPON'}
             </span>
           </td>
-          <td class="px-6 py-4 font-mono text-[11px] text-white/60">${c.assignedIp || 'Dinámica'}</td>
-          <td class="px-6 py-4">
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${
+          <td class="px-5 py-3.5 font-mono text-[11px] text-slate-400">${c.assignedIp || 'Dinámica'}</td>
+          <td class="px-5 py-3.5">
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
               c.status === 'active' 
                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
                 : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
             }">
-              <span class="w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
+              <span class="w-1 h-1 rounded-full ${c.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
               ${c.status === 'active' ? 'Activo' : 'Suspendido'}
             </span>
           </td>
-          <td class="px-6 py-4 text-right font-semibold ${c.balance !== '0.00' ? 'text-amber-400' : 'text-white/60'}">
+          <td class="px-5 py-3.5 text-right font-mono font-medium ${c.balance !== '0.00' ? 'text-amber-400' : 'text-slate-400'}">
             $${c.balance || '0.00'}
           </td>
         </tr>
@@ -829,33 +1529,33 @@
     function renderInvoices(list) {
       const tbody = document.getElementById('invoices-table-body');
       tbody.innerHTML = list.map(inv => `
-        <tr class="hover:bg-white/[0.02] transition">
-          <td class="px-6 py-4 font-mono font-medium text-white">${inv.invoiceNumber}</td>
-          <td class="px-6 py-4">
-            <div class="font-medium text-white">${inv.customerName || 'Cliente #' + inv.customerId}</div>
-            <div class="text-[11px] text-apple-gray">${inv.customerCode || ''}</div>
+        <tr class="hover:bg-white/[0.02] dark:hover:bg-white/[0.02] hover:bg-black/[0.02] transition">
+          <td class="px-5 py-3.5 font-mono font-medium text-slate-300">${inv.invoiceNumber}</td>
+          <td class="px-5 py-3.5">
+            <div class="font-medium">${inv.customerName || 'Cliente #' + inv.customerId}</div>
+            <div class="text-[10px] text-slate-400 font-mono">${inv.customerCode || ''}</div>
           </td>
-          <td class="px-6 py-4 text-white/70 font-mono">${inv.period}</td>
-          <td class="px-6 py-4 text-white/60">${new Date(inv.dueDate).toLocaleDateString()}</td>
-          <td class="px-6 py-4 font-semibold text-white">$${inv.total}</td>
-          <td class="px-6 py-4">
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${
+          <td class="px-5 py-3.5 font-mono text-slate-400">${inv.period}</td>
+          <td class="px-5 py-3.5 text-slate-400 font-mono">${new Date(inv.dueDate).toLocaleDateString()}</td>
+          <td class="px-5 py-3.5 font-mono font-semibold">$${inv.total}</td>
+          <td class="px-5 py-3.5">
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
               inv.status === 'paid' 
                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
                 : inv.status === 'overdue'
                 ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                 : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
             }">
-              ${inv.status === 'paid' ? '✓ Pagado' : inv.status === 'overdue' ? 'Vencido' : 'Pendiente'}
+              ${inv.status === 'paid' ? 'Pagado' : inv.status === 'overdue' ? 'Mora' : 'Pendiente'}
             </span>
           </td>
-          <td class="px-6 py-4 text-right">
+          <td class="px-5 py-3.5 text-right">
             ${inv.status !== 'paid' ? `
-              <button onclick="payInvoice(${inv.id})" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-[11px] transition shadow-sm">
-                Registrar Pago
+              <button onclick="payInvoice(${inv.id})" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-[10px] transition shadow-sm">
+                Cobrar
               </button>
             ` : `
-              <span class="text-[11px] text-white/40">Liquidado</span>
+              <span class="text-[11px] text-slate-500 font-mono">Liquidado</span>
             `}
           </td>
         </tr>
@@ -863,7 +1563,7 @@
     }
 
     async function payInvoice(id) {
-      if (!confirm('¿Registrar pago directo en efectivo o transferencia?')) return;
+      if (!confirm('¿Registrar pago directo de este recibo?')) return;
       const res = await fetch(`/api/invoices/${id}/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -875,7 +1575,10 @@
           referenceNumber: "PAG-MANUAL-" + Date.now()
         })
       });
-      if (res.ok) await loadInvoices();
+      if (res.ok) {
+        showToast("Cobro liquidado correctamente");
+        await loadInvoices();
+      }
     }
 
     async function loadDevices() {
@@ -888,10 +1591,10 @@
     function renderDevices(list) {
       const container = document.getElementById('network-devices-container');
       container.innerHTML = list.map(d => `
-        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
+        <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between">
-              <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider ${
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
                 d.vendor === 'mikrotik' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' :
                 d.vendor === 'huawei_olt' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
                 d.vendor === 'vsol_olt' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
@@ -899,28 +1602,28 @@
               }">
                 ${d.vendor.replace('_', ' ')}
               </span>
-              <span class="text-xs text-emerald-400 font-medium flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Online
+              <span class="text-[11px] text-emerald-400 font-mono flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ONLINE
               </span>
             </div>
-            <h3 class="text-base font-semibold text-white mt-3">${d.name}</h3>
-            <p class="text-xs text-apple-gray font-mono mt-0.5">${d.ipAddress} • Puerto ${d.port || 8728}</p>
-            <div class="mt-4 p-3 rounded-xl bg-white/[0.03] border border-white/5 text-xs space-y-1">
-              <div class="flex justify-between text-apple-gray">
+            <h3 class="text-sm font-semibold mt-2.5">${d.name}</h3>
+            <p class="text-[11px] text-slate-400 font-mono mt-0.5">${d.ipAddress}:${d.port || 8728}</p>
+            <div class="mt-3.5 p-2.5 rounded-lg bg-white/[0.02] dark:bg-white/[0.02] bg-black/[0.02] border border-white/5 text-xs space-y-1">
+              <div class="flex justify-between text-slate-400">
                 <span>Modelo:</span>
-                <span class="text-white">${d.model || 'Estándar'}</span>
+                <span class="font-medium text-slate-200">${d.model || 'Estándar'}</span>
               </div>
-              <div class="flex justify-between text-apple-gray">
-                <span>Protocolo API:</span>
-                <span class="text-white font-mono">${d.apiType}</span>
+              <div class="flex justify-between text-slate-400">
+                <span>Protocolo:</span>
+                <span class="font-mono text-slate-200">${d.apiType}</span>
               </div>
             </div>
           </div>
-          <div class="mt-5 pt-4 border-t border-white/5 flex items-center justify-between">
-            <button onclick="testDevice(${d.id})" id="btn-test-${d.id}" class="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white transition">
+          <div class="mt-4 pt-3 border-t border-white/5 dark:border-white/5 border-black/5 flex items-center justify-between">
+            <button onclick="testDevice(${d.id})" id="btn-test-${d.id}" class="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium transition">
               Probar Conexión
             </button>
-            <span id="test-result-${d.id}" class="text-[11px] text-apple-gray"></span>
+            <span id="test-result-${d.id}" class="text-[11px] text-slate-400 font-mono"></span>
           </div>
         </div>
       `).join('');
@@ -930,10 +1633,14 @@
       const resultSpan = document.getElementById(`test-result-${id}`);
       resultSpan.textContent = "Probando...";
       try {
-        const res = await fetch(`/api/network/devices/${id}/test-connection`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: "{}" });
+        const res = await fetch(`/api/network/devices/${id}/test-connection`, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: "{}" 
+        });
         const data = await res.json();
         if (data.success) {
-          resultSpan.innerHTML = `<span class="text-emerald-400 font-medium">✓ ${data.data.testResult.latencyMs} ms OK</span>`;
+          resultSpan.innerHTML = `<span class="text-emerald-400 font-mono font-medium">${data.data.testResult.latencyMs} ms OK</span>`;
         }
       } catch {
         resultSpan.textContent = "Error de red";
@@ -946,26 +1653,26 @@
       const list = data.data || [];
       const container = document.getElementById('plans-container');
       container.innerHTML = list.map(p => `
-        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
+        <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
           <div>
-            <span class="text-xs font-semibold uppercase text-blue-400">Plan Fibra</span>
-            <h3 class="text-lg font-semibold text-white mt-1">${p.name}</h3>
-            <div class="mt-4 flex items-baseline gap-1">
-              <span class="text-3xl font-bold text-white">${p.currency}${p.price}</span>
-              <span class="text-xs text-apple-gray">/ mes</span>
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-blue-400 font-mono">PLAN FIBRA</span>
+            <h3 class="text-base font-semibold mt-1">${p.name}</h3>
+            <div class="mt-3 flex items-baseline gap-1">
+              <span class="text-2xl font-bold font-mono">${p.currency}${p.price}</span>
+              <span class="text-xs text-slate-400">/ mes</span>
             </div>
-            <div class="mt-4 space-y-2 text-xs text-apple-gray border-t border-white/5 pt-4">
+            <div class="mt-3.5 space-y-1.5 text-xs text-slate-400 border-t border-white/5 dark:border-white/5 border-black/5 pt-3">
               <div class="flex justify-between">
                 <span>Bajada:</span>
-                <span class="font-semibold text-white">${p.downloadSpeedMbps} Mbps</span>
+                <span class="font-mono font-semibold text-slate-200">${p.downloadSpeedMbps} Mbps</span>
               </div>
               <div class="flex justify-between">
                 <span>Subida:</span>
-                <span class="font-semibold text-white">${p.uploadSpeedMbps} Mbps</span>
+                <span class="font-mono font-semibold text-slate-200">${p.uploadSpeedMbps} Mbps</span>
               </div>
               <div class="flex justify-between">
-                <span>Ráfaga (Burst):</span>
-                <span class="font-mono text-white">${p.burstLimit || 'No asignada'}</span>
+                <span>Ráfaga:</span>
+                <span class="font-mono text-slate-300">${p.burstLimit || 'No asignada'}</span>
               </div>
             </div>
           </div>
@@ -973,47 +1680,48 @@
       `).join('');
     }
 
-    // ==========================================================
-    // CONFIG MODULE: USERS & GRANULAR ROLES
-    // ==========================================================
     async function loadConfigModule() {
       try {
-        const [rolesRes, usersRes] = await Promise.all([
+        const [rolesRes, usersRes, brandRes] = await Promise.all([
           fetch('/api/roles'),
-          fetch('/api/users')
+          fetch('/api/users'),
+          fetch('/api/settings/branding')
         ]);
         const rolesData = await rolesRes.json();
         const usersData = await usersRes.json();
+        const brandData = await brandRes.json();
 
         currentRoles = rolesData.data || [];
         currentUsers = usersData.data || [];
+        if (brandData.success && brandData.data) {
+          appSettings = { ...appSettings, ...brandData.data };
+          applyBranding(appSettings);
+        }
 
         renderUsers(currentUsers);
         renderRoles(currentRoles);
         populateRoleSelect(currentRoles);
-      } catch (err) {
-        console.warn("Config module load error:", err);
-      }
+      } catch (err) {}
     }
 
     function renderUsers(list) {
       const container = document.getElementById('users-list-container');
       container.innerHTML = list.map(u => `
-        <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
+        <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
           <div class="flex items-center space-x-3">
-            <img class="w-10 h-10 rounded-full border border-white/10 object-cover" src="${u.avatar}" alt="${u.name}">
+            <img class="w-9 h-9 rounded-full border border-white/10 object-cover" src="${u.avatar}" alt="${u.name}">
             <div>
-              <div class="font-semibold text-white text-xs">${u.name}</div>
-              <div class="text-[11px] text-apple-gray">${u.email}</div>
+              <div class="font-semibold text-xs text-slate-200">${u.name}</div>
+              <div class="text-[10px] text-slate-400 font-mono">${u.email}</div>
             </div>
           </div>
-          <div class="flex items-center space-x-4">
-            <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <div class="flex items-center space-x-3">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
               ${u.roleName}
             </span>
             <div class="text-right">
-              <div class="font-mono text-xs text-white/50">${u.pinMasked}</div>
-              <div class="text-[10px] text-emerald-400">Activo</div>
+              <div class="font-mono text-xs text-slate-500">${u.pinMasked}</div>
+              <div class="text-[10px] text-emerald-400 font-medium">Activo</div>
             </div>
           </div>
         </div>
@@ -1023,20 +1731,20 @@
     function renderRoles(roles) {
       const container = document.getElementById('roles-cards-container');
       container.innerHTML = roles.map(r => `
-        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col justify-between">
+        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col justify-between">
           <div>
-            <h4 class="font-semibold text-white text-sm">${r.name}</h4>
-            <p class="text-[11px] text-apple-gray mt-1 leading-relaxed">${r.description}</p>
-            <div class="mt-4 pt-3 border-t border-white/5 space-y-1.5">
-              <div class="text-[10px] uppercase font-semibold text-white/40 tracking-wider">Permisos Habilitados:</div>
+            <h4 class="font-semibold text-xs tracking-tight text-slate-200">${r.name}</h4>
+            <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">${r.description}</p>
+            <div class="mt-3 pt-2.5 border-t border-white/5 space-y-1">
+              <div class="text-[9px] uppercase font-semibold text-slate-500 tracking-wider">Permisos Clave:</div>
               ${r.permissions.slice(0, 4).map(p => `
-                <div class="flex items-center space-x-1.5 text-xs text-white/80">
-                  <span class="text-emerald-400 text-[10px]">✓</span>
+                <div class="flex items-center space-x-1.5 text-[11px] text-slate-300 font-mono">
+                  <span class="text-emerald-400 text-[9px]">•</span>
                   <span>${p}</span>
                 </div>
               `).join('')}
               ${r.permissions.length > 4 ? `
-                <div class="text-[10px] text-blue-400 font-medium pt-1">+ ${r.permissions.length - 4} permisos más</div>
+                <div class="text-[10px] text-blue-400 font-mono pt-0.5">+ ${r.permissions.length - 4} permisos más</div>
               ` : ''}
             </div>
           </div>
@@ -1058,7 +1766,7 @@
       e.preventDefault();
       const statusDiv = document.getElementById('create-user-status');
       statusDiv.textContent = "Registrando operador...";
-      statusDiv.className = "text-xs text-blue-400";
+      statusDiv.className = "text-xs text-blue-400 font-mono";
 
       const name = document.getElementById('nu-name').value;
       const email = document.getElementById('nu-email').value;
@@ -1074,17 +1782,18 @@
         const data = await res.json();
 
         if (data.success) {
-          statusDiv.textContent = "✓ Operador registrado con éxito";
-          statusDiv.className = "text-xs text-emerald-400";
+          statusDiv.textContent = "Operador registrado correctamente";
+          statusDiv.className = "text-xs text-emerald-400 font-mono";
           document.getElementById('new-user-form').reset();
           await loadConfigModule();
+          showToast("Operador creado con éxito");
         } else {
           statusDiv.textContent = data.message || "Error al crear usuario";
-          statusDiv.className = "text-xs text-rose-400";
+          statusDiv.className = "text-xs text-rose-400 font-mono";
         }
       } catch {
-        statusDiv.textContent = "Error de red al registrar operador";
-        statusDiv.className = "text-xs text-rose-400";
+        statusDiv.textContent = "Error de conexión";
+        statusDiv.className = "text-xs text-rose-400 font-mono";
       }
     }
 
@@ -1095,11 +1804,14 @@
         document.getElementById('metric-rss').textContent = data.processMemory.rss;
         document.getElementById('metric-heap').textContent = data.processMemory.heapUsed;
         document.getElementById('metric-uptime').textContent = data.uptimeSeconds + ' seg';
+        document.getElementById('dash-ram-metric').textContent = data.processMemory.rss;
         document.getElementById('system-raw-json').textContent = JSON.stringify(data, null, 2);
-      } catch (e) {
-        console.warn("Could not fetch health:", e);
-      }
+      } catch (e) {}
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedSettings();
+    });
   </script>
 </body>
 </html>

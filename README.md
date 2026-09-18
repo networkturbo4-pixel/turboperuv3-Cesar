@@ -1,32 +1,36 @@
-# ⚡ TurboNetwork SaaS Engine
+# TurboNetwork SaaS Engine
 
-> **Plataforma Integral de Alto Rendimiento para Proveedores de Servicios de Internet (ISP / WISP)**  
-> Desarrollada en **TypeScript**, **Node.js**, **Fastify** y **PostgreSQL** con arquitectura desacoplada y diseño moderno inspirado en el ecosistema Apple.
+> **Plataforma de Alto Rendimiento para Proveedores de Servicios de Internet (ISP / WISP)**  
+> Desarrollada en **TypeScript**, **Node.js**, **Fastify** y **PostgreSQL** con arquitectura desacoplada, interfaz corporativa libre de emojis y soporte para monitores de 30", 35" y ultra-panorámicos.
 
 ---
 
-## 🌟 Características Principales
+## Características de Arquitectura
 
 - **Compatibilidad Dual Total**:
-  - **cPanel**: Ejecución optimizada mediante *Phusion Passenger* con consumo basal `< 80MB` de RAM y arranque automático a través de `app.js`.
-  - **VPS / Bare-Metal**: Soporte de alta concurrencia con *PM2*, *Docker* o *systemd*.
-- **Cero Tiempos Muertos de Compilación**:
-  - **Desarrollo**: Hot-reload instantáneo con `tsx` (sin compilar manualmente).
-  - **Producción**: Empaquetado ultrarrápido con `tsup` (*esbuild*) en menos de **30 milisegundos**.
-- **Autenticación Estilo Apple**:
-  - Teclado numérico táctil y físico de **8 dígitos**.
-  - Transición con saludo dinámico y avatar del operador.
-- **Módulo de Configuración & Roles Granulares**:
-  - Matriz de permisos RBAC para Clientes, Facturación, Red/OLTs, Planes y Sistema.
-  - Registro de operadores con generación de PIN seguro.
+  - **cPanel**: Ejecución nativa con *Phusion Passenger* con consumo inferior a **80 MB** de memoria RAM y archivo de arranque `app.js`.
+  - **VPS / Servidores Dedicados**: Soporte de alta concurrencia mediante *PM2*, *Docker* o *systemd*.
+- **Pipeline de Compilación Ultrarrápido**:
+  - **Desarrollo**: Ejecución directa con recarga en tiempo real mediante `tsx`.
+  - **Producción**: Empaquetado a JavaScript optimizado con `tsup` (*esbuild*) en menos de **30 milisegundos**.
+- **Autenticación con PIN de 8 Dígitos**:
+  - Teclado numérico táctil y físico para operadores de red y cajeros.
+  - Validación de credenciales y autorización por roles.
+- **Control de Acceso Basado en Roles (RBAC)**:
+  - Matriz granular de permisos (Clientes, Facturación, Red/OLTs, Planes y Sistema).
+  - Creación de operadores y asignación individual de PIN.
+- **Estudio de Personalización & Marca**:
+  - Configuración de logotipos (URL / SVG), favicon y aplicación web progresiva (PWA).
+  - Paletas de color dinámicas para modo oscuro y claro.
+  - Ajuste global de tipografía y escala de fuentes para pantallas grandes (30" a 35" 4K).
 - **Red Multi-Vendor Desacoplada**:
-  - Adaptadores modulares listos para **MikroTik RouterOS (v6 y v7)**, **OLTs de Fibra Óptica (Huawei, ZTE, VSOL)** y switches genéricos.
-- **Facturación Interna Nativa**:
-  - Control de recibos, liquidación en efectivo, transferencias bancarias y cortes administrativos por mora sin depender de pasarelas externas obligatorias.
+  - Adaptadores listos para **MikroTik RouterOS (v6 y v7)**, **OLTs de Fibra Óptica (Huawei, ZTE, VSOL)** y switches de capa 2/3.
+- **Facturación y Cobranza Interna**:
+  - Emisión de recibos mensuales, liquidación de pagos en efectivo o transferencias bancarias y gestión de deudas.
 
 ---
 
-## 🚀 Inicio Rápido (Desarrollo Local)
+## Inicio Rápido (Entorno Local)
 
 ### 1. Clonar e Instalar Dependencias
 ```bash
@@ -36,16 +40,15 @@ npm install
 ```
 
 ### 2. Configurar Variables de Entorno
-Copia el archivo `.env.example` a `.env`:
 ```bash
 cp .env.example .env
 ```
 
-### 3. Iniciar Servidor de Desarrollo
+### 3. Iniciar en Modo Desarrollo
 ```bash
 npm run dev
 ```
-Abre tu navegador en `http://localhost:3000`.
+Acceder mediante navegador en `http://localhost:3000`.
 
 **PINs de Demostración Iniciales:**
 - **Superadministrador (César):** `12345678`
@@ -54,23 +57,23 @@ Abre tu navegador en `http://localhost:3000`.
 
 ---
 
-## 📦 Compilación para Producción (cPanel o VPS)
+## Compilación y Despliegue en Producción
 
-Ejecuta el empaquetador ultrarrápido:
+### Generar Build de Producción
 ```bash
 npm run build
 ```
-Esto generará un archivo único y optimizado en `dist/server.js`.
+Genera un bundle CommonJS optimizado en `dist/server.js`.
 
 ### Despliegue en cPanel:
-1. Sube los archivos del proyecto a tu directorio en cPanel (ej. `public_html` o subcarpeta).
-2. En la sección **Setup Node.js App** de cPanel:
+1. Subir los archivos del proyecto a la carpeta correspondiente en el Administrador de Archivos.
+2. En la herramienta **Setup Node.js App**:
    - **Node.js Version**: 18.x o superior.
    - **Application startup file**: `app.js` (o `dist/server.js`).
    - **Application mode**: `Production`.
-3. Haz clic en **Run NPM Install** y luego en **Restart Application**.
+3. Ejecutar **Run NPM Install** y pulsar **Restart**.
 
-### Despliegue en VPS (con PM2):
+### Despliegue en VPS (PM2):
 ```bash
 npm run build
 pm2 start dist/server.js --name turbonetwork -i max
@@ -79,46 +82,35 @@ pm2 save
 
 ---
 
-## 🛠️ Estructura del Proyecto
+## Estructura del Código Fuente
 
 ```
 turbonetwork/
-├── app.js                   # Bootstrap de compatibilidad para Phusion Passenger en cPanel
+├── app.js                   # Bootstrap para Phusion Passenger en cPanel
 ├── package.json             # Dependencias y scripts de ejecución
-├── tsconfig.json            # Reglas estrictas de TypeScript (ES2022)
-├── tsup.config.ts           # Configuración de compilación ultrarrápida
-├── drizzle.config.ts        # Configuración de migraciones PostgreSQL
+├── tsconfig.json            # Reglas de compilación TypeScript
+├── tsup.config.ts           # Configuración de empaquetado de alto rendimiento
+├── drizzle.config.ts        # Migraciones para PostgreSQL
 ├── public/
-│   └── index.html           # Panel Frontend estilo Apple (SPA reactivo)
+│   └── index.html           # Interfaz SPA profesional libre de emojis
 ├── src/
-│   ├── config/              # Validación Zod de variables de entorno
-│   ├── db/                  # Conexión Drizzle ORM y esquema PostgreSQL
+│   ├── config/              # Variables de entorno y validación Zod
+│   ├── db/                  # Pool de PostgreSQL y esquema Drizzle
 │   ├── modules/
-│   │   ├── auth/            # Rutas de autenticación por PIN
-│   │   ├── users/           # Usuarios y catálogo de roles granulares
-│   │   ├── customers/       # Directorio de clientes y contratos
-│   │   ├── invoices/        # Facturación interna y registro de pagos
+│   │   ├── auth/            # Validación de PIN y credenciales
+│   │   ├── users/           # Usuarios y catálogo de roles RBAC
+│   │   ├── settings/        # API de personalización de marca y temas
+│   │   ├── customers/       # Clientes y contratos
+│   │   ├── invoices/        # Facturación interna y pagos
 │   │   ├── network/         # Adaptadores MikroTik, OLTs Huawei, ZTE, VSOL
-│   │   ├── plans/           # Planes de internet y ráfagas
-│   │   └── dashboard/       # Métricas y estadísticas en tiempo real
-│   └── server.ts            # Motor Fastify central
+│   │   ├── plans/           # Planes de ancho de banda
+│   │   └── dashboard/       # Métricas y telemetría
+│   └── server.ts            # Servidor central Fastify
 └── README.md
 ```
 
 ---
 
-## 🔒 Seguridad & Roles
-
-El sistema implementa un modelo de control de acceso basado en roles (RBAC) con permisos granulares:
-- `customers:view`, `customers:create`, `customers:edit`, `customers:suspend`
-- `billing:view`, `billing:collect`, `billing:generate`
-- `network:view`, `network:control`, `network:manage`
-- `plans:manage`
-- `users:manage`, `roles:manage`
-- `system:config`
-
----
-
-## 📄 Licencia
+## Licencia
 
 Desarrollado para **TurboNetwork**. Todos los derechos reservados.

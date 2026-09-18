@@ -14,6 +14,7 @@ import { invoicesRoutes } from "./modules/invoices/invoices.routes";
 import { networkRoutes } from "./modules/network/network.routes";
 import { dashboardRoutes } from "./modules/dashboard/dashboard.routes";
 import { usersRoutes } from "./modules/users/users.routes";
+import { settingsRoutes } from "./modules/settings/settings.routes";
 
 export async function buildApp() {
   const fastify = Fastify({
@@ -50,6 +51,7 @@ export async function buildApp() {
   await fastify.register(networkRoutes, { prefix: "/api" });
   await fastify.register(dashboardRoutes, { prefix: "/api" });
   await fastify.register(usersRoutes, { prefix: "/api" });
+  await fastify.register(settingsRoutes, { prefix: "/api" });
 
   // Mensaje base de bienvenida para la API
   fastify.get("/api", async () => {
