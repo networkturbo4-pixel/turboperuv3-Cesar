@@ -1,0 +1,61 @@
+[
+  {
+    "id": 1,
+    "name": "Superadministrador",
+    "slug": "superadmin",
+    "description": "Acceso ilimitado a todas las funciones del SaaS ISP",
+    "permissions": [
+      "customers:view",
+      "customers:create",
+      "customers:edit",
+      "customers:suspend",
+      "billing:view",
+      "billing:collect",
+      "billing:generate",
+      "network:view",
+      "network:control",
+      "network:manage",
+      "plans:manage",
+      "users:view",
+      "users:manage",
+      "roles:manage",
+      "system:config"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Administrador de Red / NOC",
+    "slug": "network_admin",
+    "description": "Gestión técnica de MikroTik, OLTs, topología y diagnóstico",
+    "permissions": [
+      "customers:view",
+      "network:view",
+      "network:control",
+      "network:manage",
+      "plans:manage"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Cajero / Cobranzas",
+    "slug": "cashier",
+    "description": "Recepción de pagos, liquidación de recibos y consulta de saldos",
+    "permissions": [
+      "customers:view",
+      "billing:view",
+      "billing:collect"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Soporte Técnico en Campo",
+    "slug": "technician",
+    "description": "Consulta de clientes en campo, reactivación básica y verificación de red",
+    "permissions": [
+      "customers:view",
+      "customers:edit",
+      "network:view",
+      "network:control"
+    ]
+  }
+]

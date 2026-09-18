@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "name": "César Administrador",
+    "email": "cesar@turbonetwork.com",
+    "pin": "12345678",
+    "roleId": 1,
+    "roleName": "Superadministrador",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+    "isActive": true,
+    "createdAt": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "name": "Ing. Alejandro Torres",
+    "email": "alejandro.redes@turbonetwork.com",
+    "pin": "87654321",
+    "roleId": 2,
+    "roleName": "Administrador de Red / NOC",
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+    "isActive": true,
+    "createdAt": "2026-09-05T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "name": "Ana Morales",
+    "email": "ana.caja@turbonetwork.com",
+    "pin": "11223344",
+    "roleId": 3,
+    "roleName": "Cajero / Cobranzas",
+    "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
+    "isActive": true,
+    "createdAt": "2026-09-10T00:00:00Z"
+  }
+]

@@ -786,12 +786,15 @@
                         </button>
                         <input type="text" id="cfg-logo-url" placeholder="O pega URL de imagen..." onchange="handleLogoUrlChange(this.value)" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none">
                       </div>
-                      <p class="text-[10px] text-slate-500 mt-1">Formatos admitidos: PNG, JPG, SVG, WEBP.</p>
+                      <p class="text-[10px] text-slate-500 mt-1">Formatos admitidos: PNG, JPG, SVG, WEBP (se guarda al instante).</p>
                     </div>
 
                     <!-- Subida de Favicon -->
                     <div>
-                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Favicon del Navegador</label>
+                      <div class="flex items-center justify-between mb-1">
+                        <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Favicon de la Pestaña</label>
+                        <button type="button" onclick="removeCustomFavicon()" id="btn-remove-favicon" class="text-[10px] text-rose-400 hover:text-rose-300 hidden">Restablecer Favicon</button>
+                      </div>
                       <div class="flex items-center space-x-2">
                         <button type="button" onclick="document.getElementById('upload-favicon-file').click()" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium flex items-center space-x-2 transition border border-white/10 flex-shrink-0">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -801,22 +804,48 @@
                         </button>
                         <input type="text" id="cfg-favicon-url" placeholder="O pega URL de favicon..." onchange="handleFaviconUrlChange(this.value)" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none">
                       </div>
+                      <p class="text-[10px] text-slate-500 mt-1">Si no subes favicon, el sistema usará automáticamente tu logotipo.</p>
                     </div>
                   </div>
                 </div>
 
-                <!-- Preview Box -->
-                <div class="mt-5 p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center space-x-3">
-                  <div class="w-10 h-10 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden bg-white/5" id="preview-box-logo">
-                    <svg id="preview-logo-placeholder" class="w-5 h-5 dynamic-primary-text" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                <!-- Preview Box Dual: Logo y Favicon -->
+                <div class="mt-5 p-3 rounded-xl bg-white/[0.02] border border-white/5 grid grid-cols-2 gap-3">
+                  <div class="flex items-center space-x-3 overflow-hidden">
+                    <div class="w-10 h-10 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden bg-white/5 flex-shrink-0" id="preview-box-logo">
+                      <svg id="preview-logo-placeholder" class="w-5 h-5 dynamic-primary-text" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                      </svg>
+                      <img id="preview-logo-img" class="w-full h-full object-contain p-1 hidden" alt="Preview Logo">
+                    </div>
+                    <div class="truncate">
+                      <span class="text-xs font-semibold block text-slate-200">Logotipo</span>
+                      <span class="text-[10px] text-slate-400">Sidebar & Login</span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center space-x-3 overflow-hidden">
+                    <div class="w-10 h-10 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden bg-white/5 flex-shrink-0" id="preview-box-favicon">
+                      <svg id="preview-favicon-placeholder" class="w-5 h-5 dynamic-primary-text" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                      </svg>
+                      <img id="preview-favicon-img" class="w-full h-full object-contain p-1 hidden" alt="Preview Favicon">
+                    </div>
+                    <div class="truncate">
+                      <span class="text-xs font-semibold block text-slate-200">Favicon</span>
+                      <span class="text-[10px] text-slate-400">Pestaña Navegador</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Botón de guardado directo en tarjeta -->
+                <div class="mt-4 pt-3 border-t border-white/5 flex justify-end">
+                  <button type="button" onclick="saveBrandingSettings()" class="px-4 py-2 rounded-lg btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                    <img id="preview-logo-img" class="w-full h-full object-contain p-1 hidden" alt="Preview">
-                  </div>
-                  <div>
-                    <span class="text-xs font-semibold block text-slate-200">Previsualización del Logo</span>
-                    <span class="text-[10px] text-slate-400">Se actualiza en vivo en toda la plataforma</span>
-                  </div>
+                    <span>Guardar Identidad & Logos</span>
+                  </button>
                 </div>
               </div>
 
@@ -1029,14 +1058,22 @@
           <!-- SUBTAB 3: MATRIZ DE ROLES -->
           <div id="config-subtab-roles" class="space-y-5 hidden">
             <div class="pro-card p-5 rounded-xl">
-              <div class="flex items-center justify-between mb-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                 <div>
                   <h3 class="text-sm font-semibold tracking-tight">Matriz de Permisos Granulares (RBAC)</h3>
-                  <p class="text-xs text-slate-400 mt-0.5">Políticas de acceso segmentadas por módulo y función</p>
+                  <p class="text-xs text-slate-400 mt-0.5">Políticas de acceso y control granular segmentadas por módulo y función</p>
                 </div>
-                <span class="px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[11px] font-mono">
-                  RBAC V2
-                </span>
+                <div class="flex items-center space-x-2.5">
+                  <span class="px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[11px] font-mono">
+                    RBAC V2
+                  </span>
+                  <button type="button" onclick="openCreateRoleModal()" class="px-3.5 py-1.5 rounded-lg btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Crear Nuevo Rol</span>
+                  </button>
+                </div>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="roles-cards-container"></div>
             </div>
@@ -1082,6 +1119,69 @@
       <footer class="mt-auto py-5 border-t border-white/5 dark:border-white/5 border-black/5 text-center text-xs text-slate-500 font-mono">
         TurboNetwork Engine • TypeScript • Fastify • PostgreSQL • Drizzle ORM
       </footer>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL DE CREACIÓN / EDICIÓN DE ROLES RBAC                -->
+  <!-- ======================================================== -->
+  <div id="role-modal" class="fixed inset-0 z-[260] hidden flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6 overflow-y-auto">
+    <div class="pro-card max-w-2xl w-full p-6 rounded-2xl border border-white/10 shadow-2xl relative my-auto">
+      <div class="flex items-center justify-between pb-4 border-b border-white/5 mb-4">
+        <div>
+          <h3 id="role-modal-title" class="text-base font-semibold tracking-tight text-white">Crear Nuevo Rol RBAC</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Define el perfil de acceso y selecciona los permisos correspondientes</p>
+        </div>
+        <button type="button" onclick="closeRoleModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="role-form" onsubmit="handleSaveRole(event)" class="space-y-4">
+        <input type="hidden" id="role-edit-id" value="">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre del Rol *</label>
+            <input type="text" id="role-name-input" required placeholder="Ej: Supervisor de Facturación" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Descripción / Función</label>
+            <input type="text" id="role-desc-input" placeholder="Ej: Auditoría y cobros presenciales" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500 text-slate-200">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mt-2 mb-2">
+            <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Matriz de Permisos Asignables</label>
+            <div class="flex items-center space-x-2">
+              <button type="button" onclick="toggleAllRolePermissions(true)" class="text-[10px] text-blue-400 hover:text-blue-300">Seleccionar Todos</button>
+              <span class="text-slate-600 text-xs">•</span>
+              <button type="button" onclick="toggleAllRolePermissions(false)" class="text-[10px] text-slate-400 hover:text-slate-300">Deseleccionar</button>
+            </div>
+          </div>
+          
+          <div id="role-permissions-list" class="max-h-72 overflow-y-auto space-y-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+            <!-- Renderizado dinámico de categorías y permisos -->
+          </div>
+        </div>
+
+        <div id="role-modal-error" class="text-xs text-rose-400 font-mono min-h-[18px]"></div>
+
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t border-white/5">
+          <button type="button" onclick="closeRoleModal()" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium transition text-slate-300">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-save-role" class="px-5 py-2 rounded-lg btn-brand-primary text-xs font-semibold transition flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span id="btn-save-role-text">Guardar Rol</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1133,6 +1233,16 @@
       return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
     }
 
+    function escapeHtml(text) {
+      if (!text) return "";
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
     function loadSavedSettings() {
       const saved = localStorage.getItem('turbonetwork_branding');
       if (saved) {
@@ -1143,16 +1253,53 @@
       applyBranding(appSettings);
     }
 
+    // ACTUALIZADOR ROBUSTO DE FAVICON EN TIEMPO REAL (Chrome, Edge, Firefox, Safari)
+    function updateFavicon(iconUrl) {
+      // Si no hay favicon explícito pero hay logotipo, usar el logotipo como favicon
+      const url = (iconUrl && iconUrl.trim() !== "") ? iconUrl : (appSettings.logoUrl && appSettings.logoUrl.trim() !== "" ? appSettings.logoUrl : null);
+      
+      let type = "image/png";
+      let href = url;
+      if (!href) {
+        // Fallback default SVG bolt
+        type = "image/svg+xml";
+        href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'%3E%3C/polygon%3E%3C/svg%3E";
+      } else if (href.startsWith("data:image/svg+xml") || href.endsWith(".svg")) {
+        type = "image/svg+xml";
+      } else if (href.startsWith("data:image/x-icon") || href.endsWith(".ico")) {
+        type = "image/x-icon";
+      } else if (href.startsWith("data:image/jpeg") || href.endsWith(".jpg") || href.endsWith(".jpeg")) {
+        type = "image/jpeg";
+      }
+
+      // Remover cualquier enlace favicon previo para forzar al navegador a refrescar la pestaña
+      document.querySelectorAll("link[rel*='icon']").forEach(el => el.remove());
+      const newFavicon = document.createElement('link');
+      newFavicon.id = 'dynamic-favicon';
+      newFavicon.rel = 'icon';
+      newFavicon.type = type;
+      newFavicon.href = href;
+      document.head.appendChild(newFavicon);
+    }
+
     // APLICACIÓN VISUAL Y REACTIVIDAD EN TIEMPO REAL
     function applyBranding(settings) {
+      if (!settings) return;
       const name = settings.systemName || "TurboNetwork";
-      document.getElementById('brand-system-name').textContent = name;
-      document.getElementById('login-system-title').textContent = name + " Enterprise";
-      document.getElementById('breadcrumb-app').textContent = name;
-      document.getElementById('page-title').textContent = name + " • ISP Enterprise Platform";
-      document.getElementById('brand-tagline').textContent = settings.tagline || "ISP Enterprise Core";
+      const tagline = settings.tagline || "ISP Enterprise Core";
 
-      // 1. LOGO DEL SISTEMA (Sidebar, Login y Preview)
+      const brandNameEl = document.getElementById('brand-system-name');
+      if (brandNameEl) brandNameEl.textContent = name;
+      const loginTitleEl = document.getElementById('login-system-title');
+      if (loginTitleEl) loginTitleEl.textContent = name + " Enterprise";
+      const breadcrumbEl = document.getElementById('breadcrumb-app');
+      if (breadcrumbEl) breadcrumbEl.textContent = name;
+      const pageTitleEl = document.getElementById('page-title');
+      if (pageTitleEl) pageTitleEl.textContent = name + " • ISP Enterprise Platform";
+      const taglineEl = document.getElementById('brand-tagline');
+      if (taglineEl) taglineEl.textContent = tagline;
+
+      // 1. LOGO DEL SISTEMA (Sidebar, Login y Previews)
       const hasLogo = settings.logoUrl && settings.logoUrl.trim() !== "";
       const sideBox = document.getElementById('sidebar-logo-box');
       const sideDefIcon = document.getElementById('sidebar-default-icon');
@@ -1162,57 +1309,77 @@
       const loginDefIcon = document.getElementById('login-default-icon');
       const loginCustomImg = document.getElementById('login-custom-img');
 
-      const prevBox = document.getElementById('preview-box-logo');
       const prevDefIcon = document.getElementById('preview-logo-placeholder');
       const prevCustomImg = document.getElementById('preview-logo-img');
       const btnRemoveLogo = document.getElementById('btn-remove-logo');
 
       if (hasLogo) {
-        // Mostrar imagen y ocultar icono vector
-        sideDefIcon.classList.add('hidden');
-        sideCustomImg.src = settings.logoUrl;
-        sideCustomImg.classList.remove('hidden');
-        sideBox.style.backgroundColor = "transparent";
+        if (sideDefIcon) sideDefIcon.classList.add('hidden');
+        if (sideCustomImg) {
+          sideCustomImg.src = settings.logoUrl;
+          sideCustomImg.classList.remove('hidden');
+        }
+        if (sideBox) sideBox.style.backgroundColor = "transparent";
 
-        loginDefIcon.classList.add('hidden');
-        loginCustomImg.src = settings.logoUrl;
-        loginCustomImg.classList.remove('hidden');
-        loginBox.style.backgroundColor = "transparent";
+        if (loginDefIcon) loginDefIcon.classList.add('hidden');
+        if (loginCustomImg) {
+          loginCustomImg.src = settings.logoUrl;
+          loginCustomImg.classList.remove('hidden');
+        }
+        if (loginBox) loginBox.style.backgroundColor = "transparent";
 
-        prevDefIcon.classList.add('hidden');
-        prevCustomImg.src = settings.logoUrl;
-        prevCustomImg.classList.remove('hidden');
+        if (prevDefIcon) prevDefIcon.classList.add('hidden');
+        if (prevCustomImg) {
+          prevCustomImg.src = settings.logoUrl;
+          prevCustomImg.classList.remove('hidden');
+        }
         if (btnRemoveLogo) btnRemoveLogo.classList.remove('hidden');
       } else {
-        // Restaurar icono vector y fondo de marca primario
-        sideDefIcon.classList.remove('hidden');
-        sideCustomImg.classList.add('hidden');
-        sideBox.style.backgroundColor = settings.primaryColor || "#2563eb";
+        if (sideDefIcon) sideDefIcon.classList.remove('hidden');
+        if (sideCustomImg) sideCustomImg.classList.add('hidden');
+        if (sideBox) sideBox.style.backgroundColor = settings.primaryColor || "#2563eb";
 
-        loginDefIcon.classList.remove('hidden');
-        loginCustomImg.classList.add('hidden');
-        loginBox.style.backgroundColor = settings.primaryColor || "#2563eb";
+        if (loginDefIcon) loginDefIcon.classList.remove('hidden');
+        if (loginCustomImg) loginCustomImg.classList.add('hidden');
+        if (loginBox) loginBox.style.backgroundColor = settings.primaryColor || "#2563eb";
 
-        prevDefIcon.classList.remove('hidden');
-        prevCustomImg.classList.add('hidden');
+        if (prevDefIcon) prevDefIcon.classList.remove('hidden');
+        if (prevCustomImg) prevCustomImg.classList.add('hidden');
         if (btnRemoveLogo) btnRemoveLogo.classList.add('hidden');
       }
 
       // 2. FAVICON DINÁMICO
-      if (settings.faviconUrl && settings.faviconUrl.trim() !== "") {
-        document.getElementById('dynamic-favicon').href = settings.faviconUrl;
+      updateFavicon(settings.faviconUrl);
+
+      const hasFavicon = settings.faviconUrl && settings.faviconUrl.trim() !== "";
+      const prevFavDef = document.getElementById('preview-favicon-placeholder');
+      const prevFavImg = document.getElementById('preview-favicon-img');
+      const btnRemoveFavicon = document.getElementById('btn-remove-favicon');
+      if (hasFavicon || hasLogo) {
+        const favSrc = hasFavicon ? settings.faviconUrl : settings.logoUrl;
+        if (prevFavDef) prevFavDef.classList.add('hidden');
+        if (prevFavImg) {
+          prevFavImg.src = favSrc;
+          prevFavImg.classList.remove('hidden');
+        }
+        if (btnRemoveFavicon) btnRemoveFavicon.classList.toggle('hidden', !hasFavicon);
+      } else {
+        if (prevFavDef) prevFavDef.classList.remove('hidden');
+        if (prevFavImg) prevFavImg.classList.add('hidden');
+        if (btnRemoveFavicon) btnRemoveFavicon.classList.add('hidden');
       }
 
       // 3. PWA ICON
       if (settings.pwaIconUrl && settings.pwaIconUrl.trim() !== "") {
-        document.getElementById('pwa-apple-icon').href = settings.pwaIconUrl;
-        document.getElementById('preview-pwa-placeholder').classList.add('hidden');
+        const pwaApple = document.getElementById('pwa-apple-icon');
+        if (pwaApple) pwaApple.href = settings.pwaIconUrl;
+        const pwaPlh = document.getElementById('preview-pwa-placeholder');
+        if (pwaPlh) pwaPlh.classList.add('hidden');
         const pwaImg = document.getElementById('preview-pwa-img');
-        pwaImg.src = settings.pwaIconUrl;
-        pwaImg.classList.remove('hidden');
-      } else {
-        document.getElementById('preview-pwa-placeholder').classList.remove('hidden');
-        document.getElementById('preview-pwa-img').classList.add('hidden');
+        if (pwaImg) {
+          pwaImg.src = settings.pwaIconUrl;
+          pwaImg.classList.remove('hidden');
+        }
       }
 
       // 4. CSS VARIABLES DE COLORES
@@ -1241,56 +1408,87 @@
         document.documentElement.classList.add('dark');
       }
 
-      // Sincronizar inputs del formulario
+      // Sincronizar inputs del formulario si están en el DOM
       const nameInp = document.getElementById('cfg-system-name');
       if (nameInp) {
-        document.getElementById('cfg-system-name').value = settings.systemName;
-        document.getElementById('cfg-tagline').value = settings.tagline;
-        document.getElementById('cfg-logo-url').value = settings.logoUrl;
-        document.getElementById('cfg-favicon-url').value = settings.faviconUrl;
-        document.getElementById('cfg-pwa-icon').value = settings.pwaIconUrl;
-        document.getElementById('cfg-primary-color').value = primary;
-        document.getElementById('cfg-primary-color-text').value = primary;
-        document.getElementById('cfg-accent-color').value = accent;
-        document.getElementById('cfg-accent-color-text').value = accent;
-        document.getElementById('cfg-bg-dark').value = settings.darkBgColor;
-        document.getElementById('cfg-bg-light').value = settings.lightBgColor;
-        document.getElementById('cfg-font-family').value = settings.fontFamily;
-        document.getElementById('cfg-font-scale').value = settings.fontSizeScale;
+        nameInp.value = settings.systemName || "";
+        const tagInp = document.getElementById('cfg-tagline');
+        if (tagInp) tagInp.value = settings.tagline || "";
+        const logoInp = document.getElementById('cfg-logo-url');
+        if (logoInp) logoInp.value = settings.logoUrl || "";
+        const favInp = document.getElementById('cfg-favicon-url');
+        if (favInp) favInp.value = settings.faviconUrl || "";
+        const pwaInp = document.getElementById('cfg-pwa-icon');
+        if (pwaInp) pwaInp.value = settings.pwaIconUrl || "";
+        const priInp = document.getElementById('cfg-primary-color');
+        if (priInp) priInp.value = primary;
+        const priTxt = document.getElementById('cfg-primary-color-text');
+        if (priTxt) priTxt.value = primary;
+        const accInp = document.getElementById('cfg-accent-color');
+        if (accInp) accInp.value = accent;
+        const accTxt = document.getElementById('cfg-accent-color-text');
+        if (accTxt) accTxt.value = accent;
+        const darkInp = document.getElementById('cfg-bg-dark');
+        if (darkInp) darkInp.value = settings.darkBgColor || '#090a0f';
+        const lightInp = document.getElementById('cfg-bg-light');
+        if (lightInp) lightInp.value = settings.lightBgColor || '#f8fafc';
+        const fontInp = document.getElementById('cfg-font-family');
+        if (fontInp) fontInp.value = settings.fontFamily || 'inter';
+        const scaleInp = document.getElementById('cfg-font-scale');
+        if (scaleInp) scaleInp.value = settings.fontSizeScale || 'normal';
       }
 
       updateActiveNavStyles();
     }
 
-    // MANEJO DE SUBIDA DIRECTA DE ARCHIVOS DESDE EL DISCO LOCAL
+    // MANEJO DE SUBIDA DIRECTA DE ARCHIVOS DESDE EL DISCO LOCAL CON AUTO-GUARDADO
     function handleFileUpload(event, type) {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const dataUrl = e.target.result;
         if (type === 'logo') {
           appSettings.logoUrl = dataUrl;
-          document.getElementById('cfg-logo-url').value = dataUrl;
+          const inp = document.getElementById('cfg-logo-url');
+          if (inp) inp.value = dataUrl;
         } else if (type === 'favicon') {
           appSettings.faviconUrl = dataUrl;
-          document.getElementById('cfg-favicon-url').value = dataUrl;
+          const inp = document.getElementById('cfg-favicon-url');
+          if (inp) inp.value = dataUrl;
         } else if (type === 'pwa') {
           appSettings.pwaIconUrl = dataUrl;
-          document.getElementById('cfg-pwa-icon').value = dataUrl;
+          const inp = document.getElementById('cfg-pwa-icon');
+          if (inp) inp.value = dataUrl;
         }
+
         applyBranding(appSettings);
-        showToast(`Archivo cargado para ${type.toUpperCase()}`);
+        showToast(`Guardando ${type.toUpperCase()}...`);
+
+        // Auto-persistencia en servidor y localStorage
+        await saveBrandingSettings();
+        showToast(`${type.toUpperCase()} guardado y aplicado correctamente`);
       };
       reader.readAsDataURL(file);
     }
 
-    function removeCustomLogo() {
+    async function removeCustomLogo() {
       appSettings.logoUrl = "";
-      document.getElementById('cfg-logo-url').value = "";
+      const inp = document.getElementById('cfg-logo-url');
+      if (inp) inp.value = "";
       applyBranding(appSettings);
+      await saveBrandingSettings();
       showToast("Logotipo restablecido al predeterminado");
+    }
+
+    async function removeCustomFavicon() {
+      appSettings.faviconUrl = "";
+      const inp = document.getElementById('cfg-favicon-url');
+      if (inp) inp.value = "";
+      applyBranding(appSettings);
+      await saveBrandingSettings();
+      showToast("Favicon restablecido al predeterminado");
     }
 
     function handleLogoUrlChange(val) {
@@ -1310,14 +1508,18 @@
 
     function handleNameInput(val) {
       appSettings.systemName = val;
-      document.getElementById('brand-system-name').textContent = val;
-      document.getElementById('login-system-title').textContent = val + " Enterprise";
-      document.getElementById('breadcrumb-app').textContent = val;
+      const brandEl = document.getElementById('brand-system-name');
+      if (brandEl) brandEl.textContent = val;
+      const loginEl = document.getElementById('login-system-title');
+      if (loginEl) loginEl.textContent = val + " Enterprise";
+      const breadEl = document.getElementById('breadcrumb-app');
+      if (breadEl) breadEl.textContent = val;
     }
 
     function handleTaglineInput(val) {
       appSettings.tagline = val;
-      document.getElementById('brand-tagline').textContent = val;
+      const tagEl = document.getElementById('brand-tagline');
+      if (tagEl) tagEl.textContent = val;
     }
 
     // ACTUALIZACIÓN DE COLORES EN TIEMPO REAL
@@ -1429,18 +1631,29 @@
 
     // PERSISTENCIA EN SERVIDOR Y LOCALSTORAGE
     async function saveBrandingSettings() {
-      localStorage.setItem('turbonetwork_branding', JSON.stringify(appSettings));
+      // Intentar guardar en localStorage sin bloquear si se excede la cuota de base64
+      try {
+        localStorage.setItem('turbonetwork_branding', JSON.stringify(appSettings));
+      } catch (err) {
+        console.warn('localStorage lleno, se omite caché local para assets grandes:', err);
+      }
       applyBranding(appSettings);
 
       try {
-        await fetch('/api/settings/branding', {
+        const res = await fetch('/api/settings/branding', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(appSettings)
         });
-      } catch (e) {}
-
-      showToast("Configuración guardada en el servidor");
+        const data = await res.json();
+        if (data.success) {
+          showToast("Personalización guardada exitosamente");
+        } else {
+          showToast("Aviso: " + (data.message || "Error al persistir"));
+        }
+      } catch (e) {
+        showToast("Error de conexión al guardar configuración");
+      }
     }
 
     function resetBrandingDefaults() {
@@ -1894,6 +2107,32 @@
       `).join('');
     }
 
+    let editingRoleId = null;
+
+    const SYSTEM_PERMISSIONS = [
+      { id: "customers:view", name: "Ver Clientes", category: "Clientes", description: "Acceso al directorio de clientes y contratos" },
+      { id: "customers:create", name: "Crear Clientes", category: "Clientes", description: "Dar de alta nuevos clientes" },
+      { id: "customers:edit", name: "Editar Clientes", category: "Clientes", description: "Modificar datos y planes de clientes" },
+      { id: "customers:suspend", name: "Suspender / Reactivar", category: "Clientes", description: "Cambiar estado del servicio del cliente" },
+
+      { id: "billing:view", name: "Ver Recibos", category: "Facturación & Cobranzas", description: "Consultar historial de facturas emitidas" },
+      { id: "billing:collect", name: "Registrar Pagos", category: "Facturación & Cobranzas", description: "Cobrar y liquidar recibos en efectivo/transferencia" },
+      { id: "billing:generate", name: "Emisión Masiva", category: "Facturación & Cobranzas", description: "Generar facturación mensual global" },
+
+      { id: "network:view", name: "Ver Equipos de Red", category: "Red & Equipos", description: "Ver MikroTik, OLTs, switches y topología" },
+      { id: "network:control", name: "Diagnosticar & Test", category: "Red & Equipos", description: "Probar conectividad y enviar comandos a equipos" },
+      { id: "network:manage", name: "Alta de Equipos", category: "Red & Equipos", description: "Agregar o editar routers y OLTs" },
+
+      { id: "plans:manage", name: "Administrar Planes", category: "Planes de Internet", description: "Crear o modificar tarifas de ancho de banda" },
+
+      { id: "users:view", name: "Ver Usuarios", category: "Usuarios & Operadores", description: "Consultar equipo de trabajo y operadores" },
+      { id: "users:manage", name: "Gestionar Usuarios y PIN", category: "Usuarios & Operadores", description: "Crear operadores y reasignar PIN de 8 dígitos" },
+
+      { id: "roles:manage", name: "Configurar Roles Granulares", category: "Roles & Permisos", description: "Modificar matrices de permisos por rol" },
+
+      { id: "system:config", name: "Configuración Global", category: "Sistema", description: "Parámetros del ISP, servidores y entorno" }
+    ];
+
     async function loadConfigModule() {
       try {
         const [rolesRes, usersRes, brandRes] = await Promise.all([
@@ -1908,14 +2147,21 @@
         currentRoles = rolesData.data || [];
         currentUsers = usersData.data || [];
         if (brandData.success && brandData.data) {
-          appSettings = { ...appSettings, ...brandData.data };
+          appSettings = {
+            ...appSettings,
+            ...brandData.data,
+            logoUrl: brandData.data.logoUrl || appSettings.logoUrl,
+            faviconUrl: brandData.data.faviconUrl || appSettings.faviconUrl
+          };
           applyBranding(appSettings);
         }
 
         renderUsers(currentUsers);
         renderRoles(currentRoles);
         populateRoleSelect(currentRoles);
-      } catch (err) {}
+      } catch (err) {
+        console.error("Error al cargar módulo de configuración:", err);
+      }
     }
 
     function renderUsers(list) {
@@ -1923,15 +2169,15 @@
       container.innerHTML = list.map(u => `
         <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
           <div class="flex items-center space-x-3">
-            <img class="w-9 h-9 rounded-full border border-white/10 object-cover" src="${u.avatar}" alt="${u.name}">
+            <img class="w-9 h-9 rounded-full border border-white/10 object-cover" src="${u.avatar}" alt="${escapeHtml(u.name)}">
             <div>
-              <div class="font-semibold text-xs text-slate-200">${u.name}</div>
-              <div class="text-[10px] text-slate-400 font-mono">${u.email}</div>
+              <div class="font-semibold text-xs text-slate-200">${escapeHtml(u.name)}</div>
+              <div class="text-[10px] text-slate-400 font-mono">${escapeHtml(u.email)}</div>
             </div>
           </div>
           <div class="flex items-center space-x-3">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide dynamic-primary-subtle border font-mono">
-              ${u.roleName}
+              ${escapeHtml(u.roleName)}
             </span>
             <div class="text-right">
               <div class="font-mono text-xs text-slate-500">${u.pinMasked}</div>
@@ -1944,26 +2190,209 @@
 
     function renderRoles(roles) {
       const container = document.getElementById('roles-cards-container');
-      container.innerHTML = roles.map(r => `
-        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col justify-between">
+      if (!roles || roles.length === 0) {
+        container.innerHTML = '<div class="col-span-full py-8 text-center text-xs text-slate-400">No hay roles registrados en el sistema</div>';
+        return;
+      }
+      container.innerHTML = roles.map(r => {
+        const isSuperadmin = r.id === 1;
+        const permsCount = r.permissions ? r.permissions.length : 0;
+        return `
+        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col justify-between hover:border-white/10 transition">
           <div>
-            <h4 class="font-semibold text-xs tracking-tight text-slate-200">${r.name}</h4>
-            <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">${r.description}</p>
+            <div class="flex items-center justify-between mb-1.5">
+              <h4 class="font-semibold text-xs tracking-tight text-slate-200">${escapeHtml(r.name)}</h4>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider ${isSuperadmin ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'dynamic-primary-subtle border'}">
+                ${escapeHtml(r.slug || 'custom')}
+              </span>
+            </div>
+            <p class="text-[10px] text-slate-400 leading-relaxed">${escapeHtml(r.description || 'Sin descripción')}</p>
+            
             <div class="mt-3 pt-2.5 border-t border-white/5 space-y-1">
-              <div class="text-[9px] uppercase font-semibold text-slate-500 tracking-wider">Permisos Clave:</div>
-              ${r.permissions.slice(0, 4).map(p => `
-                <div class="flex items-center space-x-1.5 text-[11px] text-slate-300 font-mono">
-                  <span class="dynamic-accent-text text-[9px]">•</span>
-                  <span>${p}</span>
-                </div>
-              `).join('')}
-              ${r.permissions.length > 4 ? `
-                <div class="text-[10px] dynamic-primary-text font-mono pt-0.5">+ ${r.permissions.length - 4} permisos más</div>
-              ` : ''}
+              <div class="flex items-center justify-between text-[9px] uppercase font-semibold text-slate-500 tracking-wider">
+                <span>Permisos Asignados:</span>
+                <span class="font-mono text-slate-300 font-bold">${permsCount}</span>
+              </div>
+              <div class="space-y-1 mt-1.5">
+                ${(r.permissions || []).slice(0, 4).map(p => `
+                  <div class="flex items-center space-x-1.5 text-[10px] text-slate-300 font-mono">
+                    <span class="dynamic-accent-text text-[9px]">•</span>
+                    <span class="truncate">${escapeHtml(p)}</span>
+                  </div>
+                `).join('')}
+                ${(permsCount > 4) ? `
+                  <div class="text-[10px] dynamic-primary-text font-mono pt-0.5">+ ${permsCount - 4} permisos más</div>
+                ` : ''}
+              </div>
             </div>
           </div>
+
+          <div class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between gap-2">
+            <button type="button" onclick="openEditRoleModal(${r.id})" class="flex-1 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-200 text-[11px] font-medium flex items-center justify-center space-x-1 transition">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span>Editar</span>
+            </button>
+            ${!isSuperadmin ? `
+              <button type="button" onclick="deleteRole(${r.id}, '${escapeHtml(r.name).replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[11px] font-medium flex items-center justify-center space-x-1 transition border border-rose-500/20" title="Eliminar este rol">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Eliminar</span>
+              </button>
+            ` : `
+              <span class="px-2 py-1 text-[10px] text-slate-500 font-mono" title="Rol protegido del sistema">Protegido</span>
+            `}
+          </div>
         </div>
-      `).join('');
+      `}).join('');
+    }
+
+    // RENDERIZADO DE PERMISOS EN MODAL POR CATEGORÍAS
+    function renderRolePermissionsCheckboxes(selectedPerms = []) {
+      const container = document.getElementById('role-permissions-list');
+      const grouped = {};
+      SYSTEM_PERMISSIONS.forEach(p => {
+        if (!grouped[p.category]) grouped[p.category] = [];
+        grouped[p.category].push(p);
+      });
+
+      let html = '';
+      for (const [category, perms] of Object.entries(grouped)) {
+        html += `
+          <div class="mb-3">
+            <div class="text-[10px] font-semibold uppercase tracking-wider dynamic-primary-text mb-1.5 flex items-center space-x-1.5">
+              <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg"></span>
+              <span>${category}</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              ${perms.map(p => {
+                const isChecked = selectedPerms.includes(p.id) ? 'checked' : '';
+                return `
+                  <label class="flex items-start space-x-2.5 p-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 cursor-pointer transition">
+                    <input type="checkbox" data-perm-id="${p.id}" ${isChecked} class="mt-0.5 rounded border-white/20 text-blue-600 focus:ring-0 focus:ring-offset-0 bg-white/5">
+                    <div class="truncate">
+                      <div class="text-xs font-medium text-slate-200 truncate">${p.name}</div>
+                      <div class="text-[10px] text-slate-400 truncate">${p.description}</div>
+                      <span class="inline-block mt-0.5 font-mono text-[9px] text-slate-500">${p.id}</span>
+                    </div>
+                  </label>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function toggleAllRolePermissions(select) {
+      document.querySelectorAll('#role-permissions-list input[type="checkbox"]').forEach(cb => {
+        cb.checked = select;
+      });
+    }
+
+    function openCreateRoleModal() {
+      editingRoleId = null;
+      document.getElementById('role-modal-title').textContent = "Crear Nuevo Rol RBAC";
+      document.getElementById('role-edit-id').value = "";
+      const nameInput = document.getElementById('role-name-input');
+      nameInput.value = "";
+      nameInput.disabled = false;
+      document.getElementById('role-desc-input').value = "";
+      document.getElementById('role-modal-error').textContent = "";
+      document.getElementById('btn-save-role-text').textContent = "Crear Rol";
+      renderRolePermissionsCheckboxes([]);
+      document.getElementById('role-modal').classList.remove('hidden');
+    }
+
+    function openEditRoleModal(id) {
+      const role = currentRoles.find(r => r.id === id);
+      if (!role) return;
+      editingRoleId = id;
+      document.getElementById('role-modal-title').textContent = `Editar Rol: ${role.name}`;
+      document.getElementById('role-edit-id').value = id;
+      const nameInput = document.getElementById('role-name-input');
+      nameInput.value = role.name;
+      // No permitir renombrar el Superadmin raíz
+      nameInput.disabled = (id === 1);
+      document.getElementById('role-desc-input').value = role.description || "";
+      document.getElementById('role-modal-error').textContent = "";
+      document.getElementById('btn-save-role-text').textContent = "Guardar Cambios";
+      renderRolePermissionsCheckboxes(role.permissions || []);
+      document.getElementById('role-modal').classList.remove('hidden');
+    }
+
+    function closeRoleModal() {
+      document.getElementById('role-modal').classList.add('hidden');
+      editingRoleId = null;
+    }
+
+    async function handleSaveRole(e) {
+      e.preventDefault();
+      const errorDiv = document.getElementById('role-modal-error');
+      errorDiv.textContent = "";
+
+      const name = document.getElementById('role-name-input').value.trim();
+      const description = document.getElementById('role-desc-input').value.trim();
+      if (!name) {
+        errorDiv.textContent = "El nombre del rol es obligatorio";
+        return;
+      }
+
+      const checked = [];
+      document.querySelectorAll('#role-permissions-list input[type="checkbox"]:checked').forEach(cb => {
+        checked.push(cb.getAttribute('data-perm-id'));
+      });
+
+      const payload = { name, description, permissions: checked };
+      const isEditing = editingRoleId !== null;
+      const url = isEditing ? `/api/roles/${editingRoleId}` : '/api/roles';
+      const method = isEditing ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeRoleModal();
+          showToast(isEditing ? "Rol actualizado correctamente" : "Nuevo rol creado exitosamente");
+          await loadConfigModule();
+        } else {
+          errorDiv.textContent = data.message || "Error al procesar la solicitud de rol";
+        }
+      } catch (err) {
+        errorDiv.textContent = "Error de conexión con el servidor";
+      }
+    }
+
+    async function deleteRole(id, name) {
+      if (id === 1) {
+        alert("El rol Superadministrador es un rol protegido del sistema y no puede ser eliminado.");
+        return;
+      }
+      if (!confirm(`¿Está seguro de eliminar el rol "${name}"?\nEsta acción no se puede deshacer.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/roles/${id}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Rol "${name}" eliminado exitosamente`);
+          await loadConfigModule();
+        } else {
+          alert(data.message || "No se pudo eliminar el rol");
+        }
+      } catch (err) {
+        alert("Error de conexión al eliminar el rol");
+      }
     }
 
     function populateRoleSelect(roles) {
@@ -2023,8 +2452,30 @@
       } catch (e) {}
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    // INICIALIZACIÓN: CARGAR INMEDIATAMENTE BRANDING DEL SERVIDOR ANTES DEL LOGIN
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 1. Cargar caché rápido
       loadSavedSettings();
+
+      // 2. Traer branding real persistido desde el servidor
+      try {
+        const res = await fetch('/api/settings/branding');
+        const data = await res.json();
+        if (data.success && data.data) {
+          appSettings = {
+            ...appSettings,
+            ...data.data,
+            logoUrl: data.data.logoUrl || appSettings.logoUrl,
+            faviconUrl: data.data.faviconUrl || appSettings.faviconUrl
+          };
+          applyBranding(appSettings);
+          try {
+            localStorage.setItem('turbonetwork_branding', JSON.stringify(appSettings));
+          } catch (e) {}
+        }
+      } catch (err) {
+        console.warn("Aviso: Servidor de branding aún no disponible en arranque:", err);
+      }
     });
   </script>
 </body>

@@ -1,5 +1,11 @@
 import { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
+import fs from "fs";
+import path from "path";
+
+const DATA_DIR = path.resolve(process.cwd(), "data");
+const ROLES_FILE = path.join(DATA_DIR, "roles.json");
+const USERS_FILE = path.join(DATA_DIR, "users.json");
 
 export interface PermissionDefinition {
   id: string;
@@ -139,6 +145,44 @@ let usersStore: SystemUser[] = [
   },
 ];
 
+// Cargar roles y usuarios persistidos si existen
+function loadRolesFromDisk(): Role[] {
+  try {
+    if (fs.existsSync(ROLES_FILE)) {
+      return JSON.parse(fs.readFileSync(ROLES_FILE, "utf-8"));
+    }
+  } catch (err) {}
+  return rolesStore;
+}
+
+function saveRolesToDisk() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(ROLES_FILE, JSON.stringify(rolesStore, null, 2), "utf-8");
+  } catch (err) {}
+}
+
+function loadUsersFromDisk(): SystemUser[] {
+  try {
+    if (fs.existsSync(USERS_FILE)) {
+      return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
+    }
+  } catch (err) {}
+  return usersStore;
+}
+
+function saveUsersToDisk() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(USERS_FILE, JSON.stringify(usersStore, null, 2), "utf-8");
+  } catch (err) {}
+}
+
+rolesStore = loadRolesFromDisk();
+usersStore = loadUsersFromDisk();
+if (!fs.existsSync(ROLES_FILE)) saveRolesToDisk();
+if (!fs.existsSync(USERS_FILE)) saveUsersToDisk();
+
 const pinLoginSchema = z.object({
   pin: z.string().length(8, "El PIN debe contener exactamente 8 dígitos").regex(/^\d{8}$/, "Solo dígitos numéricos"),
 });
@@ -151,7 +195,7 @@ const createUserSchema = z.object({
 });
 
 const createRoleSchema = z.object({
-  name: z.string().min(3),
+  name: z.string().min(2),
   description: z.string().optional(),
   permissions: z.array(z.string()),
 });
@@ -212,30 +256,70 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const newRole: Role = {
-      id: rolesStore.length + 1,
+      id: Date.now(), // ID único garantizado
       name: parse.data.name,
       slug: parse.data.name.toLowerCase().replace(/\s+/g, "_"),
-      description: parse.data.description || "",
+      description: parse.data.description || "Rol personalizado del sistema",
       permissions: parse.data.permissions,
     };
     rolesStore.push(newRole);
+    saveRolesToDisk();
 
     return reply.status(201).send({ success: true, data: newRole });
   });
 
-  // Actualizar permisos de un rol existente
+  // Actualizar rol existente (nombre, descripción y permisos)
   fastify.put("/roles/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
     const roleId = parseInt(id, 10);
-    const { permissions } = request.body as { permissions: string[] };
+    const body = request.body as { name?: string; description?: string; permissions?: string[] };
 
     const role = rolesStore.find((r) => r.id === roleId);
     if (!role) {
       return reply.status(404).send({ success: false, message: "Rol no encontrado" });
     }
 
-    role.permissions = permissions;
-    return reply.send({ success: true, message: "Permisos del rol actualizados", data: role });
+    if (body.name) {
+      role.name = body.name;
+      role.slug = body.name.toLowerCase().replace(/\s+/g, "_");
+    }
+    if (body.description !== undefined) {
+      role.description = body.description;
+    }
+    if (body.permissions) {
+      role.permissions = body.permissions;
+    }
+
+    saveRolesToDisk();
+    return reply.send({ success: true, message: "Rol actualizado correctamente", data: role });
+  });
+
+  // Eliminar rol
+  fastify.delete("/roles/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const roleId = parseInt(id, 10);
+
+    if (roleId === 1) {
+      return reply.status(403).send({ success: false, message: "No es posible eliminar el rol Superadministrador del sistema" });
+    }
+
+    const index = rolesStore.findIndex((r) => r.id === roleId);
+    if (index === -1) {
+      return reply.status(404).send({ success: false, message: "Rol no encontrado" });
+    }
+
+    const hasAssignedUsers = usersStore.some((u) => u.roleId === roleId);
+    if (hasAssignedUsers) {
+      return reply.status(400).send({ 
+        success: false, 
+        message: "No se puede eliminar este rol porque tiene operadores asignados. Reasigne los operadores primero." 
+      });
+    }
+
+    const deleted = rolesStore.splice(index, 1)[0];
+    saveRolesToDisk();
+
+    return reply.send({ success: true, message: "Rol eliminado exitosamente", data: deleted });
   });
 
   // Listar usuarios
@@ -282,6 +366,7 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     };
 
     usersStore.push(newUser);
+    saveUsersToDisk();
 
     const { pin, ...safeUser } = newUser;
     return reply.status(201).send({
