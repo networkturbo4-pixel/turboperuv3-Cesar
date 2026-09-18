@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TurboNetwork • ISP SaaS Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"Plus Jakarta Sans"', 'SF Pro Text', 'Helvetica Neue', 'sans-serif'],
+          },
+          colors: {
+            apple: {
+              gray: '#86868b',
+              darkBg: '#0b0c10',
+              cardDark: '#16181f',
+              borderDark: '#232733',
+              blue: '#0071e3',
+              green: '#30d158',
+              orange: '#ff9f0a',
+              red: '#ff453a',
+              purple: '#bf5af2'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0b0c10;
+      color: #f5f5f7;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      -webkit-font-smoothing: antialiased;
+    }
+    .glass-panel {
+      background: rgba(22, 24, 31, 0.8);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: rgba(26, 29, 38, 0.65);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+      transform: translateY(-2px);
+    }
+    .keypad-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      transition: all 0.15s ease;
+    }
+    .keypad-btn:active {
+      background: rgba(255, 255, 255, 0.18);
+      transform: scale(0.94);
+    }
+    .pin-dot {
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .pin-dot.filled {
+      background-color: #3b82f6;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.8);
+      transform: scale(1.15);
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .shake {
+      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans selection:bg-apple-blue selection:text-white">
+
+  <!-- ======================================================== -->
+  <!-- 1. PANTALLA DE LOGIN CON TECLADO NUMÉRICO 8 DÍGITOS TIPO APPLE -->
+  <!-- ======================================================== -->
+  <div id="pin-login-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#07080b]/90 backdrop-blur-2xl px-4">
+    <div class="w-full max-w-sm flex flex-col items-center text-center">
+      
+      <!-- Apple Logo / App Icon -->
+      <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-2xl shadow-blue-500/25 mb-5 border border-white/10">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      </div>
+
+      <h1 class="text-xl font-semibold tracking-tight text-white">TurboNetwork Engine</h1>
+      <p class="text-xs text-apple-gray mt-1">Ingrese su PIN de seguridad de 8 dígitos</p>
+
+      <!-- 8-Digit Indicator Dots -->
+      <div id="pin-dots-container" class="flex items-center justify-center space-x-3 my-7">
+        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-0"></div>
+        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-1"></div>
+        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-2"></div>
+        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-3"></div>
+        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-4"></div>
+        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-5"></div>
+        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-6"></div>
+        <div class="pin-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-7"></div>
+      </div>
+
+      <!-- Error / Feedback Message -->
+      <div id="login-feedback" class="text-xs min-h-[20px] text-rose-400 font-medium mb-2"></div>
+
+      <!-- Modern On-Screen Tactile Keypad -->
+      <div class="grid grid-cols-3 gap-3.5 w-full max-w-[270px]">
+        <button onclick="pressDigit('1')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
+          1<span class="text-[9px] text-white/30 font-light tracking-widest">&nbsp;</span>
+        </button>
+        <button onclick="pressDigit('2')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
+          2<span class="text-[9px] text-white/40 font-light tracking-widest">ABC</span>
+        </button>
+        <button onclick="pressDigit('3')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
+          3<span class="text-[9px] text-white/40 font-light tracking-widest">DEF</span>
+        </button>
+        
+        <button onclick="pressDigit('4')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
+          4<span class="text-[9px] text-white/40 font-light tracking-widest">GHI</span>
+        </button>
+        <button onclick="pressDigit('5')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
+          5<span class="text-[9px] text-white/40 font-light tracking-widest">JKL</span>
+        </button>
+        <button onclick="pressDigit('6')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
+          6<span class="text-[9px] text-white/40 font-light tracking-widest">MNO</span>
+        </button>
+
+        <button onclick="pressDigit('7')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
+          7<span class="text-[9px] text-white/40 font-light tracking-widest">PQRS</span>
+        </button>
+        <button onclick="pressDigit('8')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
+          8<span class="text-[9px] text-white/40 font-light tracking-widest">TUV</span>
+        </button>
+        <button onclick="pressDigit('9')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
+          9<span class="text-[9px] text-white/40 font-light tracking-widest">WXYZ</span>
+        </button>
+
+        <button onclick="clearPin()" class="h-16 rounded-2xl flex items-center justify-center text-xs font-medium text-white/40 hover:text-white transition">
+          Borrar
+        </button>
+        <button onclick="pressDigit('0')" class="keypad-btn h-16 rounded-2xl flex flex-col items-center justify-center text-xl font-medium text-white shadow-sm">
+          0<span class="text-[9px] text-white/40 font-light tracking-widest">+</span>
+        </button>
+        <button onclick="backspacePin()" class="h-16 rounded-2xl flex items-center justify-center text-white/60 hover:text-white transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6-6h12a2 2 0 012 2v8a2 2 0 01-2 2H9l-6-6z" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Quick Demo Credentials Hint -->
+      <div class="mt-6 p-3 rounded-2xl bg-white/[0.03] border border-white/5 text-[11px] text-apple-gray max-w-xs">
+        <div class="font-semibold text-white/80 mb-1">PINs de Demostración:</div>
+        <div class="flex justify-between py-0.5"><span>Superadmin (César):</span> <strong class="text-blue-400 cursor-pointer font-mono" onclick="fillPin('12345678')">12345678</strong></div>
+        <div class="flex justify-between py-0.5"><span>Admin Red / NOC:</span> <strong class="text-blue-400 cursor-pointer font-mono" onclick="fillPin('87654321')">87654321</strong></div>
+        <div class="flex justify-between py-0.5"><span>Cajero / Pagos:</span> <strong class="text-blue-400 cursor-pointer font-mono" onclick="fillPin('11223344')">11223344</strong></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 2. MODAL TRANSLÚCIDO DE BIENVENIDA / SALUDO TIPO APPLE   -->
+  <!-- ======================================================== -->
+  <div id="welcome-modal" class="fixed inset-0 z-[150] hidden flex items-center justify-center bg-black/60 backdrop-blur-xl px-4 transition duration-300">
+    <div class="glass-card max-w-sm w-full p-8 rounded-3xl text-center flex flex-col items-center border border-white/15 shadow-2xl relative overflow-hidden">
+      <!-- Glow background accent -->
+      <div class="absolute -top-12 -left-12 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl pointer-events-none"></div>
+      <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <!-- Avatar with checkmark -->
+      <div class="relative mb-4">
+        <img id="welcome-avatar" class="w-20 h-20 rounded-full object-cover border-2 border-white/20 shadow-xl" src="" alt="Avatar">
+        <div class="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-emerald-500 border-2 border-[#16181f] flex items-center justify-center">
+          <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      </div>
+
+      <span id="welcome-role" class="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold uppercase tracking-wider mb-2"></span>
+      <h2 id="welcome-title" class="text-xl font-bold text-white tracking-tight"></h2>
+      <p class="text-xs text-apple-gray mt-1">Conexión autorizada. Cargando tu espacio de trabajo...</p>
+
+      <!-- Smooth Progress Bar -->
+      <div class="w-full bg-white/10 rounded-full h-1.5 mt-6 overflow-hidden">
+        <div id="welcome-progress" class="bg-gradient-to-r from-blue-500 to-emerald-400 h-1.5 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 3. PLATAFORMA PRINCIPAL (APP SAAS)                       -->
+  <!-- ======================================================== -->
+  <header class="sticky top-0 z-50 glass-panel border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <span class="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+            TurboNetwork
+            <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/10 text-white/70">v1.0 SaaS</span>
+          </span>
+          <p class="text-[11px] text-apple-gray">ISP Core Engine</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="hidden lg:flex items-center space-x-1 p-1 bg-white/5 rounded-full border border-white/5 text-xs font-medium">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-4 py-1.5 rounded-full bg-white/15 text-white shadow-sm transition">Dashboard</button>
+        <button onclick="switchTab('customers')" id="nav-customers" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Clientes</button>
+        <button onclick="switchTab('billing')" id="nav-billing" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Facturación</button>
+        <button onclick="switchTab('network')" id="nav-network" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Red & OLTs</button>
+        <button onclick="switchTab('plans')" id="nav-plans" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Planes</button>
+        <button onclick="switchTab('config')" id="nav-config" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Config & Roles</button>
+        <button onclick="switchTab('system')" id="nav-system" class="nav-btn px-4 py-1.5 rounded-full text-white/60 hover:text-white transition">Sistema & RAM</button>
+      </nav>
+
+      <!-- User Profile & Logout -->
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2.5">
+          <img id="header-user-avatar" class="w-8 h-8 rounded-full border border-white/20 object-cover" src="" alt="User">
+          <div class="hidden sm:block text-left">
+            <div id="header-user-name" class="text-xs font-semibold text-white leading-tight"></div>
+            <div id="header-user-role" class="text-[10px] text-apple-gray leading-tight"></div>
+          </div>
+        </div>
+
+        <button onclick="logout()" title="Cerrar sesión" class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
+
+    <!-- TAB 1: DASHBOARD OVERVIEW -->
+    <section id="tab-dashboard" class="space-y-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="glass-card p-6 rounded-2xl">
+          <div class="flex items-center justify-between text-apple-gray text-xs font-medium">
+            <span>CLIENTES ACTIVOS</span>
+            <span class="text-emerald-400 font-semibold text-[11px]">+8.4% mes</span>
+          </div>
+          <div class="mt-3 flex items-baseline space-x-2">
+            <span class="text-3xl font-semibold tracking-tight text-white">1,195</span>
+            <span class="text-xs text-white/40">/ 1,248 total</span>
+          </div>
+          <div class="mt-3 flex items-center gap-2 text-xs text-apple-gray">
+            <span class="inline-block w-2 h-2 rounded-full bg-apple-green"></span> 38 suspendidos • 15 por instalar
+          </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl">
+          <div class="flex items-center justify-between text-apple-gray text-xs font-medium">
+            <span>RECAUDADO ESTE MES</span>
+            <span class="text-xs text-blue-400 font-semibold">78.7%</span>
+          </div>
+          <div class="mt-3 flex items-baseline space-x-1">
+            <span class="text-xl font-light text-white/70">$</span>
+            <span class="text-3xl font-semibold tracking-tight text-white">22,450.00</span>
+          </div>
+          <div class="mt-3 text-xs text-apple-gray">Cobranza directa nativa</div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl">
+          <div class="flex items-center justify-between text-apple-gray text-xs font-medium">
+            <span>PENDIENTE POR COBRAR</span>
+            <span class="text-xs text-amber-400 font-medium">1 mora</span>
+          </div>
+          <div class="mt-3 flex items-baseline space-x-1">
+            <span class="text-xl font-light text-white/70">$</span>
+            <span class="text-3xl font-semibold tracking-tight text-amber-300">6,050.00</span>
+          </div>
+          <div class="mt-3 text-xs text-apple-gray">Cortes automáticos por mora</div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl">
+          <div class="flex items-center justify-between text-apple-gray text-xs font-medium">
+            <span>EQUIPOS DE RED</span>
+            <span class="text-xs text-emerald-400 font-semibold">100% Online</span>
+          </div>
+          <div class="mt-3 flex items-baseline space-x-2">
+            <span class="text-3xl font-semibold tracking-tight text-white">14 / 14</span>
+          </div>
+          <div class="mt-3 text-xs text-apple-gray">MikroTik • OLTs Huawei • ZTE • VSOL</div>
+        </div>
+      </div>
+
+      <!-- Live Bandwidth & Activity Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="glass-card lg:col-span-2 p-6 rounded-2xl flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-white tracking-tight">Consumo de Ancho de Banda Agregado</h3>
+              <p class="text-xs text-apple-gray mt-0.5">Tráfico total a través de Core Routers y OLTs</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-medium">
+              Pico: 4.8 Gbps
+            </span>
+          </div>
+
+          <div class="my-6 grid grid-cols-12 gap-2 h-28 items-end">
+            <div class="bg-blue-500/30 rounded-t h-[45%]"></div>
+            <div class="bg-blue-500/30 rounded-t h-[52%]"></div>
+            <div class="bg-blue-500/40 rounded-t h-[60%]"></div>
+            <div class="bg-blue-500/30 rounded-t h-[40%]"></div>
+            <div class="bg-blue-500/50 rounded-t h-[75%]"></div>
+            <div class="bg-blue-500/60 rounded-t h-[88%]"></div>
+            <div class="bg-blue-500/80 rounded-t h-[94%]"></div>
+            <div class="bg-blue-500 rounded-t h-[100%] shadow-lg shadow-blue-500/30"></div>
+            <div class="bg-blue-500/80 rounded-t h-[92%]"></div>
+            <div class="bg-blue-500/60 rounded-t h-[70%]"></div>
+            <div class="bg-blue-500/40 rounded-t h-[55%]"></div>
+            <div class="bg-blue-500/30 rounded-t h-[48%]"></div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-apple-gray border-t border-white/5 pt-4">
+            <span>Horas pico: 20:00 - 22:30 hrs</span>
+            <span>Latencia Core Promedio: 4.2 ms</span>
+          </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <h3 class="text-sm font-semibold text-white tracking-tight">Actividad en Tiempo Real</h3>
+            <p class="text-xs text-apple-gray mt-0.5">Operaciones y auditoría</p>
+          </div>
+
+          <div class="space-y-4 my-4" id="recent-activity-list">
+            <div class="flex items-start space-x-3 text-xs">
+              <div class="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
+              <div>
+                <p class="text-white font-medium">Pago registrado $35.00</p>
+                <p class="text-apple-gray text-[11px]">Carlos Mendoza (CLI-1001)</p>
+              </div>
+            </div>
+            <div class="flex items-start space-x-3 text-xs">
+              <div class="w-2 h-2 rounded-full bg-blue-400 mt-1.5 flex-shrink-0"></div>
+              <div>
+                <p class="text-white font-medium">Nuevo contrato fibra óptica</p>
+                <p class="text-apple-gray text-[11px]">David Fernández (CLI-1004)</p>
+              </div>
+            </div>
+            <div class="flex items-start space-x-3 text-xs">
+              <div class="w-2 h-2 rounded-full bg-purple-400 mt-1.5 flex-shrink-0"></div>
+              <div>
+                <p class="text-white font-medium">Sincronización OLT Huawei</p>
+                <p class="text-apple-gray text-[11px]">MA5608T (485 ONUs online)</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t border-white/5 pt-3">
+            <button onclick="switchTab('billing')" class="text-xs text-blue-400 hover:text-blue-300 transition">Ver cobros →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: CUSTOMERS -->
+    <section id="tab-customers" class="space-y-6 hidden">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-semibold text-white tracking-tight">Gestión de Clientes</h2>
+          <p class="text-xs text-apple-gray mt-1">Directorio de abonados, contratos e IPs asignadas</p>
+        </div>
+        <input 
+          type="text" 
+          placeholder="Buscar por nombre, DNI o código..." 
+          class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-500 w-full sm:w-64 transition"
+          oninput="handleCustomerSearch(this.value)"
+        />
+      </div>
+
+      <div class="glass-card rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-white/5 text-apple-gray uppercase font-semibold tracking-wider text-[10px] border-b border-white/5">
+              <tr>
+                <th class="px-6 py-3.5">Código / Cliente</th>
+                <th class="px-6 py-3.5">Identificación</th>
+                <th class="px-6 py-3.5">Plan Contratado</th>
+                <th class="px-6 py-3.5">IP Asignada</th>
+                <th class="px-6 py-3.5">Estado</th>
+                <th class="px-6 py-3.5 text-right">Saldo</th>
+              </tr>
+            </thead>
+            <tbody id="customers-table-body" class="divide-y divide-white/5 text-white/90"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: BILLING & PAYMENTS -->
+    <section id="tab-billing" class="space-y-6 hidden">
+      <div>
+        <h2 class="text-xl font-semibold text-white tracking-tight">Facturación & Cobranzas Nativas</h2>
+        <p class="text-xs text-apple-gray mt-1">Control de recibos, liquidación en efectivo y transferencias bancarias</p>
+      </div>
+
+      <div class="glass-card rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-white/5 text-apple-gray uppercase font-semibold tracking-wider text-[10px] border-b border-white/5">
+              <tr>
+                <th class="px-6 py-3.5">Nº Recibo</th>
+                <th class="px-6 py-3.5">Cliente</th>
+                <th class="px-6 py-3.5">Periodo</th>
+                <th class="px-6 py-3.5">Vencimiento</th>
+                <th class="px-6 py-3.5">Monto Total</th>
+                <th class="px-6 py-3.5">Estado</th>
+                <th class="px-6 py-3.5 text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="invoices-table-body" class="divide-y divide-white/5 text-white/90"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: NETWORK & MULTI-VENDOR -->
+    <section id="tab-network" class="space-y-6 hidden">
+      <div>
+        <h2 class="text-xl font-semibold text-white tracking-tight">Topología y Equipos de Red</h2>
+        <p class="text-xs text-apple-gray mt-1">Soporte Multi-Vendor desacoplado (MikroTik, OLTs Huawei, ZTE, VSOL)</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="network-devices-container"></div>
+    </section>
+
+    <!-- TAB 5: PLANS -->
+    <section id="tab-plans" class="space-y-6 hidden">
+      <div>
+        <h2 class="text-xl font-semibold text-white tracking-tight">Planes de Internet</h2>
+        <p class="text-xs text-apple-gray mt-1">Tarifas, anchos de banda y ráfagas configuradas</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="plans-container"></div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TAB 6: CONFIGURACIÓN & ROLES GRANULARES (SOLICITADO)       -->
+    <!-- ======================================================== -->
+    <section id="tab-config" class="space-y-8 hidden">
+      <div>
+        <h2 class="text-xl font-semibold text-white tracking-tight">Configuración & Roles Granulares</h2>
+        <p class="text-xs text-apple-gray mt-1">Gestión de operadores del sistema, asignación de PIN de 8 dígitos y matriz de permisos</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Formulario: Registrar Nuevo Operador -->
+        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+              <span>+ Nuevo Operador</span>
+            </div>
+            <h3 class="text-base font-semibold text-white mt-2">Dar de Alta Usuario</h3>
+            <p class="text-xs text-apple-gray mt-0.5">Asigna nombre, correo, rol y su PIN de 8 dígitos</p>
+
+            <form id="new-user-form" onsubmit="handleCreateUser(event)" class="space-y-4 mt-5">
+              <div>
+                <label class="block text-[11px] font-medium text-apple-gray uppercase tracking-wider mb-1">Nombre Completo</label>
+                <input type="text" id="nu-name" required placeholder="Ej. Juan Pérez" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-medium text-apple-gray uppercase tracking-wider mb-1">Correo Electrónico</label>
+                <input type="email" id="nu-email" required placeholder="juan@turbonetwork.com" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-medium text-apple-gray uppercase tracking-wider mb-1">Rol Asignado</label>
+                <select id="nu-role" class="w-full bg-[#16181f] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                  <!-- Llenado dinámicamente -->
+                </select>
+              </div>
+
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <label class="text-[11px] font-medium text-apple-gray uppercase tracking-wider">PIN de Seguridad (8 Dígitos)</label>
+                  <button type="button" onclick="generateRandomPin()" class="text-[10px] text-blue-400 hover:text-blue-300">Generar PIN</button>
+                </div>
+                <input type="text" id="nu-pin" required maxlength="8" pattern="\d{8}" placeholder="Ej. 49201948" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono tracking-widest focus:outline-none focus:border-blue-500">
+              </div>
+
+              <div id="create-user-status" class="text-xs min-h-[16px]"></div>
+
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition shadow-lg shadow-blue-500/20">
+                Registrar Operador
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Lista de Usuarios Actuales -->
+        <div class="glass-card lg:col-span-2 p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <h3 class="text-base font-semibold text-white tracking-tight">Operadores del Sistema Registrados</h3>
+            <p class="text-xs text-apple-gray mt-0.5">Usuarios con acceso mediante PIN al motor SaaS</p>
+
+            <div class="mt-5 space-y-3" id="users-list-container">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <div class="mt-5 pt-4 border-t border-white/5 text-xs text-apple-gray flex justify-between items-center">
+            <span>Autenticación por PIN segura con hash</span>
+            <span class="text-emerald-400">Todos activos</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Matriz de Roles y Permisos Granulares -->
+      <div class="glass-card p-6 rounded-2xl">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+          <div>
+            <h3 class="text-base font-semibold text-white tracking-tight">Matriz de Roles Granulares</h3>
+            <p class="text-xs text-apple-gray mt-0.5">Control fino de accesos por categoría de módulo</p>
+          </div>
+          <span class="px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-semibold">
+            RBAC Avanzado
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5" id="roles-cards-container">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 7: SYSTEM & RAM METRICS -->
+    <section id="tab-system" class="space-y-6 hidden">
+      <div>
+        <h2 class="text-xl font-semibold text-white tracking-tight">Salud del Motor & Huella de Rendimiento</h2>
+        <p class="text-xs text-apple-gray mt-1">Métricas en tiempo real optimizadas para cPanel (Phusion Passenger) y VPS</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="glass-card p-6 rounded-2xl">
+          <span class="text-xs text-apple-gray font-medium">MEMORIA RAM PROCESO (RSS)</span>
+          <div id="metric-rss" class="text-3xl font-semibold text-white mt-2">-- MB</div>
+          <p class="text-xs text-emerald-400 mt-2">✓ Seguro para cPanel (&lt;100MB)</p>
+        </div>
+        <div class="glass-card p-6 rounded-2xl">
+          <span class="text-xs text-apple-gray font-medium">HEAP UTILIZADO</span>
+          <div id="metric-heap" class="text-3xl font-semibold text-white mt-2">-- MB</div>
+          <p class="text-xs text-apple-gray mt-2">V8 Garbage Collector activo</p>
+        </div>
+        <div class="glass-card p-6 rounded-2xl">
+          <span class="text-xs text-apple-gray font-medium">TIEMPO DE ACTIVIDAD</span>
+          <div id="metric-uptime" class="text-3xl font-semibold text-white mt-2">-- seg</div>
+          <p class="text-xs text-blue-400 mt-2">Fastify Engine v4</p>
+        </div>
+      </div>
+
+      <div class="glass-card p-6 rounded-2xl">
+        <h3 class="text-sm font-semibold text-white">Detalle de Infraestructura</h3>
+        <pre id="system-raw-json" class="mt-4 p-4 rounded-xl bg-black/40 text-xs text-apple-gray overflow-x-auto font-mono"></pre>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="mt-auto py-6 border-t border-white/5 text-center text-xs text-apple-gray">
+    TurboNetwork Engine • TypeScript • Fastify • PostgreSQL • Drizzle ORM • Multi-Vendor Architecture
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT APP LOGIC                                     -->
+  <!-- ======================================================== -->
+  <script>
+    let currentPin = "";
+    let currentUser = null;
+    let currentCustomers = [];
+    let currentInvoices = [];
+    let currentDevices = [];
+    let currentRoles = [];
+    let currentUsers = [];
+
+    // Keypad Logic
+    function pressDigit(d) {
+      if (currentPin.length < 8) {
+        currentPin += d;
+        updatePinDots();
+        if (currentPin.length === 8) {
+          submitPinLogin();
+        }
+      }
+    }
+
+    function backspacePin() {
+      if (currentPin.length > 0) {
+        currentPin = currentPin.slice(0, -1);
+        updatePinDots();
+      }
+    }
+
+    function clearPin() {
+      currentPin = "";
+      updatePinDots();
+      document.getElementById('login-feedback').textContent = "";
+    }
+
+    function fillPin(pin) {
+      currentPin = pin;
+      updatePinDots();
+      submitPinLogin();
+    }
+
+    function updatePinDots() {
+      for (let i = 0; i < 8; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        if (i < currentPin.length) {
+          dot.classList.add('filled');
+        } else {
+          dot.classList.remove('filled');
+        }
+      }
+    }
+
+    // Physical Keyboard Listener
+    window.addEventListener('keydown', (e) => {
+      const loginScreen = document.getElementById('pin-login-screen');
+      if (loginScreen && !loginScreen.classList.contains('hidden')) {
+        if (/^[0-9]$/.test(e.key)) {
+          pressDigit(e.key);
+        } else if (e.key === 'Backspace') {
+          backspacePin();
+        } else if (e.key === 'Escape') {
+          clearPin();
+        }
+      }
+    });
+
+    // Submit PIN Login
+    async function submitPinLogin() {
+      const feedback = document.getElementById('login-feedback');
+      feedback.textContent = "Verificando credenciales...";
+      feedback.className = "text-xs min-h-[20px] text-blue-400 font-medium mb-2";
+
+      try {
+        const res = await fetch('/api/auth/pin-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: currentPin })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          currentUser = data.data.user;
+          feedback.textContent = "";
+          showWelcomeGreeting(currentUser);
+        } else {
+          feedback.textContent = data.message || "PIN no reconocido";
+          feedback.className = "text-xs min-h-[20px] text-rose-400 font-medium mb-2";
+          shakeKeypad();
+          currentPin = "";
+          setTimeout(updatePinDots, 500);
+        }
+      } catch (err) {
+        feedback.textContent = "Error al conectar con el servidor";
+        shakeKeypad();
+      }
+    }
+
+    function shakeKeypad() {
+      const container = document.getElementById('pin-dots-container');
+      container.classList.add('shake');
+      setTimeout(() => container.classList.remove('shake'), 450);
+    }
+
+    // Apple-Style Welcome Greeting Modal
+    function showWelcomeGreeting(user) {
+      document.getElementById('pin-login-screen').classList.add('hidden');
+      const modal = document.getElementById('welcome-modal');
+      modal.classList.remove('hidden');
+
+      document.getElementById('welcome-avatar').src = user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
+      document.getElementById('welcome-title').textContent = `¡Hola, ${user.name}!`;
+      document.getElementById('welcome-role').textContent = user.roleName;
+
+      // Header info update
+      document.getElementById('header-user-avatar').src = user.avatar;
+      document.getElementById('header-user-name').textContent = user.name;
+      document.getElementById('header-user-role').textContent = user.roleName;
+
+      // Animate progress bar
+      setTimeout(() => {
+        document.getElementById('welcome-progress').style.width = '100%';
+      }, 50);
+
+      // Auto dismiss after 1.2 seconds
+      setTimeout(() => {
+        modal.classList.add('opacity-0');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          modal.classList.remove('opacity-0');
+          init();
+        }, 300);
+      }, 1300);
+    }
+
+    function logout() {
+      currentUser = null;
+      currentPin = "";
+      updatePinDots();
+      document.getElementById('welcome-progress').style.width = '0%';
+      document.getElementById('pin-login-screen').classList.remove('hidden');
+    }
+
+    // Navigation Switcher
+    function switchTab(tabId) {
+      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-white/15', 'text-white');
+        btn.classList.add('text-white/60');
+      });
+      const activeBtn = document.getElementById('nav-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-white/15', 'text-white');
+        activeBtn.classList.remove('text-white/60');
+      }
+
+      if (tabId === 'system') loadSystemMetrics();
+      if (tabId === 'config') loadConfigModule();
+    }
+
+    // Init data fetching
+    async function init() {
+      try {
+        await Promise.all([
+          loadCustomers(),
+          loadInvoices(),
+          loadDevices(),
+          loadPlans(),
+          loadConfigModule(),
+          loadSystemMetrics()
+        ]);
+      } catch (e) {
+        console.warn("Init error:", e);
+      }
+    }
+
+    async function loadCustomers() {
+      const res = await fetch('/api/customers');
+      const data = await res.json();
+      currentCustomers = data.data || [];
+      renderCustomers(currentCustomers);
+    }
+
+    function renderCustomers(list) {
+      const tbody = document.getElementById('customers-table-body');
+      tbody.innerHTML = list.map(c => `
+        <tr class="hover:bg-white/[0.02] transition">
+          <td class="px-6 py-4">
+            <div class="font-medium text-white">${c.fullName}</div>
+            <div class="text-[11px] text-apple-gray">${c.customerCode}</div>
+          </td>
+          <td class="px-6 py-4 text-white/80">${c.identification}</td>
+          <td class="px-6 py-4">
+            <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[11px] font-medium">
+              ${c.planName || 'Fibra Estándar'}
+            </span>
+          </td>
+          <td class="px-6 py-4 font-mono text-[11px] text-white/60">${c.assignedIp || 'Dinámica'}</td>
+          <td class="px-6 py-4">
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${
+              c.status === 'active' 
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+            }">
+              <span class="w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
+              ${c.status === 'active' ? 'Activo' : 'Suspendido'}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-right font-semibold ${c.balance !== '0.00' ? 'text-amber-400' : 'text-white/60'}">
+            $${c.balance || '0.00'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function handleCustomerSearch(query) {
+      const q = query.toLowerCase();
+      const filtered = currentCustomers.filter(c => 
+        c.fullName.toLowerCase().includes(q) || 
+        c.customerCode.toLowerCase().includes(q) ||
+        c.identification.includes(q)
+      );
+      renderCustomers(filtered);
+    }
+
+    async function loadInvoices() {
+      const res = await fetch('/api/invoices');
+      const data = await res.json();
+      currentInvoices = data.data || [];
+      renderInvoices(currentInvoices);
+    }
+
+    function renderInvoices(list) {
+      const tbody = document.getElementById('invoices-table-body');
+      tbody.innerHTML = list.map(inv => `
+        <tr class="hover:bg-white/[0.02] transition">
+          <td class="px-6 py-4 font-mono font-medium text-white">${inv.invoiceNumber}</td>
+          <td class="px-6 py-4">
+            <div class="font-medium text-white">${inv.customerName || 'Cliente #' + inv.customerId}</div>
+            <div class="text-[11px] text-apple-gray">${inv.customerCode || ''}</div>
+          </td>
+          <td class="px-6 py-4 text-white/70 font-mono">${inv.period}</td>
+          <td class="px-6 py-4 text-white/60">${new Date(inv.dueDate).toLocaleDateString()}</td>
+          <td class="px-6 py-4 font-semibold text-white">$${inv.total}</td>
+          <td class="px-6 py-4">
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${
+              inv.status === 'paid' 
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                : inv.status === 'overdue'
+                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+            }">
+              ${inv.status === 'paid' ? '✓ Pagado' : inv.status === 'overdue' ? 'Vencido' : 'Pendiente'}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-right">
+            ${inv.status !== 'paid' ? `
+              <button onclick="payInvoice(${inv.id})" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-[11px] transition shadow-sm">
+                Registrar Pago
+              </button>
+            ` : `
+              <span class="text-[11px] text-white/40">Liquidado</span>
+            `}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function payInvoice(id) {
+      if (!confirm('¿Registrar pago directo en efectivo o transferencia?')) return;
+      const res = await fetch(`/api/invoices/${id}/pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceId: id,
+          customerId: 1,
+          amount: "35.00",
+          paymentMethod: "cash",
+          referenceNumber: "PAG-MANUAL-" + Date.now()
+        })
+      });
+      if (res.ok) await loadInvoices();
+    }
+
+    async function loadDevices() {
+      const res = await fetch('/api/network/devices');
+      const data = await res.json();
+      currentDevices = data.data || [];
+      renderDevices(currentDevices);
+    }
+
+    function renderDevices(list) {
+      const container = document.getElementById('network-devices-container');
+      container.innerHTML = list.map(d => `
+        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider ${
+                d.vendor === 'mikrotik' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' :
+                d.vendor === 'huawei_olt' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                d.vendor === 'vsol_olt' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
+                'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              }">
+                ${d.vendor.replace('_', ' ')}
+              </span>
+              <span class="text-xs text-emerald-400 font-medium flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Online
+              </span>
+            </div>
+            <h3 class="text-base font-semibold text-white mt-3">${d.name}</h3>
+            <p class="text-xs text-apple-gray font-mono mt-0.5">${d.ipAddress} • Puerto ${d.port || 8728}</p>
+            <div class="mt-4 p-3 rounded-xl bg-white/[0.03] border border-white/5 text-xs space-y-1">
+              <div class="flex justify-between text-apple-gray">
+                <span>Modelo:</span>
+                <span class="text-white">${d.model || 'Estándar'}</span>
+              </div>
+              <div class="flex justify-between text-apple-gray">
+                <span>Protocolo API:</span>
+                <span class="text-white font-mono">${d.apiType}</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-5 pt-4 border-t border-white/5 flex items-center justify-between">
+            <button onclick="testDevice(${d.id})" id="btn-test-${d.id}" class="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white transition">
+              Probar Conexión
+            </button>
+            <span id="test-result-${d.id}" class="text-[11px] text-apple-gray"></span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function testDevice(id) {
+      const resultSpan = document.getElementById(`test-result-${id}`);
+      resultSpan.textContent = "Probando...";
+      try {
+        const res = await fetch(`/api/network/devices/${id}/test-connection`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: "{}" });
+        const data = await res.json();
+        if (data.success) {
+          resultSpan.innerHTML = `<span class="text-emerald-400 font-medium">✓ ${data.data.testResult.latencyMs} ms OK</span>`;
+        }
+      } catch {
+        resultSpan.textContent = "Error de red";
+      }
+    }
+
+    async function loadPlans() {
+      const res = await fetch('/api/plans');
+      const data = await res.json();
+      const list = data.data || [];
+      const container = document.getElementById('plans-container');
+      container.innerHTML = list.map(p => `
+        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
+          <div>
+            <span class="text-xs font-semibold uppercase text-blue-400">Plan Fibra</span>
+            <h3 class="text-lg font-semibold text-white mt-1">${p.name}</h3>
+            <div class="mt-4 flex items-baseline gap-1">
+              <span class="text-3xl font-bold text-white">${p.currency}${p.price}</span>
+              <span class="text-xs text-apple-gray">/ mes</span>
+            </div>
+            <div class="mt-4 space-y-2 text-xs text-apple-gray border-t border-white/5 pt-4">
+              <div class="flex justify-between">
+                <span>Bajada:</span>
+                <span class="font-semibold text-white">${p.downloadSpeedMbps} Mbps</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Subida:</span>
+                <span class="font-semibold text-white">${p.uploadSpeedMbps} Mbps</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Ráfaga (Burst):</span>
+                <span class="font-mono text-white">${p.burstLimit || 'No asignada'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ==========================================================
+    // CONFIG MODULE: USERS & GRANULAR ROLES
+    // ==========================================================
+    async function loadConfigModule() {
+      try {
+        const [rolesRes, usersRes] = await Promise.all([
+          fetch('/api/roles'),
+          fetch('/api/users')
+        ]);
+        const rolesData = await rolesRes.json();
+        const usersData = await usersRes.json();
+
+        currentRoles = rolesData.data || [];
+        currentUsers = usersData.data || [];
+
+        renderUsers(currentUsers);
+        renderRoles(currentRoles);
+        populateRoleSelect(currentRoles);
+      } catch (err) {
+        console.warn("Config module load error:", err);
+      }
+    }
+
+    function renderUsers(list) {
+      const container = document.getElementById('users-list-container');
+      container.innerHTML = list.map(u => `
+        <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <img class="w-10 h-10 rounded-full border border-white/10 object-cover" src="${u.avatar}" alt="${u.name}">
+            <div>
+              <div class="font-semibold text-white text-xs">${u.name}</div>
+              <div class="text-[11px] text-apple-gray">${u.email}</div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-4">
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              ${u.roleName}
+            </span>
+            <div class="text-right">
+              <div class="font-mono text-xs text-white/50">${u.pinMasked}</div>
+              <div class="text-[10px] text-emerald-400">Activo</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderRoles(roles) {
+      const container = document.getElementById('roles-cards-container');
+      container.innerHTML = roles.map(r => `
+        <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col justify-between">
+          <div>
+            <h4 class="font-semibold text-white text-sm">${r.name}</h4>
+            <p class="text-[11px] text-apple-gray mt-1 leading-relaxed">${r.description}</p>
+            <div class="mt-4 pt-3 border-t border-white/5 space-y-1.5">
+              <div class="text-[10px] uppercase font-semibold text-white/40 tracking-wider">Permisos Habilitados:</div>
+              ${r.permissions.slice(0, 4).map(p => `
+                <div class="flex items-center space-x-1.5 text-xs text-white/80">
+                  <span class="text-emerald-400 text-[10px]">✓</span>
+                  <span>${p}</span>
+                </div>
+              `).join('')}
+              ${r.permissions.length > 4 ? `
+                <div class="text-[10px] text-blue-400 font-medium pt-1">+ ${r.permissions.length - 4} permisos más</div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function populateRoleSelect(roles) {
+      const select = document.getElementById('nu-role');
+      select.innerHTML = roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    }
+
+    function generateRandomPin() {
+      const pin = Math.floor(10000000 + Math.random() * 90000000).toString();
+      document.getElementById('nu-pin').value = pin;
+    }
+
+    async function handleCreateUser(e) {
+      e.preventDefault();
+      const statusDiv = document.getElementById('create-user-status');
+      statusDiv.textContent = "Registrando operador...";
+      statusDiv.className = "text-xs text-blue-400";
+
+      const name = document.getElementById('nu-name').value;
+      const email = document.getElementById('nu-email').value;
+      const roleId = parseInt(document.getElementById('nu-role').value, 10);
+      const pin = document.getElementById('nu-pin').value;
+
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, roleId, pin })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          statusDiv.textContent = "✓ Operador registrado con éxito";
+          statusDiv.className = "text-xs text-emerald-400";
+          document.getElementById('new-user-form').reset();
+          await loadConfigModule();
+        } else {
+          statusDiv.textContent = data.message || "Error al crear usuario";
+          statusDiv.className = "text-xs text-rose-400";
+        }
+      } catch {
+        statusDiv.textContent = "Error de red al registrar operador";
+        statusDiv.className = "text-xs text-rose-400";
+      }
+    }
+
+    async function loadSystemMetrics() {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        document.getElementById('metric-rss').textContent = data.processMemory.rss;
+        document.getElementById('metric-heap').textContent = data.processMemory.heapUsed;
+        document.getElementById('metric-uptime').textContent = data.uptimeSeconds + ' seg';
+        document.getElementById('system-raw-json').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        console.warn("Could not fetch health:", e);
+      }
+    }
+  </script>
+</body>
+</html>
