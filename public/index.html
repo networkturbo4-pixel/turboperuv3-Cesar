@@ -164,28 +164,109 @@
       display: none !important;
     }
 
-    /* Teclado numérico PIN */
-    .pin-btn {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      transition: all 0.12s ease;
+    /* ======================================================== */
+    /* SLIDER DE FONDO CINEMÁTICO & PROFUNDIDAD                 */
+    /* ======================================================== */
+    .login-bg-slide {
+      will-change: opacity, transform;
+      filter: brightness(0.68) contrast(1.15) saturate(1.1);
     }
-    .pin-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.2);
+    .login-bg-slide.active {
+      opacity: 1 !important;
+      transform: scale(1.06) !important;
+      transition: opacity 2.2s cubic-bezier(0.4, 0, 0.2, 1), transform 9s cubic-bezier(0.25, 1, 0.5, 1);
     }
-    .pin-btn:active {
-      background: rgba(255, 255, 255, 0.15);
-      transform: scale(0.96);
+    .login-bg-slide:not(.active) {
+      opacity: 0 !important;
+      transform: scale(1.0) !important;
+      transition: opacity 2.2s cubic-bezier(0.4, 0, 0.2, 1), transform 9s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
-    .security-dot {
-      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    .bg-radial-vignette {
+      background: radial-gradient(circle at center, rgba(7, 8, 13, 0.35) 0%, rgba(7, 8, 13, 0.72) 55%, rgba(4, 5, 8, 0.94) 100%);
     }
-    .security-dot.active {
+
+    /* ======================================================== */
+    /* GLASSMORFISMO MODERNO (APPLE FROSTED GLASS CARD)         */
+    /* ======================================================== */
+    .glass-login-card {
+      background: rgba(14, 18, 27, 0.58) !important;
+      backdrop-filter: blur(28px) saturate(190%) !important;
+      -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.13) !important;
+      box-shadow: 
+        0 30px 70px -15px rgba(0, 0, 0, 0.85),
+        0 15px 35px -10px rgba(0, 0, 0, 0.65),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+        inset 0 -1px 0 0 rgba(255, 255, 255, 0.05) !important;
+      border-radius: 28px;
+    }
+
+    .glass-badge {
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .glass-pin-btn {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      box-shadow: 
+        0 4px 14px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-pin-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    .glass-pin-btn:active {
+      background: rgba(255, 255, 255, 0.22);
+      transform: scale(0.96);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .glass-action-btn {
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.15s ease;
+    }
+    .glass-action-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .glass-action-btn:active {
+      transform: scale(0.95);
+    }
+
+    .security-dot,
+    .glass-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1.5px solid rgba(255, 255, 255, 0.28);
+      backdrop-filter: blur(6px);
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .security-dot.active,
+    .glass-dot.active {
       background-color: var(--brand-primary) !important;
-      box-shadow: 0 0 12px var(--brand-primary);
-      transform: scale(1.25);
+      border-color: #ffffff !important;
+      box-shadow: 0 0 14px var(--brand-primary), 0 0 3px #ffffff;
+      transform: scale(1.35);
     }
 
     @keyframes shake {
@@ -386,91 +467,113 @@
   <!-- ======================================================== -->
   <!-- 1. LOGIN DE SEGURIDAD CON PIN DE 8 DÍGITOS               -->
   <!-- ======================================================== -->
-  <div id="pin-login-screen" class="fixed inset-0 z-[200] flex items-center justify-center bg-[#07080d]/95 backdrop-blur-2xl px-4">
-    <div class="w-full max-w-sm flex flex-col items-center text-center">
+  <div id="pin-login-screen" class="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden px-4 select-none">
+    
+    <!-- Background Slider Container with Depth & Ambient Blur -->
+    <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+      <!-- Slide 1: Eye Close-Up Texture (Clean) -->
+      <div id="login-slide-0" class="login-bg-slide active absolute inset-0 bg-cover bg-center" style="background-image: url('/assets/login_bg/slide-1.jpg');"></div>
+      
+      <!-- Slide 2: Cinematic Keyhole Silhouette (Clean) -->
+      <div id="login-slide-1" class="login-bg-slide absolute inset-0 bg-cover bg-center" style="background-image: url('/assets/login_bg/slide-2.jpg');"></div>
+      
+      <!-- Slide 3: Cafe Depth & Bokeh Scene -->
+      <div id="login-slide-2" class="login-bg-slide absolute inset-0 bg-cover bg-center" style="background-image: url('/assets/login_bg/slide-3.png');"></div>
+
+      <!-- Depth Blur Optical Layer -->
+      <div class="absolute inset-0 backdrop-blur-[3px]"></div>
+      
+      <!-- Dark Atmospheric Radial Vignette Layer -->
+      <div class="absolute inset-0 bg-radial-vignette"></div>
+      
+      <!-- Dynamic Glowing Accent Spot Behind Glass Card -->
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full dynamic-primary-bg opacity-20 blur-[130px] pointer-events-none animate-pulse"></div>
+    </div>
+
+    <!-- Modern Glassmorphic Login Card (Apple Frosted Glass) -->
+    <div class="glass-login-card relative z-10 w-full max-w-[360px] p-6 sm:p-7 flex flex-col items-center text-center">
       
       <!-- Brand Logo Container -->
-      <div id="login-logo-wrapper" class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl mb-4 border border-white/15 overflow-hidden transition-all duration-200">
-        <svg id="login-default-icon" class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+      <div id="login-logo-wrapper" class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl mb-3.5 border border-white/20 overflow-hidden transition-all duration-200 bg-white/10 backdrop-blur-md">
+        <svg id="login-default-icon" class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         </svg>
         <img id="login-custom-img" class="w-full h-full object-contain p-1 hidden" alt="Brand Logo">
       </div>
 
-      <div class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-slate-300 mb-2">
-        <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg"></span>
-        <span>TERMINAL AUTORIZADA</span>
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full glass-badge text-[10px] font-mono text-slate-200 mb-2">
+        <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg animate-pulse"></span>
+        <span class="tracking-wider">TERMINAL AUTORIZADA</span>
       </div>
 
-      <h1 id="login-system-title" class="text-lg font-semibold tracking-tight text-white">TurboNetwork Enterprise</h1>
-      <p id="login-system-tagline" class="text-xs text-slate-400 mt-0.5">Ingrese el PIN de acceso de 8 dígitos</p>
+      <h1 id="login-system-title" class="text-lg font-semibold tracking-tight text-white drop-shadow-sm">TurboNetwork Enterprise</h1>
+      <p id="login-system-tagline" class="text-xs text-slate-300/80 mt-0.5 font-normal">Ingrese el PIN de acceso de 8 dígitos</p>
 
       <!-- 8-Digit Security Dots -->
-      <div id="pin-dots-container" class="flex items-center justify-center space-x-2.5 my-6">
-        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-0"></div>
-        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-1"></div>
-        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-2"></div>
-        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-3"></div>
-        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-4"></div>
-        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-5"></div>
-        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-6"></div>
-        <div class="security-dot w-3 h-3 rounded-full border border-white/30 bg-transparent" id="dot-7"></div>
+      <div id="pin-dots-container" class="flex items-center justify-center space-x-2.5 my-5">
+        <div class="security-dot glass-dot" id="dot-0"></div>
+        <div class="security-dot glass-dot" id="dot-1"></div>
+        <div class="security-dot glass-dot" id="dot-2"></div>
+        <div class="security-dot glass-dot" id="dot-3"></div>
+        <div class="security-dot glass-dot" id="dot-4"></div>
+        <div class="security-dot glass-dot" id="dot-5"></div>
+        <div class="security-dot glass-dot" id="dot-6"></div>
+        <div class="security-dot glass-dot" id="dot-7"></div>
       </div>
 
       <!-- Feedback -->
-      <div id="login-feedback" class="text-xs min-h-[20px] text-rose-400 font-medium mb-3 font-mono"></div>
+      <div id="login-feedback" class="text-xs min-h-[20px] text-rose-400 font-medium mb-3 font-mono drop-shadow"></div>
 
-      <!-- Precision Numeric Keypad -->
-      <div class="grid grid-cols-3 gap-2.5 w-full max-w-[260px]">
-        <button onclick="pressDigit('1')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
-          1<span class="text-[8px] text-slate-500 font-normal tracking-widest">&nbsp;</span>
+      <!-- Precision Numeric Keypad with Glassmorphic Styling -->
+      <div class="grid grid-cols-3 gap-2.5 w-full max-w-[270px]">
+        <button onclick="pressDigit('1')" class="glass-pin-btn h-12 sm:h-13 py-2 rounded-2xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          1<span class="text-[8px] text-slate-400/80 font-normal tracking-widest">&nbsp;</span>
         </button>
-        <button onclick="pressDigit('2')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
-          2<span class="text-[8px] text-slate-400 font-normal tracking-wider">ABC</span>
+        <button onclick="pressDigit('2')" class="glass-pin-btn h-12 sm:h-13 py-2 rounded-2xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          2<span class="text-[8px] text-slate-300/80 font-normal tracking-wider">ABC</span>
         </button>
-        <button onclick="pressDigit('3')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
-          3<span class="text-[8px] text-slate-400 font-normal tracking-wider">DEF</span>
+        <button onclick="pressDigit('3')" class="glass-pin-btn h-12 sm:h-13 py-2 rounded-2xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          3<span class="text-[8px] text-slate-300/80 font-normal tracking-wider">DEF</span>
         </button>
         
-        <button onclick="pressDigit('4')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
-          4<span class="text-[8px] text-slate-400 font-normal tracking-wider">GHI</span>
+        <button onclick="pressDigit('4')" class="glass-pin-btn h-12 sm:h-13 py-2 rounded-2xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          4<span class="text-[8px] text-slate-300/80 font-normal tracking-wider">GHI</span>
         </button>
-        <button onclick="pressDigit('5')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
-          5<span class="text-[8px] text-slate-400 font-normal tracking-wider">JKL</span>
+        <button onclick="pressDigit('5')" class="glass-pin-btn h-12 sm:h-13 py-2 rounded-2xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          5<span class="text-[8px] text-slate-300/80 font-normal tracking-wider">JKL</span>
         </button>
-        <button onclick="pressDigit('6')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
-          6<span class="text-[8px] text-slate-400 font-normal tracking-wider">MNO</span>
-        </button>
-
-        <button onclick="pressDigit('7')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
-          7<span class="text-[8px] text-slate-400 font-normal tracking-wider">PQRS</span>
-        </button>
-        <button onclick="pressDigit('8')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
-          8<span class="text-[8px] text-slate-400 font-normal tracking-wider">TUV</span>
-        </button>
-        <button onclick="pressDigit('9')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
-          9<span class="text-[8px] text-slate-400 font-normal tracking-wider">WXYZ</span>
+        <button onclick="pressDigit('6')" class="glass-pin-btn h-12 sm:h-13 py-2 rounded-2xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          6<span class="text-[8px] text-slate-300/80 font-normal tracking-wider">MNO</span>
         </button>
 
-        <button onclick="clearPin()" class="h-13 rounded-xl flex items-center justify-center text-xs font-medium text-slate-400 hover:text-white transition">
+        <button onclick="pressDigit('7')" class="glass-pin-btn h-12 sm:h-13 py-2 rounded-2xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          7<span class="text-[8px] text-slate-300/80 font-normal tracking-wider">PQRS</span>
+        </button>
+        <button onclick="pressDigit('8')" class="glass-pin-btn h-12 sm:h-13 py-2 rounded-2xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          8<span class="text-[8px] text-slate-300/80 font-normal tracking-wider">TUV</span>
+        </button>
+        <button onclick="pressDigit('9')" class="glass-pin-btn h-12 sm:h-13 py-2 rounded-2xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          9<span class="text-[8px] text-slate-300/80 font-normal tracking-wider">WXYZ</span>
+        </button>
+
+        <button onclick="clearPin()" class="glass-action-btn h-12 sm:h-13 rounded-2xl flex items-center justify-center text-xs font-medium text-slate-300 transition">
           Limpiar
         </button>
-        <button onclick="pressDigit('0')" class="pin-btn h-13 py-2.5 rounded-xl flex flex-col items-center justify-center text-lg font-semibold text-white">
-          0<span class="text-[8px] text-slate-400 font-normal tracking-widest">+</span>
+        <button onclick="pressDigit('0')" class="glass-pin-btn h-12 sm:h-13 py-2 rounded-2xl flex flex-col items-center justify-center text-lg font-semibold text-white">
+          0<span class="text-[8px] text-slate-300/80 font-normal tracking-widest">+</span>
         </button>
-        <button onclick="backspacePin()" class="h-13 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition">
+        <button onclick="backspacePin()" class="glass-action-btn h-12 sm:h-13 rounded-2xl flex items-center justify-center text-slate-300 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6-6h12a2 2 0 012 2v8a2 2 0 01-2 2H9l-6-6z" />
           </svg>
         </button>
       </div>
 
-      <!-- Demo Chips -->
-      <div class="mt-6 p-3 rounded-xl bg-white/[0.03] border border-white/5 text-[11px] text-slate-400 max-w-xs w-full text-left">
-        <div class="text-[10px] uppercase font-semibold text-slate-500 tracking-wider mb-1.5">Accesos de Prueba:</div>
-        <div class="flex justify-between py-0.5"><span class="text-slate-400">Superadmin:</span> <code class="dynamic-primary-text cursor-pointer font-mono font-medium" onclick="fillPin('12345678')">12345678</code></div>
-        <div class="flex justify-between py-0.5"><span class="text-slate-400">Ing. NOC:</span> <code class="dynamic-primary-text cursor-pointer font-mono font-medium" onclick="fillPin('87654321')">87654321</code></div>
-        <div class="flex justify-between py-0.5"><span class="text-slate-400">Cobranzas:</span> <code class="dynamic-primary-text cursor-pointer font-mono font-medium" onclick="fillPin('11223344')">11223344</code></div>
+      <!-- Depth Slider Indicators -->
+      <div class="flex items-center justify-center space-x-1.5 mt-5">
+        <button type="button" onclick="setLoginSlide(0)" id="slide-indicator-0" class="h-1.5 rounded-full transition-all duration-500 w-6 dynamic-primary-bg" title="Fondo 1"></button>
+        <button type="button" onclick="setLoginSlide(1)" id="slide-indicator-1" class="h-1.5 rounded-full transition-all duration-500 w-1.5 bg-white/30 hover:bg-white/60" title="Fondo 2"></button>
+        <button type="button" onclick="setLoginSlide(2)" id="slide-indicator-2" class="h-1.5 rounded-full transition-all duration-500 w-1.5 bg-white/30 hover:bg-white/60" title="Fondo 3"></button>
       </div>
 
     </div>
@@ -2240,6 +2343,7 @@
     }
 
     function showWelcomeGreeting(user) {
+      stopLoginSlider();
       document.getElementById('pin-login-screen').classList.add('hidden');
       const modal = document.getElementById('welcome-modal');
       modal.classList.remove('hidden');
@@ -2284,6 +2388,52 @@
       document.getElementById('welcome-progress').style.width = '0%';
       document.getElementById('pin-login-screen').classList.remove('hidden');
       closeMobileConfigDrawer();
+      startLoginSlider();
+    }
+
+    // BACKGROUND SLIDER CON PROFUNDIDAD Y TRANSICIONES CINEMÁTICAS
+    let currentSlideIndex = 0;
+    const totalSlides = 3;
+    let slideInterval = null;
+
+    function setLoginSlide(index) {
+      currentSlideIndex = (index + totalSlides) % totalSlides;
+      for (let i = 0; i < totalSlides; i++) {
+        const slide = document.getElementById(`login-slide-${i}`);
+        const indicator = document.getElementById(`slide-indicator-${i}`);
+        if (slide) {
+          if (i === currentSlideIndex) {
+            slide.classList.add('active');
+          } else {
+            slide.classList.remove('active');
+          }
+        }
+        if (indicator) {
+          if (i === currentSlideIndex) {
+            indicator.className = "h-1.5 rounded-full transition-all duration-500 w-6 dynamic-primary-bg cursor-pointer";
+          } else {
+            indicator.className = "h-1.5 rounded-full transition-all duration-500 w-1.5 bg-white/30 hover:bg-white/60 cursor-pointer";
+          }
+        }
+      }
+    }
+
+    function startLoginSlider() {
+      if (slideInterval) clearInterval(slideInterval);
+      setLoginSlide(0);
+      slideInterval = setInterval(() => {
+        const loginScreen = document.getElementById('pin-login-screen');
+        if (loginScreen && !loginScreen.classList.contains('hidden') && !document.documentElement.classList.contains('has-session')) {
+          setLoginSlide(currentSlideIndex + 1);
+        }
+      }, 6500);
+    }
+
+    function stopLoginSlider() {
+      if (slideInterval) {
+        clearInterval(slideInterval);
+        slideInterval = null;
+      }
     }
 
     // Data Loaders
@@ -2892,6 +3042,11 @@
           document.documentElement.classList.remove('has-session');
           document.getElementById('pin-login-screen').classList.remove('hidden');
         }
+      }
+
+      // Si no hay sesión activa, iniciar el slider dinámico de fondo
+      if (!currentUser) {
+        startLoginSlider();
       }
 
       // 3. Traer branding real persistido desde el servidor
