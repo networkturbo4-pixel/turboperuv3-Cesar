@@ -18,6 +18,7 @@ import { settingsRoutes } from "./modules/settings/settings.routes";
 
 export async function buildApp() {
   const fastify = Fastify({
+    bodyLimit: 15 * 1024 * 1024, // 15 MB para subida de logos, favicons e iconos PWA
     logger: {
       level: env.NODE_ENV === "production" ? "info" : "debug",
     },

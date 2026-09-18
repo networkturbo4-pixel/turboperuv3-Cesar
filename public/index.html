@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title id="page-title">TurboNetwork • ISP Enterprise Platform</title>
   
-  <!-- Favicon dinámico en SVG vectorial puro (cero emojis) -->
+  <!-- Favicon dinámico en SVG puro (sin emojis) -->
   <link rel="icon" id="dynamic-favicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'%3E%3C/polygon%3E%3C/svg%3E">
   <link rel="apple-touch-icon" id="pwa-apple-icon" href="https://api.dicebear.com/7.x/shapes/svg?seed=TurboNetPro">
 
-  <!-- Fuentes profesionales de alta legibilidad -->
+  <!-- Fuentes profesionales -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -23,17 +23,6 @@
           screens: {
             '3xl': '1920px',
             '4xl': '2560px',
-          },
-          colors: {
-            brand: {
-              primary: 'var(--brand-primary, #2563eb)',
-              accent: 'var(--brand-accent, #059669)',
-              surfaceDark: 'var(--surface-dark, #0e121b)',
-              surfaceDarkSubtle: 'var(--surface-dark-subtle, #141925)',
-              borderDark: 'var(--border-dark, rgba(255, 255, 255, 0.08))',
-              surfaceLight: 'var(--surface-light, #ffffff)',
-              borderLight: 'var(--border-light, rgba(0, 0, 0, 0.08))',
-            }
           }
         }
       }
@@ -43,7 +32,9 @@
   <style>
     :root {
       --brand-primary: #2563eb;
+      --brand-primary-rgb: 37, 99, 235;
       --brand-accent: #059669;
+      --brand-accent-rgb: 5, 150, 105;
       --bg-dark: #090a0f;
       --surface-dark: #0e121b;
       --surface-dark-subtle: #141925;
@@ -68,7 +59,46 @@
       color: #0f172a;
     }
 
-    /* Superficies de cristal profesional */
+    /* Clases de utilidad vinculadas en tiempo real a las variables de color */
+    .dynamic-primary-bg {
+      background-color: var(--brand-primary) !important;
+    }
+    .dynamic-primary-text {
+      color: var(--brand-primary) !important;
+    }
+    .dynamic-primary-border {
+      border-color: var(--brand-primary) !important;
+    }
+    .dynamic-primary-subtle {
+      background-color: rgba(var(--brand-primary-rgb), 0.12) !important;
+      color: var(--brand-primary) !important;
+      border-color: rgba(var(--brand-primary-rgb), 0.25) !important;
+    }
+    .dynamic-accent-subtle {
+      background-color: rgba(var(--brand-accent-rgb), 0.12) !important;
+      color: var(--brand-accent) !important;
+      border-color: rgba(var(--brand-accent-rgb), 0.25) !important;
+    }
+    .dynamic-accent-text {
+      color: var(--brand-accent) !important;
+    }
+
+    /* Botones primarios corporativos reactivos */
+    .btn-brand-primary {
+      background-color: var(--brand-primary) !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px -2px rgba(var(--brand-primary-rgb), 0.35);
+      transition: all 0.18s ease;
+    }
+    .btn-brand-primary:hover {
+      filter: brightness(1.12);
+      transform: translateY(-1px);
+    }
+    .btn-brand-primary:active {
+      transform: scale(0.98);
+    }
+
+    /* Superficies de cristal */
     .pro-sidebar {
       background: rgba(14, 18, 27, 0.94);
       backdrop-filter: blur(20px);
@@ -111,7 +141,7 @@
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
     }
 
-    /* Teclado numérico de alta precisión */
+    /* Teclado numérico PIN */
     .pin-btn {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -130,9 +160,9 @@
       transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .security-dot.active {
-      background-color: var(--brand-primary);
-      box-shadow: 0 0 10px var(--brand-primary);
-      transform: scale(1.2);
+      background-color: var(--brand-primary) !important;
+      box-shadow: 0 0 12px var(--brand-primary);
+      transform: scale(1.25);
     }
 
     @keyframes shake {
@@ -144,7 +174,7 @@
       animation: shake 0.35s ease-in-out both;
     }
 
-    /* Scrollbars discretos */
+    /* Scrollbars */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
@@ -155,22 +185,27 @@
 </head>
 <body class="min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white antialiased">
 
+  <!-- Hidden File Inputs for Direct File Uploads -->
+  <input type="file" id="upload-logo-file" accept="image/png,image/jpeg,image/svg+xml,image/webp" class="hidden" onchange="handleFileUpload(event, 'logo')">
+  <input type="file" id="upload-favicon-file" accept="image/x-icon,image/png,image/svg+xml" class="hidden" onchange="handleFileUpload(event, 'favicon')">
+  <input type="file" id="upload-pwa-file" accept="image/png,image/jpeg,image/svg+xml" class="hidden" onchange="handleFileUpload(event, 'pwa')">
+
   <!-- ======================================================== -->
   <!-- 1. LOGIN DE SEGURIDAD CON PIN DE 8 DÍGITOS               -->
   <!-- ======================================================== -->
   <div id="pin-login-screen" class="fixed inset-0 z-[200] flex items-center justify-center bg-[#07080d]/95 backdrop-blur-2xl px-4">
     <div class="w-full max-w-sm flex flex-col items-center text-center">
       
-      <!-- Vector Brand Crest -->
-      <div id="login-logo-wrapper" class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-600/20 mb-4 border border-white/15 overflow-hidden">
-        <svg id="login-default-icon" class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+      <!-- Brand Logo Container -->
+      <div id="login-logo-wrapper" class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl mb-4 border border-white/15 overflow-hidden transition-all duration-200">
+        <svg id="login-default-icon" class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         </svg>
-        <img id="login-custom-img" class="w-full h-full object-cover hidden" alt="Brand Logo">
+        <img id="login-custom-img" class="w-full h-full object-contain p-1 hidden" alt="Brand Logo">
       </div>
 
       <div class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-slate-300 mb-2">
-        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+        <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg"></span>
         <span>TERMINAL AUTORIZADA</span>
       </div>
 
@@ -190,7 +225,7 @@
       </div>
 
       <!-- Feedback -->
-      <div id="login-feedback" class="text-xs min-h-[20px] text-rose-400 font-medium mb-3"></div>
+      <div id="login-feedback" class="text-xs min-h-[20px] text-rose-400 font-medium mb-3 font-mono"></div>
 
       <!-- Precision Numeric Keypad -->
       <div class="grid grid-cols-3 gap-2.5 w-full max-w-[260px]">
@@ -240,55 +275,55 @@
       <!-- Demo Chips -->
       <div class="mt-6 p-3 rounded-xl bg-white/[0.03] border border-white/5 text-[11px] text-slate-400 max-w-xs w-full text-left">
         <div class="text-[10px] uppercase font-semibold text-slate-500 tracking-wider mb-1.5">Accesos de Prueba:</div>
-        <div class="flex justify-between py-0.5"><span class="text-slate-400">Superadmin:</span> <code class="text-blue-400 cursor-pointer font-mono font-medium" onclick="fillPin('12345678')">12345678</code></div>
-        <div class="flex justify-between py-0.5"><span class="text-slate-400">Ing. NOC:</span> <code class="text-blue-400 cursor-pointer font-mono font-medium" onclick="fillPin('87654321')">87654321</code></div>
-        <div class="flex justify-between py-0.5"><span class="text-slate-400">Cobranzas:</span> <code class="text-blue-400 cursor-pointer font-mono font-medium" onclick="fillPin('11223344')">11223344</code></div>
+        <div class="flex justify-between py-0.5"><span class="text-slate-400">Superadmin:</span> <code class="dynamic-primary-text cursor-pointer font-mono font-medium" onclick="fillPin('12345678')">12345678</code></div>
+        <div class="flex justify-between py-0.5"><span class="text-slate-400">Ing. NOC:</span> <code class="dynamic-primary-text cursor-pointer font-mono font-medium" onclick="fillPin('87654321')">87654321</code></div>
+        <div class="flex justify-between py-0.5"><span class="text-slate-400">Cobranzas:</span> <code class="dynamic-primary-text cursor-pointer font-mono font-medium" onclick="fillPin('11223344')">11223344</code></div>
       </div>
 
     </div>
   </div>
 
   <!-- ======================================================== -->
-  <!-- 2. MODAL DE AUTORIZACIÓN & BIENVENIDA                    -->
+  <!-- 2. MODAL DE BIENVENIDA & AUTORIZACIÓN                    -->
   <!-- ======================================================== -->
   <div id="welcome-modal" class="fixed inset-0 z-[250] hidden flex items-center justify-center bg-black/70 backdrop-blur-xl px-4 transition duration-200">
     <div class="pro-card max-w-sm w-full p-7 rounded-2xl text-center flex flex-col items-center border border-white/10 shadow-2xl relative overflow-hidden">
       <div class="relative mb-4">
         <img id="welcome-avatar" class="w-16 h-16 rounded-full object-cover border border-white/20 shadow-md" src="" alt="Avatar">
-        <div class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#0e121b] flex items-center justify-center">
+        <div class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full dynamic-primary-bg border-2 border-[#0e121b] flex items-center justify-center">
           <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
       </div>
 
-      <span id="welcome-role" class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-semibold tracking-wide uppercase mb-2"></span>
+      <span id="welcome-role" class="px-2.5 py-0.5 rounded-full dynamic-primary-subtle border text-[10px] font-semibold tracking-wide uppercase mb-2"></span>
       <h2 id="welcome-title" class="text-base font-semibold tracking-tight text-white"></h2>
       <p class="text-xs text-slate-400 mt-0.5">Identidad verificada. Iniciando sesión de trabajo...</p>
 
       <div class="w-full bg-white/10 rounded-full h-1 mt-5 overflow-hidden">
-        <div id="welcome-progress" class="bg-blue-500 h-1 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+        <div id="welcome-progress" class="dynamic-primary-bg h-1 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
       </div>
     </div>
   </div>
 
   <!-- ======================================================== -->
-  <!-- 3. WORKSPACE PRINCIPAL CON SIDEBAR MODERNO               -->
+  <!-- 3. WORKSPACE PRINCIPAL CON SIDEBAR                       -->
   <!-- ======================================================== -->
   <div class="flex-1 flex min-h-screen overflow-x-hidden">
     
-    <!-- SIDEBAR PROFESIONAL -->
+    <!-- SIDEBAR -->
     <aside id="main-sidebar" class="w-64 pro-sidebar fixed inset-y-0 left-0 z-40 flex flex-col justify-between p-3.5 transition-all duration-200">
       
       <div>
         <!-- Top Brand Section -->
         <div class="flex items-center justify-between px-2.5 py-3 mb-3 border-b border-white/5 dark:border-white/5 border-black/5">
           <div class="flex items-center space-x-3 overflow-hidden">
-            <div id="sidebar-logo-box" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden">
+            <div id="sidebar-logo-box" class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden transition-all duration-200">
               <svg id="sidebar-default-icon" class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
               </svg>
-              <img id="sidebar-custom-img" class="w-full h-full object-cover hidden" alt="Brand Logo">
+              <img id="sidebar-custom-img" class="w-full h-full object-contain p-0.5 hidden" alt="Brand Logo">
             </div>
             <div class="truncate">
               <span id="brand-system-name" class="text-xs font-semibold tracking-tight text-white dark:text-white text-slate-900 block truncate">
@@ -305,10 +340,10 @@
         </div>
 
         <!-- Navigation Rail -->
-        <nav class="space-y-0.5 text-xs font-medium">
+        <nav class="space-y-0.5 text-xs font-medium" id="sidebar-nav">
           <div class="text-[10px] uppercase font-semibold text-slate-500 px-3 py-1.5 tracking-wider">Operaciones</div>
           
-          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl bg-blue-600/15 text-blue-400 font-semibold transition group">
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl transition group">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
               <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
               <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
@@ -413,13 +448,13 @@
 
         <!-- Right Quick Status & Theme Switcher -->
         <div class="flex items-center space-x-3">
-          <div class="hidden sm:flex items-center space-x-2 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] font-mono text-blue-400">
-            <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+          <div class="hidden sm:flex items-center space-x-2 px-2.5 py-1 rounded-full dynamic-primary-subtle border text-[11px] font-mono">
+            <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg animate-pulse"></span>
             <span>4.8 Gbps AGG</span>
           </div>
 
-          <div class="flex items-center space-x-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-mono text-emerald-400">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <div class="flex items-center space-x-2 px-2.5 py-1 rounded-full dynamic-accent-subtle border text-[11px] font-mono">
+            <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg"></span>
             <span>CORE ONLINE</span>
           </div>
 
@@ -427,7 +462,7 @@
           <button onclick="toggleThemeMode()" id="theme-toggle-btn" title="Modo Claro / Oscuro" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition border border-white/5">
             <svg id="theme-icon-sun" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="5"></circle>
-              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="12" x2="12" y2="3"></line>
               <line x1="12" y1="21" x2="12" y2="23"></line>
               <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
               <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
@@ -456,7 +491,7 @@
             <div class="pro-card p-5 rounded-xl">
               <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
                 <span>Abonados Activos</span>
-                <span class="text-emerald-400 font-mono text-[10px]">+8.4%</span>
+                <span class="dynamic-accent-text font-mono text-[10px]">+8.4%</span>
               </div>
               <div class="mt-2.5 flex items-baseline space-x-2">
                 <span class="text-2xl font-bold tracking-tight">1,195</span>
@@ -468,7 +503,7 @@
             <div class="pro-card p-5 rounded-xl">
               <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
                 <span>Cobranza del Mes</span>
-                <span class="text-blue-400 font-mono text-[10px]">78.7%</span>
+                <span class="dynamic-primary-text font-mono text-[10px]">78.7%</span>
               </div>
               <div class="mt-2.5 flex items-baseline space-x-1">
                 <span class="text-lg font-light text-slate-400">$</span>
@@ -492,7 +527,7 @@
             <div class="pro-card p-5 rounded-xl">
               <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
                 <span>Nodos & OLTs</span>
-                <span class="text-emerald-400 font-mono text-[10px]">100% OK</span>
+                <span class="dynamic-accent-text font-mono text-[10px]">100% OK</span>
               </div>
               <div class="mt-2.5 flex items-baseline space-x-2">
                 <span class="text-2xl font-bold tracking-tight">14 / 14</span>
@@ -503,10 +538,10 @@
             <div class="pro-card p-5 rounded-xl hidden 3xl:block">
               <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
                 <span>Huella RAM Node.js</span>
-                <span class="text-emerald-400 font-mono text-[10px]">OPTIMIZADO</span>
+                <span class="dynamic-accent-text font-mono text-[10px]">OPTIMIZADO</span>
               </div>
               <div class="mt-2.5 flex items-baseline space-x-2">
-                <span id="dash-ram-metric" class="text-2xl font-bold tracking-tight text-emerald-400">~80 MB</span>
+                <span id="dash-ram-metric" class="text-2xl font-bold tracking-tight dynamic-accent-text">~80 MB</span>
               </div>
               <div class="mt-2 text-[11px] text-slate-400">cPanel Passenger & VPS</div>
             </div>
@@ -520,24 +555,24 @@
                   <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Monitoreo de Tráfico Agregado</h3>
                   <p class="text-[11px] text-slate-400 mt-0.5">Tráfico saliente y entrante a través de Core Routers</p>
                 </div>
-                <span class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[11px] font-mono">
+                <span class="px-2.5 py-0.5 rounded-full dynamic-primary-subtle border text-[11px] font-mono">
                   Pico: 4.8 Gbps
                 </span>
               </div>
 
-              <div class="my-6 grid grid-cols-12 gap-2.5 h-32 items-end">
-                <div class="bg-blue-600/30 rounded-t h-[45%]"></div>
-                <div class="bg-blue-600/30 rounded-t h-[52%]"></div>
-                <div class="bg-blue-600/40 rounded-t h-[60%]"></div>
-                <div class="bg-blue-600/30 rounded-t h-[40%]"></div>
-                <div class="bg-blue-600/50 rounded-t h-[75%]"></div>
-                <div class="bg-blue-600/60 rounded-t h-[88%]"></div>
-                <div class="bg-blue-600/80 rounded-t h-[94%]"></div>
-                <div class="bg-blue-600 rounded-t h-[100%] shadow-md shadow-blue-500/30"></div>
-                <div class="bg-blue-600/80 rounded-t h-[92%]"></div>
-                <div class="bg-blue-600/60 rounded-t h-[70%]"></div>
-                <div class="bg-blue-600/40 rounded-t h-[55%]"></div>
-                <div class="bg-blue-600/30 rounded-t h-[48%]"></div>
+              <div class="my-6 grid grid-cols-12 gap-2.5 h-32 items-end" id="bandwidth-bars-container">
+                <div class="bandwidth-bar rounded-t h-[45%]"></div>
+                <div class="bandwidth-bar rounded-t h-[52%]"></div>
+                <div class="bandwidth-bar rounded-t h-[60%]"></div>
+                <div class="bandwidth-bar rounded-t h-[40%]"></div>
+                <div class="bandwidth-bar rounded-t h-[75%]"></div>
+                <div class="bandwidth-bar rounded-t h-[88%]"></div>
+                <div class="bandwidth-bar rounded-t h-[94%]"></div>
+                <div class="bandwidth-bar rounded-t h-[100%]"></div>
+                <div class="bandwidth-bar rounded-t h-[92%]"></div>
+                <div class="bandwidth-bar rounded-t h-[70%]"></div>
+                <div class="bandwidth-bar rounded-t h-[55%]"></div>
+                <div class="bandwidth-bar rounded-t h-[48%]"></div>
               </div>
 
               <div class="flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 dark:border-white/5 border-black/5 pt-3 font-mono">
@@ -554,21 +589,21 @@
 
               <div class="space-y-3.5 my-4" id="recent-activity-list">
                 <div class="flex items-start space-x-3 text-xs">
-                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></div>
+                  <div class="w-1.5 h-1.5 rounded-full dynamic-primary-bg mt-1.5 flex-shrink-0"></div>
                   <div>
                     <p class="font-medium text-slate-200">Cobro liquidado $35.00</p>
                     <p class="text-slate-400 text-[11px] font-mono">CLI-1001 • Carlos Mendoza</p>
                   </div>
                 </div>
                 <div class="flex items-start space-x-3 text-xs">
-                  <div class="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0"></div>
+                  <div class="w-1.5 h-1.5 rounded-full dynamic-primary-bg mt-1.5 flex-shrink-0"></div>
                   <div>
                     <p class="font-medium text-slate-200">Alta de contrato fibra</p>
                     <p class="text-slate-400 text-[11px] font-mono">CLI-1004 • David Fernández</p>
                   </div>
                 </div>
                 <div class="flex items-start space-x-3 text-xs">
-                  <div class="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0"></div>
+                  <div class="w-1.5 h-1.5 rounded-full dynamic-primary-bg mt-1.5 flex-shrink-0"></div>
                   <div>
                     <p class="font-medium text-slate-200">Sincronización OLT Huawei</p>
                     <p class="text-slate-400 text-[11px] font-mono">MA5608T • 485 ONUs online</p>
@@ -577,7 +612,7 @@
               </div>
 
               <div class="border-t border-white/5 dark:border-white/5 border-black/5 pt-3">
-                <button onclick="switchTab('billing')" class="text-xs text-blue-400 hover:text-blue-300 transition">Ver historial de cobros →</button>
+                <button onclick="switchTab('billing')" class="text-xs dynamic-primary-text hover:underline transition">Ver historial de cobros →</button>
               </div>
             </div>
           </div>
@@ -675,7 +710,7 @@
         <!-- ======================================================== -->
         <section id="tab-config" class="space-y-6 hidden">
           
-          <!-- Sub-Nav Segmented Control con Iconos SVG puros -->
+          <!-- Sub-Nav Segmented Control -->
           <div class="flex items-center justify-between flex-wrap gap-4 border-b border-white/5 dark:border-white/5 border-black/5 pb-3">
             <div>
               <h2 class="text-lg font-semibold tracking-tight">Configuración de Gobernanza & Marca</h2>
@@ -683,7 +718,7 @@
             </div>
 
             <div class="flex items-center p-1 bg-white/5 dark:bg-white/5 bg-black/5 rounded-xl border border-white/5 dark:border-white/5 border-black/5 text-xs font-medium">
-              <button onclick="switchConfigSubTab('branding')" id="subnav-branding" class="subnav-btn px-3.5 py-1.5 rounded-lg bg-blue-600 text-white shadow-sm transition flex items-center space-x-2">
+              <button onclick="switchConfigSubTab('branding')" id="subnav-branding" class="subnav-btn px-3.5 py-1.5 rounded-lg btn-brand-primary font-semibold transition flex items-center space-x-2">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10"></circle>
                   <path d="M12 2a4.5 4.5 0 000 9 4.5 4.5 0 010 9 1 1 0 01-1-1 9 9 0 011-17"></path>
@@ -710,109 +745,132 @@
           <div id="config-subtab-branding" class="space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
               
-              <!-- 1. Identidad de Marca -->
+              <!-- 1. Identidad de Marca y Subida de Archivos -->
               <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
                 <div>
-                  <div class="flex items-center space-x-2 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                  <div class="flex items-center space-x-2 dynamic-primary-text text-xs font-semibold uppercase tracking-wider mb-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <rect x="2" y="3" width="20" height="14" rx="2"></rect>
                       <line x1="8" y1="21" x2="16" y2="21"></line>
                       <line x1="12" y1="17" x2="12" y2="21"></line>
                     </svg>
-                    <span>Identidad Corporativa</span>
+                    <span>Identidad & Logotipos</span>
                   </div>
-                  <h3 class="text-sm font-semibold tracking-tight">Logotipos & Nomenclatura</h3>
-                  <p class="text-xs text-slate-400 mt-0.5">Ajusta el nombre, isotipo y favicon del sistema</p>
+                  <h3 class="text-sm font-semibold tracking-tight">Carga de Logo y Favicon</h3>
+                  <p class="text-xs text-slate-400 mt-0.5">Sube imágenes desde tu equipo o ingresa URLs</p>
 
-                  <div class="space-y-3.5 mt-4">
+                  <div class="space-y-4 mt-4">
                     <div>
                       <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre Comercial</label>
-                      <input type="text" id="cfg-system-name" value="TurboNetwork" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                      <input type="text" id="cfg-system-name" value="TurboNetwork" oninput="handleNameInput(this.value)" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
                     </div>
 
                     <div>
                       <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Subtítulo / Tagline</label>
-                      <input type="text" id="cfg-tagline" value="ISP Enterprise Core" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                      <input type="text" id="cfg-tagline" value="ISP Enterprise Core" oninput="handleTaglineInput(this.value)" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
                     </div>
 
+                    <!-- Subida de Logo con Botón de Archivo Local -->
                     <div>
-                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">URL del Logotipo (Header / Sidebar)</label>
-                      <input type="url" id="cfg-logo-url" placeholder="https://ejemplo.com/logo.svg" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                      <div class="flex items-center justify-between mb-1">
+                        <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Logotipo del Sistema</label>
+                        <button type="button" onclick="removeCustomLogo()" id="btn-remove-logo" class="text-[10px] text-rose-400 hover:text-rose-300 hidden">Restablecer Icono</button>
+                      </div>
+                      
+                      <div class="flex items-center space-x-2">
+                        <button type="button" onclick="document.getElementById('upload-logo-file').click()" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium flex items-center space-x-2 transition border border-white/10 flex-shrink-0">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                          </svg>
+                          <span>Subir Logo</span>
+                        </button>
+                        <input type="text" id="cfg-logo-url" placeholder="O pega URL de imagen..." onchange="handleLogoUrlChange(this.value)" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none">
+                      </div>
+                      <p class="text-[10px] text-slate-500 mt-1">Formatos admitidos: PNG, JPG, SVG, WEBP.</p>
                     </div>
 
+                    <!-- Subida de Favicon -->
                     <div>
-                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">URL del Favicon del Navegador</label>
-                      <input type="url" id="cfg-favicon-url" placeholder="https://ejemplo.com/favicon.ico" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Favicon del Navegador</label>
+                      <div class="flex items-center space-x-2">
+                        <button type="button" onclick="document.getElementById('upload-favicon-file').click()" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium flex items-center space-x-2 transition border border-white/10 flex-shrink-0">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                          </svg>
+                          <span>Subir Favicon</span>
+                        </button>
+                        <input type="text" id="cfg-favicon-url" placeholder="O pega URL de favicon..." onchange="handleFaviconUrlChange(this.value)" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none">
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Preview Box -->
                 <div class="mt-5 p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center space-x-3">
-                  <div class="w-9 h-9 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center overflow-hidden">
-                    <svg id="preview-logo-placeholder" class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <div class="w-10 h-10 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden bg-white/5" id="preview-box-logo">
+                    <svg id="preview-logo-placeholder" class="w-5 h-5 dynamic-primary-text" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                     </svg>
-                    <img id="preview-logo-img" class="w-full h-full object-cover hidden" alt="Preview">
+                    <img id="preview-logo-img" class="w-full h-full object-contain p-1 hidden" alt="Preview">
                   </div>
                   <div>
-                    <span class="text-xs font-semibold block">Previsualización de Isotipo</span>
-                    <span class="text-[10px] text-slate-400">Actualización en tiempo real</span>
+                    <span class="text-xs font-semibold block text-slate-200">Previsualización del Logo</span>
+                    <span class="text-[10px] text-slate-400">Se actualiza en vivo en toda la plataforma</span>
                   </div>
                 </div>
               </div>
 
-              <!-- 2. Paleta Cromática -->
+              <!-- 2. Paleta Cromática y Colores -->
               <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
                 <div>
-                  <div class="flex items-center space-x-2 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                  <div class="flex items-center space-x-2 dynamic-primary-text text-xs font-semibold uppercase tracking-wider mb-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"></path>
                     </svg>
                     <span>Paleta Cromática</span>
                   </div>
-                  <h3 class="text-sm font-semibold tracking-tight">Modo Oscuro & Claro</h3>
-                  <p class="text-xs text-slate-400 mt-0.5">Control de contraste y tonos de acento</p>
+                  <h3 class="text-sm font-semibold tracking-tight">Colores de Marca en Vivo</h3>
+                  <p class="text-xs text-slate-400 mt-0.5">Aplica instantáneamente a botones, paneles y bordes</p>
 
-                  <div class="space-y-3.5 mt-4">
+                  <div class="space-y-4 mt-4">
                     <div>
-                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Color de Marca Primario</label>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Color Principal de Marca</label>
                       <div class="flex items-center space-x-2.5">
-                        <input type="color" id="cfg-primary-color" value="#2563eb" class="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0">
-                        <input type="text" id="cfg-primary-color-text" value="#2563eb" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-1.5 text-xs font-mono">
+                        <input type="color" id="cfg-primary-color" value="#2563eb" oninput="updatePrimaryColor(this.value)" class="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0">
+                        <input type="text" id="cfg-primary-color-text" value="#2563eb" oninput="updatePrimaryColor(this.value)" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs font-mono">
                       </div>
                       
                       <!-- Presets corporativos -->
-                      <div class="flex items-center space-x-2 mt-2">
-                        <button type="button" onclick="setPrimaryPreset('#2563eb')" class="w-4 h-4 rounded-full bg-[#2563eb] border border-white/20" title="Cobalto"></button>
-                        <button type="button" onclick="setPrimaryPreset('#0284c7')" class="w-4 h-4 rounded-full bg-[#0284c7] border border-white/20" title="Cyan"></button>
-                        <button type="button" onclick="setPrimaryPreset('#059669')" class="w-4 h-4 rounded-full bg-[#059669] border border-white/20" title="Esmeralda"></button>
-                        <button type="button" onclick="setPrimaryPreset('#7c3aed')" class="w-4 h-4 rounded-full bg-[#7c3aed] border border-white/20" title="Violeta"></button>
-                        <button type="button" onclick="setPrimaryPreset('#e11d48')" class="w-4 h-4 rounded-full bg-[#e11d48] border border-white/20" title="Carmín"></button>
-                        <button type="button" onclick="setPrimaryPreset('#d97706')" class="w-4 h-4 rounded-full bg-[#d97706] border border-white/20" title="Ámbar"></button>
+                      <div class="flex items-center space-x-2 mt-2.5">
+                        <button type="button" onclick="updatePrimaryColor('#2563eb')" class="w-5 h-5 rounded-full bg-[#2563eb] border-2 border-white/40 shadow-sm transition transform hover:scale-110" title="Cobalto"></button>
+                        <button type="button" onclick="updatePrimaryColor('#0284c7')" class="w-5 h-5 rounded-full bg-[#0284c7] border-2 border-white/40 shadow-sm transition transform hover:scale-110" title="Cyan"></button>
+                        <button type="button" onclick="updatePrimaryColor('#059669')" class="w-5 h-5 rounded-full bg-[#059669] border-2 border-white/40 shadow-sm transition transform hover:scale-110" title="Esmeralda"></button>
+                        <button type="button" onclick="updatePrimaryColor('#7c3aed')" class="w-5 h-5 rounded-full bg-[#7c3aed] border-2 border-white/40 shadow-sm transition transform hover:scale-110" title="Violeta"></button>
+                        <button type="button" onclick="updatePrimaryColor('#e11d48')" class="w-5 h-5 rounded-full bg-[#e11d48] border-2 border-white/40 shadow-sm transition transform hover:scale-110" title="Carmín"></button>
+                        <button type="button" onclick="updatePrimaryColor('#d97706')" class="w-5 h-5 rounded-full bg-[#d97706] border-2 border-white/40 shadow-sm transition transform hover:scale-110" title="Ámbar"></button>
                       </div>
                     </div>
 
                     <div>
-                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Color de Acento (Estados OK)</label>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Color de Acento (Estados Activos)</label>
                       <div class="flex items-center space-x-2.5">
-                        <input type="color" id="cfg-accent-color" value="#059669" class="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0">
-                        <input type="text" id="cfg-accent-color-text" value="#059669" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-1.5 text-xs font-mono">
+                        <input type="color" id="cfg-accent-color" value="#059669" oninput="updateAccentColor(this.value)" class="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0">
+                        <input type="text" id="cfg-accent-color-text" value="#059669" oninput="updateAccentColor(this.value)" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs font-mono">
                       </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5 pt-1">
                       <div>
-                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Base Oscura</label>
-                        <select id="cfg-bg-dark" class="w-full bg-[#11141d] border border-white/10 rounded-lg px-2 py-1.5 text-xs">
+                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Fondo Modo Oscuro</label>
+                        <select id="cfg-bg-dark" onchange="updateBgDark(this.value)" class="w-full bg-[#11141d] border border-white/10 rounded-lg px-2 py-2 text-xs">
                           <option value="#090a0f">Obsidiana (#090a0f)</option>
                           <option value="#000000">Negro Puro (#000000)</option>
                           <option value="#0f172a">Slate Profundo (#0f172a)</option>
                         </select>
                       </div>
                       <div>
-                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Base Clara</label>
-                        <select id="cfg-bg-light" class="w-full bg-[#11141d] border border-white/10 rounded-lg px-2 py-1.5 text-xs">
+                        <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Fondo Modo Claro</label>
+                        <select id="cfg-bg-light" onchange="updateBgLight(this.value)" class="w-full bg-[#11141d] border border-white/10 rounded-lg px-2 py-2 text-xs">
                           <option value="#f8fafc">Slate Claro (#f8fafc)</option>
                           <option value="#ffffff">Blanco Puro (#ffffff)</option>
                           <option value="#f1f5f9">Gris Neutro (#f1f5f9)</option>
@@ -823,30 +881,30 @@
                 </div>
 
                 <div class="mt-5">
-                  <button type="button" onclick="toggleThemeMode()" class="w-full py-2 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-medium transition flex items-center justify-center space-x-2">
+                  <button type="button" onclick="toggleThemeMode()" class="w-full py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-medium transition flex items-center justify-center space-x-2 border border-white/10">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                     </svg>
-                    <span>Conmutar Modo Claro / Oscuro</span>
+                    <span>Probar Modo Claro / Oscuro</span>
                   </button>
                 </div>
               </div>
 
-              <!-- 3. Tipografía & Pantallas Grandes -->
+              <!-- 3. Tipografía, Escala y PWA -->
               <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
                 <div>
-                  <div class="flex items-center space-x-2 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                  <div class="flex items-center space-x-2 dynamic-primary-text text-xs font-semibold uppercase tracking-wider mb-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <polyline points="4 7 4 4 20 4 20 7"></polyline>
                       <line x1="9" y1="20" x2="15" y2="20"></line>
                       <line x1="12" y1="4" x2="12" y2="20"></line>
                     </svg>
-                    <span>Tipografía & Pantallas 30"-35"</span>
+                    <span>Tipografía & PWA</span>
                   </div>
-                  <h3 class="text-sm font-semibold tracking-tight">Escala & App PWA</h3>
-                  <p class="text-xs text-slate-400 mt-0.5">Adaptabilidad visual para monitores amplios</p>
+                  <h3 class="text-sm font-semibold tracking-tight">Fuente, Escala y PWA</h3>
+                  <p class="text-xs text-slate-400 mt-0.5">Adaptabilidad para pantallas grandes de 30" a 35"</p>
 
-                  <div class="space-y-3.5 mt-4">
+                  <div class="space-y-4 mt-4">
                     <div>
                       <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Familia Tipográfica</label>
                       <select id="cfg-font-family" onchange="previewFontFamily(this.value)" class="w-full bg-[#11141d] border border-white/10 rounded-lg px-2.5 py-2 text-xs">
@@ -860,34 +918,43 @@
 
                     <div>
                       <div class="flex justify-between items-center mb-1">
-                        <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Escala Global de Texto</label>
-                        <span id="cfg-scale-label" class="text-[11px] text-blue-400 font-mono font-medium">15px</span>
+                        <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Escala de Texto</label>
+                        <span id="cfg-scale-label" class="text-[11px] dynamic-primary-text font-mono font-medium">15px</span>
                       </div>
                       <select id="cfg-font-scale" onchange="previewFontSize(this.value)" class="w-full bg-[#11141d] border border-white/10 rounded-lg px-2.5 py-2 text-xs">
-                        <option value="compact">Compacto (13px) - Densidad de Datos</option>
+                        <option value="compact">Compacto (13px) - Mayor Densidad</option>
                         <option value="normal" selected>Normal (15px) - Estándar</option>
-                        <option value="comfortable">Confort (17px) - Monitores 27"-30"</option>
+                        <option value="comfortable">Confort (17px) - Pantallas 27"-30"</option>
                         <option value="large">Amplio / 4K (19px) - Monitores 30", 35" Ultrawide</option>
                       </select>
                     </div>
 
+                    <!-- Subida de Icono PWA -->
                     <div>
-                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Icono PWA (Mobile App Manifest)</label>
-                      <input type="url" id="cfg-pwa-icon" placeholder="https://ejemplo.com/pwa-icon.png" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Icono PWA (Móvil / Escritorio)</label>
+                      <div class="flex items-center space-x-2">
+                        <button type="button" onclick="document.getElementById('upload-pwa-file').click()" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium flex items-center space-x-2 transition border border-white/10 flex-shrink-0">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                          </svg>
+                          <span>Subir Icono PWA</span>
+                        </button>
+                        <input type="text" id="cfg-pwa-icon" placeholder="O pega URL..." onchange="handlePwaUrlChange(this.value)" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none">
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div class="mt-5 p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center space-x-3">
-                  <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <img id="preview-pwa-img" class="w-full h-full object-cover hidden" alt="PWA Icon">
+                  <div class="w-10 h-10 rounded-xl dynamic-primary-bg flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+                    <img id="preview-pwa-img" class="w-full h-full object-contain p-1 hidden" alt="PWA Icon">
                     <svg id="preview-pwa-placeholder" class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                     </svg>
                   </div>
                   <div>
-                    <span class="text-xs font-semibold block">Icono PWA Instalable</span>
-                    <span class="text-[10px] text-slate-400">Acceso directo en smartphone / desktop</span>
+                    <span class="text-xs font-semibold block text-slate-200">Icono PWA Instalable</span>
+                    <span class="text-[10px] text-slate-400">Visualización en pantalla de inicio</span>
                   </div>
                 </div>
               </div>
@@ -899,11 +966,11 @@
               <button type="button" onclick="resetBrandingDefaults()" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-slate-400 hover:text-white transition">
                 Restablecer Fábrica
               </button>
-              <button type="button" onclick="saveBrandingSettings()" class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-md shadow-blue-600/20 transition flex items-center space-x-2">
+              <button type="button" onclick="saveBrandingSettings()" class="px-5 py-2 rounded-lg btn-brand-primary text-xs font-semibold transition flex items-center space-x-2">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Guardar Parámetros de Marca</span>
+                <span>Guardar Personalización Global</span>
               </button>
             </div>
           </div>
@@ -935,14 +1002,14 @@
                     <div>
                       <div class="flex justify-between items-center mb-1">
                         <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">PIN de 8 Dígitos</label>
-                        <button type="button" onclick="generateRandomPin()" class="text-[10px] text-blue-400 hover:text-blue-300 font-mono">Generar Aleatorio</button>
+                        <button type="button" onclick="generateRandomPin()" class="text-[10px] dynamic-primary-text hover:underline font-mono">Generar Aleatorio</button>
                       </div>
                       <input type="text" id="nu-pin" required maxlength="8" pattern="\d{8}" placeholder="Ej. 49201948" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs font-mono tracking-widest focus:outline-none focus:border-blue-500">
                     </div>
 
                     <div id="create-user-status" class="text-xs min-h-[16px]"></div>
 
-                    <button type="submit" class="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition shadow-sm">
+                    <button type="submit" class="w-full py-2 rounded-lg btn-brand-primary font-semibold text-xs transition">
                       Registrar Operador
                     </button>
                   </form>
@@ -990,7 +1057,7 @@
             <div class="pro-card p-5 rounded-xl">
               <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Memoria Proceso (RSS)</span>
               <div id="metric-rss" class="text-2xl font-bold font-mono mt-2">-- MB</div>
-              <p class="text-xs text-emerald-400 mt-1.5">Límite cPanel seguro (&lt;100MB)</p>
+              <p class="text-xs dynamic-accent-text mt-1.5">Límite cPanel seguro (&lt;100MB)</p>
             </div>
             <div class="pro-card p-5 rounded-xl">
               <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">V8 Heap Utilizado</span>
@@ -1000,7 +1067,7 @@
             <div class="pro-card p-5 rounded-xl">
               <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Uptime del Motor</span>
               <div id="metric-uptime" class="text-2xl font-bold font-mono mt-2">-- seg</div>
-              <p class="text-xs text-blue-400 mt-1.5">Fastify Engine v4.x</p>
+              <p class="text-xs dynamic-primary-text mt-1.5">Fastify Engine v4.x</p>
             </div>
           </div>
 
@@ -1027,12 +1094,14 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- JAVASCRIPT APP LOGIC (100% LIBRE DE EMOJIS)              -->
+  <!-- JAVASCRIPT ENGINE CON REACTIVIDAD DE MARCA COMPLETA       -->
   <!-- ======================================================== -->
   <script>
     let currentPin = "";
     let currentUser = null;
     let isSidebarCollapsed = false;
+    let activeTabId = "dashboard";
+    let activeConfigSubTab = "branding";
     let currentCustomers = [];
     let currentInvoices = [];
     let currentDevices = [];
@@ -1055,6 +1124,15 @@
       themeMode: "dark"
     };
 
+    function hexToRgb(hex) {
+      if (!hex || typeof hex !== 'string') return "37, 99, 235";
+      let c = hex.replace('#', '');
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      const num = parseInt(c, 16);
+      if (isNaN(num)) return "37, 99, 235";
+      return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
+    }
+
     function loadSavedSettings() {
       const saved = localStorage.getItem('turbonetwork_branding');
       if (saved) {
@@ -1065,6 +1143,7 @@
       applyBranding(appSettings);
     }
 
+    // APLICACIÓN VISUAL Y REACTIVIDAD EN TIEMPO REAL
     function applyBranding(settings) {
       const name = settings.systemName || "TurboNetwork";
       document.getElementById('brand-system-name').textContent = name;
@@ -1073,63 +1152,96 @@
       document.getElementById('page-title').textContent = name + " • ISP Enterprise Platform";
       document.getElementById('brand-tagline').textContent = settings.tagline || "ISP Enterprise Core";
 
-      // Custom Logo
-      if (settings.logoUrl && settings.logoUrl.trim() !== "") {
-        document.getElementById('sidebar-default-icon').classList.add('hidden');
-        const sideImg = document.getElementById('sidebar-custom-img');
-        sideImg.src = settings.logoUrl;
-        sideImg.classList.remove('hidden');
+      // 1. LOGO DEL SISTEMA (Sidebar, Login y Preview)
+      const hasLogo = settings.logoUrl && settings.logoUrl.trim() !== "";
+      const sideBox = document.getElementById('sidebar-logo-box');
+      const sideDefIcon = document.getElementById('sidebar-default-icon');
+      const sideCustomImg = document.getElementById('sidebar-custom-img');
 
-        document.getElementById('login-default-icon').classList.add('hidden');
-        const loginImg = document.getElementById('login-custom-img');
-        loginImg.src = settings.logoUrl;
-        loginImg.classList.remove('hidden');
+      const loginBox = document.getElementById('login-logo-wrapper');
+      const loginDefIcon = document.getElementById('login-default-icon');
+      const loginCustomImg = document.getElementById('login-custom-img');
 
-        document.getElementById('preview-logo-placeholder').classList.add('hidden');
-        const prevImg = document.getElementById('preview-logo-img');
-        prevImg.src = settings.logoUrl;
-        prevImg.classList.remove('hidden');
+      const prevBox = document.getElementById('preview-box-logo');
+      const prevDefIcon = document.getElementById('preview-logo-placeholder');
+      const prevCustomImg = document.getElementById('preview-logo-img');
+      const btnRemoveLogo = document.getElementById('btn-remove-logo');
+
+      if (hasLogo) {
+        // Mostrar imagen y ocultar icono vector
+        sideDefIcon.classList.add('hidden');
+        sideCustomImg.src = settings.logoUrl;
+        sideCustomImg.classList.remove('hidden');
+        sideBox.style.backgroundColor = "transparent";
+
+        loginDefIcon.classList.add('hidden');
+        loginCustomImg.src = settings.logoUrl;
+        loginCustomImg.classList.remove('hidden');
+        loginBox.style.backgroundColor = "transparent";
+
+        prevDefIcon.classList.add('hidden');
+        prevCustomImg.src = settings.logoUrl;
+        prevCustomImg.classList.remove('hidden');
+        if (btnRemoveLogo) btnRemoveLogo.classList.remove('hidden');
       } else {
-        document.getElementById('sidebar-default-icon').classList.remove('hidden');
-        document.getElementById('sidebar-custom-img').classList.add('hidden');
-        document.getElementById('login-default-icon').classList.remove('hidden');
-        document.getElementById('login-custom-img').classList.add('hidden');
-        document.getElementById('preview-logo-placeholder').classList.remove('hidden');
-        document.getElementById('preview-logo-img').classList.add('hidden');
+        // Restaurar icono vector y fondo de marca primario
+        sideDefIcon.classList.remove('hidden');
+        sideCustomImg.classList.add('hidden');
+        sideBox.style.backgroundColor = settings.primaryColor || "#2563eb";
+
+        loginDefIcon.classList.remove('hidden');
+        loginCustomImg.classList.add('hidden');
+        loginBox.style.backgroundColor = settings.primaryColor || "#2563eb";
+
+        prevDefIcon.classList.remove('hidden');
+        prevCustomImg.classList.add('hidden');
+        if (btnRemoveLogo) btnRemoveLogo.classList.add('hidden');
       }
 
-      // Favicon
+      // 2. FAVICON DINÁMICO
       if (settings.faviconUrl && settings.faviconUrl.trim() !== "") {
         document.getElementById('dynamic-favicon').href = settings.faviconUrl;
       }
 
-      // PWA Icon
+      // 3. PWA ICON
       if (settings.pwaIconUrl && settings.pwaIconUrl.trim() !== "") {
         document.getElementById('pwa-apple-icon').href = settings.pwaIconUrl;
         document.getElementById('preview-pwa-placeholder').classList.add('hidden');
         const pwaImg = document.getElementById('preview-pwa-img');
         pwaImg.src = settings.pwaIconUrl;
         pwaImg.classList.remove('hidden');
+      } else {
+        document.getElementById('preview-pwa-placeholder').classList.remove('hidden');
+        document.getElementById('preview-pwa-img').classList.add('hidden');
       }
 
-      // CSS Variables for Colors
-      document.documentElement.style.setProperty('--brand-primary', settings.primaryColor || '#2563eb');
-      document.documentElement.style.setProperty('--brand-accent', settings.accentColor || '#059669');
+      // 4. CSS VARIABLES DE COLORES
+      const primary = settings.primaryColor || '#2563eb';
+      const accent = settings.accentColor || '#059669';
+      document.documentElement.style.setProperty('--brand-primary', primary);
+      document.documentElement.style.setProperty('--brand-primary-rgb', hexToRgb(primary));
+      document.documentElement.style.setProperty('--brand-accent', accent);
+      document.documentElement.style.setProperty('--brand-accent-rgb', hexToRgb(accent));
       document.documentElement.style.setProperty('--bg-dark', settings.darkBgColor || '#090a0f');
       document.documentElement.style.setProperty('--bg-light', settings.lightBgColor || '#f8fafc');
 
-      // Font Family & Scale
+      // Actualizar barras de ancho de banda dinámicas
+      document.querySelectorAll('.bandwidth-bar').forEach(el => {
+        el.style.backgroundColor = primary;
+      });
+
+      // 5. TIPOGRAFÍA Y ESCALA
       previewFontFamily(settings.fontFamily || 'inter');
       previewFontSize(settings.fontSizeScale || 'normal');
 
-      // Dark / Light Theme
+      // 6. MODO CLARO / OSCURO
       if (settings.themeMode === 'light') {
         document.documentElement.classList.remove('dark');
       } else {
         document.documentElement.classList.add('dark');
       }
 
-      // Sync form fields
+      // Sincronizar inputs del formulario
       const nameInp = document.getElementById('cfg-system-name');
       if (nameInp) {
         document.getElementById('cfg-system-name').value = settings.systemName;
@@ -1137,13 +1249,121 @@
         document.getElementById('cfg-logo-url').value = settings.logoUrl;
         document.getElementById('cfg-favicon-url').value = settings.faviconUrl;
         document.getElementById('cfg-pwa-icon').value = settings.pwaIconUrl;
-        document.getElementById('cfg-primary-color').value = settings.primaryColor;
-        document.getElementById('cfg-primary-color-text').value = settings.primaryColor;
-        document.getElementById('cfg-accent-color').value = settings.accentColor;
-        document.getElementById('cfg-accent-color-text').value = settings.accentColor;
+        document.getElementById('cfg-primary-color').value = primary;
+        document.getElementById('cfg-primary-color-text').value = primary;
+        document.getElementById('cfg-accent-color').value = accent;
+        document.getElementById('cfg-accent-color-text').value = accent;
+        document.getElementById('cfg-bg-dark').value = settings.darkBgColor;
+        document.getElementById('cfg-bg-light').value = settings.lightBgColor;
         document.getElementById('cfg-font-family').value = settings.fontFamily;
         document.getElementById('cfg-font-scale').value = settings.fontSizeScale;
       }
+
+      updateActiveNavStyles();
+    }
+
+    // MANEJO DE SUBIDA DIRECTA DE ARCHIVOS DESDE EL DISCO LOCAL
+    function handleFileUpload(event, type) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        if (type === 'logo') {
+          appSettings.logoUrl = dataUrl;
+          document.getElementById('cfg-logo-url').value = dataUrl;
+        } else if (type === 'favicon') {
+          appSettings.faviconUrl = dataUrl;
+          document.getElementById('cfg-favicon-url').value = dataUrl;
+        } else if (type === 'pwa') {
+          appSettings.pwaIconUrl = dataUrl;
+          document.getElementById('cfg-pwa-icon').value = dataUrl;
+        }
+        applyBranding(appSettings);
+        showToast(`Archivo cargado para ${type.toUpperCase()}`);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeCustomLogo() {
+      appSettings.logoUrl = "";
+      document.getElementById('cfg-logo-url').value = "";
+      applyBranding(appSettings);
+      showToast("Logotipo restablecido al predeterminado");
+    }
+
+    function handleLogoUrlChange(val) {
+      appSettings.logoUrl = val;
+      applyBranding(appSettings);
+    }
+
+    function handleFaviconUrlChange(val) {
+      appSettings.faviconUrl = val;
+      applyBranding(appSettings);
+    }
+
+    function handlePwaUrlChange(val) {
+      appSettings.pwaIconUrl = val;
+      applyBranding(appSettings);
+    }
+
+    function handleNameInput(val) {
+      appSettings.systemName = val;
+      document.getElementById('brand-system-name').textContent = val;
+      document.getElementById('login-system-title').textContent = val + " Enterprise";
+      document.getElementById('breadcrumb-app').textContent = val;
+    }
+
+    function handleTaglineInput(val) {
+      appSettings.tagline = val;
+      document.getElementById('brand-tagline').textContent = val;
+    }
+
+    // ACTUALIZACIÓN DE COLORES EN TIEMPO REAL
+    function updatePrimaryColor(color) {
+      if (!color) return;
+      appSettings.primaryColor = color;
+      document.documentElement.style.setProperty('--brand-primary', color);
+      document.documentElement.style.setProperty('--brand-primary-rgb', hexToRgb(color));
+      
+      const inpCol = document.getElementById('cfg-primary-color');
+      const inpText = document.getElementById('cfg-primary-color-text');
+      if (inpCol) inpCol.value = color;
+      if (inpText) inpText.value = color;
+
+      // Si no hay logo personalizado, actualizar fondo del icono
+      if (!appSettings.logoUrl) {
+        document.getElementById('sidebar-logo-box').style.backgroundColor = color;
+        document.getElementById('login-logo-wrapper').style.backgroundColor = color;
+      }
+
+      document.querySelectorAll('.bandwidth-bar').forEach(el => {
+        el.style.backgroundColor = color;
+      });
+
+      updateActiveNavStyles();
+    }
+
+    function updateAccentColor(color) {
+      if (!color) return;
+      appSettings.accentColor = color;
+      document.documentElement.style.setProperty('--brand-accent', color);
+      document.documentElement.style.setProperty('--brand-accent-rgb', hexToRgb(color));
+      const inpCol = document.getElementById('cfg-accent-color');
+      const inpText = document.getElementById('cfg-accent-color-text');
+      if (inpCol) inpCol.value = color;
+      if (inpText) inpText.value = color;
+    }
+
+    function updateBgDark(val) {
+      appSettings.darkBgColor = val;
+      document.documentElement.style.setProperty('--bg-dark', val);
+    }
+
+    function updateBgLight(val) {
+      appSettings.lightBgColor = val;
+      document.documentElement.style.setProperty('--bg-light', val);
     }
 
     function toggleThemeMode() {
@@ -1207,25 +1427,8 @@
       }
     }
 
-    function setPrimaryPreset(color) {
-      document.getElementById('cfg-primary-color').value = color;
-      document.getElementById('cfg-primary-color-text').value = color;
-      document.documentElement.style.setProperty('--brand-primary', color);
-    }
-
+    // PERSISTENCIA EN SERVIDOR Y LOCALSTORAGE
     async function saveBrandingSettings() {
-      appSettings.systemName = document.getElementById('cfg-system-name').value;
-      appSettings.tagline = document.getElementById('cfg-tagline').value;
-      appSettings.logoUrl = document.getElementById('cfg-logo-url').value;
-      appSettings.faviconUrl = document.getElementById('cfg-favicon-url').value;
-      appSettings.pwaIconUrl = document.getElementById('cfg-pwa-icon').value;
-      appSettings.primaryColor = document.getElementById('cfg-primary-color').value;
-      appSettings.accentColor = document.getElementById('cfg-accent-color').value;
-      appSettings.darkBgColor = document.getElementById('cfg-bg-dark').value;
-      appSettings.lightBgColor = document.getElementById('cfg-bg-light').value;
-      appSettings.fontFamily = document.getElementById('cfg-font-family').value;
-      appSettings.fontSizeScale = document.getElementById('cfg-font-scale').value;
-
       localStorage.setItem('turbonetwork_branding', JSON.stringify(appSettings));
       applyBranding(appSettings);
 
@@ -1237,11 +1440,11 @@
         });
       } catch (e) {}
 
-      showToast("Configuración de marca guardada");
+      showToast("Configuración guardada en el servidor");
     }
 
     function resetBrandingDefaults() {
-      if (!confirm("¿Restablecer configuración de marca a valores originales?")) return;
+      if (!confirm("¿Restablecer configuración de marca a los valores originales?")) return;
       localStorage.removeItem('turbonetwork_branding');
       appSettings = {
         systemName: "TurboNetwork",
@@ -1258,7 +1461,7 @@
         themeMode: "dark"
       };
       applyBranding(appSettings);
-      showToast("Valores restablecidos");
+      showToast("Valores restablecidos a fábrica");
     }
 
     function showToast(msg) {
@@ -1266,6 +1469,59 @@
       document.getElementById('toast-message').textContent = msg;
       toast.classList.remove('hidden');
       setTimeout(() => toast.classList.add('hidden'), 2500);
+    }
+
+    // ESTILOS DINÁMICOS DE NAVEGACIÓN
+    function updateActiveNavStyles() {
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.style.backgroundColor = "transparent";
+        btn.style.color = "";
+      });
+      const activeBtn = document.getElementById('nav-' + activeTabId);
+      if (activeBtn) {
+        const rgb = hexToRgb(appSettings.primaryColor);
+        activeBtn.style.backgroundColor = `rgba(${rgb}, 0.14)`;
+        activeBtn.style.color = appSettings.primaryColor;
+      }
+    }
+
+    function switchTab(tabId) {
+      activeTabId = tabId;
+      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+      updateActiveNavStyles();
+
+      const titles = {
+        dashboard: "Dashboard General",
+        customers: "Clientes & Contratos",
+        billing: "Facturación & Cobranzas",
+        network: "Red & OLTs Multi-Vendor",
+        plans: "Planes de Ancho de Banda",
+        config: "Configuración & Marca",
+        system: "Diagnóstico & RAM"
+      };
+      document.getElementById('breadcrumb-section').textContent = titles[tabId] || tabId;
+
+      if (tabId === 'system') loadSystemMetrics();
+      if (tabId === 'config') loadConfigModule();
+    }
+
+    function switchConfigSubTab(subTabId) {
+      activeConfigSubTab = subTabId;
+      ['branding', 'users', 'roles'].forEach(id => {
+        document.getElementById('config-subtab-' + id).classList.add('hidden');
+        const btn = document.getElementById('subnav-' + id);
+        btn.classList.remove('btn-brand-primary');
+        btn.classList.add('text-slate-400');
+        btn.style.backgroundColor = "transparent";
+        btn.style.color = "";
+      });
+      document.getElementById('config-subtab-' + subTabId).classList.remove('hidden');
+      const activeBtn = document.getElementById('subnav-' + subTabId);
+      activeBtn.classList.remove('text-slate-400');
+      activeBtn.classList.add('btn-brand-primary');
+      activeBtn.style.backgroundColor = appSettings.primaryColor;
     }
 
     // Sidebar Collapsible
@@ -1298,49 +1554,7 @@
       sidebar.classList.toggle('-translate-x-full');
     }
 
-    // Navigation Switcher
-    function switchTab(tabId) {
-      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
-      document.getElementById('tab-' + tabId).classList.remove('hidden');
-
-      document.querySelectorAll('.nav-item').forEach(btn => {
-        btn.classList.remove('bg-blue-600/15', 'text-blue-400', 'font-semibold');
-        btn.classList.add('text-slate-400');
-      });
-      const activeBtn = document.getElementById('nav-' + tabId);
-      if (activeBtn) {
-        activeBtn.classList.add('bg-blue-600/15', 'text-blue-400', 'font-semibold');
-        activeBtn.classList.remove('text-slate-400');
-      }
-
-      const titles = {
-        dashboard: "Dashboard General",
-        customers: "Clientes & Contratos",
-        billing: "Facturación & Cobranzas",
-        network: "Red & OLTs Multi-Vendor",
-        plans: "Planes de Ancho de Banda",
-        config: "Configuración & Marca",
-        system: "Diagnóstico & RAM"
-      };
-      document.getElementById('breadcrumb-section').textContent = titles[tabId] || tabId;
-
-      if (tabId === 'system') loadSystemMetrics();
-      if (tabId === 'config') loadConfigModule();
-    }
-
-    function switchConfigSubTab(subTabId) {
-      ['branding', 'users', 'roles'].forEach(id => {
-        document.getElementById('config-subtab-' + id).classList.add('hidden');
-        document.getElementById('subnav-' + id).classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
-        document.getElementById('subnav-' + id).classList.add('text-slate-400');
-      });
-      document.getElementById('config-subtab-' + subTabId).classList.remove('hidden');
-      const activeBtn = document.getElementById('subnav-' + subTabId);
-      activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
-      activeBtn.classList.remove('text-slate-400');
-    }
-
-    // 8-Digit Keypad Functions
+    // 8-Digit Keypad
     function pressDigit(d) {
       if (currentPin.length < 8) {
         currentPin += d;
@@ -1388,7 +1602,7 @@
     async function submitPinLogin() {
       const feedback = document.getElementById('login-feedback');
       feedback.textContent = "Verificando credenciales...";
-      feedback.className = "text-xs min-h-[20px] text-blue-400 font-medium mb-3";
+      feedback.className = "text-xs min-h-[20px] dynamic-primary-text font-medium mb-3 font-mono";
 
       try {
         const res = await fetch('/api/auth/pin-login', {
@@ -1404,7 +1618,7 @@
           showWelcomeGreeting(currentUser);
         } else {
           feedback.textContent = data.message || "PIN no reconocido";
-          feedback.className = "text-xs min-h-[20px] text-rose-400 font-medium mb-3";
+          feedback.className = "text-xs min-h-[20px] text-rose-400 font-medium mb-3 font-mono";
           shakeKeypad();
           currentPin = "";
           setTimeout(updatePinDots, 450);
@@ -1487,7 +1701,7 @@
           </td>
           <td class="px-5 py-3.5 text-slate-400 font-mono">${c.identification}</td>
           <td class="px-5 py-3.5">
-            <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-medium">
+            <span class="px-2 py-0.5 rounded-full dynamic-primary-subtle border text-[10px] font-medium font-mono">
               ${c.planName || 'Fibra GPON'}
             </span>
           </td>
@@ -1495,10 +1709,10 @@
           <td class="px-5 py-3.5">
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
               c.status === 'active' 
-                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                ? 'dynamic-accent-subtle border' 
                 : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
             }">
-              <span class="w-1 h-1 rounded-full ${c.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
+              <span class="w-1 h-1 rounded-full ${c.status === 'active' ? 'dynamic-primary-bg' : 'bg-rose-400'}"></span>
               ${c.status === 'active' ? 'Activo' : 'Suspendido'}
             </span>
           </td>
@@ -1541,7 +1755,7 @@
           <td class="px-5 py-3.5">
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
               inv.status === 'paid' 
-                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                ? 'dynamic-accent-subtle border' 
                 : inv.status === 'overdue'
                 ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                 : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
@@ -1551,7 +1765,7 @@
           </td>
           <td class="px-5 py-3.5 text-right">
             ${inv.status !== 'paid' ? `
-              <button onclick="payInvoice(${inv.id})" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-[10px] transition shadow-sm">
+              <button onclick="payInvoice(${inv.id})" class="px-2.5 py-1 rounded-lg dynamic-primary-bg text-white font-medium text-[10px] transition shadow-sm hover:brightness-110">
                 Cobrar
               </button>
             ` : `
@@ -1598,12 +1812,12 @@
                 d.vendor === 'mikrotik' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' :
                 d.vendor === 'huawei_olt' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
                 d.vendor === 'vsol_olt' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
-                'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                'dynamic-primary-subtle border'
               }">
                 ${d.vendor.replace('_', ' ')}
               </span>
-              <span class="text-[11px] text-emerald-400 font-mono flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ONLINE
+              <span class="text-[11px] dynamic-accent-text font-mono flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg"></span> ONLINE
               </span>
             </div>
             <h3 class="text-sm font-semibold mt-2.5">${d.name}</h3>
@@ -1640,7 +1854,7 @@
         });
         const data = await res.json();
         if (data.success) {
-          resultSpan.innerHTML = `<span class="text-emerald-400 font-mono font-medium">${data.data.testResult.latencyMs} ms OK</span>`;
+          resultSpan.innerHTML = `<span class="dynamic-accent-text font-mono font-medium">${data.data.testResult.latencyMs} ms OK</span>`;
         }
       } catch {
         resultSpan.textContent = "Error de red";
@@ -1655,7 +1869,7 @@
       container.innerHTML = list.map(p => `
         <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
           <div>
-            <span class="text-[10px] font-semibold uppercase tracking-wider text-blue-400 font-mono">PLAN FIBRA</span>
+            <span class="text-[10px] font-semibold uppercase tracking-wider dynamic-primary-text font-mono">PLAN FIBRA</span>
             <h3 class="text-base font-semibold mt-1">${p.name}</h3>
             <div class="mt-3 flex items-baseline gap-1">
               <span class="text-2xl font-bold font-mono">${p.currency}${p.price}</span>
@@ -1716,12 +1930,12 @@
             </div>
           </div>
           <div class="flex items-center space-x-3">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide dynamic-primary-subtle border font-mono">
               ${u.roleName}
             </span>
             <div class="text-right">
               <div class="font-mono text-xs text-slate-500">${u.pinMasked}</div>
-              <div class="text-[10px] text-emerald-400 font-medium">Activo</div>
+              <div class="text-[10px] dynamic-accent-text font-medium">Activo</div>
             </div>
           </div>
         </div>
@@ -1739,12 +1953,12 @@
               <div class="text-[9px] uppercase font-semibold text-slate-500 tracking-wider">Permisos Clave:</div>
               ${r.permissions.slice(0, 4).map(p => `
                 <div class="flex items-center space-x-1.5 text-[11px] text-slate-300 font-mono">
-                  <span class="text-emerald-400 text-[9px]">•</span>
+                  <span class="dynamic-accent-text text-[9px]">•</span>
                   <span>${p}</span>
                 </div>
               `).join('')}
               ${r.permissions.length > 4 ? `
-                <div class="text-[10px] text-blue-400 font-mono pt-0.5">+ ${r.permissions.length - 4} permisos más</div>
+                <div class="text-[10px] dynamic-primary-text font-mono pt-0.5">+ ${r.permissions.length - 4} permisos más</div>
               ` : ''}
             </div>
           </div>
@@ -1766,7 +1980,7 @@
       e.preventDefault();
       const statusDiv = document.getElementById('create-user-status');
       statusDiv.textContent = "Registrando operador...";
-      statusDiv.className = "text-xs text-blue-400 font-mono";
+      statusDiv.className = "text-xs dynamic-primary-text font-mono";
 
       const name = document.getElementById('nu-name').value;
       const email = document.getElementById('nu-email').value;
@@ -1783,7 +1997,7 @@
 
         if (data.success) {
           statusDiv.textContent = "Operador registrado correctamente";
-          statusDiv.className = "text-xs text-emerald-400 font-mono";
+          statusDiv.className = "text-xs dynamic-accent-text font-mono";
           document.getElementById('new-user-form').reset();
           await loadConfigModule();
           showToast("Operador creado con éxito");
