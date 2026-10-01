@@ -1,0 +1,47 @@
+[
+  {
+    "id": "cat-fibra",
+    "name": "Cables & Fibra Óptica",
+    "description": "Bobinas, drops, pigtails y patch cords",
+    "color": "#2563eb",
+    "tenantId": "tenant-isp-sur",
+    "createdAt": "2026-09-30T15:40:32.443Z",
+    "updatedAt": "2026-09-30T15:40:32.443Z"
+  },
+  {
+    "id": "cat-activos",
+    "name": "Equipos Activos & ONUs",
+    "description": "Routers, ONUs XPON, switches y OLTs",
+    "color": "#059669",
+    "tenantId": "tenant-isp-sur",
+    "createdAt": "2026-09-30T15:40:32.443Z",
+    "updatedAt": "2026-09-30T15:40:32.443Z"
+  },
+  {
+    "id": "cat-pasivos",
+    "name": "Ferretería & Pasivos",
+    "description": "Splitters, cajas NAP, mangas y conectores",
+    "color": "#7c3aed",
+    "tenantId": "tenant-isp-sur",
+    "createdAt": "2026-09-30T15:40:32.443Z",
+    "updatedAt": "2026-09-30T15:40:32.443Z"
+  },
+  {
+    "id": "cat-epp",
+    "name": "EPP & Seguridad Industrial",
+    "description": "Equipos de protección personal para técnicos",
+    "color": "#d97706",
+    "tenantId": "tenant-isp-sur",
+    "createdAt": "2026-09-30T15:40:32.443Z",
+    "updatedAt": "2026-09-30T15:40:32.443Z"
+  },
+  {
+    "id": "cat-herramientas",
+    "name": "Herramientas & Medición",
+    "description": "Fusionadoras, OTDR, power meters y peladoras",
+    "color": "#0891b2",
+    "tenantId": "tenant-isp-sur",
+    "createdAt": "2026-09-30T15:40:32.443Z",
+    "updatedAt": "2026-09-30T15:40:32.443Z"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "257688ca-06ce-4994-a423-9ec5e8670cb9",
+    "tenantId": "tenant-demo",
+    "productId": 105,
+    "productName": "Test Restore",
+    "type": "out",
+    "quantity": 0,
+    "reason": "Enviado a papelera de reciclaje",
+    "timestamp": "2026-09-30T15:42:11.269Z"
+  },
+  {
+    "id": "eeeeca56-ee76-438e-abbb-7c90a1cc40f6",
+    "tenantId": "tenant-demo",
+    "productId": 105,
+    "productName": "Test Restore",
+    "type": "in",
+    "quantity": 0,
+    "reason": "Restaurado desde papelera de reciclaje",
+    "timestamp": "2026-09-30T15:41:19.467Z"
+  },
+  {
+    "id": "af95185a-7f2a-45a0-8ab2-3c3d5ce6d54d",
+    "tenantId": "tenant-demo",
+    "productId": 105,
+    "productName": "Test Restore",
+    "type": "out",
+    "quantity": 0,
+    "reason": "Enviado a papelera de reciclaje",
+    "timestamp": "2026-09-30T15:41:19.464Z"
+  },
+  {
+    "id": "4509fb0a-cdc8-4414-865f-f2ada283cc00",
+    "tenantId": "tenant-demo",
+    "productId": 105,
+    "productName": "Producto Prueba Para Papelera",
+    "type": "out",
+    "quantity": 0,
+    "reason": "Enviado a papelera de reciclaje",
+    "timestamp": "2026-09-30T15:41:07.277Z"
+  },
+  {
+    "id": "6db3ea00-ed41-4b13-9ee6-03dc10453b8b",
+    "tenantId": "tenant-demo",
+    "productId": 105,
+    "productName": "Producto Prueba Para Papelera",
+    "type": "out",
+    "quantity": 0,
+    "reason": "Enviado a papelera de reciclaje",
+    "timestamp": "2026-09-30T15:41:07.268Z"
+  },
+  {
+    "id": "d83e3294-25b8-49cc-a202-18107bf843a7",
+    "tenantId": "tenant-demo",
+    "productId": 105,
+    "productName": "Producto Prueba Para Papelera",
+    "type": "in",
+    "quantity": 5,
+    "reason": "Inventario Inicial",
+    "timestamp": "2026-09-30T15:41:07.262Z"
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "conv-1790823318203",
+    "type": "cliente",
+    "contactId": 1,
+    "name": "Roberto Carlos Gutiérrez",
+    "phone": "+51 954 112 233",
+    "email": "roberto.gutierrez@gmail.com",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Roberto%20Carlos%20Guti%C3%A9rrez",
+    "status": "online",
+    "tags": [
+      "personal"
+    ],
+    "isArchived": false,
+    "planOrRole": "Cliente Fibra",
+    "serviceStatus": "active",
+    "unreadCount": 0,
+    "lastMessage": "Conversación iniciada",
+    "lastMessageTime": "09:55 p. m.",
+    "lastMessageDate": "2026-10-01",
+    "messages": [
+      {
+        "id": "m-1790823318203",
+        "sender": "system",
+        "senderName": "Sistema",
+        "text": "Canal de mensajería iniciado con Roberto Carlos Gutiérrez.",
+        "timestamp": "2026-10-01T02:55:18.203Z",
+        "timeFormatted": "09:55 p. m.",
+        "status": "read"
+      }
+    ],
+    "createdAt": "2026-10-01T02:55:18.203Z",
+    "updatedAt": "2026-10-01T02:55:18.203Z",
+    "contractStartDate": "",
+    "address": "Calle Mercaderes 210, Arequipa"
+  }
+]

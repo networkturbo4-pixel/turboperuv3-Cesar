@@ -15,8 +15,18 @@ import { networkRoutes } from "./modules/network/network.routes";
 import { dashboardRoutes } from "./modules/dashboard/dashboard.routes";
 import { usersRoutes } from "./modules/users/users.routes";
 import { settingsRoutes } from "./modules/settings/settings.routes";
+import { maintenanceRoutes } from "./modules/settings/maintenance.routes";
+import { connectionsRoutes } from "./modules/settings/connections.routes";
+import { rrhhRoutes, getCredentialHtmlByToken } from "./modules/rrhh/rrhh.routes";
+import { tenantsRoutes } from "./modules/tenants/tenants.routes";
+import { inventoryRoutes } from "./modules/inventory/inventory.routes";
+import { messagesRoutes } from "./modules/messages/messages.routes";
+import { initializeTenantsSystem } from "./modules/tenants/tenants.service";
 
 export async function buildApp() {
+  // Inicializar y asegurar sistema de múltiples empresas (Multi-Tenant)
+  initializeTenantsSystem();
+
   const fastify = Fastify({
     bodyLimit: 15 * 1024 * 1024, // 15 MB para subida de logos, favicons e iconos PWA
     logger: {
@@ -33,6 +43,43 @@ export async function buildApp() {
   await fastify.register(cors, {
     origin: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  });
+
+  // Rutas directas de credencial digital pública (sin requerir autenticación)
+  fastify.get("/credencial/:token", async (req, reply) => {
+    const { token } = req.params as { token: string };
+    const host = req.headers.host || "localhost:3000";
+    const protocol = req.protocol || "http";
+    const baseUrl = `${protocol}://${host}`;
+    const html = getCredentialHtmlByToken(token, baseUrl);
+    if (!html) {
+      return reply.status(404).type("text/html; charset=utf-8").send(`
+        <div style="font-family:sans-serif; text-align:center; padding:50px; background:#0b0f19; color:#fff; min-height:100vh;">
+          <h1 style="color:#f43f5e;">Credencial No Encontrada</h1>
+          <p style="color:#94a3b8;">El enlace del acta de personal no existe o ha sido revocado.</p>
+          <a href="/" style="display:inline-block; margin-top:20px; padding:10px 20px; background:#2563eb; color:#fff; text-decoration:none; border-radius:8px;">Ir al Portal</a>
+        </div>
+      `);
+    }
+    return reply.type("text/html; charset=utf-8").send(html);
+  });
+
+  fastify.get("/rrhh/personal/:token", async (req, reply) => {
+    const { token } = req.params as { token: string };
+    const host = req.headers.host || "localhost:3000";
+    const protocol = req.protocol || "http";
+    const baseUrl = `${protocol}://${host}`;
+    const html = getCredentialHtmlByToken(token, baseUrl);
+    if (!html) {
+      return reply.status(404).type("text/html; charset=utf-8").send(`
+        <div style="font-family:sans-serif; text-align:center; padding:50px; background:#0b0f19; color:#fff; min-height:100vh;">
+          <h1 style="color:#f43f5e;">Credencial No Encontrada</h1>
+          <p style="color:#94a3b8;">El enlace del acta de personal no existe o ha sido revocado.</p>
+          <a href="/" style="display:inline-block; margin-top:20px; padding:10px 20px; background:#2563eb; color:#fff; text-decoration:none; border-radius:8px;">Ir al Portal</a>
+        </div>
+      `);
+    }
+    return reply.type("text/html; charset=utf-8").send(html);
   });
 
   // Servir frontend estático si existe la carpeta public
@@ -53,6 +100,13 @@ export async function buildApp() {
   await fastify.register(dashboardRoutes, { prefix: "/api" });
   await fastify.register(usersRoutes, { prefix: "/api" });
   await fastify.register(settingsRoutes, { prefix: "/api" });
+  await fastify.register(rrhhRoutes, { prefix: "/api" });
+  await fastify.register(tenantsRoutes, { prefix: "/api" });
+  await fastify.register(maintenanceRoutes, { prefix: "/api" });
+  await fastify.register(connectionsRoutes, { prefix: "/api" });
+  await fastify.register(inventoryRoutes, { prefix: "/api" });
+  await fastify.register(messagesRoutes, { prefix: "/api" });
+
 
   // Mensaje base de bienvenida para la API
   fastify.get("/api", async () => {

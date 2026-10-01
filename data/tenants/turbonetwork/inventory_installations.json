@@ -1,0 +1,41 @@
+[
+  {
+    "id": "inst-001",
+    "tenantId": "turbonetwork",
+    "productId": 101,
+    "customerId": 1,
+    "customerName": "Carlos Méndez Soto",
+    "address": "Av. Los Rosales 450 - Dpto 301, San Isidro",
+    "assignedIp": "192.168.10.15",
+    "installedAt": "2026-08-20T11:30:00Z",
+    "technicianName": "Juan Pérez",
+    "quantity": 1,
+    "notes": "Instalación Plan 300 Mbps Fibra"
+  },
+  {
+    "id": "inst-002",
+    "tenantId": "turbonetwork",
+    "productId": 101,
+    "customerId": 2,
+    "customerName": "María Fernández Dávila",
+    "address": "Calle Los Pinos 182, Miraflores",
+    "assignedIp": "192.168.10.16",
+    "installedAt": "2026-08-25T16:00:00Z",
+    "technicianName": "Carlos Gómez",
+    "quantity": 1,
+    "notes": "Migración de HFC a FTTH Wi-Fi 6"
+  },
+  {
+    "id": "inst-003",
+    "tenantId": "turbonetwork",
+    "productId": 102,
+    "customerId": 1,
+    "customerName": "Carlos Méndez Soto",
+    "address": "Av. Los Rosales 450, San Isidro",
+    "assignedIp": "192.168.10.15",
+    "installedAt": "2026-08-20T11:30:00Z",
+    "technicianName": "Juan Pérez",
+    "quantity": 120,
+    "notes": "Tirada desde caja NAP-04 hasta roseta interior"
+  }
+]

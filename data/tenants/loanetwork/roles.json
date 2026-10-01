@@ -1,0 +1,100 @@
+[
+  {
+    "id": 1,
+    "name": "Superadministrador LoaNet",
+    "slug": "superadmin_loa",
+    "description": "Control absoluto de operaciones LoaNetwork Fibra",
+    "permissions": [
+      "customers:view",
+      "customers:create",
+      "customers:edit",
+      "customers:suspend",
+      "billing:view",
+      "billing:collect",
+      "billing:generate",
+      "inventory:view",
+      "inventory:manage",
+      "backpack:view",
+      "backpack:manage",
+      "rrhh:view",
+      "rrhh:attendance",
+      "rrhh:manage",
+      "network:view",
+      "network:control",
+      "network:manage",
+      "plans:manage",
+      "users:view",
+      "users:manage",
+      "roles:manage",
+      "system:config"
+    ],
+    "allowedModules": [
+      "dashboard",
+      "customers",
+      "billing",
+      "inventory",
+      "mochila",
+      "network",
+      "plans",
+      "rrhh",
+      "config",
+      "system"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Supervisor Regional Arequipa",
+    "slug": "supervisor_sur",
+    "description": "Supervisión de cuadrillas, auditoría de campo y clientes",
+    "permissions": [
+      "customers:view",
+      "customers:edit",
+      "backpack:view",
+      "backpack:manage",
+      "inventory:view",
+      "rrhh:view",
+      "rrhh:manage"
+    ],
+    "allowedModules": [
+      "dashboard",
+      "customers",
+      "inventory",
+      "mochila",
+      "rrhh"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Cajero Sucursal Centro",
+    "slug": "caja_centro",
+    "description": "Cobros en ventanilla y cierre de caja diario",
+    "permissions": [
+      "customers:view",
+      "billing:view",
+      "billing:collect"
+    ],
+    "allowedModules": [
+      "dashboard",
+      "customers",
+      "billing"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Técnico de Fibra Óptica FTTH",
+    "slug": "tecnico_ftth",
+    "description": "Instalación de acometidas de fibra y mantenimiento en planta externa",
+    "permissions": [
+      "customers:view",
+      "inventory:view",
+      "backpack:view",
+      "backpack:manage"
+    ],
+    "allowedModules": [
+      "dashboard",
+      "customers",
+      "inventory",
+      "mochila"
+    ]
+  }
+]

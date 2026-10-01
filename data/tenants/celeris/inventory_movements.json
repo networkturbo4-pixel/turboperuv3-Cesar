@@ -1,0 +1,22 @@
+[
+  {
+    "id": "670b495f-0e2c-4b1b-a236-3fdfe23cd1c2",
+    "tenantId": "celeris",
+    "productId": 104,
+    "productName": "Conector Rápido SC/APC Monomodo Ensamblado Manual",
+    "type": "out",
+    "quantity": 0,
+    "reason": "Enviado a papelera de reciclaje",
+    "timestamp": "2026-09-30T15:09:21.245Z"
+  },
+  {
+    "id": "eac51a61-8885-4051-a415-8b2d3726beaf",
+    "tenantId": "celeris",
+    "productId": 103,
+    "productName": "Casco Dieléctrico con Barbiquejo de Seguridad",
+    "type": "out",
+    "quantity": 0,
+    "reason": "Enviado a papelera de reciclaje",
+    "timestamp": "2026-09-30T15:09:18.392Z"
+  }
+]

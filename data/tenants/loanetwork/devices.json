@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "name": "Router Core Loa MikroTik CCR2004",
+    "vendor": "mikrotik",
+    "type": "RouterOS",
+    "status": "online",
+    "location": "POP Arequipa Centro",
+    "model": "CCR2004-16G-2S+",
+    "ipAddress": "10.20.10.1",
+    "port": 8728,
+    "username": "admin_loa",
+    "apiType": "routeros_api"
+  },
+  {
+    "id": 2,
+    "name": "OLT ZTE C320 Loa Sur",
+    "vendor": "zte_olt",
+    "type": "GPON OLT",
+    "status": "online",
+    "location": "POP Yanahuara",
+    "model": "ZTE C320 16-PON",
+    "ipAddress": "10.20.10.2",
+    "port": 23,
+    "username": "zte_admin",
+    "apiType": "snmp"
+  }
+]

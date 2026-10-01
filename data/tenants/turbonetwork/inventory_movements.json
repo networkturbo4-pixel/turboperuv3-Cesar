@@ -1,0 +1,116 @@
+[
+  {
+    "id": "d84a99e3-b196-4fe8-9fcb-efe9b97fed7d",
+    "tenantId": "turbonetwork",
+    "productId": 105,
+    "productName": "ONU GPON Bridge 1GE XPON",
+    "type": "in",
+    "quantity": 10,
+    "variantName": "",
+    "reason": "Devolución de material/EPP por Emanuel Lopez (Buen estado)",
+    "operatorName": "Recepción Almacén",
+    "timestamp": "2026-09-30T22:13:42.682Z"
+  },
+  {
+    "id": "afdea8e6-d2c3-4c9a-b888-a1f70f682c85",
+    "tenantId": "turbonetwork",
+    "productId": 105,
+    "productName": "ONU GPON Bridge 1GE XPON",
+    "type": "out",
+    "quantity": 10,
+    "variantName": "",
+    "reason": "Asignación a técnico: Emanuel Lopez",
+    "operatorName": "Despacho Almacén",
+    "timestamp": "2026-09-30T22:13:36.323Z"
+  },
+  {
+    "id": "7c5097da-7dce-4499-a9bf-519f9da089e6",
+    "tenantId": "turbonetwork",
+    "productId": 105,
+    "productName": "ONU GPON Bridge 1GE XPON",
+    "type": "out",
+    "quantity": 10,
+    "variantName": "",
+    "reason": "Asignación a técnico: Emanuel Lopez",
+    "operatorName": "Despacho Almacén",
+    "timestamp": "2026-09-30T21:26:25.794Z"
+  },
+  {
+    "id": "0fc47ca6-1f1b-418b-8e4a-f40093f33c0d",
+    "tenantId": "turbonetwork",
+    "productId": 105,
+    "productName": "ONU GPON Bridge 1GE XPON",
+    "type": "out",
+    "quantity": 1,
+    "variantName": "",
+    "reason": "Asignación a técnico: Emanuel Lopez",
+    "operatorName": "Despacho Almacén",
+    "timestamp": "2026-09-30T16:32:26.505Z"
+  },
+  {
+    "id": "3a1c9fa9-3c10-4360-8375-5fdcd679917e",
+    "tenantId": "turbonetwork",
+    "productId": 102,
+    "productName": "Cable de Fibra Óptica Drop FTTH 1 Hilo G657A2",
+    "type": "in",
+    "quantity": 50,
+    "variantName": "",
+    "reason": "Devolución de material/EPP por Test Tech Loa (Buen estado)",
+    "operatorName": "Recepción Almacén",
+    "timestamp": "2026-09-30T16:25:37.667Z"
+  },
+  {
+    "id": "f047c632-9548-4c1f-94c1-3267c674d0d5",
+    "tenantId": "turbonetwork",
+    "productId": 102,
+    "productName": "Cable de Fibra Óptica Drop FTTH 1 Hilo G657A2",
+    "type": "out",
+    "quantity": 50,
+    "variantName": "",
+    "reason": "Asignación a técnico: Test Tech Loa",
+    "operatorName": "Despacho Almacén",
+    "timestamp": "2026-09-30T16:25:37.643Z"
+  },
+  {
+    "id": "1abfe031-9b1a-4b5e-8f25-6a6b80abd434",
+    "tenantId": "turbonetwork",
+    "productId": 105,
+    "productName": "ONU GPON Bridge 1GE XPON",
+    "type": "in",
+    "quantity": 15,
+    "variantName": "",
+    "reason": "Recepción de importación Lote #44",
+    "operatorName": "Operador",
+    "timestamp": "2026-09-30T05:17:55.964Z"
+  },
+  {
+    "id": "598ae76e-2aaa-4145-822a-01174e020de8",
+    "tenantId": "turbonetwork",
+    "productId": 107,
+    "productName": "Chaleco Reflectivo de Alta Visibilidad Normado",
+    "type": "in",
+    "quantity": 25,
+    "reason": "Inventario Inicial",
+    "timestamp": "2026-09-30T05:17:55.950Z"
+  },
+  {
+    "id": "31b32e9c-8a58-42ca-96b1-ca1ff59b9aea",
+    "tenantId": "turbonetwork",
+    "productId": 106,
+    "productName": "Cable UTP Cat6 Exterior Doble Chaqueta Puro Cobre",
+    "type": "in",
+    "quantity": 1200,
+    "reason": "Inventario Inicial",
+    "timestamp": "2026-09-30T05:17:55.934Z"
+  },
+  {
+    "id": "1f7a3202-2377-44da-9344-a4f2f1568317",
+    "tenantId": "turbonetwork",
+    "productId": 105,
+    "productName": "ONU GPON Bridge 1GE XPON",
+    "type": "in",
+    "quantity": 85,
+    "reason": "Inventario Inicial",
+    "timestamp": "2026-09-30T05:17:55.925Z"
+  }
+]

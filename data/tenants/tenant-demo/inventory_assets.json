@@ -1,0 +1,144 @@
+[
+  {
+    "id": 501,
+    "code": "ACT-VEH-001",
+    "name": "Camioneta Técnica Toyota Hilux 4x4 Cuadrilla 1",
+    "category": "vehiculo",
+    "brand": "Toyota",
+    "model": "Hilux Doble Cabina 2.4 TDI",
+    "plateNumber": "ABC-123",
+    "serialNumber": "8AJFA8920194821",
+    "assignedTo": "Cuadrilla 1 - Técnico Juan Pérez",
+    "location": "Sede Principal - Cochera A",
+    "acquisitionDate": "2025-03-10",
+    "acquisitionCost": 32500,
+    "status": "operativo",
+    "description": "Camioneta equipada con portaescaleras reforzado, caja de herramientas metálica y conos de seguridad.",
+    "photos": [
+      "https://images.unsplash.com/photo-1559416523-140ddc3d238c?auto=format&fit=crop&w=600&q=80"
+    ],
+    "videos": [],
+    "maintenanceHistory": [
+      {
+        "id": "maint-1",
+        "assetId": 501,
+        "type": "preventivo",
+        "title": "Mantenimiento 20,000 KM & Cambio de Aceite",
+        "description": "Cambio de aceite sintético 5W-30, filtro de aceite, filtro de aire y rotación de neumáticos.",
+        "cost": 280,
+        "technician": "Taller Autorizado Mitsui",
+        "date": "2026-08-10",
+        "photos": [
+          "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=600&q=80"
+        ],
+        "videos": [],
+        "createdAt": "2026-08-10T15:00:00Z"
+      }
+    ],
+    "eventHistory": [
+      {
+        "id": "evt-1",
+        "assetId": 501,
+        "type": "creacion",
+        "title": "Alta de Activo en Flota",
+        "description": "Incorporación a la flota de TurboNetwork.",
+        "operator": "Admin",
+        "date": "2025-03-10T10:00:00Z"
+      },
+      {
+        "id": "evt-2",
+        "assetId": 501,
+        "type": "asignacion",
+        "title": "Asignación a Cuadrilla 1",
+        "description": "Entrega de llaves y tarjeta de propiedad a Juan Pérez.",
+        "operator": "Jefe de Operaciones",
+        "date": "2025-03-12T08:30:00Z"
+      }
+    ],
+    "tenantId": "tenant-demo",
+    "createdAt": "2026-09-30T15:37:48.125Z",
+    "updatedAt": "2026-09-30T15:37:48.125Z"
+  },
+  {
+    "id": 502,
+    "code": "ACT-TEC-001",
+    "name": "Fusionadora de Fibra Óptica Fujikura 90S+ Core Alignment",
+    "category": "tecnologia",
+    "brand": "Fujikura",
+    "model": "90S+ Core Alignment",
+    "serialNumber": "FJ-90S-984210",
+    "assignedTo": "Técnico Especialista Carlos Gómez",
+    "location": "Laboratorio NOC / Cuadrilla Fibra",
+    "acquisitionDate": "2025-06-20",
+    "acquisitionCost": 6800,
+    "status": "operativo",
+    "description": "Equipo de fusión por alineación de núcleo con pérdida < 0.02 dB y cortadora CT-50 Bluetooth.",
+    "photos": [
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80"
+    ],
+    "videos": [],
+    "maintenanceHistory": [
+      {
+        "id": "maint-2",
+        "assetId": 502,
+        "type": "calibracion",
+        "title": "Calibración de Electrodos y Limpieza de Lentes V-Groove",
+        "description": "Calibración anual con 1,200 arcos realizados, reemplazo de electrodos originales Fujikura.",
+        "cost": 150,
+        "technician": "Servicio Técnico Óptico",
+        "date": "2026-06-15",
+        "photos": [],
+        "videos": [],
+        "createdAt": "2026-06-15T12:00:00Z"
+      }
+    ],
+    "eventHistory": [
+      {
+        "id": "evt-3",
+        "assetId": 502,
+        "type": "creacion",
+        "title": "Compra e ingreso a inventario técnico",
+        "description": "Adquirida para proyectos de expansión FTTH troncal.",
+        "operator": "Admin",
+        "date": "2025-06-20T11:00:00Z"
+      }
+    ],
+    "tenantId": "tenant-demo",
+    "createdAt": "2026-09-30T15:37:48.125Z",
+    "updatedAt": "2026-09-30T15:37:48.125Z"
+  },
+  {
+    "id": 503,
+    "code": "ACT-MOB-001",
+    "name": "Gabinete Rack Servidores 42U 800x1000mm Puerta Microperforada",
+    "category": "mobiliario",
+    "brand": "Nexxt Solutions",
+    "model": "Server Rack 42U Heavy Duty",
+    "serialNumber": "NXT-42U-003",
+    "assignedTo": "NOC DataCenter Central",
+    "location": "Data Center Piso 2 - Fila A",
+    "acquisitionDate": "2024-11-05",
+    "acquisitionCost": 1150,
+    "status": "operativo",
+    "description": "Rack para servidores de cabecera MikroTik CCR2216 y OLTs Huawei SmartAX.",
+    "photos": [
+      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80"
+    ],
+    "videos": [],
+    "maintenanceHistory": [],
+    "eventHistory": [
+      {
+        "id": "evt-4",
+        "assetId": 503,
+        "type": "creacion",
+        "title": "Instalación y anclaje antisísmico en sala de datos",
+        "description": "Anclaje con barras roscadas a losa de piso técnico.",
+        "operator": "Admin",
+        "date": "2024-11-05T09:00:00Z"
+      }
+    ],
+    "tenantId": "tenant-demo",
+    "createdAt": "2026-09-30T15:37:48.125Z",
+    "updatedAt": "2026-09-30T15:37:48.125Z"
+  }
+]

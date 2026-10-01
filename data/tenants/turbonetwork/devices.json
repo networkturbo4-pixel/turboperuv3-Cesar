@@ -1,0 +1,54 @@
+[
+  {
+    "id": 1,
+    "name": "Router Core MikroTik CCR1036",
+    "vendor": "mikrotik",
+    "type": "RouterOS",
+    "status": "online",
+    "location": "DataCenter Central",
+    "model": "CCR1036-8G-2S+",
+    "ipAddress": "192.168.88.1",
+    "port": 8728,
+    "username": "admin_turbo",
+    "apiType": "routeros_api"
+  },
+  {
+    "id": 2,
+    "name": "OLT Principal Fibra Huawei SmartAX",
+    "vendor": "huawei_olt",
+    "type": "GPON OLT",
+    "status": "online",
+    "location": "POP Nodo Norte",
+    "model": "MA5608T",
+    "ipAddress": "192.168.90.10",
+    "port": 23,
+    "username": "root",
+    "apiType": "snmp"
+  },
+  {
+    "id": 3,
+    "name": "OLT Distribución VSOL GPON",
+    "vendor": "vsol_olt",
+    "type": "EPON/GPON",
+    "status": "online",
+    "location": "Torre Central",
+    "model": "V1600G1",
+    "ipAddress": "192.168.90.20",
+    "port": 80,
+    "username": "admin",
+    "apiType": "web_api"
+  },
+  {
+    "id": 4,
+    "name": "Switch Core Capa 3 Edge-1",
+    "vendor": "generic",
+    "type": "Switch L3",
+    "status": "online",
+    "location": "DataCenter Central",
+    "model": "Cisco Catalyst 3850",
+    "ipAddress": "192.168.88.2",
+    "port": 22,
+    "username": "admin",
+    "apiType": "ssh"
+  }
+]

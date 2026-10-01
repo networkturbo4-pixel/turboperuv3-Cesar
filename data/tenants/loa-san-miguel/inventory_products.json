@@ -1,0 +1,160 @@
+[
+  {
+    "id": 101,
+    "type": "simple",
+    "name": "Router Wi-Fi 6 Gigabit Dual Band AX1800",
+    "alternativeNames": [
+      "Router AX1800",
+      "Módem WiFi 6 Residencial",
+      "AP Gigabit Dual Band"
+    ],
+    "categoryId": "cat-activos",
+    "categoryName": "Equipos Activos & ONUs",
+    "sku": "EQ-RTR-AX1800",
+    "barcode": "775981029384",
+    "batchNumber": "LOTE-2026-08A",
+    "entryDate": "2026-08-15T09:30:00Z",
+    "barcodePrinted": true,
+    "barcodePrintedAt": "2026-08-15T10:00:00Z",
+    "baseCost": 125,
+    "salePrice": 165,
+    "stock": 42,
+    "stockMin": 10,
+    "stockCritical": 3,
+    "images": [
+      "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "Router de alto rendimiento para abonados FTTH con soporte EasyMesh y 4 puertos Gigabit Ethernet.",
+    "location": "Estante A-02",
+    "status": "optimal",
+    "tenantId": "loa-san-miguel",
+    "isDeleted": false,
+    "createdAt": "2026-09-30T22:02:25.866Z",
+    "updatedAt": "2026-09-30T22:02:25.866Z"
+  },
+  {
+    "id": 102,
+    "type": "bulk",
+    "name": "Cable de Fibra Óptica Drop FTTH 1 Hilo G657A2",
+    "alternativeNames": [
+      "Cable Drop 1H",
+      "Fibra Drop Exterior Negro",
+      "Drop Flat 1 Core"
+    ],
+    "categoryId": "cat-fibra",
+    "categoryName": "Cables & Fibra Óptica",
+    "sku": "FBR-DROP-1H-MTR",
+    "unitOfMeasure": "Metros (m)",
+    "unitSku": "FBR-DROP-MTR",
+    "batchNumber": "LOTE-2026-09B",
+    "entryDate": "2026-09-02T14:15:00Z",
+    "barcodePrinted": false,
+    "allowDecimals": true,
+    "baseCost": 0.38,
+    "salePrice": 0.65,
+    "stock": 3500,
+    "stockMin": 800,
+    "stockCritical": 250,
+    "images": [
+      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "Cable de acometida exterior con mensajero de acero galvanizado y protección UV.",
+    "location": "Pasillo Central - Bobinas 04",
+    "status": "optimal",
+    "tenantId": "loa-san-miguel",
+    "isDeleted": false,
+    "createdAt": "2026-09-30T22:02:25.866Z",
+    "updatedAt": "2026-09-30T22:02:25.866Z"
+  },
+  {
+    "id": 103,
+    "type": "epp",
+    "name": "Casco Dieléctrico con Barbiquejo de Seguridad",
+    "alternativeNames": [
+      "Casco Liniero Alturas",
+      "Casco Protección Dieléctrica Clase E",
+      "Casco de Faena"
+    ],
+    "categoryId": "cat-epp",
+    "categoryName": "EPP & Seguridad Industrial",
+    "sku": "EPP-CSK-GEN",
+    "batchNumber": "LOTE-2026-07C",
+    "entryDate": "2026-07-20T11:00:00Z",
+    "barcodePrinted": true,
+    "barcodePrintedAt": "2026-07-20T11:45:00Z",
+    "baseCost": 48,
+    "salePrice": 65,
+    "stock": 38,
+    "stockMin": 12,
+    "stockCritical": 4,
+    "hasDifferentCostPerVariant": true,
+    "variants": [
+      {
+        "id": "var-1",
+        "name": "Blanco / Talla Estándar (Liniero)",
+        "sku": "EPP-CSK-BL",
+        "quantity": 14,
+        "costPrice": 48,
+        "salePrice": 65
+      },
+      {
+        "id": "var-2",
+        "name": "Azul Eléctrico / Talla Estándar (Técnico)",
+        "sku": "EPP-CSK-AZ",
+        "quantity": 12,
+        "costPrice": 50,
+        "salePrice": 68
+      },
+      {
+        "id": "var-3",
+        "name": "Amarillo Alta Visibilidad c/ Barbiquejo 4 Puntas",
+        "sku": "EPP-CSK-AM-BAR",
+        "quantity": 12,
+        "costPrice": 56,
+        "salePrice": 75
+      }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1578873375972-00b84c8a8e1b?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "Casco certificado ANSI Z89.1 Clase E para trabajos en postes y líneas eléctricas.",
+    "location": "Armario de Seguridad EPP-01",
+    "status": "optimal",
+    "tenantId": "loa-san-miguel",
+    "isDeleted": false,
+    "createdAt": "2026-09-30T22:02:25.866Z",
+    "updatedAt": "2026-09-30T22:02:25.866Z"
+  },
+  {
+    "id": 104,
+    "type": "simple",
+    "name": "Conector Rápido SC/APC Monomodo Ensamblado Manual",
+    "alternativeNames": [
+      "Fast Connector SC/APC",
+      "Conector Verde Fibra",
+      "Conector Mecánico FTTH"
+    ],
+    "categoryId": "cat-pasivos",
+    "categoryName": "Ferretería & Pasivos",
+    "sku": "PAS-CON-SCAPC",
+    "batchNumber": "LOTE-2026-09C",
+    "entryDate": "2026-09-10T16:20:00Z",
+    "barcodePrinted": false,
+    "baseCost": 0.85,
+    "salePrice": 1.5,
+    "stock": 8,
+    "stockMin": 50,
+    "stockCritical": 15,
+    "images": [
+      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "Conector pre-pulido para terminación rápida en rosetas de cliente sin fusionadora.",
+    "location": "Cajón B-12",
+    "status": "critical",
+    "tenantId": "loa-san-miguel",
+    "isDeleted": false,
+    "createdAt": "2026-09-30T22:02:25.866Z",
+    "updatedAt": "2026-09-30T22:02:25.866Z"
+  }
+]

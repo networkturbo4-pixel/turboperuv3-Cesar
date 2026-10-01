@@ -1,0 +1,108 @@
+[
+  {
+    "id": 1,
+    "name": "Superadministrador",
+    "slug": "superadmin",
+    "description": "Acceso ilimitado a todas las configuraciones, auditoría y operaciones",
+    "permissions": [
+      "customers:view",
+      "customers:create",
+      "customers:edit",
+      "customers:suspend",
+      "billing:view",
+      "billing:collect",
+      "billing:generate",
+      "inventory:view",
+      "inventory:manage",
+      "backpack:view",
+      "backpack:manage",
+      "rrhh:view",
+      "rrhh:attendance",
+      "rrhh:manage",
+      "network:view",
+      "network:control",
+      "network:manage",
+      "plans:manage",
+      "users:view",
+      "users:manage",
+      "roles:manage",
+      "system:config"
+    ],
+    "allowedModules": [
+      "dashboard",
+      "customers",
+      "billing",
+      "inventory",
+      "mochila",
+      "network",
+      "plans",
+      "rrhh",
+      "config",
+      "system"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Administrador de Red / NOC",
+    "slug": "noc_engineer",
+    "description": "Gestión de routers MikroTik, OLTs, interfaces de red y planes",
+    "permissions": [
+      "customers:view",
+      "network:view",
+      "network:control",
+      "network:manage",
+      "plans:manage"
+    ],
+    "allowedModules": [
+      "dashboard",
+      "customers",
+      "network",
+      "plans",
+      "system"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Cajero / Cobranzas",
+    "slug": "cajero_/_cobranzas",
+    "description": "Recepción de pagos, liquidación de recibos y consulta de saldos",
+    "permissions": [
+      "customers:view",
+      "billing:view",
+      "billing:collect",
+      "rrhh:attendance",
+      "messages:view",
+      "messages:send",
+      "messages:manage"
+    ],
+    "allowedModules": [
+      "dashboard",
+      "customers",
+      "messages"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Soporte Técnico en Campo",
+    "slug": "technician",
+    "description": "Consulta de clientes en campo, reactivación básica y verificación de red",
+    "permissions": [
+      "customers:view",
+      "customers:edit",
+      "network:view",
+      "network:control",
+      "inventory:view",
+      "backpack:view",
+      "backpack:manage",
+      "rrhh:attendance"
+    ],
+    "allowedModules": [
+      "dashboard",
+      "customers",
+      "inventory",
+      "mochila",
+      "network",
+      "rrhh"
+    ]
+  }
+]

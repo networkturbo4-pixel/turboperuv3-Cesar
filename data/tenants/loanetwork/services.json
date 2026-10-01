@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "Plan Loa Fibra 200M",
+    "speed": "200 Mbps Simétrico Fibra",
+    "downloadSpeedMbps": 200,
+    "uploadSpeedMbps": 200,
+    "price": "65.00",
+    "billingCycle": "monthly",
+    "description": "Fibra óptica directa al hogar con ultra baja latencia",
+    "isActive": true,
+    "createdAt": "2026-09-15T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "name": "Plan Loa Pyme 500M",
+    "speed": "500 Mbps Corporativo",
+    "downloadSpeedMbps": 500,
+    "uploadSpeedMbps": 500,
+    "price": "150.00",
+    "billingCycle": "monthly",
+    "description": "Enlace simétrico dedicado con soporte 24/7 y SLA 99.8%",
+    "isActive": true,
+    "createdAt": "2026-09-15T00:00:00Z"
+  }
+]

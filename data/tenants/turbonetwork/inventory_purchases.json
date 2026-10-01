@@ -1,0 +1,28 @@
+[
+  {
+    "id": "pch-001",
+    "tenantId": "turbonetwork",
+    "productId": 101,
+    "supplier": "Huawei Enterprise Tech SAC",
+    "invoiceNumber": "F001-002891",
+    "date": "2026-08-15",
+    "quantity": 50,
+    "unitCost": 125,
+    "totalCost": 6250,
+    "notes": "Importación Lote 2026-08A Routers Wi-Fi 6",
+    "createdAt": "2026-08-15T09:30:00Z"
+  },
+  {
+    "id": "pch-002",
+    "tenantId": "turbonetwork",
+    "productId": 102,
+    "supplier": "OptoFibre Telecom Perú",
+    "invoiceNumber": "F003-009841",
+    "date": "2026-09-02",
+    "quantity": 4000,
+    "unitCost": 0.38,
+    "totalCost": 1520,
+    "notes": "Carretes de 1000m Drop G657A2 exterior",
+    "createdAt": "2026-09-02T14:15:00Z"
+  }
+]

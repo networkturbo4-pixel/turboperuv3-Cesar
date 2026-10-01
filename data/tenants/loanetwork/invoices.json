@@ -1,0 +1,36 @@
+[
+  {
+    "id": 1,
+    "invoiceNumber": "REC-LOA-2026-001",
+    "customerId": 1,
+    "customerName": "Roberto Carlos Gutiérrez",
+    "customerCode": "CLI-LOA-101",
+    "period": "2026-09",
+    "issueDate": "2026-09-01T08:00:00Z",
+    "dueDate": "2026-09-10T23:59:59Z",
+    "subtotal": "65.00",
+    "discount": "0.00",
+    "total": "65.00",
+    "status": "paid",
+    "paidDate": "2026-09-06T10:00:00Z",
+    "paymentMethod": "pos",
+    "referenceNumber": "POS-LOA-4431"
+  },
+  {
+    "id": 2,
+    "invoiceNumber": "REC-LOA-2026-002",
+    "customerId": 2,
+    "customerName": "Clinica Odontológica Sur Dental SAC",
+    "customerCode": "CLI-LOA-102",
+    "period": "2026-09",
+    "issueDate": "2026-09-01T08:00:00Z",
+    "dueDate": "2026-09-15T23:59:59Z",
+    "subtotal": "150.00",
+    "discount": "0.00",
+    "total": "150.00",
+    "status": "pending",
+    "paidDate": null,
+    "paymentMethod": null,
+    "referenceNumber": null
+  }
+]

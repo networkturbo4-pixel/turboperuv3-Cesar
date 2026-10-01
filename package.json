@@ -30,17 +30,24 @@
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.33.0",
     "fastify": "^4.28.1",
+    "light-my-request": "^6.6.0",
+    "mime": "^4.1.0",
     "postgres": "^3.4.4",
+    "rollup": "^4.63.4",
+    "source-map": "^0.8.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^22.5.5",
     "drizzle-kit": "^0.24.2",
-    "tsup": "^8.2.4",
-    "tsx": "^4.19.1",
-    "typescript": "^5.6.2"
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "overrides": {
+    "esbuild": "^0.28.2"
   }
 }

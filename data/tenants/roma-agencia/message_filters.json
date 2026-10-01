@@ -1,0 +1,38 @@
+[
+  {
+    "id": "all",
+    "name": "Todos",
+    "color": "blue",
+    "isSystem": true
+  },
+  {
+    "id": "personal",
+    "name": "Personal / Cuadrilla",
+    "color": "emerald",
+    "isSystem": true
+  },
+  {
+    "id": "clientes",
+    "name": "Clientes",
+    "color": "indigo",
+    "isSystem": true
+  },
+  {
+    "id": "corte",
+    "name": "Corte de Servicio",
+    "color": "rose",
+    "isSystem": true
+  },
+  {
+    "id": "pendiente",
+    "name": "Pendiente de Pago",
+    "color": "amber",
+    "isSystem": true
+  },
+  {
+    "id": "archived",
+    "name": "Archivados",
+    "color": "purple",
+    "isSystem": true
+  }
+]

@@ -1,0 +1,81 @@
+[
+  {
+    "id": 1,
+    "name": "Superadministrador Celeris",
+    "slug": "superadmin_celeris",
+    "description": "Administración integral Celeris Telecom",
+    "permissions": [
+      "customers:view",
+      "customers:create",
+      "customers:edit",
+      "customers:suspend",
+      "billing:view",
+      "billing:collect",
+      "billing:generate",
+      "inventory:view",
+      "inventory:manage",
+      "backpack:view",
+      "backpack:manage",
+      "rrhh:view",
+      "rrhh:attendance",
+      "rrhh:manage",
+      "network:view",
+      "network:control",
+      "network:manage",
+      "plans:manage",
+      "users:view",
+      "users:manage",
+      "roles:manage",
+      "system:config"
+    ],
+    "allowedModules": [
+      "dashboard",
+      "customers",
+      "billing",
+      "inventory",
+      "mochila",
+      "network",
+      "plans",
+      "rrhh",
+      "config",
+      "system"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Ingeniero NOC Enlaces",
+    "slug": "noc_celeris",
+    "description": "Monitoreo de enlaces troncales, BGP y OLTs",
+    "permissions": [
+      "network:view",
+      "network:control",
+      "network:manage",
+      "plans:manage",
+      "system:config"
+    ],
+    "allowedModules": [
+      "dashboard",
+      "network",
+      "plans",
+      "system"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Ejecutivo Corporativo y Facturación",
+    "slug": "corporativo_billing",
+    "description": "Gestión de contratos empresariales y facturación corporativa",
+    "permissions": [
+      "customers:view",
+      "customers:create",
+      "billing:view",
+      "billing:collect",
+      "billing:generate"
+    ],
+    "allowedModules": [
+      "dashboard",
+      "customers",
+      "billing"
+    ]
+  }
+]

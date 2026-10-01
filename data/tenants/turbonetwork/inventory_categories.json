@@ -1,0 +1,56 @@
+[
+  {
+    "id": "cat-fibra",
+    "name": "Cables & Fibra Óptica",
+    "description": "Bobinas, drops, pigtails y patch cords",
+    "color": "#2563eb",
+    "tenantId": "turbonetwork",
+    "createdAt": "2026-09-30T05:06:56.677Z",
+    "updatedAt": "2026-09-30T05:06:56.677Z"
+  },
+  {
+    "id": "cat-activos",
+    "name": "Equipos Activos & ONUs",
+    "description": "Routers, ONUs XPON, switches y OLTs",
+    "color": "#059669",
+    "tenantId": "turbonetwork",
+    "createdAt": "2026-09-30T05:06:56.677Z",
+    "updatedAt": "2026-09-30T05:06:56.677Z"
+  },
+  {
+    "id": "cat-pasivos",
+    "name": "Ferretería & Pasivos",
+    "description": "Splitters, cajas NAP, mangas y conectores",
+    "color": "#7c3aed",
+    "tenantId": "turbonetwork",
+    "createdAt": "2026-09-30T05:06:56.677Z",
+    "updatedAt": "2026-09-30T05:06:56.677Z"
+  },
+  {
+    "id": "cat-epp",
+    "name": "EPP & Seguridad Industrial",
+    "description": "Equipos de protección personal para técnicos",
+    "color": "#d97706",
+    "tenantId": "turbonetwork",
+    "createdAt": "2026-09-30T05:06:56.677Z",
+    "updatedAt": "2026-09-30T05:06:56.677Z"
+  },
+  {
+    "id": "cat-herramientas",
+    "name": "Herramientas & Medición",
+    "description": "Fusionadoras, OTDR, power meters y peladoras",
+    "color": "#0891b2",
+    "tenantId": "turbonetwork",
+    "createdAt": "2026-09-30T05:06:56.677Z",
+    "updatedAt": "2026-09-30T05:06:56.677Z"
+  },
+  {
+    "id": "cat-50315c",
+    "tenantId": "turbonetwork",
+    "name": "Herramientas de Fusión",
+    "description": "Fusionadoras, cortadoras de precisión y decapadoras",
+    "color": "#059669",
+    "createdAt": "2026-09-30T05:17:55.984Z",
+    "updatedAt": "2026-09-30T05:17:55.984Z"
+  }
+]

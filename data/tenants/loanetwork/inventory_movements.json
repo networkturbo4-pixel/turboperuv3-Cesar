@@ -1,0 +1,72 @@
+[
+  {
+    "id": "f53e6e4e-74b3-432f-a6eb-0aa476638ea7",
+    "tenantId": "loanetwork",
+    "productId": 101,
+    "productName": "Router Wi-Fi 6 Gigabit Dual Band AX1800",
+    "type": "in",
+    "quantity": 4,
+    "variantName": "",
+    "reason": "Devolución de material/EPP por Juan Pérez (Buen estado)",
+    "operatorName": "Recepción Almacén",
+    "timestamp": "2026-09-30T16:49:01.681Z"
+  },
+  {
+    "id": "b382b4e6-f1f7-49e1-a936-4bd7c540c164",
+    "tenantId": "loanetwork",
+    "productId": 103,
+    "productName": "Casco Dieléctrico con Barbiquejo de Seguridad",
+    "type": "in",
+    "quantity": 1,
+    "variantName": "",
+    "reason": "Devolución de material/EPP por Juan Pérez (Técnico Alturas) (Buen estado)",
+    "operatorName": "Recepción Almacén",
+    "timestamp": "2026-09-30T16:49:00.199Z"
+  },
+  {
+    "id": "64f503c1-dd72-4514-a862-0a02d491793f",
+    "tenantId": "loanetwork",
+    "productId": 102,
+    "productName": "Cable de Fibra Óptica Drop FTTH 1 Hilo G657A2",
+    "type": "in",
+    "quantity": 1,
+    "variantName": "",
+    "reason": "Devolución de material/EPP por Emanuel Lopez (Buen estado)",
+    "operatorName": "Recepción Almacén",
+    "timestamp": "2026-09-30T16:48:17.138Z"
+  },
+  {
+    "id": "9bcf1f0d-0de6-4eb0-9c91-b516543bce83",
+    "tenantId": "loanetwork",
+    "productId": 102,
+    "productName": "Cable de Fibra Óptica Drop FTTH 1 Hilo G657A2",
+    "type": "out",
+    "quantity": 1,
+    "variantName": "",
+    "reason": "Asignación a técnico: Emanuel Lopez",
+    "operatorName": "Despacho Almacén",
+    "timestamp": "2026-09-30T16:48:03.839Z"
+  },
+  {
+    "id": "3e4780f8-d4a6-4006-a480-57235d84aaac",
+    "tenantId": "loanetwork",
+    "productId": 103,
+    "productName": "Casco Dieléctrico con Barbiquejo de Seguridad",
+    "type": "in",
+    "quantity": 1,
+    "variantName": "",
+    "reason": "Devolución de material/EPP por Carlos Gómez (Técnico Fibra) (Buen estado)",
+    "operatorName": "Recepción Almacén",
+    "timestamp": "2026-09-30T16:47:22.308Z"
+  },
+  {
+    "id": "c0b446d5-5dd7-40d9-a581-90eb6d17057d",
+    "tenantId": "loanetwork",
+    "productId": 101,
+    "productName": "Router Wi-Fi 6 Gigabit Dual Band AX1800",
+    "type": "out",
+    "quantity": 0,
+    "reason": "Enviado a papelera de reciclaje",
+    "timestamp": "2026-09-30T15:45:24.513Z"
+  }
+]

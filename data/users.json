@@ -6,30 +6,99 @@
     "pin": "12345678",
     "roleId": 1,
     "roleName": "Superadministrador",
-    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=en2xce",
     "isActive": true,
-    "createdAt": "2026-09-01T00:00:00Z"
+    "createdAt": "2026-09-01T00:00:00Z",
+    "isSuperAdmin": true,
+    "allowedTenants": [
+      "*"
+    ],
+    "workSchedule": "08:00 - 17:00",
+    "preferences": {
+      "primaryColor": "#2563eb",
+      "themeMode": "light",
+      "darkBgColor": "#18181b"
+    },
+    "assignedTenantId": "turbonetwork"
   },
   {
-    "id": 2,
-    "name": "Ing. Alejandro Torres",
-    "email": "alejandro.redes@turbonetwork.com",
-    "pin": "87654321",
+    "id": 1790781290504,
+    "name": "Emanuel Lopez",
+    "email": "emanuelalopez@gmail.com",
+    "pin": "74214636",
+    "roleId": 3,
+    "roleName": "Cajero Sucursal Centro",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=hhbzmd",
+    "isActive": true,
+    "createdAt": "2026-09-30T15:14:50.504Z",
+    "isSuperAdmin": false,
+    "allowedTenants": [
+      "turbonetwork",
+      "loanetwork",
+      "loa-san-miguel"
+    ],
+    "workSchedule": "Lunes a Viernes",
+    "hireDate": "2026-09-01",
+    "birthDate": "2026-09-16",
+    "preferences": {
+      "themeMode": "light",
+      "primaryColor": "#7c3aed",
+      "darkBgColor": "#000000",
+      "lightBgColor": "#ffffff",
+      "toastStyle": "pill",
+      "accentColor": "#ff00bb"
+    },
+    "assignedTenantId": null,
+    "scheduleStartDate": "",
+    "scheduleEndDate": ""
+  },
+  {
+    "id": 1790787042063,
+    "name": "Miguel Mendoza",
+    "email": "miguelmendoza@gmail.com",
+    "pin": "74214635",
     "roleId": 2,
     "roleName": "Administrador de Red / NOC",
-    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Miguel%20Mendoza",
     "isActive": true,
-    "createdAt": "2026-09-05T00:00:00Z"
+    "createdAt": "2026-09-30T16:50:42.063Z",
+    "isSuperAdmin": false,
+    "assignedTenantId": null,
+    "allowedTenants": [
+      "turbonetwork",
+      "roma-agencia",
+      "loa-san-miguel"
+    ],
+    "workSchedule": "08:00 - 17:00",
+    "hireDate": "2026-08-01",
+    "birthDate": "2026-08-14",
+    "preferences": {
+      "themeMode": "light"
+    },
+    "scheduleStartDate": "",
+    "scheduleEndDate": ""
   },
   {
-    "id": 3,
-    "name": "Ana Morales",
-    "email": "ana.caja@turbonetwork.com",
-    "pin": "11223344",
-    "roleId": 3,
-    "roleName": "Cajero / Cobranzas",
-    "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
+    "id": 1790806727208,
+    "name": "Saul Caceres",
+    "email": "saulcaceres@gmail.com",
+    "pin": "22530345",
+    "roleId": 1,
+    "roleName": "Superadministrador",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Saul%20Caceres",
     "isActive": true,
-    "createdAt": "2026-09-10T00:00:00Z"
+    "createdAt": "2026-09-30T22:18:47.208Z",
+    "isSuperAdmin": false,
+    "assignedTenantId": "turbonetwork",
+    "allowedTenants": [
+      "turbonetwork",
+      "loa-san-miguel"
+    ],
+    "workSchedule": "08:00 - 17:00",
+    "scheduleStartDate": "2026-09-30",
+    "scheduleEndDate": "2026-10-10",
+    "hireDate": "2026-09-01",
+    "birthDate": "2026-09-23",
+    "preferences": {}
   }
 ]

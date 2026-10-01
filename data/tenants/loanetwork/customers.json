@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "code": "CLI-LOA-101",
+    "fullName": "Roberto Carlos Gutiérrez",
+    "documentType": "dni",
+    "documentNumber": "45678901",
+    "email": "roberto.gutierrez@gmail.com",
+    "phone": "+51 954 112 233",
+    "address": "Calle Mercaderes 210, Arequipa",
+    "serviceStatus": "active",
+    "servicePlanId": 1,
+    "serviceSpeed": "200 Mbps Simétrico Fibra",
+    "monthlyFee": "65.00",
+    "billingDay": 5,
+    "ipAddress": "10.20.10.45",
+    "routerModel": "Huawei EG8145V5",
+    "createdAt": "2026-09-12T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "code": "CLI-LOA-102",
+    "fullName": "Clinica Odontológica Sur Dental SAC",
+    "documentType": "ruc",
+    "documentNumber": "20604445551",
+    "email": "administracion@surdental.pe",
+    "phone": "+51 958 776 655",
+    "address": "Av. Cayma 550 Of. 302, Arequipa",
+    "serviceStatus": "active",
+    "servicePlanId": 2,
+    "serviceSpeed": "500 Mbps Corporativo",
+    "monthlyFee": "150.00",
+    "billingDay": 15,
+    "ipAddress": "10.20.10.46",
+    "routerModel": "MikroTik hEX S",
+    "createdAt": "2026-09-14T15:30:00Z"
+  }
+]

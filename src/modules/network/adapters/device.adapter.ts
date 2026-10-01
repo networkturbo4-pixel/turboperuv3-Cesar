@@ -2,6 +2,7 @@ export interface DeviceConnectionConfig {
   id: number;
   name: string;
   vendor: "mikrotik" | "huawei_olt" | "zte_olt" | "vsol_olt" | "ubiquiti" | "generic";
+  model?: string;
   ipAddress: string;
   port?: number | null;
   username?: string | null;

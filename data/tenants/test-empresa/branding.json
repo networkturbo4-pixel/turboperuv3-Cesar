@@ -1,0 +1,14 @@
+{
+  "systemName": "Test Empresa",
+  "tagline": "ISP Enterprise Core",
+  "logoUrl": "",
+  "faviconUrl": "",
+  "pwaIconUrl": "https://api.dicebear.com/7.x/shapes/svg?seed=test-empresa",
+  "primaryColor": "#2563eb",
+  "accentColor": "#059669",
+  "lightBgColor": "#f8fafc",
+  "darkBgColor": "#090a0f",
+  "fontFamily": "inter",
+  "fontSizeScale": "normal",
+  "themeMode": "dark"
+}

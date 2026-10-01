@@ -1,5 +1,7 @@
 # Node dependencies
 node_modules/
+node_modules_corrupt/
+node_modules_bad*/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -21,3 +23,8 @@ Thumbs.db
 
 # Antigravity agent temp files
 .system_generated/
+
+# Backups and temporary deployment markers
+data/backups/
+data/updates_history.json
+tmp/

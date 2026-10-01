@@ -1,0 +1,46 @@
+{
+  "enabled": true,
+  "companyName": "TurboNetwork Fibra",
+  "supportPhone": "+51 987 654 321",
+  "paymentLinkDefault": "https://pagos.turbonetwork.net/pago",
+  "stages": {
+    "beforeDue": {
+      "enabled": true,
+      "daysBefore": 3,
+      "dispatchTime": "09:00",
+      "channels": {
+        "whatsapp": true,
+        "email": true,
+        "sms": false
+      },
+      "subject": "Aviso de Recibo de Internet - Próximo Vencimiento",
+      "template": "Estimado(a) *{cliente}*,\n\nLe recordamos que su servicio de internet *{servicio}* cuenta con su recibo emitido por el monto de *${monto}*.\n\n- *Nº de Recibo:* {recibo_nro}\n- *Fecha Límite de Pago:* {fecha_vencimiento}\n\nEvite recargos y realice su pago en línea de manera segura en:\n{enlace_pago}\n\nAgradecemos su puntualidad para seguir brindándole la mejor experiencia de conectividad.\n\nAtentamente,\n*{empresa}* - Soporte: {telefono_soporte}"
+    },
+    "onDue": {
+      "enabled": true,
+      "dispatchTime": "08:30",
+      "channels": {
+        "whatsapp": true,
+        "email": true,
+        "sms": true
+      },
+      "subject": "Recordatorio: Vencimiento de Servicio de Internet Hoy",
+      "template": "Estimado(a) *{cliente}*,\n\nLe informamos que el día de *HOY* vence el plazo de pago de su servicio de internet *{servicio}*.\n\n- *Monto a Pagar:* ${monto}\n- *Nº de Recibo:* {recibo_nro}\n- *Fecha de Vencimiento:* {fecha_vencimiento}\n\nPara evitar la interrupción de su navegación, realice su abono aquí:\n{enlace_pago}\n\nSi ya realizó su pago en las últimas horas, por favor remita su comprobante al WhatsApp: {telefono_soporte}.\n\nMuchas gracias,\n*{empresa}*"
+    },
+    "onCut": {
+      "enabled": true,
+      "graceDaysAfterDue": 2,
+      "actionType": "suspend_traffic",
+      "actionDescription": "Suspender servicio en enrutador MikroTik y cortar tráfico",
+      "dispatchTime": "10:00",
+      "channels": {
+        "whatsapp": true,
+        "email": true,
+        "sms": true
+      },
+      "subject": "Aviso Importante: Servicio Suspendido por Falta de Pago",
+      "template": "AVISO IMPORTANTE: *{cliente}* \n\nLe comunicamos que su servicio de internet *{servicio}* ha sido *SUSPENDIDO TEMPORALMENTE* por falta de pago tras vencer el periodo de gracia ({dias_vencido} días).\n\n- *Estado:* Servicio Suspendido\n- *Saldo Pendiente:* ${monto}\n- *Recibo Vencido:* {recibo_nro}\n\n*¿CÓMO REACTIVAR SU SERVICIO INMEDIATAMENTE?*\n1. Realice el pago del monto adeudado en línea: {enlace_pago}\n2. Remita su comprobante al canal de soporte oficial: {telefono_soporte}\n3. El sistema reactivará automáticamente su ancho de banda en un plazo máximo de 10 minutos.\n\nEstamos atentos para brindarle asistencia inmediata.\n*{empresa}* - Operaciones de Red"
+    }
+  },
+  "updatedAt": "2026-09-19T21:42:17.745Z"
+}

@@ -1,0 +1,19 @@
+[
+  {
+    "id": 1,
+    "invoiceNumber": "REC-CEL-2026-001",
+    "customerId": 1,
+    "customerName": "Agroindustrias del Norte SA",
+    "customerCode": "CLI-CEL-301",
+    "period": "2026-09",
+    "issueDate": "2026-09-01T08:00:00Z",
+    "dueDate": "2026-09-05T23:59:59Z",
+    "subtotal": "220.00",
+    "discount": "0.00",
+    "total": "220.00",
+    "status": "paid",
+    "paidDate": "2026-09-03T09:12:00Z",
+    "paymentMethod": "bank_transfer",
+    "referenceNumber": "TR-BCP-99210"
+  }
+]

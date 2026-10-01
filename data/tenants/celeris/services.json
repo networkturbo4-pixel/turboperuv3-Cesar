@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "name": "Celeris Dedicado 600M",
+    "speed": "600 Mbps Dedicado",
+    "downloadSpeedMbps": 600,
+    "uploadSpeedMbps": 600,
+    "price": "220.00",
+    "billingCycle": "monthly",
+    "description": "Enlace corporativo punto a punto con IP pública fija",
+    "isActive": true,
+    "createdAt": "2026-09-20T00:00:00Z"
+  }
+]

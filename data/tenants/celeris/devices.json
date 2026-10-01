@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "name": "Router BGP Celeris Telecom CCR2116",
+    "vendor": "mikrotik",
+    "type": "RouterOS",
+    "status": "online",
+    "location": "Datacenter Trujillo Norte",
+    "model": "CCR2116-12G-4S+",
+    "ipAddress": "172.16.50.1",
+    "port": 8728,
+    "username": "admin_celeris",
+    "apiType": "routeros_api"
+  },
+  {
+    "id": 2,
+    "name": "OLT Huawei MA5800-X7 Celeris",
+    "vendor": "huawei_olt",
+    "type": "XGS-PON OLT",
+    "status": "online",
+    "location": "POP Mansiche",
+    "model": "MA5800-X7",
+    "ipAddress": "172.16.50.2",
+    "port": 23,
+    "username": "hw_celeris",
+    "apiType": "snmp"
+  }
+]

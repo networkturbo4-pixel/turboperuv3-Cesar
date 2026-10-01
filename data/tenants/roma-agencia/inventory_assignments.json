@@ -1,0 +1,37 @@
+[
+  {
+    "id": "asg-001",
+    "tenantId": "roma-agencia",
+    "productId": 103,
+    "employeeId": 1,
+    "employeeName": "Juan Pérez (Técnico Alturas)",
+    "assignedAt": "2026-07-22T08:00:00Z",
+    "quantity": 1,
+    "status": "en_uso",
+    "variantName": "Blanco / Talla Estándar (Liniero)",
+    "notes": "Asignación semestral de EPP normado"
+  },
+  {
+    "id": "asg-002",
+    "tenantId": "roma-agencia",
+    "productId": 103,
+    "employeeId": 2,
+    "employeeName": "Carlos Gómez (Técnico Fibra)",
+    "assignedAt": "2026-07-22T08:15:00Z",
+    "quantity": 1,
+    "status": "en_uso",
+    "variantName": "Azul Eléctrico / Talla Estándar (Técnico)",
+    "notes": "Asignación semestral de EPP normado"
+  },
+  {
+    "id": "asg-003",
+    "tenantId": "roma-agencia",
+    "productId": 101,
+    "employeeId": 1,
+    "employeeName": "Juan Pérez",
+    "assignedAt": "2026-09-28T07:30:00Z",
+    "quantity": 4,
+    "status": "en_uso",
+    "notes": "Stock móvil en camioneta para instalaciones del día"
+  }
+]

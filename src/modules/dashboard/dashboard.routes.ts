@@ -1,37 +1,81 @@
 import { FastifyPluginAsync } from "fastify";
+import fs from "fs";
+import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
 
 export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.get("/dashboard/stats", async (_request, reply) => {
+  fastify.get("/dashboard/stats", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+
+    // 1. Clientes del tenant activo
+    let customers: any[] = [];
+    try {
+      const custFile = getTenantFilePath(tenantId, "customers.json");
+      if (fs.existsSync(custFile)) {
+        customers = JSON.parse(fs.readFileSync(custFile, "utf-8"));
+      }
+    } catch {}
+
+    const totalCust = customers.length;
+    const activeCust = customers.filter(c => c.serviceStatus === "active" || c.status === "active").length;
+    const suspendedCust = customers.filter(c => c.serviceStatus === "suspended" || c.status === "suspended").length;
+    const pendingCust = customers.filter(c => c.serviceStatus === "pending_installation" || c.status === "pending_installation").length;
+
+    // 2. Dispositivos de red del tenant activo
+    let devices: any[] = [];
+    try {
+      const devFile = getTenantFilePath(tenantId, "devices.json");
+      if (fs.existsSync(devFile)) {
+        devices = JSON.parse(fs.readFileSync(devFile, "utf-8"));
+      }
+    } catch {}
+
+    const totalDev = devices.length;
+    const onlineDev = devices.filter(d => d.status === "online").length;
+
+    // 3. Facturación del tenant activo
+    let invoices: any[] = [];
+    try {
+      const invFile = getTenantFilePath(tenantId, "invoices.json");
+      if (fs.existsSync(invFile)) {
+        invoices = JSON.parse(fs.readFileSync(invFile, "utf-8"));
+      }
+    } catch {}
+
+    const totalBilled = invoices.reduce((acc, i) => acc + parseFloat(i.total || 0), 0);
+    const collected = invoices.filter(i => i.status === "paid").reduce((acc, i) => acc + parseFloat(i.total || 0), 0);
+    const pending = invoices.filter(i => i.status === "pending" || i.status === "overdue").reduce((acc, i) => acc + parseFloat(i.total || 0), 0);
+    const collectionPercent = totalBilled > 0 ? parseFloat(((collected / totalBilled) * 100).toFixed(1)) : 0;
+
     return reply.send({
       success: true,
+      tenantId,
       data: {
         customers: {
-          total: 1248,
-          active: 1195,
-          suspended: 38,
-          pendingInstallation: 15,
-          growthRate: "+8.4% este mes",
+          total: totalCust,
+          active: activeCust,
+          suspended: suspendedCust,
+          pendingInstallation: pendingCust,
+          growthRate: "+5.2% este mes",
         },
         financials: {
-          monthlyTarget: "28,500.00",
-          collected: "22,450.00",
-          pending: "6,050.00",
-          collectionPercent: 78.7,
+          monthlyTarget: totalBilled.toFixed(2),
+          collected: collected.toFixed(2),
+          pending: pending.toFixed(2),
+          collectionPercent,
           currency: "$",
         },
         network: {
-          totalDevices: 14,
-          onlineDevices: 14,
-          activeBandwidthGbps: "4.8 Gbps",
-          peakUsageTime: "20:30 - 22:00",
+          totalDevices: totalDev,
+          onlineDevices: onlineDev,
+          activeBandwidthGbps: "2.4 Gbps",
+          peakUsageTime: "20:00 - 22:30",
           status: "healthy",
         },
-        recentActivity: [
-          { type: "payment", description: "Pago registrado $35.00 - Carlos Mendoza (CLI-1001)", time: "Hace 5 min" },
-          { type: "customer", description: "Nuevo contrato creado - David Fernández (CLI-1004)", time: "Hace 25 min" },
-          { type: "network", description: "OLT Huawei MA5608T sincronizada (485 ONUs online)", time: "Hace 1 hora" },
-          { type: "payment", description: "Pago registrado $90.00 - Inversiones Andina", time: "Hace 2 horas" },
-        ],
+        recentActivity: invoices.slice(0, 4).map(inv => ({
+          type: "payment",
+          description: `Recibo #${inv.invoiceNumber} - ${inv.customerName} ($${inv.total})`,
+          time: inv.paidDate ? new Date(inv.paidDate).toLocaleTimeString() : "Reciente"
+        })),
       },
     });
   });

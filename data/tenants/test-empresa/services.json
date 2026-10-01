@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "name": "Plan Test Empresa Fibra 100M",
+    "speed": "100 Mbps Simétrico",
+    "downloadSpeedMbps": 100,
+    "uploadSpeedMbps": 100,
+    "price": "50.00",
+    "billingCycle": "monthly",
+    "description": "Plan base de fibra óptica para nuevos clientes",
+    "isActive": true,
+    "createdAt": "2026-09-30T01:11:06.413Z"
+  }
+]

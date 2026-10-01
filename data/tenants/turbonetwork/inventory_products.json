@@ -1,0 +1,235 @@
+[
+  {
+    "type": "epp",
+    "name": "Chaleco Reflectivo de Alta Visibilidad Normado",
+    "alternativeNames": [
+      "Chaleco Seguridad",
+      "Chaleco Brigadista"
+    ],
+    "categoryId": "cat-epp",
+    "sku": "EPP-CHAL-REF",
+    "baseCost": 18,
+    "stock": 25,
+    "stockMin": 5,
+    "stockCritical": 2,
+    "images": [],
+    "hasDifferentCostPerVariant": true,
+    "variants": [
+      {
+        "name": "Talla M / Naranja Fluor",
+        "sku": "EPP-CHAL-M-NAR",
+        "quantity": 10,
+        "costPrice": 18
+      },
+      {
+        "name": "Talla L / Naranja Fluor",
+        "sku": "EPP-CHAL-L-NAR",
+        "quantity": 10,
+        "costPrice": 18
+      },
+      {
+        "name": "Talla XL / Amarillo Neón",
+        "sku": "EPP-CHAL-XL-AM",
+        "quantity": 5,
+        "costPrice": 21.5
+      }
+    ],
+    "id": 107,
+    "tenantId": "turbonetwork",
+    "salePrice": 0,
+    "status": "optimal",
+    "createdAt": "2026-09-30T05:17:55.950Z",
+    "updatedAt": "2026-09-30T05:17:55.950Z"
+  },
+  {
+    "type": "bulk",
+    "name": "Cable UTP Cat6 Exterior Doble Chaqueta Puro Cobre",
+    "alternativeNames": [
+      "UTP Cat6 Exterior",
+      "Cable de Red Exterior"
+    ],
+    "categoryId": "cat-fibra",
+    "sku": "CAB-UTP-CAT6-EXT",
+    "baseCost": 0.55,
+    "stock": 1200,
+    "stockMin": 300,
+    "stockCritical": 100,
+    "images": [],
+    "unitOfMeasure": "Metros (m)",
+    "unitSku": "UTP-MTR-EXT",
+    "allowDecimals": true,
+    "id": 106,
+    "tenantId": "turbonetwork",
+    "salePrice": 0,
+    "variants": [],
+    "status": "optimal",
+    "createdAt": "2026-09-30T05:17:55.934Z",
+    "updatedAt": "2026-09-30T05:17:55.934Z"
+  },
+  {
+    "type": "simple",
+    "name": "ONU GPON Bridge 1GE XPON",
+    "alternativeNames": [
+      "ONU Bridge",
+      "Módem Fibra Óptica 1GE",
+      "ONT XPON"
+    ],
+    "categoryId": "cat-activos",
+    "sku": "EQ-ONU-1GE",
+    "baseCost": 14.5,
+    "salePrice": 22,
+    "stock": 89,
+    "stockMin": 15,
+    "stockCritical": 5,
+    "images": [
+      "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600"
+    ],
+    "description": "ONU ultra-compacta compatible con OLTs Huawei, ZTE y VSOL",
+    "id": 105,
+    "tenantId": "turbonetwork",
+    "variants": [],
+    "status": "optimal",
+    "createdAt": "2026-09-30T05:17:55.925Z",
+    "updatedAt": "2026-09-30T22:13:42.682Z"
+  },
+  {
+    "id": 101,
+    "type": "simple",
+    "name": "Router Wi-Fi 6 Gigabit Dual Band AX1800",
+    "alternativeNames": [
+      "Router AX1800",
+      "Módem WiFi 6 Residencial",
+      "AP Gigabit Dual Band"
+    ],
+    "categoryId": "cat-activos",
+    "categoryName": "Equipos Activos & ONUs",
+    "sku": "EQ-RTR-AX1800",
+    "barcode": "775981029384",
+    "baseCost": 125,
+    "salePrice": 165,
+    "stock": 42,
+    "stockMin": 10,
+    "stockCritical": 3,
+    "images": [
+      "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "Router de alto rendimiento para abonados FTTH con soporte EasyMesh y 4 puertos Gigabit Ethernet.",
+    "location": "Estante A-02",
+    "status": "optimal",
+    "tenantId": "turbonetwork",
+    "createdAt": "2026-09-30T05:06:56.676Z",
+    "updatedAt": "2026-09-30T05:06:56.676Z"
+  },
+  {
+    "id": 102,
+    "type": "bulk",
+    "name": "Cable de Fibra Óptica Drop FTTH 1 Hilo G657A2",
+    "alternativeNames": [
+      "Cable Drop 1H",
+      "Fibra Drop Exterior Negro",
+      "Drop Flat 1 Core"
+    ],
+    "categoryId": "cat-fibra",
+    "categoryName": "Cables & Fibra Óptica",
+    "sku": "FBR-DROP-1H-MTR",
+    "unitOfMeasure": "Metros (m)",
+    "unitSku": "FBR-DROP-MTR",
+    "allowDecimals": true,
+    "baseCost": 0.38,
+    "salePrice": 0.65,
+    "stock": 3500,
+    "stockMin": 800,
+    "stockCritical": 250,
+    "images": [
+      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "Cable de acometida exterior con mensajero de acero galvanizado y protección UV.",
+    "location": "Pasillo Central - Bobinas 04",
+    "status": "optimal",
+    "tenantId": "turbonetwork",
+    "createdAt": "2026-09-30T05:06:56.676Z",
+    "updatedAt": "2026-09-30T16:25:37.667Z"
+  },
+  {
+    "id": 103,
+    "type": "epp",
+    "name": "Casco Dieléctrico con Barbiquejo de Seguridad",
+    "alternativeNames": [
+      "Casco Liniero Alturas",
+      "Casco Protección Dieléctrica Clase E",
+      "Casco de Faena"
+    ],
+    "categoryId": "cat-epp",
+    "categoryName": "EPP & Seguridad Industrial",
+    "sku": "EPP-CSK-GEN",
+    "baseCost": 48,
+    "salePrice": 65,
+    "stock": 38,
+    "stockMin": 12,
+    "stockCritical": 4,
+    "hasDifferentCostPerVariant": true,
+    "variants": [
+      {
+        "id": "var-1",
+        "name": "Blanco / Talla Estándar (Liniero)",
+        "sku": "EPP-CSK-BL",
+        "quantity": 14,
+        "costPrice": 48,
+        "salePrice": 65
+      },
+      {
+        "id": "var-2",
+        "name": "Azul Eléctrico / Talla Estándar (Técnico)",
+        "sku": "EPP-CSK-AZ",
+        "quantity": 12,
+        "costPrice": 50,
+        "salePrice": 68
+      },
+      {
+        "id": "var-3",
+        "name": "Amarillo Alta Visibilidad c/ Barbiquejo 4 Puntas",
+        "sku": "EPP-CSK-AM-BAR",
+        "quantity": 12,
+        "costPrice": 56,
+        "salePrice": 75
+      }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1578873375972-00b84c8a8e1b?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "Casco certificado ANSI Z89.1 Clase E para trabajos en postes y líneas eléctricas.",
+    "location": "Armario de Seguridad EPP-01",
+    "status": "optimal",
+    "tenantId": "turbonetwork",
+    "createdAt": "2026-09-30T05:06:56.676Z",
+    "updatedAt": "2026-09-30T05:06:56.676Z"
+  },
+  {
+    "id": 104,
+    "type": "simple",
+    "name": "Conector Rápido SC/APC Monomodo Ensamblado Manual",
+    "alternativeNames": [
+      "Fast Connector SC/APC",
+      "Conector Verde Fibra",
+      "Conector Mecánico FTTH"
+    ],
+    "categoryId": "cat-pasivos",
+    "categoryName": "Ferretería & Pasivos",
+    "sku": "PAS-CON-SCAPC",
+    "baseCost": 0.85,
+    "salePrice": 1.5,
+    "stock": 8,
+    "stockMin": 50,
+    "stockCritical": 15,
+    "images": [
+      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "Conector pre-pulido para terminación rápida en rosetas de cliente sin fusionadora.",
+    "location": "Cajón B-12",
+    "status": "critical",
+    "tenantId": "turbonetwork",
+    "createdAt": "2026-09-30T05:06:56.676Z",
+    "updatedAt": "2026-09-30T05:06:56.676Z"
+  }
+]
