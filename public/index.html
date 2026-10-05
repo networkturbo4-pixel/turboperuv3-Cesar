@@ -15414,8 +15414,9 @@ Estamos atentos para brindarle asistencia inmediata.
 
         const data = await res.json();
 
-        if (data.executionLogs && Array.isArray(data.executionLogs)) {
-          data.executionLogs.forEach(line => {
+        const logList = data.executionLogs || data.logs;
+        if (logList && Array.isArray(logList)) {
+          logList.forEach(line => {
             let color = '#e2e8f0';
             if (line.includes('ERROR') || line.includes('FALLÓ')) color = '#f87171';
             else if (line.includes('OK') || line.includes('EXITOS') || line.includes('FINALIZADA')) color = '#34d399';

@@ -54,6 +54,7 @@ export interface UpdateExecutionResult {
   previousCommit: string;
   newCommit: string;
   logs: string[];
+  executionLogs?: string[];
   durationMs: number;
   timestamp: string;
 }
@@ -506,14 +507,27 @@ export async function executeSystemUpdate(options: {
     // PASO 4: Actualizar dependencias npm si hubo cambios
     log("📚 [4/6] Verificando dependencias npm...");
     try {
-      // Instalamos todas las dependencias necesarias para que tsup pueda compilar
-      const { stdout: npmOut } = await execAsync("npm install --no-audit --no-fund", {
+      // Instalamos todas las dependencias necesarias para que tsup pueda compilar en cPanel y VPS
+      const { stdout: npmOut } = await execAsync("npm install --include=dev --no-audit --no-fund", {
         cwd: ROOT_DIR,
         timeout: 180000,
+        env: { ...process.env, NODE_ENV: "development" },
       });
       log(`✅ Dependencias verificadas:\n${npmOut.slice(0, 300)}...`);
     } catch (npmErr: any) {
       log(`⚠️ Aviso al verificar dependencias: ${npmErr.message || String(npmErr)}`);
+      // Intento de rescate directo para tsup y typescript
+      try {
+        log("🔄 Intentando instalar dependencias críticas de compilación (tsup)...");
+        await execAsync("npm install tsup typescript --no-audit --no-fund", {
+          cwd: ROOT_DIR,
+          timeout: 120000,
+          env: { ...process.env, NODE_ENV: "development" },
+        });
+        log("✅ tsup y dependencias de build instaladas.");
+      } catch (tsupInstallErr: any) {
+        log(`⚠️ Aviso al instalar tsup: ${tsupInstallErr.message || String(tsupInstallErr)}`);
+      }
     }
 
     // PASO 5: Migraciones de Base de Datos
@@ -536,8 +550,23 @@ export async function executeSystemUpdate(options: {
     // PASO 6: Compilación de alto rendimiento con TSUP para cPanel y VPS
     if (shouldRebuild) {
       log("⚡ [6/6] Compilando bundle de producción optimizado (tsup)...");
-      const { stdout: buildOut } = await execAsync("npm run build", { cwd: ROOT_DIR, timeout: 90000 });
-      log(`✅ Compilación exitosa:\n${buildOut.trim()}`);
+      try {
+        const { stdout: buildOut } = await execAsync("npm run build", {
+          cwd: ROOT_DIR,
+          timeout: 90000,
+          env: { ...process.env, NODE_ENV: "production" },
+        });
+        log(`✅ Compilación exitosa:\n${buildOut.trim()}`);
+      } catch (buildErr: any) {
+        log(`⚠️ npm run build directo reportó: ${buildErr.message}. Ejecutando compilación directa con fallback node tsup...`);
+        const fallbackCmd = "node ./node_modules/tsup/dist/cli-default.js";
+        const { stdout: fallbackOut } = await execAsync(fallbackCmd, {
+          cwd: ROOT_DIR,
+          timeout: 90000,
+          env: { ...process.env, NODE_ENV: "production" },
+        });
+        log(`✅ Compilación exitosa con fallback directo:\n${fallbackOut.trim()}`);
+      }
     } else {
       log("⏭️ [6/6] Compilación omitida.");
     }
@@ -564,6 +593,7 @@ export async function executeSystemUpdate(options: {
       previousCommit,
       newCommit,
       logs,
+      executionLogs: logs,
       durationMs,
       timestamp: new Date().toISOString(),
     };
@@ -591,6 +621,7 @@ export async function executeSystemUpdate(options: {
       previousCommit,
       newCommit,
       logs,
+      executionLogs: logs,
       durationMs,
       timestamp: new Date().toISOString(),
     };
