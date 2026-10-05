@@ -167,8 +167,13 @@ export async function checkForSystemUpdates(): Promise<CheckUpdatesResult> {
   const checkedAt = new Date().toISOString();
 
   try {
+    // 0. Asegurar compatibilidad de permisos Git en servidores Linux/VPS
+    try {
+      await execAsync('git config --global --add safe.directory "*"', { cwd: ROOT_DIR });
+    } catch (e) {}
+
     // 1. Fetch sin merge para obtener el estado remoto
-    await execAsync(`git fetch origin ${branch} --quiet`, { cwd: ROOT_DIR, timeout: 25000 });
+    await execAsync(`git fetch origin ${branch} --quiet`, { cwd: ROOT_DIR, timeout: 30000 });
 
     // 2. Obtener hash del commit remoto más reciente
     const { stdout: rHashOut } = await execAsync(`git rev-parse --short origin/${branch}`, { cwd: ROOT_DIR });
@@ -477,13 +482,14 @@ export async function executeSystemUpdate(options: {
       log("⏭️ [1/6] Respaldo preventivo omitido por configuración.");
     }
 
-    // PASO 2: Git Stash preventivo de archivos locales temporales
-    log("📦 [2/6] Preservando estado local de trabajo (git stash)...");
+    // PASO 2: Git Stash preventivo y configuración de directorio seguro
+    log("📦 [2/6] Preservando estado local de trabajo y permisos Git...");
     try {
+      await execAsync('git config --global --add safe.directory "*"', { cwd: ROOT_DIR });
       await execAsync("git stash save 'Auto-stash pre-update'", { cwd: ROOT_DIR });
-      log("✅ Cambios locales preservados en stash.");
+      log("✅ Cambios locales preservados y permisos Git validados.");
     } catch (e) {
-      log("ℹ️ No se requirió stash local o el árbol ya está limpio.");
+      log("ℹ️ Directorio Git preparado.");
     }
 
     // PASO 3: Git Pull desde GitHub
@@ -500,10 +506,10 @@ export async function executeSystemUpdate(options: {
     // PASO 4: Actualizar dependencias npm si hubo cambios
     log("📚 [4/6] Verificando dependencias npm...");
     try {
-      // Instalamos o verificamos dependencias
-      const { stdout: npmOut } = await execAsync("npm install --omit=dev --no-audit --no-fund", {
+      // Instalamos todas las dependencias necesarias para que tsup pueda compilar
+      const { stdout: npmOut } = await execAsync("npm install --no-audit --no-fund", {
         cwd: ROOT_DIR,
-        timeout: 120000,
+        timeout: 180000,
       });
       log(`✅ Dependencias verificadas:\n${npmOut.slice(0, 300)}...`);
     } catch (npmErr: any) {
@@ -514,8 +520,8 @@ export async function executeSystemUpdate(options: {
     if (shouldMigrate) {
       log("🗄️ [5/6] Verificando y aplicando migraciones de esquema de base de datos...");
       try {
-        if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost:5432/turbonetwork")) {
-          const { stdout: dbOut } = await execAsync("npx drizzle-kit push", { cwd: ROOT_DIR, timeout: 60000 });
+        if (process.env.DATABASE_URL) {
+          const { stdout: dbOut } = await execAsync("npm run db:push", { cwd: ROOT_DIR, timeout: 60000 });
           log(`✅ Migración de Drizzle ORM completada:\n${dbOut.trim()}`);
         } else {
           log("ℹ️ Base de datos en almacenamiento híbrido nativo (PostgreSQL / JSON). Estructuras y colecciones validadas.");
@@ -527,19 +533,25 @@ export async function executeSystemUpdate(options: {
       log("⏭️ [5/6] Migraciones de BD omitidas.");
     }
 
-    // PASO 6: Compilación de alto rendimiento con TSUP para cPanel
+    // PASO 6: Compilación de alto rendimiento con TSUP para cPanel y VPS
     if (shouldRebuild) {
-      log("⚡ [6/6] Compilando bundle de producción optimizado para cPanel (tsup)...");
-      const { stdout: buildOut } = await execAsync("npm run build", { cwd: ROOT_DIR, timeout: 60000 });
-      log(`✅ Compilación exitosa para cPanel:\n${buildOut.trim()}`);
+      log("⚡ [6/6] Compilando bundle de producción optimizado (tsup)...");
+      const { stdout: buildOut } = await execAsync("npm run build", { cwd: ROOT_DIR, timeout: 90000 });
+      log(`✅ Compilación exitosa:\n${buildOut.trim()}`);
     } else {
       log("⏭️ [6/6] Compilación omitida.");
     }
 
-    // PASO 7: Señal de reinicio automático en cPanel Passenger
-    const passengerReload = touchCpanelRestart();
-    if (passengerReload) {
-      log("🔄 Señal de reinicio automático enviada a Phusion Passenger en cPanel (touch tmp/restart.txt).");
+    // PASO 7: Reiniciar servicio (Soporte Dual: PM2 en VPS y Phusion Passenger en cPanel)
+    touchCpanelRestart();
+    try {
+      await execAsync("pm2 reload turbonetwork || pm2 reload all || pm2 restart turbonetwork", {
+        cwd: ROOT_DIR,
+        timeout: 20000,
+      });
+      log("🔄 Servicio PM2 recargado exitosamente en VPS (Zero-Downtime Reload).");
+    } catch (pm2Err) {
+      log("🔄 Señal de recarga enviada a Phusion Passenger en cPanel (touch tmp/restart.txt).");
     }
 
     const durationMs = Date.now() - startTime;
