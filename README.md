@@ -73,12 +73,30 @@ Genera un bundle CommonJS optimizado en `dist/server.js`.
    - **Application mode**: `Production`.
 3. Ejecutar **Run NPM Install** y pulsar **Restart**.
 
-### Despliegue en VPS (PM2):
+### Despliegue en VPS (CloudPanel / PM2):
 ```bash
+# 1. Configurar variables de entorno
+cp .env.example .env
+
+# 2. Instalar dependencias y compilar
+npm install
 npm run build
-pm2 start dist/server.js --name turbonetwork -i max
+
+# 3. Sincronizar base de datos
+npm run db:push
+
+# 4. Arrancar en segundo plano con PM2
+pm2 start ecosystem.config.js
 pm2 save
+pm2 startup
 ```
+
+### Actualización Rápida en VPS (1 solo paso):
+Cada vez que subas cambios a GitHub, solo ejecuta en la carpeta del proyecto en el VPS:
+```bash
+bash deploy.sh
+```
+*(El script descarga cambios de GitHub, compila, sincroniza la base de datos y recarga PM2 en caliente sin interrupción de servicio).*
 
 ---
 
