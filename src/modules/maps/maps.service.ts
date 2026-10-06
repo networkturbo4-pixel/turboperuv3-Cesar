@@ -263,221 +263,20 @@ function getDefaultMapData(tenantId: string): MapTenantData {
     );
   }
 
-  // TurboNetwork (Lima - Predeterminado)
-  return createDefaultTenantData(
-    "turbonetwork",
-    "map_san_isidro",
-    "Mapa San Isidro (Troncal & NAPs)",
-    "San Isidro, Lima",
-    "#2563eb",
-    [-77.0368, -12.097],
-    14.5,
-    "mapbox://styles/mapbox/satellite-streets-v12",
-    [
-      {
-        id: "node_turbo_01",
-        name: "Torre Matriz San Isidro",
-        type: "tower",
-        icon: "tower",
-        color: "#2563eb",
-        lat: -12.097,
-        lng: -77.0368,
-        address: "Av. Rivera Navarrete 450, San Isidro",
-        capacity: "Master Hub • 4 OLT Huawei MA5608T",
-        status: "active",
-        notes: "Nodo principal de distribución de fibra óptica troncal",
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: "node_turbo_02",
-        name: "OLT Core 01 (GPON/XGS-PON)",
-        type: "olt",
-        icon: "router",
-        color: "#7c3aed",
-        lat: -12.0985,
-        lng: -77.0348,
-        address: "Calle Begonias 120",
-        capacity: "16 Puertos GPON • 1024 ONUs máx",
-        status: "active",
-        notes: "Alimentado por UPS redundante 3kVA",
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: "node_turbo_03",
-        name: "Manga de Empalme Troncal F-01",
-        type: "switch",
-        icon: "box",
-        color: "#059669",
-        lat: -12.1008,
-        lng: -77.0332,
-        address: "Cruce Av. Canaval y Moreyra",
-        capacity: "48 Fibras fusionadas",
-        status: "active",
-        notes: "Manga subterránea en cámara de registro",
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: "node_turbo_04",
-        name: "Caja NAP-01 Residencial (1:16)",
-        type: "nap",
-        icon: "box",
-        color: "#ea580c",
-        lat: -12.1032,
-        lng: -77.0315,
-        address: "Calle Los Ruiseñores 320",
-        capacity: "16 puertos (11 abonados activos)",
-        status: "active",
-        notes: "Acometidas drop listas",
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: "node_turbo_05",
-        name: "Caja NAP-02 Financiero (1:8)",
-        type: "nap",
-        icon: "box",
-        color: "#06b6d4",
-        lat: -12.0948,
-        lng: -77.0388,
-        address: "Calle Las Camelias 210",
-        capacity: "8 puertos dedicados (6 en uso)",
-        status: "active",
-        notes: "Clientes corporativos con SLA 99.9%",
-        createdAt: now,
-        updatedAt: now,
-      },
-    ],
-    [
-      {
-        id: "line_turbo_01",
-        name: "Troncal Óptica 48 FO - Torre Matriz a OLT Core",
-        type: "trunk",
-        fromNodeId: "node_turbo_01",
-        toNodeId: "node_turbo_02",
-        coordinates: [
-          [-77.0368, -12.097],
-          [-77.0358, -12.0977],
-          [-77.0348, -12.0985],
-        ],
-        color: "#2563eb",
-        width: 4,
-        style: "solid",
-        distanceMeters: 290,
-        cores: 48,
-        status: "active",
-        notes: "Cable ADSS aéreo sobre postes con ferretería dieléctrica",
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: "line_turbo_02",
-        name: "Distribución 24 FO - OLT Core a Manga Troncal",
-        type: "distribution",
-        fromNodeId: "node_turbo_02",
-        toNodeId: "node_turbo_03",
-        coordinates: [
-          [-77.0348, -12.0985],
-          [-77.034, -12.0995],
-          [-77.0332, -12.1008],
-        ],
-        color: "#059669",
-        width: 3.5,
-        style: "solid",
-        distanceMeters: 330,
-        cores: 24,
-        status: "active",
-        notes: "Subterráneo ducto PVC 2 pulgadas",
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: "line_turbo_03",
-        name: "Ramal FTTH - Manga a Caja NAP-01",
-        type: "drop",
-        fromNodeId: "node_turbo_03",
-        toNodeId: "node_turbo_04",
-        coordinates: [
-          [-77.0332, -12.1008],
-          [-77.0323, -12.102],
-          [-77.0315, -12.1032],
-        ],
-        color: "#ea580c",
-        width: 2.5,
-        style: "solid",
-        distanceMeters: 340,
-        cores: 8,
-        status: "active",
-        notes: "Distribución secundaria hacia viviendas",
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: "line_turbo_04",
-        name: "Distribución Corporativa - Torre Matriz a NAP-02",
-        type: "distribution",
-        fromNodeId: "node_turbo_01",
-        toNodeId: "node_turbo_05",
-        coordinates: [
-          [-77.0368, -12.097],
-          [-77.0378, -12.096],
-          [-77.0388, -12.0948],
-        ],
-        color: "#06b6d4",
-        width: 3,
-        style: "solid",
-        distanceMeters: 310,
-        cores: 12,
-        status: "active",
-        notes: "Enlace exclusivo edificios corporativos",
-        createdAt: now,
-        updatedAt: now,
-      },
-    ],
-    [
-      {
-        id: "area_turbo_01",
-        name: "Zona Cobertura FTTH San Isidro Centro",
-        coordinates: [
-          [-77.042, -12.092],
-          [-77.031, -12.092],
-          [-77.029, -12.105],
-          [-77.04, -12.105],
-        ],
-        fillColor: "#2563eb",
-        strokeColor: "#1d4ed8",
-        fillOpacity: 0.2,
-        surfaceAreaKm2: 1.58,
-        status: "active",
-        targetCustomers: 1200,
-        notes: "Área activa de comercialización con 8 NAPs proyectadas",
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: "area_turbo_02",
-        name: "Sector Expansión Sur - Limatambo",
-        coordinates: [
-          [-77.038, -12.104],
-          [-77.028, -12.104],
-          [-77.028, -12.112],
-          [-77.038, -12.112],
-        ],
-        fillColor: "#059669",
-        strokeColor: "#047857",
-        fillOpacity: 0.15,
-        surfaceAreaKm2: 0.95,
-        status: "expansion",
-        targetCustomers: 600,
-        notes: "Fase de postación y cableado en progreso",
-        createdAt: now,
-        updatedAt: now,
-      },
-    ],
-    [getCarabaylloSeedProject(now)]
-  );
+    // TurboNetwork (Lima Norte / Carabayllo - Predeterminado)
+  const carabProject = getCarabaylloSeedProject(now);
+  return {
+    tenantId: "turbonetwork",
+    activeMapId: carabProject.id,
+    maps: [carabProject],
+    center: carabProject.center,
+    zoom: carabProject.zoom,
+    style: carabProject.style,
+    nodes: carabProject.nodes,
+    lines: carabProject.lines,
+    areas: carabProject.areas,
+    updatedAt: now,
+  };
 }
 
 // Datos semilla para Carabayllo (Lima Norte)
@@ -633,6 +432,21 @@ export function loadMapData(tenantId: string): MapTenantData {
       if (parsed) {
         // Formato moderno con múltiples mapas independientes
         if (Array.isArray(parsed.maps) && parsed.maps.length > 0) {
+          // Si es turbonetwork y por alguna razón aún tiene map_san_isidro, filtrarlo
+          if (safeTenant === "turbonetwork") {
+            const initialLen = parsed.maps.length;
+            parsed.maps = parsed.maps.filter((m: any) => m.id !== "map_san_isidro");
+            if (parsed.maps.length === 0) {
+              parsed.maps.push(getCarabaylloSeedProject());
+            }
+            if (parsed.maps.length !== initialLen || parsed.activeMapId === "map_san_isidro") {
+              parsed.activeMapId = parsed.maps[0].id;
+              try {
+                fs.writeFileSync(filePath, JSON.stringify(parsed, null, 2), "utf-8");
+              } catch (e) {}
+            }
+          }
+
           if (!parsed.activeMapId || !parsed.maps.some((m: any) => m.id === parsed.activeMapId)) {
             parsed.activeMapId = parsed.maps[0].id;
           }
@@ -655,47 +469,53 @@ export function loadMapData(tenantId: string): MapTenantData {
         // Migración transparente si viene de formato heredado (con nodes a nivel raíz)
         if (Array.isArray(parsed.nodes)) {
           const now = new Date().toISOString();
-          const migratedProject: MapProject = {
-            id: "map_san_isidro",
-            name:
-              safeTenant === "loanetwork"
-                ? "Mapa Sede Arequipa Centro"
-                : safeTenant === "celeris"
-                ? "Mapa Sede Trujillo Norte"
-                : "Mapa San Isidro (Troncal & NAPs)",
-            district:
-              safeTenant === "loanetwork"
-                ? "Arequipa Centro"
-                : safeTenant === "celeris"
-                ? "Trujillo, La Libertad"
-                : "San Isidro, Lima",
-            description: "Red principal y distribución FTTH activa",
-            color: "#2563eb",
-            center: parsed.center || [-77.0368, -12.097],
-            zoom: parsed.zoom || 14.5,
-            style: parsed.style || "mapbox://styles/mapbox/satellite-streets-v12",
-            nodes: parsed.nodes || [],
-            lines: parsed.lines || [],
-            areas: parsed.areas || [],
-            createdAt: parsed.updatedAt || now,
-            updatedAt: parsed.updatedAt || now,
-          };
+          let maps: MapProject[] = [];
+          let activeId = "map_carabayllo";
 
-          const maps: MapProject[] = [migratedProject];
           if (safeTenant === "turbonetwork") {
-            maps.push(getCarabaylloSeedProject(now));
+            maps = [getCarabaylloSeedProject(now)];
+            activeId = maps[0].id;
+          } else {
+            const migratedProject: MapProject = {
+              id: safeTenant === "loanetwork" ? "map_arequipa_centro" : "map_principal",
+              name:
+                safeTenant === "loanetwork"
+                  ? "Mapa Sede Arequipa Centro"
+                  : safeTenant === "celeris"
+                  ? "Mapa Sede Trujillo Norte"
+                  : "Mapa Sede Principal",
+              district:
+                safeTenant === "loanetwork"
+                  ? "Arequipa Centro"
+                  : safeTenant === "celeris"
+                  ? "Trujillo, La Libertad"
+                  : "Sede Central",
+              description: "Red principal y distribución FTTH activa",
+              color: "#2563eb",
+              center: parsed.center || [-77.0345, -11.8755],
+              zoom: parsed.zoom || 14.5,
+              style: parsed.style || "mapbox://styles/mapbox/satellite-streets-v12",
+              nodes: parsed.nodes || [],
+              lines: parsed.lines || [],
+              areas: parsed.areas || [],
+              createdAt: parsed.updatedAt || now,
+              updatedAt: parsed.updatedAt || now,
+            };
+            maps = [migratedProject];
+            activeId = migratedProject.id;
           }
 
+          const primary = maps[0];
           const migrated: MapTenantData = {
             tenantId: safeTenant,
-            activeMapId: migratedProject.id,
+            activeMapId: activeId,
             maps,
-            center: migratedProject.center,
-            zoom: migratedProject.zoom,
-            style: migratedProject.style,
-            nodes: migratedProject.nodes,
-            lines: migratedProject.lines,
-            areas: migratedProject.areas,
+            center: primary.center,
+            zoom: primary.zoom,
+            style: primary.style,
+            nodes: primary.nodes,
+            lines: primary.lines,
+            areas: primary.areas,
             updatedAt: now,
           };
 

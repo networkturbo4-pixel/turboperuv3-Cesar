@@ -544,6 +544,10 @@
               <span>Entrar al Mapa</span>
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </button>
+            <button type="button" onclick="mapsModule.enterMapMode('${p.id}', true)" class="px-3 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold transition flex items-center justify-center space-x-1" title="Abrir explorador de elementos de este mapa">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              <span>Biblioteca</span>
+            </button>
             <div class="flex items-center space-x-1">
               <button type="button" onclick="mapsModule.openCreateMapModal('${p.id}')" class="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition" title="Editar detalles del mapa">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -1149,7 +1153,7 @@
   }
 
   // 5. ENTRAR AL MODO MAPA EXPANDIDO (AISLADO POR PROYECTO)
-  async function enterMapMode(mapId) {
+  async function enterMapMode(mapId, openLibrary = false) {
     if (mapId) {
       state.activeMapId = mapId;
       try {
@@ -1222,6 +1226,12 @@
     // Actualizar biblioteca y badges
     updateLibraryBadge();
     renderLibraryList();
+
+    if (openLibrary) {
+      setTimeout(() => {
+        toggleLibraryDrawer(true);
+      }, 350);
+    }
 
     // Redimensionar el mapa tras el cambio de layout para asegurar 100% ancho y alto
     [50, 150, 300, 600, 1000].forEach(ms => {
@@ -3861,14 +3871,16 @@
   function toggleLibraryDrawer(forceOpen) {
     const drawer = document.getElementById('maps-library-drawer');
     if (!drawer) return;
-    const isOpen = !drawer.classList.contains('hidden');
-    const willOpen = typeof forceOpen === 'boolean' ? forceOpen : !isOpen;
+    const isHidden = drawer.classList.contains('hidden') || drawer.style.display === 'none';
+    const willOpen = typeof forceOpen === 'boolean' ? forceOpen : isHidden;
 
     if (willOpen) {
       drawer.classList.remove('hidden');
+      drawer.style.display = 'flex';
       renderLibraryList();
     } else {
       drawer.classList.add('hidden');
+      drawer.style.display = 'none';
     }
   }
 
@@ -3893,169 +3905,176 @@
   }
 
   function renderLibraryList() {
-    const container = document.getElementById('maps-library-items-list');
-    if (!container) return;
+    try {
+      const container = document.getElementById('maps-library-items-list');
+      if (!container) return;
 
-    const activeMap = getActiveMap();
-    const mapName = activeMap ? activeMap.name : 'Mapa Activo';
-    const libTitle = document.getElementById('maps-lib-map-title');
-    if (libTitle) libTitle.textContent = `Biblioteca: ${mapName}`;
-    const libSubtitle = document.getElementById('maps-lib-map-subtitle');
-    if (libSubtitle) {
-      libSubtitle.textContent = activeMap ? `Elementos en ${activeMap.district || activeMap.name}` : 'Elementos del mapa actual';
-    }
-
-    const q = state.librarySearchQuery;
-    const tab = state.libraryFilter;
-
-    // Obtener elementos EXCLUSIVAMENTE del mapa activo
-    const sourceNodes = (activeMap ? activeMap.nodes : state.data.nodes) || [];
-    const sourceLines = (activeMap ? activeMap.lines : state.data.lines) || [];
-    const sourceAreas = (activeMap ? activeMap.areas : state.data.areas) || [];
-
-    const nodes = sourceNodes.map(n => ({ ...n, _category: 'node' }));
-    const lines = sourceLines.map(l => ({ ...l, _category: 'line' }));
-    const areas = sourceAreas.map(a => ({ ...a, _category: 'area' }));
-
-    // Actualizar contadores
-    const cntAll = document.getElementById('maps-lib-cnt-all');
-    const cntNodes = document.getElementById('maps-lib-cnt-nodes');
-    const cntLines = document.getElementById('maps-lib-cnt-lines');
-    const cntAreas = document.getElementById('maps-lib-cnt-areas');
-    const badgeCount = document.getElementById('maps-library-badge-count');
-
-    const totalCount = nodes.length + lines.length + areas.length;
-    if (cntAll) cntAll.textContent = totalCount;
-    if (cntNodes) cntNodes.textContent = nodes.length;
-    if (cntLines) cntLines.textContent = lines.length;
-    if (cntAreas) cntAreas.textContent = areas.length;
-    if (badgeCount) badgeCount.textContent = totalCount;
-
-    let items = [];
-    if (tab === 'nodes') items = nodes;
-    else if (tab === 'lines') items = lines;
-    else if (tab === 'areas') items = areas;
-    else items = [...nodes, ...lines, ...areas];
-
-    if (q) {
-      items = items.filter(it => {
-        const name = (it.name || '').toLowerCase();
-        const type = (it.type || '').toLowerCase();
-        const addr = (it.address || '').toLowerCase();
-        const notes = (it.notes || '').toLowerCase();
-        return name.includes(q) || type.includes(q) || addr.includes(q) || notes.includes(q);
-      });
-    }
-
-    if (items.length === 0) {
-      container.innerHTML = `
-        <div class="p-6 text-center text-slate-400">
-          <svg class="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-          <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">No se encontraron elementos en ${escapeHtml(mapName)}</p>
-          <p class="text-[11px] text-slate-400 mt-0.5">Agregue puntos, líneas o zonas a este mapa.</p>
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = items.map(it => {
-      if (it._category === 'node') {
-        const ic = NODE_ICONS[it.type] || NODE_ICONS.custom;
-        const photoCount = Array.isArray(it.photos) ? it.photos.length : 0;
-        return `
-          <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-blue-500/40 transition space-y-2">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2 min-w-0">
-                <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0 shadow-xs overflow-hidden" style="background-color: ${it.color || '#2563eb'}">
-                  ${it.customImage ? `<img src="${it.customImage}" class="w-full h-full object-cover">` : `<span class="w-3.5 h-3.5">${ic.svg}</span>`}
-                </div>
-                <div class="min-w-0">
-                  <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(it.name)}</h5>
-                  <span class="text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase">${ic.name}</span>
-                </div>
-              </div>
-              <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${it.status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/15 text-amber-500'}">Punto</span>
-            </div>
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-              <span class="font-mono">📍 ${it.lat.toFixed(4)}, ${it.lng.toFixed(4)}</span>
-              ${photoCount > 0 ? `<span class="text-indigo-600 dark:text-indigo-400 font-bold">📸 ${photoCount} fotos</span>` : ''}
-            </div>
-            <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-white/5">
-              <button type="button" onclick="mapsModule.flyToElement('node', '${it.id}')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
-                <span>Volar</span>
-              </button>
-              <div class="flex items-center space-x-1">
-                <button type="button" onclick="mapsModule.openPhotosModal('${it.id}')" class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-xs font-semibold" title="Ver / Tomar Fotos">📸</button>
-                <button type="button" onclick="mapsModule.openEditNodeModal('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-blue-500 text-xs font-semibold" title="Editar">✏️</button>
-                <button type="button" onclick="mapsModule.deleteNode('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 text-xs font-semibold" title="Eliminar">🗑️</button>
-              </div>
-            </div>
-          </div>
-        `;
-      } else if (it._category === 'line') {
-        return `
-          <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition space-y-2">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2 min-w-0">
-                <div class="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: ${it.color || '#059669'}">
-                  <div class="w-3 h-0.5 bg-white rounded-full"></div>
-                </div>
-                <div class="min-w-0">
-                  <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(it.name)}</h5>
-                  <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase">${it.type}</span>
-                </div>
-              </div>
-              <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Línea</span>
-            </div>
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-              <span class="font-mono font-bold">${it.distanceMeters ? formatDistance(it.distanceMeters) : '--'}</span>
-              <span>${it.fiberCores || 24} hilos</span>
-            </div>
-            <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-white/5">
-              <button type="button" onclick="mapsModule.flyToElement('line', '${it.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
-                <span>Volar</span>
-              </button>
-              <div class="flex items-center space-x-1">
-                <button type="button" onclick="mapsModule.openEditLineModal('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-500 text-xs font-semibold" title="Editar">✏️</button>
-                <button type="button" onclick="mapsModule.deleteLine('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 text-xs font-semibold" title="Eliminar">🗑️</button>
-              </div>
-            </div>
-          </div>
-        `;
-      } else if (it._category === 'area') {
-        return `
-          <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-purple-500/40 transition space-y-2">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2 min-w-0">
-                <div class="w-6 h-6 rounded-lg border flex-shrink-0" style="background-color: ${it.fillColor || '#3b82f6'}; border-color: ${it.strokeColor || '#1d4ed8'}"></div>
-                <div class="min-w-0">
-                  <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(it.name)}</h5>
-                  <span class="text-[10px] text-purple-600 dark:text-purple-400 font-semibold uppercase">Zona Cobertura</span>
-                </div>
-              </div>
-              <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400">Área</span>
-            </div>
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-              <span class="font-mono font-bold">${it.surfaceAreaKm2 || 0} km²</span>
-              <span>${it.targetCustomers ? it.targetCustomers + ' abonados' : ''}</span>
-            </div>
-            <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-white/5">
-              <button type="button" onclick="mapsModule.flyToElement('area', '${it.id}')" class="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
-                <span>Volar</span>
-              </button>
-              <div class="flex items-center space-x-1">
-                <button type="button" onclick="mapsModule.openEditAreaModal('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-purple-500 text-xs font-semibold" title="Editar">✏️</button>
-                <button type="button" onclick="mapsModule.deleteArea('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 text-xs font-semibold" title="Eliminar">🗑️</button>
-              </div>
-            </div>
-          </div>
-        `;
+      const activeMap = getActiveMap();
+      const mapName = activeMap ? activeMap.name : 'Mapa Activo';
+      const libTitle = document.getElementById('maps-lib-map-title');
+      if (libTitle) libTitle.textContent = `Biblioteca: ${mapName}`;
+      const libSubtitle = document.getElementById('maps-lib-map-subtitle');
+      if (libSubtitle) {
+        libSubtitle.textContent = activeMap ? `Elementos en ${activeMap.district || activeMap.name}` : 'Elementos del mapa actual';
       }
-      return '';
-    }).join('');
+
+      const q = state.librarySearchQuery;
+      const tab = state.libraryFilter;
+
+      // Obtener elementos EXCLUSIVAMENTE del mapa activo
+      const sourceNodes = (activeMap ? activeMap.nodes : state.data.nodes) || [];
+      const sourceLines = (activeMap ? activeMap.lines : state.data.lines) || [];
+      const sourceAreas = (activeMap ? activeMap.areas : state.data.areas) || [];
+
+      const nodes = sourceNodes.map(n => ({ ...n, _category: 'node' }));
+      const lines = sourceLines.map(l => ({ ...l, _category: 'line' }));
+      const areas = sourceAreas.map(a => ({ ...a, _category: 'area' }));
+
+      // Actualizar contadores
+      const cntAll = document.getElementById('maps-lib-cnt-all');
+      const cntNodes = document.getElementById('maps-lib-cnt-nodes');
+      const cntLines = document.getElementById('maps-lib-cnt-lines');
+      const cntAreas = document.getElementById('maps-lib-cnt-areas');
+      const badgeCount = document.getElementById('maps-library-badge-count');
+
+      const totalCount = nodes.length + lines.length + areas.length;
+      if (cntAll) cntAll.textContent = totalCount;
+      if (cntNodes) cntNodes.textContent = nodes.length;
+      if (cntLines) cntLines.textContent = lines.length;
+      if (cntAreas) cntAreas.textContent = areas.length;
+      if (badgeCount) badgeCount.textContent = totalCount;
+
+      let items = [];
+      if (tab === 'nodes') items = nodes;
+      else if (tab === 'lines') items = lines;
+      else if (tab === 'areas') items = areas;
+      else items = [...nodes, ...lines, ...areas];
+
+      if (q) {
+        items = items.filter(it => {
+          const name = (it.name || '').toLowerCase();
+          const type = (it.type || '').toLowerCase();
+          const addr = (it.address || '').toLowerCase();
+          const notes = (it.notes || '').toLowerCase();
+          return name.includes(q) || type.includes(q) || addr.includes(q) || notes.includes(q);
+        });
+      }
+
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="p-6 text-center text-slate-400">
+            <svg class="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">No se encontraron elementos en ${escapeHtml(mapName)}</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Agregue puntos, líneas o zonas a este mapa.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = items.map(it => {
+        if (it._category === 'node') {
+          const ic = NODE_ICONS[it.type] || NODE_ICONS.custom;
+          const photoCount = Array.isArray(it.photos) ? it.photos.length : 0;
+          const latStr = (parseFloat(it.lat) || 0).toFixed(4);
+          const lngStr = (parseFloat(it.lng) || 0).toFixed(4);
+          return `
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-blue-500/40 transition space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 min-w-0">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0 shadow-xs overflow-hidden" style="background-color: ${it.color || '#2563eb'}">
+                    ${it.customImage ? `<img src="${it.customImage}" class="w-full h-full object-cover">` : `<span class="w-3.5 h-3.5">${ic.svg}</span>`}
+                  </div>
+                  <div class="min-w-0">
+                    <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(it.name)}</h5>
+                    <span class="text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase">${ic.name}</span>
+                  </div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${it.status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/15 text-amber-500'}">Punto</span>
+              </div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                <span class="font-mono">📍 ${latStr}, ${lngStr}</span>
+                ${photoCount > 0 ? `<span class="text-indigo-600 dark:text-indigo-400 font-bold">📸 ${photoCount} fotos</span>` : ''}
+              </div>
+              <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-white/5">
+                <button type="button" onclick="mapsModule.flyToElement('node', '${it.id}')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+                  <span>Volar</span>
+                </button>
+                <div class="flex items-center space-x-1">
+                  <button type="button" onclick="mapsModule.openPhotosModal('${it.id}')" class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-xs font-semibold" title="Ver / Tomar Fotos">📸</button>
+                  <button type="button" onclick="mapsModule.openEditNodeModal('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-blue-500 text-xs font-semibold" title="Editar">✏️</button>
+                  <button type="button" onclick="mapsModule.deleteNode('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 text-xs font-semibold" title="Eliminar">🗑️</button>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (it._category === 'line') {
+          return `
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 min-w-0">
+                  <div class="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: ${it.color || '#059669'}">
+                    <div class="w-3 h-0.5 bg-white rounded-full"></div>
+                  </div>
+                  <div class="min-w-0">
+                    <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(it.name)}</h5>
+                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase">${it.type}</span>
+                  </div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Línea</span>
+              </div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                <span class="font-mono font-bold">${it.distanceMeters ? formatDistance(it.distanceMeters) : '--'}</span>
+                <span>${it.fiberCores || 24} hilos</span>
+              </div>
+              <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-white/5">
+                <button type="button" onclick="mapsModule.flyToElement('line', '${it.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+                  <span>Volar</span>
+                </button>
+                <div class="flex items-center space-x-1">
+                  <button type="button" onclick="mapsModule.openEditLineModal('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-500 text-xs font-semibold" title="Editar">✏️</button>
+                  <button type="button" onclick="mapsModule.deleteLine('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 text-xs font-semibold" title="Eliminar">🗑️</button>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (it._category === 'area') {
+          const areaKm = typeof it.surfaceAreaKm2 === 'number' ? it.surfaceAreaKm2.toFixed(2) : (parseFloat(it.surfaceAreaKm2) || 0).toFixed(2);
+          return `
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-purple-500/40 transition space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 min-w-0">
+                  <div class="w-6 h-6 rounded-lg border flex-shrink-0" style="background-color: ${it.fillColor || '#3b82f6'}; border-color: ${it.strokeColor || '#1d4ed8'}"></div>
+                  <div class="min-w-0">
+                    <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(it.name)}</h5>
+                    <span class="text-[10px] text-purple-600 dark:text-purple-400 font-semibold uppercase">Zona Cobertura</span>
+                  </div>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400">Área</span>
+              </div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                <span class="font-mono font-bold">${areaKm} km²</span>
+                <span>${it.targetCustomers ? it.targetCustomers + ' abonados' : ''}</span>
+              </div>
+              <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-white/5">
+                <button type="button" onclick="mapsModule.flyToElement('area', '${it.id}')" class="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+                  <span>Volar</span>
+                </button>
+                <div class="flex items-center space-x-1">
+                  <button type="button" onclick="mapsModule.openEditAreaModal('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-purple-500 text-xs font-semibold" title="Editar">✏️</button>
+                  <button type="button" onclick="mapsModule.deleteArea('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 text-xs font-semibold" title="Eliminar">🗑️</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        return '';
+      }).join('');
+    } catch (err) {
+      console.error('[MAPS] Error renderLibraryList:', err);
+    }
   }
 
   function flyToElement(type, id) {

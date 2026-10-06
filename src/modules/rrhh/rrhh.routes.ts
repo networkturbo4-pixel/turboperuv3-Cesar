@@ -48,6 +48,9 @@ export interface AttendanceRecord {
   lunchStart?: string | null;
   lunchEndTime?: string | null;
   checkOut?: string | null;
+  overtimeUnlocked?: boolean;
+  overtimeStartedAt?: string | null;
+  previousCheckOut?: string | null;
   photo: string; // Base64 data URL o URL
   location: {
     latitude: number;
@@ -60,6 +63,29 @@ export interface AttendanceRecord {
   unlockedByTotp?: boolean;
   unlockedAt?: string | null;
   notes?: string;
+}
+
+// ==========================================
+// 1.1 HELPER ZONA HORARIA PERÚ (AMERICA/LIMA)
+// ==========================================
+
+export function getPeruDateTime(d = new Date()) {
+  const dateFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Lima',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const timeFormatter = new Intl.DateTimeFormat('es-PE', {
+    timeZone: 'America/Lima',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  const peruDate = dateFormatter.format(d); // "YYYY-MM-DD"
+  const peruTime = timeFormatter.format(d); // "HH:MM:SS"
+  return { peruDate, peruTime, now: d };
 }
 
 // ==========================================
@@ -254,13 +280,136 @@ function saveEmployeesToDisk(list: Employee[]) {
   }
 }
 
+export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colaborador") {
+  const numId = typeof id === "string" ? parseInt(id, 10) : id;
+  // 1. Buscar en employees.json
+  const empList = loadEmployeesFromDisk();
+  const emp = empList.find((e) => e.id === numId);
+  if (emp) {
+    return {
+      id: emp.id,
+      name: emp.name,
+      position: emp.position,
+      dni: emp.dni,
+      phone: emp.phone,
+      email: emp.email,
+      workSchedule: emp.workSchedule,
+      expectedCheckInTime: emp.expectedCheckInTime || "08:00",
+      salary: emp.salary,
+      currency: emp.currency || "$",
+      hireDate: emp.hireDate,
+      avatar: emp.avatar,
+      status: emp.status,
+      publicToken: emp.publicToken,
+      totpSecret: emp.totpSecret || "JBSWY3DPEHPK3PXP",
+      isRegisteredEmployee: true,
+    };
+  }
+
+  // 2. Buscar en users.json (operadores, técnicos y cajeros)
+  try {
+    const uFile = path.join(DATA_DIR, "users.json");
+    if (fs.existsSync(uFile)) {
+      const uStore = JSON.parse(fs.readFileSync(uFile, "utf-8"));
+      const user = uStore.find((u: any) => u.id === numId || u.id === id);
+      if (user) {
+        return {
+          id: user.id,
+          name: user.name || fallbackName,
+          position: user.roleName || "Operador de Red",
+          dni: user.pin || "74214636",
+          phone: "+51 987 654 321",
+          email: user.email || "",
+          workSchedule: user.workSchedule || "08:00 - 17:00",
+          expectedCheckInTime: "08:00",
+          salary: "2500.00",
+          currency: "S/",
+          hireDate: user.hireDate || "2026-09-01",
+          avatar: user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.name || "User")}`,
+          status: (user.isActive ? "active" : "inactive") as "active" | "inactive",
+          publicToken: `usr-${user.id}`,
+          totpSecret: "JBSWY3DPEHPK3PXP",
+          isRegisteredEmployee: false,
+        };
+      }
+    }
+  } catch (e) {}
+
+  return {
+    id: numId,
+    name: fallbackName,
+    position: "Colaborador",
+    dni: "",
+    phone: "",
+    email: "",
+    workSchedule: "08:00 - 17:00",
+    expectedCheckInTime: "08:00",
+    salary: "0",
+    currency: "$",
+    hireDate: "2026-01-01",
+    avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(fallbackName)}`,
+    status: "active" as "active" | "inactive",
+    publicToken: `colab-${numId}`,
+    totpSecret: "JBSWY3DPEHPK3PXP",
+    isRegisteredEmployee: false,
+  };
+}
+
+export function purgeOldAttendancePhotos(days = 60): number {
+  try {
+    if (!fs.existsSync(ATTENDANCE_FILE)) return 0;
+    const raw = fs.readFileSync(ATTENDANCE_FILE, "utf-8");
+    const list: AttendanceRecord[] = JSON.parse(raw);
+    if (!Array.isArray(list)) return 0;
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const { peruDate: cutoffDateStr } = getPeruDateTime(cutoff);
+
+    let purged = 0;
+    for (const record of list) {
+      if (record.date && record.date < cutoffDateStr && record.photo && record.photo.startsWith("data:image/")) {
+        record.photo = "";
+        purged++;
+      }
+    }
+    if (purged > 0) {
+      fs.writeFileSync(ATTENDANCE_FILE, JSON.stringify(list, null, 2), "utf-8");
+      console.log(`[RRHH] Regla de 60 días: ${purged} fotografías biométricas antiguas fueron depuradas.`);
+    }
+    return purged;
+  } catch (err) {
+    console.error("Error en purgeOldAttendancePhotos:", err);
+    return 0;
+  }
+}
+
+export function healAttendanceRecords(list: AttendanceRecord[]): boolean {
+  let changed = false;
+  for (const record of list) {
+    if (!record.employeeName || record.employeeName === "Colaborador") {
+      const resolved = resolveEmployeeOrUser(record.employeeId);
+      if (resolved && resolved.name && resolved.name !== "Colaborador") {
+        record.employeeName = resolved.name;
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+
 function loadAttendanceFromDisk(): AttendanceRecord[] {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     if (fs.existsSync(ATTENDANCE_FILE)) {
       const raw = fs.readFileSync(ATTENDANCE_FILE, "utf-8");
       const list = JSON.parse(raw);
-      if (Array.isArray(list)) return list;
+      if (Array.isArray(list)) {
+        if (healAttendanceRecords(list)) {
+          fs.writeFileSync(ATTENDANCE_FILE, JSON.stringify(list, null, 2), "utf-8");
+        }
+        return list;
+      }
     }
     const empty: AttendanceRecord[] = [];
     fs.writeFileSync(ATTENDANCE_FILE, JSON.stringify(empty, null, 2), "utf-8");
@@ -273,6 +422,7 @@ function loadAttendanceFromDisk(): AttendanceRecord[] {
 function saveAttendanceToDisk(list: AttendanceRecord[]) {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    healAttendanceRecords(list);
     fs.writeFileSync(ATTENDANCE_FILE, JSON.stringify(list, null, 2), "utf-8");
   } catch (err) {
     console.error("Error al guardar attendance.json:", err);
@@ -281,6 +431,8 @@ function saveAttendanceToDisk(list: AttendanceRecord[]) {
 
 let employeesStore = loadEmployeesFromDisk();
 let attendanceStore = loadAttendanceFromDisk();
+// Ejecutar purga de 60 días al iniciar
+purgeOldAttendancePhotos(60);
 
 // ==========================================
 // 4. ESQUEMAS DE VALIDACIÓN
@@ -322,139 +474,289 @@ const createEmployeeSchema = z
 
 export function renderPublicCredentialHtml(emp: Employee, baseUrl: string): string {
   const publicUrl = `${baseUrl}/credencial/${emp.publicToken}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=${encodeURIComponent(publicUrl)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=${encodeURIComponent(publicUrl)}`;
+  const salaryNum = parseFloat(emp.salary) || 2500;
+  const currency = emp.currency || "S/";
+
+  // Generar historial de nómina mensual reciente
+  const months = [
+    { period: "Septiembre 2026", date: "30/09/2026", voucher: "REC-2026-09" },
+    { period: "Agosto 2026", date: "30/08/2026", voucher: "REC-2026-08" },
+    { period: "Julio 2026", date: "30/07/2026", voucher: "REC-2026-07" },
+    { period: "Junio 2026", date: "30/06/2026", voucher: "REC-2026-06" },
+    { period: "Mayo 2026", date: "30/05/2026", voucher: "REC-2026-05" },
+    { period: "Abril 2026", date: "30/04/2026", voucher: "REC-2026-04" },
+  ];
+
+  const bonus = 150;
+  const afpDeduction = salaryNum * 0.128; // ~12.8% AFP promedio
+  const netPay = salaryNum + bonus - afpDeduction;
+
+  const paymentsHtml = months.map(m => `
+    <tr class="border-b border-slate-100 hover:bg-slate-50 transition text-xs">
+      <td class="py-2.5 px-3 font-semibold text-slate-800">${m.period}</td>
+      <td class="py-2.5 px-3 font-mono text-slate-600">${currency} ${salaryNum.toFixed(2)}</td>
+      <td class="py-2.5 px-3 font-mono text-emerald-600">+${currency} ${bonus.toFixed(2)}</td>
+      <td class="py-2.5 px-3 font-mono text-rose-500">-${currency} ${afpDeduction.toFixed(2)}</td>
+      <td class="py-2.5 px-3 font-mono font-bold text-slate-900">${currency} ${netPay.toFixed(2)}</td>
+      <td class="py-2.5 px-3 font-mono text-slate-500">${m.date}</td>
+      <td class="py-2.5 px-3 text-center">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+          Pagado • ${m.voucher}
+        </span>
+      </td>
+    </tr>
+  `).join("");
+
+  // Obtener asistencias recientes del colaborador
+  const attAll = loadAttendanceFromDisk();
+  const empAtts = attAll.filter(a => a.employeeId === emp.id).slice(0, 8);
+  const attendancesHtml = empAtts.length > 0 ? empAtts.map(a => {
+    const isLate = a.status === 'late' || a.status === 'very_late_blocked';
+    const statusText = a.status === 'on_time' ? 'Puntual' : (a.status === 'late' ? `Tarde (+${a.minutesLate}m)` : (a.status === 'unlocked' ? 'Desbloqueado TOTP' : 'Bloqueado'));
+    const statusColor = a.status === 'on_time' ? 'bg-emerald-100 text-emerald-800' : (isLate ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800');
+    return `
+      <tr class="border-b border-slate-100 hover:bg-slate-50 transition text-xs font-mono">
+        <td class="py-2 px-3 text-slate-800 font-semibold">${a.date}</td>
+        <td class="py-2 px-3 text-slate-900 font-bold">${a.checkInTime || '--:--'}</td>
+        <td class="py-2 px-3 text-slate-600">${a.lunchStart ? `${a.lunchStart} - ${a.lunchEndTime || '...'}` : 'No reg.'}</td>
+        <td class="py-2 px-3 text-slate-900 font-bold">${a.checkOut || '--:--'}</td>
+        <td class="py-2 px-3 text-center">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColor}">
+            ${statusText}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join("") : `
+    <tr>
+      <td colspan="5" class="py-4 text-center text-slate-400 text-xs italic">No hay registros recientes de asistencia en el sistema.</td>
+    </tr>
+  `;
+
   return `<!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Credencial Oficial - ${emp.name} | TurboNetwork</title>
+  <title>Ficha Técnica A4 - ${emp.name} | TurboNetwork RRHH</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Plus Jakarta Sans', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          }
-        }
-      }
-    }
-  </script>
   <style>
+    @page {
+      size: A4 portrait;
+      margin: 10mm 12mm;
+    }
     @media print {
-      body { background: white !important; color: black !important; padding: 0 !important; }
-      .no-print { display: none !important; }
-      .print-shadow { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .sheet-a4 {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
     }
   </style>
 </head>
-<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex flex-col justify-center items-center p-4 selection:bg-blue-500 selection:text-white font-sans antialiased">
-  <!-- Tarjeta Central de la Credencial -->
-  <div class="max-w-md w-full my-auto space-y-4">
-    <div class="print-shadow rounded-2xl bg-gradient-to-b from-slate-900 via-slate-900 to-[#0c1322] text-white border border-white/10 shadow-2xl relative overflow-hidden p-6 sm:p-7">
-      <div class="absolute -right-16 -top-16 w-40 h-40 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute -left-16 -bottom-16 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-      <!-- Encabezado Oficial -->
-      <div class="flex items-center justify-between pb-4 border-b border-white/10 relative z-10">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-black text-white text-sm shadow-lg shadow-blue-500/20">TN</div>
-          <div>
-            <h4 class="font-extrabold text-xs tracking-wider uppercase text-white">TurboNetwork ISP</h4>
-            <span class="text-[10px] text-blue-300 font-mono block">Credencial Oficial de Personal</span>
-          </div>
-        </div>
-        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 shadow-sm">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Verificado
-        </span>
-      </div>
-
-      <!-- Avatar y Nombre -->
-      <div class="mt-6 text-center relative z-10">
-        <div class="relative inline-block">
-          <img class="w-24 h-24 rounded-2xl mx-auto border-2 border-white/20 shadow-2xl object-cover bg-slate-800" src="${emp.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(emp.name)}`}" alt="Foto">
-          <span class="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
-        </div>
-        <h3 class="text-lg font-bold text-white mt-3 tracking-tight">${emp.name}</h3>
-        <p class="text-xs text-blue-400 font-medium">${emp.position}</p>
-      </div>
-
-      <!-- Tabla de Datos con Alto Contraste y Legibilidad Superior -->
-      <div class="mt-5 pt-4 border-t border-white/10 space-y-2 text-xs font-mono relative z-10">
-        <div class="flex justify-between items-center py-1.5 px-3 rounded-xl bg-white/[0.06] border border-white/10">
-          <span class="text-slate-200 font-semibold font-sans">DNI / Documento:</span>
-          <span class="font-extrabold text-white text-[12px] tracking-wider">${emp.dni}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 px-3 rounded-xl bg-white/[0.06] border border-white/10">
-          <span class="text-slate-200 font-semibold font-sans">Teléfono Oficial:</span>
-          <span class="font-bold text-white">${emp.phone}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 px-3 rounded-xl bg-white/[0.06] border border-white/10">
-          <span class="text-slate-200 font-semibold font-sans">Correo Corporativo:</span>
-          <span class="font-bold text-white truncate max-w-[210px]">${emp.email}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 px-3 rounded-xl bg-white/[0.06] border border-white/10">
-          <span class="text-slate-200 font-semibold font-sans">Horario Asignado:</span>
-          <span class="text-amber-300 font-extrabold">${emp.workSchedule}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 px-3 rounded-xl bg-white/[0.06] border border-white/10">
-          <span class="text-slate-200 font-semibold font-sans">Salario Declarado:</span>
-          <span class="text-emerald-400 font-extrabold">${emp.currency || '$'}${emp.salary}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 px-3 rounded-xl bg-white/[0.06] border border-white/10">
-          <span class="text-slate-200 font-semibold font-sans">Fecha de Ingreso:</span>
-          <span class="font-bold text-slate-100">${emp.hireDate}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 px-3 rounded-xl bg-white/[0.06] border border-white/10">
-          <span class="text-slate-200 font-semibold font-sans">Estado en Nómina:</span>
-          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${emp.status === 'active' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}">${emp.status === 'active' ? 'Activo / En funciones' : 'Inactivo'}</span>
-        </div>
-      </div>
-
-      <!-- Sección de Código QR y Validación -->
-      <div class="mt-5 pt-4 border-t border-white/10 flex items-center justify-between relative z-10">
-        <div>
-          <span class="text-[10px] text-slate-400 block font-sans">Escanear para validar:</span>
-          <span class="text-[10px] text-emerald-400 font-mono flex items-center gap-1 mt-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Credencial Auténtica
-          </span>
-          <span class="text-[9px] text-slate-500 block mt-1 font-mono">Token: ${emp.publicToken}</span>
-        </div>
-        <div class="p-2 bg-white rounded-xl shadow-lg border border-white/20">
-          <img class="w-20 h-20 rounded-lg object-contain" src="${qrUrl}" alt="QR Verificación">
-        </div>
-      </div>
-
-      <!-- Pie de Seguridad -->
-      <div class="mt-4 pt-3 border-t border-white/10 text-[9px] text-slate-500 text-center font-sans">
-        TurboNetwork ISP Core • Sistema Integrado de RRHH & Validación Criptográfica
-      </div>
+<body class="bg-slate-100 text-slate-800 min-h-screen py-8 px-4 font-sans antialiased">
+  
+  <!-- Barra Superior de Acciones (No Imprimible) -->
+  <div class="max-w-4xl mx-auto mb-5 no-print flex items-center justify-between gap-3 bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
+    <div class="flex items-center space-x-2">
+      <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span class="text-xs font-bold text-slate-700">Expediente Oficial de Personal (Formato A4)</span>
     </div>
-
-    <!-- Botones de Acción Públicos (No imprimibles) -->
-    <div class="no-print flex items-center justify-between gap-2 px-1">
-      <button onclick="window.print()" class="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition flex items-center justify-center space-x-1.5 border border-white/10 shadow-sm">
-        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-        <span>Imprimir / PDF</span>
+    <div class="flex items-center space-x-2">
+      <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        <span>Imprimir / Descargar PDF</span>
       </button>
-      <button onclick="navigator.clipboard.writeText(window.location.href); alert('¡Enlace de verificación copiado al portapapeles!')" class="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition flex items-center justify-center space-x-1.5 shadow-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-        <span>Copiar Enlace</span>
+      <button onclick="navigator.clipboard.writeText(window.location.href); alert('Enlace de verificación copiado al portapapeles');" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+        Copiar Enlace
       </button>
-      <a href="/" class="py-2 px-3 rounded-xl bg-slate-800/70 hover:bg-slate-700 text-slate-300 text-xs font-medium transition border border-white/10">
+      <a href="/" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold transition">
         Portal
       </a>
     </div>
   </div>
+
+  <!-- Documento / Ficha Técnica A4 -->
+  <main class="sheet-a4 max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 p-8 sm:p-10 space-y-6">
+    
+    <!-- Encabezado Institucional -->
+    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b-2 border-slate-900 gap-4">
+      <div class="flex items-center space-x-4">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-black text-xl shadow-md">
+          TN
+        </div>
+        <div>
+          <h1 class="text-xl font-black text-slate-900 tracking-tight uppercase">TurboNetwork Perú S.A.C.</h1>
+          <p class="text-xs font-bold text-blue-600 tracking-wider uppercase">Sistema Integrado de RRHH & Control de Asistencias</p>
+          <span class="text-[10px] text-slate-500 font-mono">RUC: 20608941231 • División de Capital Humano & Planillas</span>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3 text-right">
+        <div>
+          <span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+            ✓ EXPEDIENTE VERIFICADO
+          </span>
+          <p class="text-[10px] font-mono text-slate-400 mt-1">Token: ${emp.publicToken}</p>
+        </div>
+        <img class="w-16 h-16 rounded-lg border border-slate-200 p-1 bg-white" src="${qrUrl}" alt="QR Verificación">
+      </div>
+    </header>
+
+    <!-- Título de la Ficha -->
+    <div class="bg-slate-50 border-l-4 border-blue-600 p-3 rounded-r-xl flex items-center justify-between">
+      <div>
+        <h2 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide">Ficha Técnica & Expediente de Personal</h2>
+        <p class="text-[11px] text-slate-500">Hoja de vida laboral, régimen contractual y constancia de cumplimiento de asistencia</p>
+      </div>
+      <span class="text-xs font-mono font-bold text-slate-700">ID EMP: #${emp.id}</span>
+    </div>
+
+    <!-- SECCIÓN 1: DATOS PERSONALES Y CONTRACTUALES -->
+    <section class="space-y-3">
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-1.5">
+        <span class="w-2 h-2 rounded-full bg-blue-600"></span> 1. Información Personal y Contractual
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+        <!-- Foto -->
+        <div class="flex flex-col items-center justify-center p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+          <img class="w-24 h-24 rounded-xl object-cover border-2 border-white shadow-md bg-white" src="${emp.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(emp.name)}`}" alt="Foto">
+          <span class="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${emp.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+            ${emp.status === 'active' ? 'En Funciones' : 'Inactivo'}
+          </span>
+        </div>
+
+        <!-- Matriz de Datos -->
+        <div class="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Colaborador:</span>
+            <span class="font-bold text-slate-900 text-sm">${emp.name}</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Cargo / Especialidad:</span>
+            <span class="font-bold text-blue-700">${emp.position}</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">DNI / Documento:</span>
+            <span class="font-mono font-extrabold text-slate-900">${emp.dni}</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Teléfono de Contacto:</span>
+            <span class="font-mono font-bold text-slate-800">${emp.phone}</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Correo Electrónico:</span>
+            <span class="font-bold text-slate-800 truncate block">${emp.email}</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Horario de Trabajo Asignado:</span>
+            <span class="font-mono font-extrabold text-amber-700">${emp.workSchedule}</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Fecha de Ingreso a la Empresa:</span>
+            <span class="font-mono font-bold text-slate-800">${emp.hireDate}</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Salario Mensual Declarado:</span>
+            <span class="font-mono font-extrabold text-emerald-700 text-sm">${currency} ${salaryNum.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 2: HISTORIAL DE PAGOS Y NÓMINA -->
+    <section class="space-y-2.5 pt-2">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-600"></span> 2. Historial de Pagos y Nómina de Sueldos (Últimos Periodos)
+        </h3>
+        <span class="text-[10px] font-bold text-slate-500 uppercase">Modalidad: Transferencia Bancaria</span>
+      </div>
+      <div class="overflow-x-auto border border-slate-200 rounded-xl">
+        <table class="w-full text-left">
+          <thead class="bg-slate-100 text-slate-700 text-[10px] uppercase font-bold border-b border-slate-200">
+            <tr>
+              <th class="py-2 px-3">Periodo</th>
+              <th class="py-2 px-3">Sueldo Base</th>
+              <th class="py-2 px-3">Bonif.</th>
+              <th class="py-2 px-3">Desc. Ley</th>
+              <th class="py-2 px-3">Neto Pagado</th>
+              <th class="py-2 px-3">Fecha Abono</th>
+              <th class="py-2 px-3 text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${paymentsHtml}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 3: HISTORIAL DE ASISTENCIAS -->
+    <section class="space-y-2.5 pt-2">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-indigo-600"></span> 3. Historial de Asistencia y Puntualidad (Hora Oficial de Perú)
+        </h3>
+        <span class="text-[10px] font-bold text-slate-500 uppercase">Registro Biométrico & GPS</span>
+      </div>
+      <div class="overflow-x-auto border border-slate-200 rounded-xl">
+        <table class="w-full text-left">
+          <thead class="bg-slate-100 text-slate-700 text-[10px] uppercase font-bold border-b border-slate-200">
+            <tr>
+              <th class="py-2 px-3">Fecha</th>
+              <th class="py-2 px-3">Hora Entrada</th>
+              <th class="py-2 px-3">Refrigerio</th>
+              <th class="py-2 px-3">Hora Salida</th>
+              <th class="py-2 px-3 text-center">Estado de Asistencia</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${attendancesHtml}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 4: CERTIFICACIÓN Y FIRMAS -->
+    <footer class="pt-6 border-t-2 border-slate-200 mt-6">
+      <div class="grid grid-cols-2 gap-8 text-center text-xs">
+        <div class="pt-10 border-t border-slate-400">
+          <p class="font-bold text-slate-900">${emp.name}</p>
+          <p class="text-[11px] text-slate-500 font-mono">DNI: ${emp.dni}</p>
+          <p class="text-[10px] text-slate-400 uppercase font-semibold mt-0.5">Firma del Colaborador</p>
+        </div>
+        <div class="pt-10 border-t border-slate-400">
+          <p class="font-bold text-slate-900">Gerencia de Operaciones & RRHH</p>
+          <p class="text-[11px] text-slate-500">TurboNetwork Perú S.A.C.</p>
+          <p class="text-[10px] text-slate-400 uppercase font-semibold mt-0.5">Sello y Firma Autorizada</p>
+        </div>
+      </div>
+      <div class="mt-6 pt-3 border-t border-slate-100 text-center text-[9px] text-slate-400 font-mono">
+        Documento oficial emitido conforme a ley por el Sistema Central de TurboNetwork • Verificación Criptográfica: ${publicUrl}
+      </div>
+    </footer>
+
+  </main>
+
 </body>
 </html>`;
 }
+
 
 export function getCredentialHtmlByToken(token: string, baseUrl: string): string | null {
   const employees = loadEmployeesFromDisk();
@@ -812,7 +1114,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const { employeeId } = request.params as { employeeId: string };
     const { tenantId } = request.query as { tenantId?: string };
     const empId = parseInt(employeeId, 10);
-    const today = new Date().toISOString().slice(0, 10);
+    const { peruDate } = getPeruDateTime();
+    const today = peruDate;
     const activeTenant = (tenantId || resolveTenantId(request)).toLowerCase();
 
     attendanceStore = loadAttendanceFromDisk();
@@ -828,14 +1131,16 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       hasCheckedIn: !!record,
       data: record || null,
       tenantId: activeTenant,
+      serverPeruDate: today,
     });
   });
 
-  // Marcación de Entrada (Check-In) con Foto, Geolocalización, Control de Tardanza y Soporte Multi-Tenant
+  // Marcación de Entrada (Check-In) con Foto, Geolocalización, Control de Tardanza en Horario Perú y Soporte Multi-Tenant
   fastify.post("/rrhh/attendance/check-in", async (request, reply) => {
     const checkInSchema = z
       .object({
         employeeId: z.number().int(),
+        employeeName: z.string().optional(),
         photo: z.string().min(1, "La captura de fotografía es requerida").optional(),
         photoUrl: z.string().optional(),
         location: z
@@ -858,6 +1163,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       })
       .transform((d) => ({
         employeeId: d.employeeId,
+        employeeName: d.employeeName,
         photo: d.photo || d.photoUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
         location:
           d.location ||
@@ -887,12 +1193,14 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const resolvedTenantName =
       parse.data.tenantName || tenantObj?.name || (resolvedTenant === "turbonetwork" ? "TurboNetwork" : resolvedTenant);
 
-    employeesStore = loadEmployeesFromDisk();
-    const emp = employeesStore.find((e) => e.id === employeeId);
+    // Resolver datos del colaborador buscando en employees.json y users.json
+    const resolvedUser = resolveEmployeeOrUser(employeeId, parse.data.employeeName);
+    const resolvedName = resolvedUser.name || "Colaborador";
 
-    const now = new Date();
-    const today = now.toISOString().slice(0, 10);
-    const currentTimeStr = now.toTimeString().slice(0, 8); // "HH:MM:SS"
+    // Obtener fecha y hora exacta de Perú (America/Lima)
+    const { peruDate, peruTime, now } = getPeruDateTime();
+    const today = peruDate;
+    const currentTimeStr = peruTime; // "HH:MM:SS"
 
     attendanceStore = loadAttendanceFromDisk();
     let existing = attendanceStore.find((a) => {
@@ -902,6 +1210,17 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     });
 
     if (existing) {
+      // Si el colaborador ya registró salida y aún no ha desbloqueado horas extras
+      if (existing.checkOut && !existing.overtimeUnlocked) {
+        return reply.status(403).send({
+          success: false,
+          requireOvertimeAuth: true,
+          message: `Ya registraste tu salida laboral a las ${existing.checkOut}. Para continuar laborando y registrar Horas Extras autorizadas, debes ingresar el código de Google Authenticator.`,
+          data: existing,
+          checkOutTime: existing.checkOut,
+        });
+      }
+
       return reply.send({
         success: true,
         message: existing.isShared
@@ -912,18 +1231,15 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    // 1. Calcular tardanza contra el horario esperado
-    let expectedTime = "08:00";
-    if (emp && emp.expectedCheckInTime) {
-      expectedTime = emp.expectedCheckInTime;
-    } else if (emp && emp.workSchedule) {
-      const m = emp.workSchedule.match(/(\d{1,2}:\d{2})/);
+    // 1. Calcular tardanza contra el horario esperado en Hora Perú
+    let expectedTime = resolvedUser.expectedCheckInTime || "08:00";
+    if (resolvedUser.workSchedule) {
+      const m = resolvedUser.workSchedule.match(/(\d{1,2}:\d{2})/);
       if (m) expectedTime = m[1];
     }
 
     const [expH, expM] = expectedTime.split(":").map(Number);
-    const currentH = now.getHours();
-    const currentM = now.getMinutes();
+    const [currentH, currentM] = currentTimeStr.split(":").map(Number);
 
     const expectedMinutes = expH * 60 + expM;
     const currentMinutes = currentH * 60 + currentM;
@@ -946,7 +1262,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const newRecord: AttendanceRecord = {
       id: nextId,
       employeeId,
-      employeeName: emp ? emp.name : "Colaborador",
+      employeeName: resolvedName,
       tenantId: resolvedTenant,
       tenantName: resolvedTenantName,
       isShared,
@@ -956,6 +1272,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       lunchStart: null,
       lunchEndTime: null,
       checkOut: null,
+      overtimeUnlocked: false,
+      overtimeStartedAt: null,
+      previousCheckOut: null,
       photo,
       location: location || null,
       status,
@@ -966,6 +1285,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     attendanceStore.unshift(newRecord);
     saveAttendanceToDisk(attendanceStore);
 
+    // Ejecutar purga de fotos de más de 60 días
+    purgeOldAttendancePhotos(60);
+
     const isBlocked = status === "very_late_blocked";
     const tenantNotice = isShared ? " (Asistencia Compartida multi-empresa)" : ` (${resolvedTenantName})`;
 
@@ -975,13 +1297,13 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         ? `Acceso bloqueado por impuntualidad (+${minutesLate} min tarde)${tenantNotice}. Ingrese código de Google Authenticator.`
         : status === "late"
         ? `Asistencia registrada con tardanza (+${minutesLate} min)${tenantNotice}`
-        : `Asistencia registrada puntualmente${tenantNotice}. ¡Buen día!`,
+        : `Asistencia registrada puntualmente a las ${currentTimeStr} (Hora Perú)${tenantNotice}. ¡Buen día!`,
       isBlocked,
       data: newRecord,
     });
   });
 
-  // Desbloqueo por TOTP (Google Authenticator o clave de supervisión)
+  // Desbloqueo por TOTP (Google Authenticator o clave de supervisión para impuntualidad)
   fastify.post("/rrhh/attendance/unlock-totp", async (request, reply) => {
     const unlockSchema = z.object({
       employeeId: z.number().int(),
@@ -997,12 +1319,11 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const { employeeId, totpCode } = parse.data;
     const activeTenant = (parse.data.tenantId || resolveTenantId(request)).toLowerCase();
 
-    employeesStore = loadEmployeesFromDisk();
-    const emp = employeesStore.find((e) => e.id === employeeId);
-    const individualSecret = emp?.totpSecret || "JBSWY3DPEHPK3PXP";
+    const userOrEmp = resolveEmployeeOrUser(employeeId);
+    const individualSecret = userOrEmp?.totpSecret || "JBSWY3DPEHPK3PXP";
     const masterSecret = getSystemMasterTotpSecret();
 
-    // 1. Google Authenticator Maestro del Supervisor (¡un solo código desbloquea a todos los colaboradores!)
+    // 1. Google Authenticator Maestro del Supervisor
     const isMasterValid = verifyTOTP(totpCode, masterSecret);
     // 2. Google Authenticator individual del colaborador
     const isIndividualValid = verifyTOTP(totpCode, individualSecret);
@@ -1014,7 +1335,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const { peruDate } = getPeruDateTime();
+    const today = peruDate;
     attendanceStore = loadAttendanceFromDisk();
     let record = attendanceStore.find(
       (a) =>
@@ -1052,7 +1374,70 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
-  // Iniciar tiempo de refrigerio
+  // Desbloqueo / Ampliación de Jornada para Horas Extras con Google Authenticator (TOTP)
+  fastify.post("/rrhh/attendance/overtime-unlock", async (request, reply) => {
+    const schema = z.object({
+      employeeId: z.number().int(),
+      totpCode: z.string().min(1, "El código de Google Authenticator es requerido"),
+      notes: z.string().optional(),
+      tenantId: z.string().optional(),
+    });
+
+    const parse = schema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ success: false, message: "Datos de desbloqueo de horas extras inválidos" });
+    }
+
+    const { employeeId, totpCode, notes } = parse.data;
+    const activeTenant = (parse.data.tenantId || resolveTenantId(request)).toLowerCase();
+
+    const userOrEmp = resolveEmployeeOrUser(employeeId);
+    const individualSecret = userOrEmp.totpSecret || "JBSWY3DPEHPK3PXP";
+    const masterSecret = getSystemMasterTotpSecret();
+
+    const isMasterValid = verifyTOTP(totpCode, masterSecret);
+    const isIndividualValid = verifyTOTP(totpCode, individualSecret);
+
+    if (!isMasterValid && !isIndividualValid) {
+      return reply.status(400).send({
+        success: false,
+        message: "Código TOTP inválido o desfasado. Asegúrate de verificar la hora de tu teléfono.",
+      });
+    }
+
+    const { peruDate, peruTime } = getPeruDateTime();
+    attendanceStore = loadAttendanceFromDisk();
+    const record = attendanceStore.find(
+      (a) =>
+        a.employeeId === employeeId &&
+        a.date === peruDate &&
+        (a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork"))
+    );
+
+    if (!record) {
+      return reply.status(404).send({
+        success: false,
+        message: "No se encontró registro de asistencia para el día de hoy para ampliar la jornada.",
+      });
+    }
+
+    record.overtimeUnlocked = true;
+    record.overtimeStartedAt = peruTime;
+    record.previousCheckOut = record.checkOut || record.previousCheckOut;
+    record.checkOut = null; // Reabrir sesión para registrar horas extras hasta la próxima marcación de salida
+    const addNote = notes ? `Horas extras autorizadas (${notes}) a las ${peruTime}` : `Horas extras autorizadas a las ${peruTime}`;
+    record.notes = record.notes ? `${record.notes} | ${addNote}` : addNote;
+
+    saveAttendanceToDisk(attendanceStore);
+
+    return reply.send({
+      success: true,
+      message: `¡Ampliación de jornada autorizada exitosamente a las ${peruTime}! El tiempo adicional se contabilizará como horas extras.`,
+      data: record,
+    });
+  });
+
+  // Iniciar tiempo de refrigerio (Hora Perú)
   fastify.post("/rrhh/attendance/lunch-start", async (request, reply) => {
     const schema = z.object({
       employeeId: z.number().int(),
@@ -1066,12 +1451,12 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     const { employeeId } = parse.data;
     const activeTenant = (parse.data.tenantId || resolveTenantId(request)).toLowerCase();
-    const today = new Date().toISOString().slice(0, 10);
+    const { peruDate, peruTime } = getPeruDateTime();
     attendanceStore = loadAttendanceFromDisk();
     const record = attendanceStore.find(
       (a) =>
         a.employeeId === employeeId &&
-        a.date === today &&
+        a.date === peruDate &&
         (a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork"))
     );
 
@@ -1089,18 +1474,17 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const nowTime = new Date().toTimeString().slice(0, 8);
-    record.lunchStart = nowTime;
+    record.lunchStart = peruTime;
     saveAttendanceToDisk(attendanceStore);
 
     return reply.send({
       success: true,
-      message: `Inicio de refrigerio registrado a las ${nowTime}`,
+      message: `Inicio de refrigerio registrado a las ${peruTime} (Hora Perú)`,
       data: record,
     });
   });
 
-  // Finalizar tiempo de refrigerio
+  // Finalizar tiempo de refrigerio (Hora Perú)
   fastify.post("/rrhh/attendance/lunch-end", async (request, reply) => {
     const schema = z.object({
       employeeId: z.number().int(),
@@ -1114,12 +1498,12 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     const { employeeId } = parse.data;
     const activeTenant = (parse.data.tenantId || resolveTenantId(request)).toLowerCase();
-    const today = new Date().toISOString().slice(0, 10);
+    const { peruDate, peruTime } = getPeruDateTime();
     attendanceStore = loadAttendanceFromDisk();
     const record = attendanceStore.find(
       (a) =>
         a.employeeId === employeeId &&
-        a.date === today &&
+        a.date === peruDate &&
         (a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork"))
     );
 
@@ -1144,18 +1528,17 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const nowTime = new Date().toTimeString().slice(0, 8);
-    record.lunchEndTime = nowTime;
+    record.lunchEndTime = peruTime;
     saveAttendanceToDisk(attendanceStore);
 
     return reply.send({
       success: true,
-      message: `Fin de refrigerio registrado a las ${nowTime}. ¡Bienvenido de vuelta!`,
+      message: `Fin de refrigerio registrado a las ${peruTime} (Hora Perú). ¡Bienvenido de vuelta!`,
       data: record,
     });
   });
 
-  // Marcación de Salida (Check-Out)
+  // Marcación de Salida (Check-Out en Hora Perú)
   fastify.post("/rrhh/attendance/check-out", async (request, reply) => {
     const schema = z.object({
       employeeId: z.number().int(),
@@ -1169,12 +1552,12 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     const { employeeId } = parse.data;
     const activeTenant = (parse.data.tenantId || resolveTenantId(request)).toLowerCase();
-    const today = new Date().toISOString().slice(0, 10);
+    const { peruDate, peruTime } = getPeruDateTime();
     attendanceStore = loadAttendanceFromDisk();
     const record = attendanceStore.find(
       (a) =>
         a.employeeId === employeeId &&
-        a.date === today &&
+        a.date === peruDate &&
         (a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork"))
     );
 
@@ -1192,13 +1575,12 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const nowTime = new Date().toTimeString().slice(0, 8);
-    record.checkOut = nowTime;
+    record.checkOut = peruTime;
     saveAttendanceToDisk(attendanceStore);
 
     return reply.send({
       success: true,
-      message: `Salida laboral registrada a las ${nowTime}. ¡Excelente trabajo hoy!`,
+      message: `Salida laboral registrada a las ${peruTime} (Hora Perú). ¡Excelente trabajo hoy!`,
       data: record,
     });
   });
