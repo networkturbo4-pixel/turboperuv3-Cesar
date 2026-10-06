@@ -5,13 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TurboNetwork">
+  <meta name="application-name" content="TurboNetwork">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#090a0f">
+  <meta name="theme-color" content="#1d4ed8">
   <title id="page-title">TurboNetwork • ISP Enterprise Platform</title>
   
+  <!-- Manifest PWA Web App -->
+  <link rel="manifest" href="/manifest.json">
+
   <!-- Favicon dinámico en SVG puro (sin emojis) -->
   <link rel="icon" id="dynamic-favicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'%3E%3C/polygon%3E%3C/svg%3E">
-  <link rel="apple-touch-icon" id="pwa-apple-icon" href="https://api.dicebear.com/7.x/shapes/svg?seed=TurboNetPro">
+  <link rel="apple-touch-icon" id="pwa-apple-icon" href="/icons/icon-192.png">
 
   <!-- Fuentes profesionales -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6818,6 +6823,24 @@
         <button type="button" onclick="closeMobileConfigDrawer(); openMobileWorkspaceModal();" class="w-full py-2 px-3 rounded-xl bg-white dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-blue-600 dark:text-blue-300 font-semibold text-xs border border-blue-200 dark:border-white/10 transition flex items-center justify-center space-x-1.5 shadow-2xs">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
           <span>Cambiar de Empresa</span>
+        </button>
+      </div>
+
+      <!-- Botón Instalar Aplicación PWA (Móvil / Desktop) -->
+      <div id="drawer-pwa-install-container">
+        <button type="button" onclick="installPwaApp()" id="btn-drawer-install-pwa" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold transition text-left shadow-md cursor-pointer group active:scale-98">
+          <div class="flex items-center space-x-2.5 min-w-0">
+            <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+            </div>
+            <div class="truncate">
+              <span class="text-xs block leading-tight font-bold">Instalar Aplicación</span>
+              <span class="text-[10px] text-blue-100 font-normal block leading-tight">Acceso directo en pantalla</span>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/25 text-white flex-shrink-0">PWA</span>
         </button>
       </div>
 
@@ -26924,5 +26947,109 @@ async function sendCurrentLocation(isLive) {
 
   </script>
   <script src="/js/maps-module.js"></script>
+
+  <!-- ======================================================== -->
+  <!-- TURBONETWORK PWA: SERVICE WORKER & GESTIÓN DE INSTALACIÓN -->
+  <!-- ======================================================== -->
+  <script>
+    (function initTurboNetworkPwa() {
+      let deferredPwaPrompt = null;
+
+      // 1. Registro del Service Worker con alcance global
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then((reg) => {
+              console.log('[PWA] Service Worker registrado exitosamente. Alcance:', reg.scope);
+              reg.onupdatefound = () => {
+                const installingWorker = reg.installing;
+                if (installingWorker) {
+                  installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      showPwaToast('⚡ Nueva versión disponible. Recarga para actualizar.', 'info');
+                    }
+                  };
+                }
+              };
+            })
+            .catch((err) => {
+              console.warn('[PWA] Error al registrar Service Worker:', err);
+            });
+        });
+      }
+
+      // 2. Captura del evento de instalación en Android / Chrome / Edge
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPwaPrompt = e;
+        const installContainer = document.getElementById('drawer-pwa-install-container');
+        if (installContainer) {
+          installContainer.classList.remove('hidden');
+        }
+      });
+
+      // 3. Confirmación de app instalada
+      window.addEventListener('appinstalled', () => {
+        deferredPwaPrompt = null;
+        const installContainer = document.getElementById('drawer-pwa-install-container');
+        if (installContainer) {
+          installContainer.classList.add('hidden');
+        }
+        showPwaToast('🎉 ¡TurboNetwork instalada con éxito en tu dispositivo!', 'success');
+      });
+
+      // 4. Disparador de instalación accesible globalmente
+      window.installPwaApp = async function() {
+        if (deferredPwaPrompt) {
+          deferredPwaPrompt.prompt();
+          const { outcome } = await deferredPwaPrompt.userChoice;
+          if (outcome === 'accepted') {
+            console.log('[PWA] Instalación aceptada por el usuario.');
+          } else {
+            console.log('[PWA] Instalación cancelada o pospuesta.');
+          }
+          deferredPwaPrompt = null;
+        } else {
+          const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent);
+          if (isIos) {
+            alert('Para instalar TurboNetwork en iPhone/iPad:\n1. Toca el botón Compartir (icono cuadrado con flecha hacia arriba)\n2. Selecciona "Agregar a la pantalla de inicio"');
+          } else {
+            showPwaToast('La aplicación ya está instalada o tu navegador la gestiona desde su menú superior.', 'info');
+          }
+        }
+      };
+
+      // 5. Notificación Visual no invasiva de Estado de Conexión (Online / Offline)
+      function showPwaToast(msg, type) {
+        let banner = document.getElementById('pwa-network-toast');
+        if (!banner) {
+          banner = document.createElement('div');
+          banner.id = 'pwa-network-toast';
+          banner.className = 'fixed top-3 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 pointer-events-none opacity-0 -translate-y-4 px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl backdrop-blur-xl flex items-center gap-2 border';
+          document.body.appendChild(banner);
+        }
+        
+        if (type === 'offline') {
+          banner.className = 'fixed top-3 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 pointer-events-auto opacity-100 translate-y-0 px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl backdrop-blur-xl flex items-center gap-2 border bg-amber-500/95 text-slate-900 border-amber-400';
+          banner.innerHTML = '<svg class="w-4 h-4 text-slate-900 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 4.243a9 9 0 01-5.657-2.343m0 0l2.829-2.829M3 3l18 18"/></svg><span>Modo sin conexión activado</span>';
+        } else if (type === 'online') {
+          banner.className = 'fixed top-3 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 pointer-events-auto opacity-100 translate-y-0 px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl backdrop-blur-xl flex items-center gap-2 border bg-emerald-600 text-white border-emerald-500';
+          banner.innerHTML = '<svg class="w-4 h-4 text-white flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>Conexión a Internet restablecida</span>';
+          setTimeout(() => {
+            banner.classList.add('opacity-0', '-translate-y-4');
+          }, 3000);
+        } else {
+          banner.className = 'fixed top-3 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 pointer-events-auto opacity-100 translate-y-0 px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl backdrop-blur-xl flex items-center gap-2 border bg-blue-600 text-white border-blue-500';
+          banner.innerHTML = `<span>${msg}</span>`;
+          setTimeout(() => {
+            banner.classList.add('opacity-0', '-translate-y-4');
+          }, 3500);
+        }
+      }
+
+      window.addEventListener('offline', () => showPwaToast(null, 'offline'));
+      window.addEventListener('online', () => showPwaToast(null, 'online'));
+    })();
+  </script>
 </body>
 </html>

@@ -1,0 +1,71 @@
+{
+  "name": "TurboNetwork - Sistema ISP & FTTH",
+  "short_name": "TurboNetwork",
+  "description": "Plataforma Integral de Gestión para Proveedores de Internet, FTTH, Cobranzas y Mapas GIS",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0b1329",
+  "theme_color": "#1d4ed8",
+  "orientation": "any",
+  "lang": "es",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Clientes",
+      "short_name": "Clientes",
+      "description": "Ver padrón de clientes y contratos",
+      "url": "/#tab-customers",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Cobranzas",
+      "short_name": "Cobranzas",
+      "description": "Gestión de recibos, pagos y caja",
+      "url": "/#tab-billing",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mapas GIS",
+      "short_name": "Mapas",
+      "description": "Mapeo de red FTTH, cajas NAP y postes",
+      "url": "/#tab-maps",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mi Jornada",
+      "short_name": "Asistencia",
+      "description": "Marcaje de jornada laboral y turnos",
+      "url": "/#tab-dashboard",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
