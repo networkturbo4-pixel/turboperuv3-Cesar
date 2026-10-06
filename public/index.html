@@ -2944,138 +2944,6 @@
               </div>
             </div>
           </div>
-
-
-          <!-- Fluid KPI Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 3xl:grid-cols-5 gap-4">
-            <div class="pro-card p-5 rounded-xl">
-              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
-                <span>Abonados Activos</span>
-                <span class="dynamic-accent-text font-mono text-[10px]">+8.4%</span>
-              </div>
-              <div class="mt-2.5 flex items-baseline space-x-2">
-                <span class="text-2xl font-bold tracking-tight">1,195</span>
-                <span class="text-xs text-slate-400 font-mono">/ 1,248</span>
-              </div>
-              <div class="mt-2 text-[11px] text-slate-400">38 en corte • 15 altas pendientes</div>
-            </div>
-
-            <div class="pro-card p-5 rounded-xl">
-              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
-                <span>Cobranza del Mes</span>
-                <span class="dynamic-primary-text font-mono text-[10px]">78.7%</span>
-              </div>
-              <div class="mt-2.5 flex items-baseline space-x-1">
-                <span class="text-lg font-light text-slate-400 global-currency-symbol">$</span>
-                <span class="text-2xl font-bold tracking-tight">22,450.00</span>
-              </div>
-              <div class="mt-2 text-[11px] text-slate-400">Recaudación directa en caja/bancos</div>
-            </div>
-
-            <div class="pro-card p-5 rounded-xl">
-              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
-                <span>Cuentas por Cobrar</span>
-                <span class="text-amber-400 font-mono text-[10px]">MORA</span>
-              </div>
-              <div class="mt-2.5 flex items-baseline space-x-1">
-                <span class="text-lg font-light text-slate-400 global-currency-symbol">$</span>
-                <span class="text-2xl font-bold tracking-tight text-amber-400">6,050.00</span>
-              </div>
-              <div class="mt-2 text-[11px] text-slate-400">Suspensión técnica programada</div>
-            </div>
-
-            <div class="pro-card p-5 rounded-xl">
-              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
-                <span>Nodos & OLTs</span>
-                <span class="dynamic-accent-text font-mono text-[10px]">100% OK</span>
-              </div>
-              <div class="mt-2.5 flex items-baseline space-x-2">
-                <span class="text-2xl font-bold tracking-tight">14 / 14</span>
-              </div>
-              <div class="mt-2 text-[11px] text-slate-400">MikroTik, Huawei, ZTE, VSOL</div>
-            </div>
-
-            <div class="pro-card p-5 rounded-xl hidden 3xl:block">
-              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold tracking-wider uppercase">
-                <span>Huella RAM Node.js</span>
-                <span class="dynamic-accent-text font-mono text-[10px]">OPTIMIZADO</span>
-              </div>
-              <div class="mt-2.5 flex items-baseline space-x-2">
-                <span id="dash-ram-metric" class="text-2xl font-bold tracking-tight dynamic-accent-text">~80 MB</span>
-              </div>
-              <div class="mt-2 text-[11px] text-slate-400">cPanel Passenger & VPS</div>
-            </div>
-          </div>
-
-          <!-- Charts and Activity -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <div class="pro-card lg:col-span-2 p-5 rounded-xl flex flex-col justify-between">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Monitoreo de Tráfico Agregado</h3>
-                  <p class="text-[11px] text-slate-400 mt-0.5">Tráfico saliente y entrante a través de Core Routers</p>
-                </div>
-                <span class="px-2.5 py-0.5 rounded-full dynamic-primary-subtle border text-[11px] font-mono">
-                  Pico: 4.8 Gbps
-                </span>
-              </div>
-
-              <div class="my-6 grid grid-cols-12 gap-2.5 h-32 items-end" id="bandwidth-bars-container">
-                <div class="bandwidth-bar rounded-t h-[45%]"></div>
-                <div class="bandwidth-bar rounded-t h-[52%]"></div>
-                <div class="bandwidth-bar rounded-t h-[60%]"></div>
-                <div class="bandwidth-bar rounded-t h-[40%]"></div>
-                <div class="bandwidth-bar rounded-t h-[75%]"></div>
-                <div class="bandwidth-bar rounded-t h-[88%]"></div>
-                <div class="bandwidth-bar rounded-t h-[94%]"></div>
-                <div class="bandwidth-bar rounded-t h-[100%]"></div>
-                <div class="bandwidth-bar rounded-t h-[92%]"></div>
-                <div class="bandwidth-bar rounded-t h-[70%]"></div>
-                <div class="bandwidth-bar rounded-t h-[55%]"></div>
-                <div class="bandwidth-bar rounded-t h-[48%]"></div>
-              </div>
-
-              <div class="flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 dark:border-white/5 border-black/5 pt-3 font-mono">
-                <span>PICO HORARIO: 20:00 - 22:30</span>
-                <span>LATENCIA MEDIA: 4.2 MS</span>
-              </div>
-            </div>
-
-            <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
-              <div>
-                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Auditoría en Tiempo Real</h3>
-                <p class="text-[11px] text-slate-400 mt-0.5">Operaciones registradas</p>
-              </div>
-
-              <div class="space-y-3.5 my-4" id="recent-activity-list">
-                <div class="flex items-start space-x-3 text-xs">
-                  <div class="w-1.5 h-1.5 rounded-full dynamic-primary-bg mt-1.5 flex-shrink-0"></div>
-                  <div>
-                    <p class="font-medium text-slate-200">Cobro liquidado $35.00</p>
-                    <p class="text-slate-400 text-[11px] font-mono">CLI-1001 • Carlos Mendoza</p>
-                  </div>
-                </div>
-                <div class="flex items-start space-x-3 text-xs">
-                  <div class="w-1.5 h-1.5 rounded-full dynamic-primary-bg mt-1.5 flex-shrink-0"></div>
-                  <div>
-                    <p class="font-medium text-slate-200">Alta de contrato fibra</p>
-                    <p class="text-slate-400 text-[11px] font-mono">CLI-1004 • David Fernández</p>
-                  </div>
-                </div>
-                <div class="flex items-start space-x-3 text-xs">
-                  <div class="w-1.5 h-1.5 rounded-full dynamic-primary-bg mt-1.5 flex-shrink-0"></div>
-                  <div>
-                    <p class="font-medium text-slate-200">Sincronización OLT Huawei</p>
-                    <p class="text-slate-400 text-[11px] font-mono">MA5608T • 485 ONUs online</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="border-t border-white/5 dark:border-white/5 border-black/5 pt-3">
-                <button onclick="switchTab('billing')" class="text-xs dynamic-primary-text hover:underline transition">Ver historial de cobros →</button>
-              </div>
-            </div>
-          </div>
         </section>
 
         <!-- ======================================================== -->
@@ -3207,79 +3075,61 @@
           <!-- VISTA 1: RESUMEN DEL MÓDULO CON CARDS DE DETALLE -->
           <div id="maps-overview-view" class="space-y-6">
             
-            <!-- Encabezado del Módulo con Acciones -->
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-slate-100 via-slate-50 to-blue-50/30 dark:from-white/5 dark:via-white/[0.02] dark:to-blue-500/[0.03] border border-slate-200 dark:border-white/10 shadow-2xs">
-              <div class="flex items-center space-x-3.5">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <!-- Encabezado del Módulo con Buscador y Acciones -->
+            <div class="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-100 via-slate-50 to-blue-50/30 dark:from-white/5 dark:via-white/[0.02] dark:to-blue-500/[0.03] border border-slate-200 dark:border-white/10 shadow-2xs">
+              <div class="flex items-center space-x-3 sm:space-x-3.5 min-w-0">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                  <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
                 </div>
-                <div>
-                  <div class="flex items-center space-x-2">
-                    <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">Mapeo de Red & Cobertura FTTH / Wireless</h2>
-                    <span id="maps-tenant-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <h2 class="text-sm sm:text-base lg:text-lg font-bold text-slate-900 dark:text-white tracking-tight">Mapeo de Red & Cobertura FTTH / Wireless</h2>
+                    <span id="maps-tenant-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
                       TurboNetwork
                     </span>
+                    <span id="maps-projects-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-slate-200/80 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-white/10">
+                      0 Mapas
+                    </span>
                   </div>
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-normal">
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-normal leading-snug">
                     Infraestructura óptica GIS, postes, cajas NAP, empalmes y zonas de cobertura.
                   </p>
                 </div>
               </div>
 
-              <!-- Botones de Acción -->
-              <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-                <button type="button" onclick="mapsModule.exportGeoJson()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-white/10 transition flex items-center space-x-1.5 shadow-2xs">
-                  <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                  <span>Exportar GeoJSON</span>
+              <!-- Buscador y Botones de Acción Responsive -->
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full xl:w-auto">
+                <!-- Buscador como Botón que abre el Command Palette del Módulo Mapas -->
+                <button type="button" onclick="mapsModule.openCommandPalette()" class="w-full sm:w-60 md:w-64 flex items-center justify-between px-3.5 py-2 bg-white/90 hover:bg-white dark:bg-white/5 dark:hover:bg-white/10 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-slate-600 dark:text-slate-400 transition group shadow-2xs cursor-pointer" title="Buscar mapa o acciones rápidas (Ctrl+M)">
+                  <div class="flex items-center space-x-2 min-w-0">
+                    <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <span class="truncate">Buscar mapa o comandos...</span>
+                  </div>
+                  <kbd class="hidden md:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-slate-100 dark:bg-white/10 border border-slate-300 dark:border-white/10 text-slate-500 dark:text-slate-400 flex-shrink-0">Ctrl+M</kbd>
                 </button>
 
-                <!-- Botón Principal: Nuevo Mapa -->
-                <button type="button" onclick="mapsModule.openCreateMapModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-white btn-brand-primary shadow-sm transition flex items-center space-x-2 active:scale-95 flex-shrink-0 cursor-pointer">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>+ Nuevo Mapa</span>
-                </button>
+                <!-- Acciones: Exportar GeoJSON + Nuevo Mapa -->
+                <div class="grid grid-cols-2 sm:flex sm:items-center gap-2">
+                  <button type="button" onclick="mapsModule.exportGeoJson()" class="w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-white/10 transition flex items-center space-x-1.5 shadow-2xs cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span class="truncate">Exportar GeoJSON</span>
+                  </button>
+
+                  <button type="button" onclick="mapsModule.openCreateMapModal()" class="w-full sm:w-auto justify-center px-4 py-2 rounded-xl text-xs font-bold text-white btn-brand-primary shadow-sm transition flex items-center space-x-1.5 active:scale-95 flex-shrink-0 cursor-pointer">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span class="truncate">+ Nuevo Mapa</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <!-- SECCIÓN: MIS MAPAS Y ZONAS DE COBERTURA (MULTI-MAPA) -->
-            <div class="space-y-4">
-              <!-- Encabezado de la Sección con Buscador (Command Palette Trigger) y Acciones -->
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-white/[0.02] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
-                <div>
-                  <div class="flex items-center space-x-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
-                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Mis Mapas & Zonas de Cobertura</h3>
-                    <span id="maps-projects-count-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">0 Mapas</span>
-                  </div>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Gestione proyectos GIS independientes por distrito o sector. Cada mapa almacena exclusivamente sus propios puntos, líneas y áreas.</p>
-                </div>
-                
-                <div class="flex items-center gap-2">
-                  <!-- Buscador como Botón que abre el Command Palette del Módulo Mapas -->
-                  <button type="button" onclick="mapsModule.openCommandPalette()" class="w-full sm:w-72 flex items-center justify-between px-3.5 py-2 bg-slate-100 hover:bg-slate-200/80 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-500 dark:text-slate-400 transition group shadow-2xs cursor-pointer" title="Buscar mapa o acciones rápidas (Ctrl+M)">
-                    <div class="flex items-center space-x-2 min-w-0">
-                      <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                      <span class="truncate">Buscar mapa o comandos...</span>
-                    </div>
-                    <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-white dark:bg-white/10 border border-slate-300 dark:border-white/10 text-slate-500 dark:text-slate-400 flex-shrink-0">Ctrl+M</kbd>
-                  </button>
-
-                  <!-- Botón Acciones Rápidas -->
-                  <button type="button" onclick="mapsModule.openCommandPalette()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Comandos Rápidos del Mapa (Ctrl+M)">
-                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    <span class="hidden sm:inline">Comandos</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Grid de Tarjetas de Mapas -->
-              <div id="maps-projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                <!-- Se puebla dinámicamente con mapas (ej: Mapa Zona Carabayllo) -->
-              </div>
+            <!-- Grid de Tarjetas de Mapas -->
+            <div id="maps-projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <!-- Se puebla dinámicamente con mapas (ej: Mapa Zona Carabayllo) -->
             </div>
 
           </div>
