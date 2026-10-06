@@ -96,21 +96,6 @@
       "notes": "",
       "createdAt": "2026-10-06T18:00:23.362Z",
       "updatedAt": "2026-10-06T18:00:23.362Z"
-    },
-    {
-      "id": "node_1791313757010_utbwy",
-      "name": "dgdfgdfgdf",
-      "type": "nap",
-      "icon": "https://e-file.huawei.com/marketingcloud/pep/asset/20000001/mediae/images/products/optical-terminal/eg8145b7-50/overview-pc1-1.png",
-      "color": "#d97706",
-      "lat": -11.858576,
-      "lng": -77.010938,
-      "address": "",
-      "capacity": "",
-      "status": "active",
-      "notes": "",
-      "createdAt": "2026-10-06T19:09:17.010Z",
-      "updatedAt": "2026-10-06T19:09:17.010Z"
     }
   ],
   "lines": [

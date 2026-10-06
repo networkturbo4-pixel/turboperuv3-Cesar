@@ -11,6 +11,7 @@ import {
   listBackups,
   restoreBackup,
   deleteBackup,
+  touchCpanelRestart,
 } from "./maintenance.service";
 
 const BACKUPS_DIR = path.resolve(process.cwd(), "data", "backups");
@@ -40,9 +41,12 @@ export const maintenanceRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post("/settings/system/update", async (request, reply) => {
     const schema = z.object({
       branch: z.string().default("main").optional(),
-      createBackup: z.boolean().default(true).optional(),
-      runMigrations: z.boolean().default(true).optional(),
-      rebuild: z.boolean().default(true).optional(),
+      createBackup: z.boolean().optional(),
+      createBackupBefore: z.boolean().optional(),
+      runMigrations: z.boolean().optional(),
+      runMigration: z.boolean().optional(),
+      rebuild: z.boolean().optional(),
+      runBuild: z.boolean().optional(),
     });
 
     const parse = schema.safeParse(request.body || {});
@@ -50,9 +54,31 @@ export const maintenanceRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ success: false, errors: parse.error.format() });
     }
 
+    const data = parse.data;
+    const updateOptions = {
+      branch: data.branch || "main",
+      createBackup: data.createBackup ?? data.createBackupBefore ?? true,
+      runMigrations: data.runMigrations ?? data.runMigration ?? true,
+      rebuild: data.rebuild ?? data.runBuild ?? true,
+    };
+
     try {
-      const result = await executeSystemUpdate(parse.data);
-      return reply.send(result);
+      const result = await executeSystemUpdate(updateOptions);
+
+      // Enviamos primero la respuesta JSON completa para que el cliente reciba HTTP 200 y todos los logs
+      await reply.send(result);
+
+      // Programamos la recarga en caliente para Phusion Passenger (cPanel) y PM2 (VPS)
+      // con 1.5s de retraso para garantizar que el socket HTTP envíe los datos sin cortes
+      setTimeout(async () => {
+        touchCpanelRestart();
+        try {
+          const { exec } = await import("child_process");
+          exec("pm2 reload turbonetwork || pm2 reload all || pm2 restart turbonetwork", { cwd: process.cwd() });
+        } catch (e) {}
+      }, 1500);
+
+      return;
     } catch (err: any) {
       return reply.status(500).send({
         success: false,

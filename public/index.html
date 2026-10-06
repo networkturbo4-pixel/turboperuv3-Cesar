@@ -16253,39 +16253,88 @@ Estamos atentos para brindarle asistencia inmediata.
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            createBackup: backupChecked,
             createBackupBefore: backupChecked,
+            runMigrations: migrateChecked,
             runMigration: migrateChecked,
+            rebuild: buildChecked,
             runBuild: buildChecked
           })
         });
 
-        const data = await res.json();
-
-        const logList = data.executionLogs || data.logs;
-        if (logList && Array.isArray(logList)) {
-          logList.forEach(line => {
-            let color = '#e2e8f0';
-            if (line.includes('ERROR') || line.includes('FALLÓ')) color = '#f87171';
-            else if (line.includes('OK') || line.includes('EXITOS') || line.includes('FINALIZADA')) color = '#34d399';
-            else if (line.includes('PASO') || line.includes('INICIANDO')) color = '#38bdf8';
-            else if (line.includes('WARN')) color = '#fbbf24';
-            appendUpdateLog(line, color);
-          });
+        let data = null;
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          try {
+            data = await res.json();
+          } catch (e) {}
         }
 
-        if (data.success) {
-          showToast("¡Sistema actualizado y compilado con éxito!", "success");
-          appendUpdateLog(`[${new Date().toLocaleTimeString()}] ¡DESPLIEGUE FINALIZADO EXITOSAMENTE!`, '#4ade80');
-          appendUpdateLog(`======================================================\n`, '#94a3b8');
-          await loadSystemUpdateInfo();
-          await loadBackupList();
+        if (data) {
+          const logList = data.executionLogs || data.logs;
+          if (logList && Array.isArray(logList)) {
+            logList.forEach(line => {
+              let color = '#e2e8f0';
+              if (line.includes('ERROR') || line.includes('FALLÓ')) color = '#f87171';
+              else if (line.includes('OK') || line.includes('EXITOS') || line.includes('FINALIZADA') || line.includes('PRESERVADOS')) color = '#34d399';
+              else if (line.includes('PASO') || line.includes('INICIANDO') || line.includes('PROTECCIÓN')) color = '#38bdf8';
+              else if (line.includes('WARN')) color = '#fbbf24';
+              appendUpdateLog(line, color);
+            });
+          }
+
+          if (data.success) {
+            showToast("¡Sistema actualizado y compilado con éxito!", "success");
+            appendUpdateLog(`[${new Date().toLocaleTimeString()}] ¡DESPLIEGUE FINALIZADO EXITOSAMENTE!`, '#4ade80');
+            appendUpdateLog(`======================================================\n`, '#94a3b8');
+            await loadSystemUpdateInfo();
+            await loadBackupList();
+          } else {
+            showToast(data.message || "La actualización encontró errores. Revisa la terminal.", "error");
+            appendUpdateLog(`[${new Date().toLocaleTimeString()}] ERROR: ${data.message}`, '#f87171');
+          }
         } else {
-          showToast(data.message || "La actualización encontró errores. Revisa la terminal.", "error");
-          appendUpdateLog(`[${new Date().toLocaleTimeString()}] ERROR: ${data.message}`, '#f87171');
+          // Si el servidor devolvió respuesta no-JSON (reinicio inmediato de Passenger / LiteSpeed proxy)
+          appendUpdateLog(`[${new Date().toLocaleTimeString()}] ℹ️ El servidor está aplicando los cambios y recargando el servicio web (Phusion Passenger / PM2)...`, '#38bdf8');
+          appendUpdateLog(`[${new Date().toLocaleTimeString()}] ⏳ Comprobando reconexión en caliente con el servidor...`, '#cbd5e1');
+
+          let reconnected = false;
+          for (let attempt = 1; attempt <= 15; attempt++) {
+            await new Promise(r => setTimeout(r, 2500));
+            try {
+              const pingRes = await fetch('/api/settings/system/version', { cache: 'no-store' });
+              if (pingRes.ok) {
+                const pingData = await pingRes.json();
+                if (pingData && pingData.success) {
+                  reconnected = true;
+                  appendUpdateLog(`[${new Date().toLocaleTimeString()}] ✅ ¡Servidor reconectado y operativo con la nueva versión (${pingData.data?.currentCommit || 'OK'})!`, '#4ade80');
+                  appendUpdateLog(`======================================================\n`, '#94a3b8');
+                  showToast("¡Sistema actualizado y reiniciado exitosamente!", "success");
+                  await loadSystemUpdateInfo();
+                  await loadBackupList();
+                  break;
+                }
+              }
+            } catch (e) {
+              appendUpdateLog(`[${new Date().toLocaleTimeString()}] 🔄 Intento ${attempt}/15: esperando que el servicio web termine de reiniciar...`, '#94a3b8');
+            }
+          }
+
+          if (!reconnected) {
+            showToast("Actualización enviada. Si no ves la nueva versión, recarga la página.", "info");
+            appendUpdateLog(`[${new Date().toLocaleTimeString()}] ℹ️ Proceso completado en el servidor. Por favor refresca la página.`, '#fbbf24');
+          }
         }
       } catch (err) {
-        showToast("Error de conexión durante la actualización", "error");
-        appendUpdateLog(`[FATAL] Error de conexión de red al ejecutar actualización: ${err.message}`, '#f87171');
+        appendUpdateLog(`[${new Date().toLocaleTimeString()}] ℹ️ El servidor reinició el proceso durante la actualización. Verificando reconexión...`, '#38bdf8');
+        try {
+          await new Promise(r => setTimeout(r, 3000));
+          await loadSystemUpdateInfo();
+          await loadBackupList();
+          showToast("¡Sistema actualizado!", "success");
+        } catch (e) {
+          showToast("Actualización completada. Recarga la página en unos segundos.", "info");
+        }
       } finally {
         if (btn) {
           btn.disabled = false;
