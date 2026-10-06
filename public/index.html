@@ -80,7 +80,9 @@
 
     // Restaurar sesión, tema y colores antes de pintar la pantalla para evitar parpadeos
     try {
-      if (localStorage.getItem('turbonetwork_session')) {
+      if (localStorage.getItem('turbonetwork_pending_2fa')) {
+        document.documentElement.classList.remove('has-session');
+      } else if (localStorage.getItem('turbonetwork_session')) {
         document.documentElement.classList.add('has-session');
       }
       var explicitTheme = localStorage.getItem('turbonetwork_theme');
@@ -414,6 +416,17 @@
       opacity: 1 !important;
       transform: scaleY(1) !important;
       background-color: var(--brand-primary) !important;
+    }
+
+    /* Ocultación forzada y prioritaria de navegación RBAC */
+    .nav-item.hidden,
+    #main-sidebar .nav-item.hidden,
+    #main-sidebar .nav-item[style*="display: none"],
+    #main-sidebar.is-collapsed .nav-item.hidden,
+    #main-sidebar.is-collapsed .nav-item[style*="display: none"],
+    .mob-nav-btn.hidden,
+    .mob-nav-btn[style*="display: none"] {
+      display: none !important;
     }
 
     /* ======================================================== */
@@ -2457,7 +2470,7 @@
         <!-- Navigation Rail -->
         <nav class="space-y-1" id="sidebar-nav">
           <!-- Categoría 1: OPERACIONES -->
-          <div class="sidebar-section-title px-2.5 pt-2 pb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div id="sidebar-section-ops" class="sidebar-section-title px-2.5 pt-2 pb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             <span>Operaciones</span>
             <span class="sidebar-text w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
           </div>
@@ -2565,11 +2578,26 @@
           </button>
 
           <!-- Separador / Categoría 2: INFRAESTRUCTURA -->
-          <div class="sidebar-section-divider hidden my-2 mx-2 border-t border-slate-200/60 dark:border-white/5"></div>
-          <div class="sidebar-section-title px-2.5 pt-3 pb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div id="sidebar-divider-infra" class="sidebar-section-divider hidden my-2 mx-2 border-t border-slate-200/60 dark:border-white/5"></div>
+          <div id="sidebar-section-infra" class="sidebar-section-title px-2.5 pt-3 pb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             <span>Infraestructura</span>
             <span class="sidebar-text w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
           </div>
+
+          <!-- Red & OLTs Multi-Vendor -->
+          <button onclick="switchTab('network')" id="nav-network" title="Red & MikroTik / OLTs" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
+            <span class="nav-active-pill"></span>
+            <div class="nav-icon-box">
+              <svg fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+                <rect x="2" y="2" width="20" height="8" rx="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+              </svg>
+            </div>
+            <span class="nav-label truncate text-[13px] font-medium">Red & OLTs</span>
+            <span class="sidebar-tooltip">Red & MikroTik / OLTs</span>
+          </button>
 
           <!-- Mapas & Cobertura FTTH -->
           <button onclick="switchTab('maps')" id="nav-maps" title="Mapas & Cobertura FTTH" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
@@ -2597,8 +2625,8 @@
           </button>
 
           <!-- Separador / Categoría 3: GOBERNANZA -->
-          <div class="sidebar-section-divider hidden my-2 mx-2 border-t border-slate-200/60 dark:border-white/5"></div>
-          <div class="sidebar-section-title px-2.5 pt-3 pb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div id="sidebar-divider-gov" class="sidebar-section-divider hidden my-2 mx-2 border-t border-slate-200/60 dark:border-white/5"></div>
+          <div id="sidebar-section-gov" class="sidebar-section-title px-2.5 pt-3 pb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             <span>Gobernanza</span>
             <span class="sidebar-text w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
           </div>
@@ -2614,6 +2642,18 @@
             </div>
             <span class="nav-label truncate text-[13px] font-medium">Configuración & Marca</span>
             <span class="sidebar-tooltip">Configuración & Marca</span>
+          </button>
+
+          <!-- Diagnóstico & RAM / Sistema -->
+          <button onclick="switchTab('system')" id="nav-system" title="Diagnóstico & RAM" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
+            <span class="nav-active-pill"></span>
+            <div class="nav-icon-box">
+              <svg fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+              </svg>
+            </div>
+            <span class="nav-label truncate text-[13px] font-medium">Diagnóstico & RAM</span>
+            <span class="sidebar-tooltip">Diagnóstico del Servidor & RAM</span>
           </button>
         </nav>
 
@@ -4691,6 +4731,24 @@
                         <button type="button" onclick="generateRandomPin()" class="text-[10px] dynamic-primary-text hover:underline font-mono">Generar Aleatorio</button>
                       </div>
                       <input type="text" id="nu-pin" required maxlength="8" pattern="\d{8}" placeholder="Ej. 49201948" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs font-mono tracking-widest focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <!-- SWITCHER ACCESO CON CÓDIGO GOOGLE AUTHENTICATOR -->
+                    <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center justify-between">
+                      <div class="space-y-0.5 pr-2">
+                        <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                          <span>Google Authenticator (2FA)</span>
+                        </label>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400">¿Entra con código o sin código?</p>
+                      </div>
+                      <div class="flex items-center space-x-2 flex-shrink-0">
+                        <span id="nu-totp-label" class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Sin Código</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" id="nu-require-totp" class="sr-only peer" onchange="updateFormTotpLabel('nu-totp-label', this.checked)">
+                          <div class="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                      </div>
                     </div>
 
                     <div id="create-user-status" class="text-xs min-h-[16px]"></div>
@@ -7586,52 +7644,34 @@
             </div>
           </div>
 
-          <!-- SECCIÓN 1: VISIBILIDAD DE MÓDULOS (SWITCHERS) -->
-          <div class="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <div class="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" /></svg>
+          <!-- SECCIÓN: MÓDULOS EN BARRA LATERAL & PERMISOS GRANULARES -->
+          <div class="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/5">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" /></svg>
                 </div>
                 <div>
-                  <span class="text-[11px] font-bold text-slate-200 uppercase tracking-wider">Módulos Visibles en Barra Lateral</span>
-                  <p class="text-[10px] text-slate-400">Activa o desactiva qué módulos y accesos directos puede ver este rol en el sistema</p>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold text-slate-200 uppercase tracking-wider">Módulos Visibles & Permisos Granulares</span>
+                    <span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Despliegue Dinámico</span>
+                  </div>
+                  <p class="text-[10px] text-slate-400 mt-0.5">Activa qué módulos puede ver este rol en la barra lateral. Al activar el switch <span class="text-blue-400 font-semibold">Mostrar</span>, se desplegarán inmediatamente los permisos granulares asignables para ese módulo.</p>
                 </div>
               </div>
-              <div class="flex items-center space-x-2">
-                <button type="button" onclick="toggleAllRoleModules(true)" class="text-[10px] text-blue-400 hover:text-blue-300 font-semibold transition">Mostrar Todos</button>
-                <span class="text-slate-600 text-xs">•</span>
-                <button type="button" onclick="toggleAllRoleModules(false)" class="text-[10px] text-slate-400 hover:text-slate-300 transition">Ocultar Todos</button>
+              <div class="flex flex-wrap items-center gap-1.5 text-[10px] flex-shrink-0 pt-1 sm:pt-0">
+                <button type="button" onclick="toggleAllRoleModules(true)" class="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-blue-400 font-semibold transition border border-white/5">Mostrar Todos</button>
+                <button type="button" onclick="toggleAllRoleModules(false)" class="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-400 transition border border-white/5">Ocultar</button>
+                <button type="button" onclick="toggleAllRolePermissions(true)" class="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-purple-400 font-semibold transition border border-white/5">Marcar Permisos</button>
+                <button type="button" onclick="toggleAllRolePermissions(false)" class="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-400 transition border border-white/5">Desmarcar</button>
               </div>
             </div>
 
-            <div id="role-modules-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-              <!-- Renderizado dinámico de switches con SVG -->
+            <!-- Contenedor dinámico de módulos con sus permisos acoplados -->
+            <div id="role-modules-grid" class="space-y-2.5 pt-1">
+              <!-- Renderizado dinámico de tarjetas de módulos con sus permisos granulares acoplados -->
             </div>
-          </div>
-
-          <!-- SECCIÓN 2: MATRIZ DE PERMISOS GRANULARES -->
-          <div class="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <div class="w-6 h-6 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                </div>
-                <div>
-                  <span class="text-[11px] font-bold text-slate-200 uppercase tracking-wider">Matriz de Permisos Asignables</span>
-                  <p class="text-[10px] text-slate-400">Acciones granulares de escritura, cobro, diagnóstico y configuración</p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-2">
-                <button type="button" onclick="toggleAllRolePermissions(true)" class="text-[10px] text-purple-400 hover:text-purple-300 font-semibold transition">Seleccionar Todos</button>
-                <span class="text-slate-600 text-xs">•</span>
-                <button type="button" onclick="toggleAllRolePermissions(false)" class="text-[10px] text-slate-400 hover:text-slate-300 transition">Deseleccionar</button>
-              </div>
-            </div>
-            
-            <div id="role-permissions-list" class="space-y-3 pt-1">
-              <!-- Renderizado dinámico de categorías y permisos -->
-            </div>
+            <div id="role-permissions-list" class="hidden"></div>
           </div>
         </div>
 
@@ -7769,6 +7809,24 @@
           <p class="text-[10px] text-slate-500 mt-1">Este PIN numérico de 8 dígitos será utilizado en la pantalla de bienvenida.</p>
         </div>
 
+        <!-- SWITCHER ACCESO CON CÓDIGO GOOGLE AUTHENTICATOR -->
+        <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center justify-between">
+          <div class="space-y-0.5 pr-2">
+            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              <span>Google Authenticator (2FA)</span>
+            </label>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400">¿Entra con código o sin código?</p>
+          </div>
+          <div class="flex items-center space-x-2 flex-shrink-0">
+            <span id="nmodal-totp-label" class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Sin Código</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="nmodal-require-totp" class="sr-only peer" onchange="updateFormTotpLabel('nmodal-totp-label', this.checked)">
+              <div class="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+            </label>
+          </div>
+        </div>
+
         <div id="nmodal-modal-error" class="text-xs text-rose-400 font-mono min-h-[18px]"></div>
       </form>
 
@@ -7899,6 +7957,24 @@
           </div>
           <input type="text" id="ue-pin" maxlength="8" pattern="\d{8}" placeholder="•••••••• (Dejar en blanco para conservar el actual)" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs font-mono tracking-widest focus:outline-none focus:border-blue-500">
           <p class="text-[10px] text-slate-500 mt-1">Si no deseas cambiar el PIN del operador, deja este campo en blanco.</p>
+        </div>
+
+        <!-- SWITCHER ACCESO CON CÓDIGO GOOGLE AUTHENTICATOR -->
+        <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center justify-between">
+          <div class="space-y-0.5 pr-2">
+            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              <span>Google Authenticator (2FA)</span>
+            </label>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400">¿Entra con código o sin código?</p>
+          </div>
+          <div class="flex items-center space-x-2 flex-shrink-0">
+            <span id="ue-totp-label" class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Sin Código</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="ue-require-totp" class="sr-only peer" onchange="updateFormTotpLabel('ue-totp-label', this.checked)">
+              <div class="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+            </label>
+          </div>
         </div>
 
         <div id="ue-modal-error" class="text-xs text-rose-400 font-mono min-h-[18px]"></div>
@@ -11199,19 +11275,28 @@
 
     function canAccessTab(tabId) {
       if (!currentUser) return true;
-      if (currentUser.isSuperAdmin) return true;
 
-      // 1. Visibilidad por módulo según rol del operador (allowedModules)
+      const isSuperAdminUser = (currentUser.id === 1 && currentUser.isSuperAdmin);
+
+      // 1. Visibilidad estricta por módulo según rol del operador (allowedModules)
       const userRole = (typeof currentRoles !== 'undefined' ? currentRoles : []).find(r => r.id === currentUser.roleId);
-      const allowedMods = (currentUser.allowedModules && Array.isArray(currentUser.allowedModules))
+      const allowedMods = (currentUser.allowedModules && Array.isArray(currentUser.allowedModules) && currentUser.allowedModules.length > 0)
         ? currentUser.allowedModules
-        : (userRole && Array.isArray(userRole.allowedModules) ? userRole.allowedModules : null);
+        : (userRole && Array.isArray(userRole.allowedModules) && userRole.allowedModules.length > 0 ? userRole.allowedModules : null);
 
-      if (allowedMods && Array.isArray(allowedMods) && !allowedMods.includes(tabId)) {
-        return false;
+      if (allowedMods && Array.isArray(allowedMods)) {
+        if (!allowedMods.includes(tabId)) {
+          return false;
+        }
+      } else if (!isSuperAdminUser && currentUser.roleId !== 1) {
+        return tabId === 'dashboard';
       }
 
-      const userPerms = Array.isArray(currentUser.permissions) ? currentUser.permissions : [];
+      if (isSuperAdminUser || (currentUser.roleId === 1 && (!allowedMods || allowedMods.includes(tabId)))) {
+        return true;
+      }
+
+      const userPerms = Array.isArray(currentUser.permissions) ? currentUser.permissions : (userRole && Array.isArray(userRole.permissions) ? userRole.permissions : []);
       if (userPerms.includes('*')) return true;
 
       switch (tabId) {
@@ -11247,6 +11332,17 @@
     function applyRbacPermissions() {
       if (!currentUser) return;
 
+      // Sincronizar allowedModules y permisos del rol activo si currentUser aún no los tiene sincronizados
+      if (typeof currentRoles !== 'undefined' && Array.isArray(currentRoles) && currentRoles.length > 0) {
+        const myRole = currentRoles.find(r => r.id === currentUser.roleId);
+        if (myRole && Array.isArray(myRole.allowedModules)) {
+          currentUser.allowedModules = myRole.allowedModules;
+          if (!currentUser.isSuperAdmin && Array.isArray(myRole.permissions)) {
+            currentUser.permissions = myRole.permissions;
+          }
+        }
+      }
+
       const tabs = [
         { id: 'dashboard', check: () => canAccessTab('dashboard') },
         { id: 'customers', check: () => canAccessTab('customers') },
@@ -11266,74 +11362,57 @@
         const allowed = item.check();
         const navEl = document.getElementById('nav-' + item.id);
         if (navEl) {
-          if (allowed) {
-            navEl.classList.remove('hidden');
-          } else {
-            navEl.classList.add('hidden');
-          }
+          navEl.style.display = allowed ? '' : 'none';
+          navEl.classList.toggle('hidden', !allowed);
         }
         const mobEl = document.getElementById('mob-nav-' + item.id);
         if (mobEl) {
-          if (allowed) {
-            mobEl.classList.remove('hidden');
-          } else {
-            mobEl.classList.add('hidden');
-          }
+          mobEl.style.display = allowed ? '' : 'none';
+          mobEl.classList.toggle('hidden', !allowed);
         }
       });
 
-      // Ocultar cabeceras de categorías en sidebar si ningún submódulo es visible
+      // Ocultar cabeceras y separadores de categorías en sidebar si ningún submódulo es visible
       const hasOps = canAccessTab('dashboard') || canAccessTab('customers') || canAccessTab('messages') || canAccessTab('rrhh') || canAccessTab('billing') || canAccessTab('inventory') || canAccessTab('mochila');
-      document.querySelectorAll('.sidebar-section-title').forEach(el => {
-        if (el.textContent.includes('Operaciones')) {
-          el.style.display = hasOps ? '' : 'none';
-        }
-      });
+      const opsTitle = document.getElementById('sidebar-section-ops');
+      if (opsTitle) opsTitle.style.display = hasOps ? '' : 'none';
+
       const hasInfra = canAccessTab('network') || canAccessTab('plans') || canAccessTab('maps');
-      document.querySelectorAll('.sidebar-section-title').forEach(el => {
-        if (el.textContent.includes('Infraestructura')) {
-          el.style.display = hasInfra ? '' : 'none';
-        }
-      });
+      const infraTitle = document.getElementById('sidebar-section-infra');
+      const infraDiv = document.getElementById('sidebar-divider-infra');
+      if (infraTitle) infraTitle.style.display = hasInfra ? '' : 'none';
+      if (infraDiv) infraDiv.style.display = hasInfra ? '' : 'none';
+
       const hasGov = canAccessTab('config') || canAccessTab('system');
-      document.querySelectorAll('.sidebar-section-title').forEach(el => {
-        if (el.textContent.includes('Gobernanza')) {
-          el.style.display = hasGov ? '' : 'none';
-        }
-      });
+      const govTitle = document.getElementById('sidebar-section-gov');
+      const govDiv = document.getElementById('sidebar-divider-gov');
+      if (govTitle) govTitle.style.display = hasGov ? '' : 'none';
+      if (govDiv) govDiv.style.display = hasGov ? '' : 'none';
 
       // Sub-pestañas de Configuración
       const subnavRoles = document.getElementById('subnav-roles');
       if (subnavRoles) {
-        if (hasPermission('roles:manage')) {
-          subnavRoles.classList.remove('hidden');
-        } else {
-          subnavRoles.classList.add('hidden');
-        }
+        const allowed = hasPermission('roles:manage');
+        subnavRoles.style.display = allowed ? '' : 'none';
+        subnavRoles.classList.toggle('hidden', !allowed);
       }
       const subnavUsers = document.getElementById('subnav-users');
       if (subnavUsers) {
-        if (hasPermission('users:view') || hasPermission('users:manage')) {
-          subnavUsers.classList.remove('hidden');
-        } else {
-          subnavUsers.classList.add('hidden');
-        }
+        const allowed = hasPermission('users:view') || hasPermission('users:manage');
+        subnavUsers.style.display = allowed ? '' : 'none';
+        subnavUsers.classList.toggle('hidden', !allowed);
       }
       const subnavBranding = document.getElementById('subnav-branding');
       if (subnavBranding) {
-        if (hasPermission('system:config')) {
-          subnavBranding.classList.remove('hidden');
-        } else {
-          subnavBranding.classList.add('hidden');
-        }
+        const allowed = hasPermission('system:config');
+        subnavBranding.style.display = allowed ? '' : 'none';
+        subnavBranding.classList.toggle('hidden', !allowed);
       }
       const subnavCompany = document.getElementById('subnav-company');
       if (subnavCompany) {
-        if (hasPermission('system:config')) {
-          subnavCompany.classList.remove('hidden');
-        } else {
-          subnavCompany.classList.add('hidden');
-        }
+        const allowed = hasPermission('system:config');
+        subnavCompany.style.display = allowed ? '' : 'none';
+        subnavCompany.classList.toggle('hidden', !allowed);
       }
 
       // Si la pestaña activa actual no es accesible por el rol del usuario, ir a la primera accesible
@@ -14188,14 +14267,27 @@
         const data = await res.json();
 
         if (data.require2fa) {
-          // El negocio tiene activa la regla estricta de 2FA
+          // El negocio o el operador tiene activo el requerimiento de Google Authenticator
           pendingLoginPin = currentPin;
           pendingLoginTenantId = data.tenantId || '';
+          try {
+            localStorage.setItem('turbonetwork_pending_2fa', JSON.stringify({
+              pin: currentPin,
+              tenantId: data.tenantId || '',
+              tenantName: data.tenantName || '',
+              user: data.user || null,
+              message: data.message || ''
+            }));
+            history.pushState({ step: 'totp_2fa' }, '', window.location.href);
+          } catch (e) {}
           showLogin2faStep(data);
           return;
         }
 
         if (data.success) {
+          try {
+            localStorage.removeItem('turbonetwork_pending_2fa');
+          } catch (e) {}
           completeLoginSuccess(data);
         } else {
           feedback.textContent = data.message || "PIN no reconocido";
@@ -14213,6 +14305,8 @@
     function showLogin2faStep(data) {
       const pinStep = document.getElementById('login-pin-step');
       const totpStep = document.getElementById('login-2fa-step');
+      const pinScreen = document.getElementById('pin-login-screen');
+      if (pinScreen) pinScreen.classList.remove('hidden');
       if (pinStep) pinStep.classList.add('hidden');
       if (totpStep) {
         totpStep.classList.remove('hidden');
@@ -14227,6 +14321,11 @@
 
       const tenantName = document.getElementById('login-2fa-tenant-name');
       if (tenantName && data.tenantName) tenantName.textContent = `Sede: ${data.tenantName}`;
+
+      const ruleDesc = document.getElementById('login-2fa-rule-desc');
+      if (ruleDesc && data.message) {
+        ruleDesc.innerHTML = `${escapeHtml(data.message)} Ingrese los 6 dígitos dinámicos que muestra su app <strong class="text-white">Google Authenticator</strong>:`;
+      }
 
       const totpInp = document.getElementById('login-totp-input');
       const totpFeedback = document.getElementById('login-2fa-feedback');
@@ -14254,6 +14353,9 @@
     function cancelTotpLogin() {
       pendingLoginPin = "";
       pendingLoginTenantId = "";
+      try {
+        localStorage.removeItem('turbonetwork_pending_2fa');
+      } catch (e) {}
       const pinStep = document.getElementById('login-pin-step');
       const totpStep = document.getElementById('login-2fa-step');
       if (totpStep) {
@@ -14263,6 +14365,27 @@
       if (pinStep) pinStep.classList.remove('hidden');
       clearPin();
     }
+
+    // Proteger navegación hacia atrás en el navegador para que no oculte el 2FA si está pendiente
+    window.addEventListener('popstate', () => {
+      const pending2faRaw = localStorage.getItem('turbonetwork_pending_2fa');
+      if (pending2faRaw) {
+        try {
+          history.pushState({ step: 'totp_2fa' }, '', window.location.href);
+        } catch (err) {}
+        const pinStep = document.getElementById('login-pin-step');
+        const totpStep = document.getElementById('login-2fa-step');
+        const pinScreen = document.getElementById('pin-login-screen');
+        if (pinScreen) pinScreen.classList.remove('hidden');
+        if (pinStep) pinStep.classList.add('hidden');
+        if (totpStep) {
+          totpStep.classList.remove('hidden');
+          totpStep.classList.add('flex');
+          const inp = document.getElementById('login-totp-input');
+          if (inp) inp.focus();
+        }
+      }
+    });
 
     async function submitTotpLogin() {
       const totpInp = document.getElementById('login-totp-input');
@@ -14296,6 +14419,9 @@
         const data = await res.json();
 
         if (data.success) {
+          try {
+            localStorage.removeItem('turbonetwork_pending_2fa');
+          } catch (e) {}
           cancelTotpLogin();
           completeLoginSuccess(data);
         } else {
@@ -14414,13 +14540,23 @@
     function logout() {
       try {
         localStorage.removeItem('turbonetwork_session');
+        localStorage.removeItem('turbonetwork_pending_2fa');
       } catch (e) {}
       document.documentElement.classList.remove('has-session');
       currentUser = null;
       applyBranding(appSettings);
       renderWorkspaceDropdown();
       currentPin = "";
+      pendingLoginPin = "";
+      pendingLoginTenantId = "";
       updatePinDots();
+      const pinStep = document.getElementById('login-pin-step');
+      const totpStep = document.getElementById('login-2fa-step');
+      if (totpStep) {
+        totpStep.classList.add('hidden');
+        totpStep.classList.remove('flex');
+      }
+      if (pinStep) pinStep.classList.remove('hidden');
       document.getElementById('welcome-progress').style.width = '0%';
       document.getElementById('pin-login-screen').classList.remove('hidden');
       closeMobileConfigDrawer();
@@ -15788,6 +15924,61 @@ Estamos atentos para brindarle asistencia inmediata.
       system: 'Diagnóstico'
     };
 
+    const MODULE_PERMISSIONS_MAP = {
+      dashboard: [],
+      customers: [
+        { id: "customers:view", name: "Ver Clientes", description: "Acceso al directorio de clientes y contratos" },
+        { id: "customers:create", name: "Crear Clientes", description: "Dar de alta nuevos clientes" },
+        { id: "customers:edit", name: "Editar Clientes", description: "Modificar datos y planes de clientes" },
+        { id: "customers:suspend", name: "Suspender / Reactivar", description: "Cambiar estado del servicio del cliente" }
+      ],
+      messages: [
+        { id: "messages:view", name: "Ver Mensajes & Chat", description: "Acceso a la bandeja de chats y conversaciones" },
+        { id: "messages:send", name: "Enviar Mensajes", description: "Enviar respuestas, avisos y recordatorios" },
+        { id: "messages:manage", name: "Gestionar Filtros & Plantillas", description: "Crear, editar o eliminar filtros y plantillas" }
+      ],
+      billing: [
+        { id: "billing:view", name: "Ver Recibos", description: "Consultar historial de facturas emitidas" },
+        { id: "billing:collect", name: "Registrar Pagos", description: "Cobrar y liquidar recibos en efectivo/transferencia" },
+        { id: "billing:generate", name: "Emisión Masiva", description: "Generar facturación mensual global" }
+      ],
+      inventory: [
+        { id: "inventory:view", name: "Ver Inventario", description: "Consultar catálogo de materiales, stock y kardex" },
+        { id: "inventory:manage", name: "Gestionar Stock & Compras", description: "Crear productos, compras, activos y etiquetas" }
+      ],
+      mochila: [
+        { id: "backpack:view", name: "Ver Mochila Técnica", description: "Consultar materiales asignados a cuadrillas" },
+        { id: "backpack:manage", name: "Asignar / Desasignar Materiales", description: "Asignación QR y devoluciones de técnicos" }
+      ],
+      network: [
+        { id: "network:view", name: "Ver Equipos de Red", description: "Ver MikroTik, OLTs, switches y topología" },
+        { id: "network:control", name: "Diagnosticar & Test", description: "Probar conectividad y enviar comandos a equipos" },
+        { id: "network:manage", name: "Alta de Equipos", description: "Agregar o editar routers y OLTs" }
+      ],
+      maps: [
+        { id: "maps:view", name: "Ver Mapas & Cobertura", description: "Visualizar nodos, enlaces, áreas de cobertura y mediciones" },
+        { id: "maps:create", name: "Crear Puntos, Enlaces y Áreas", description: "Añadir nuevos nodos, cables de fibra y zonas de servicio" },
+        { id: "maps:edit", name: "Editar Elementos de Mapa", description: "Modificar ubicación, colores, iconos y trazados" },
+        { id: "maps:delete", name: "Eliminar Elementos de Mapa", description: "Borrar nodos, enlaces y polígonos del mapa" }
+      ],
+      plans: [
+        { id: "plans:manage", name: "Administrar Planes", description: "Crear o modificar tarifas de ancho de banda" }
+      ],
+      rrhh: [
+        { id: "rrhh:view", name: "Ver Asistencias & Personal", description: "Consultar historial y nómina de personal" },
+        { id: "rrhh:attendance", name: "Marcar Asistencia Biométrica", description: "Registro biométrico selfie y GPS" },
+        { id: "rrhh:manage", name: "Gestionar Personal & Turnos", description: "Administrar colaboradores y turnos" }
+      ],
+      config: [
+        { id: "users:view", name: "Ver Usuarios", description: "Consultar equipo de trabajo y operadores" },
+        { id: "users:manage", name: "Gestionar Usuarios y PIN", description: "Crear operadores y reasignar PIN de 8 dígitos" },
+        { id: "roles:manage", name: "Configurar Roles Granulares", description: "Modificar matrices de permisos por rol" }
+      ],
+      system: [
+        { id: "system:config", name: "Configuración Global", description: "Parámetros del ISP, servidores y entorno" }
+      ]
+    };
+
     function updateRbacCompanyHeader() {
       const badge = document.getElementById('rbac-company-badge');
       if (badge) {
@@ -15809,6 +16000,24 @@ Estamos atentos para brindarle asistencia inmediata.
 
         currentRoles = rolesData.data || [];
         currentUsers = usersData.data || [];
+
+        // Sincronizar permisos y módulos del usuario activo si su rol fue modificado
+        if (currentUser && currentRoles.length > 0) {
+          const myRole = currentRoles.find(r => r.id === currentUser.roleId);
+          if (myRole) {
+            currentUser.permissions = myRole.permissions || [];
+            if (Array.isArray(myRole.allowedModules)) {
+              currentUser.allowedModules = myRole.allowedModules;
+            }
+            try {
+              localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser));
+            } catch (e) {}
+            if (typeof applyRbacPermissions === 'function') {
+              applyRbacPermissions();
+            }
+          }
+        }
+
         if (brandData.success && brandData.data) {
           appSettings = {
             ...appSettings,
@@ -15875,6 +16084,25 @@ Estamos atentos para brindarle asistencia inmediata.
               </div>
             </div>
 
+            <!-- SWITCHER GOOGLE AUTHENTICATOR (CON CÓDIGO / SIN CÓDIGO) -->
+            <button type="button" onclick="handleQuickToggleUserTotp(${u.id}, ${!u.requireTotp})" 
+              class="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all flex items-center space-x-1.5 border shadow-xs cursor-pointer select-none active:scale-95 ${u.requireTotp ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25' : 'bg-slate-500/10 text-slate-400 border-slate-500/20 hover:bg-white/10 hover:text-slate-200'}" 
+              title="Clic para alternar: ${u.requireTotp ? 'Requiere Google Authenticator (Con Código)' : 'Acceso directo con PIN (Sin Código)'}">
+              ${u.requireTotp ? `
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+                <span>Con Código</span>
+              ` : `
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                </svg>
+                <span>Sin Código</span>
+              `}
+            </button>
+
             <div class="flex items-center space-x-1.5 pl-1 border-l border-white/5">
               <button type="button" onclick="openEditUserModal(${u.id})" title="Editar operador" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition flex items-center space-x-1">
                 <svg class="w-3.5 h-3.5 text-slate-400 hover:text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -15931,7 +16159,7 @@ Estamos atentos para brindarle asistencia inmediata.
             <!-- Módulos Habilitados en Barra Lateral -->
             <div class="mt-3 pt-2.5 border-t border-white/5">
               <div class="flex items-center justify-between text-[9px] uppercase font-semibold text-slate-500 tracking-wider mb-1.5">
-                <span>Módulos Visibles (${allowedMods.length}/10):</span>
+                <span>Módulos Visibles (${allowedMods.length}/12):</span>
               </div>
               <div class="flex flex-wrap gap-1">
                 ${allowedMods.map(m => `
@@ -15987,42 +16215,12 @@ Estamos atentos para brindarle asistencia inmediata.
 
     function renderRolePermissionsCheckboxes(selectedPerms = []) {
       const container = document.getElementById('role-permissions-list');
-      const grouped = {};
-      SYSTEM_PERMISSIONS.forEach(p => {
-        if (!grouped[p.category]) grouped[p.category] = [];
-        grouped[p.category].push(p);
-      });
-
-      let html = '';
-      for (const [category, perms] of Object.entries(grouped)) {
-        html += `
-          <div class="mb-3">
-            <div class="text-[10px] font-semibold uppercase tracking-wider dynamic-primary-text mb-1.5 flex items-center space-x-1.5">
-              <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg"></span>
-              <span>${category}</span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              ${perms.map(p => {
-                const isChecked = selectedPerms.includes(p.id) ? 'checked' : '';
-                return `
-                  <label class="flex items-start space-x-2.5 p-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 cursor-pointer transition">
-                    <input type="checkbox" data-perm-id="${p.id}" ${isChecked} class="mt-0.5 rounded border-white/20 text-blue-600 focus:ring-0 focus:ring-offset-0 bg-white/5">
-                    <div class="truncate">
-                      <div class="text-xs font-medium text-slate-200 truncate">${p.name}</div>
-                      <div class="text-[10px] text-slate-400 truncate">${p.description}</div>
-                      <span class="inline-block mt-0.5 font-mono text-[9px] text-slate-500">${p.id}</span>
-                    </div>
-                  </label>
-                `;
-              }).join('')}
-            </div>
-          </div>
-        `;
+      if (container) {
+        container.innerHTML = '';
       }
-      container.innerHTML = html;
     }
 
-    function renderRoleModulesCheckboxes(selectedModules = []) {
+    function renderRoleModulesCheckboxes(selectedModules = [], selectedPerms = []) {
       const container = document.getElementById('role-modules-grid');
       if (!container) return;
 
@@ -16033,36 +16231,135 @@ Estamos atentos para brindarle asistencia inmediata.
 
       container.innerHTML = SYSTEM_MODULES.map(m => {
         const isChecked = activeList.includes(m.id);
+        const perms = MODULE_PERMISSIONS_MAP[m.id] || [];
+
         return `
-          <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/5 transition">
-            <div class="flex items-center space-x-2.5 min-w-0 pr-2">
-              <div class="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
-                ${m.iconSvg}
+          <div class="p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.04] border border-white/5 transition flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-2">
+              <div class="flex items-center space-x-2.5 min-w-0 pr-2">
+                <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+                  ${m.iconSvg}
+                </div>
+                <div class="min-w-0">
+                  <div class="text-xs font-semibold text-slate-200 truncate">${escapeHtml(m.name)}</div>
+                  <div class="text-[10px] text-slate-400 truncate">${escapeHtml(m.desc)}</div>
+                </div>
               </div>
-              <div class="min-w-0">
-                <div class="text-xs font-semibold text-slate-200 truncate">${escapeHtml(m.name)}</div>
-                <div class="text-[10px] text-slate-400 truncate">${escapeHtml(m.desc)}</div>
+              <div class="flex items-center space-x-2 flex-shrink-0">
+                <span class="text-[10px] font-medium text-slate-400">Mostrar</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" data-mod-id="${m.id}" ${isChecked ? 'checked' : ''} onchange="handleRoleModuleToggle('${m.id}', this.checked)" class="sr-only peer">
+                  <div class="w-9 h-5 bg-slate-700/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
               </div>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-              <input type="checkbox" data-mod-id="${m.id}" ${isChecked ? 'checked' : ''} class="sr-only peer">
-              <div class="w-9 h-5 bg-slate-700/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
+
+            <!-- Contenedor dinámico de permisos granulares para este módulo -->
+            <div id="role-mod-perms-${m.id}" class="mt-2 pt-2.5 border-t border-white/5 ${isChecked ? '' : 'hidden'}">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-2">
+                  <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Permisos del Módulo:</span>
+                  <span id="role-mod-perms-count-${m.id}" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400">0/${perms.length}</span>
+                </div>
+                ${perms.length > 0 ? `
+                  <div class="flex items-center space-x-1">
+                    <button type="button" onclick="toggleModulePerms('${m.id}', true)" class="text-[10px] text-blue-400 hover:text-blue-300 hover:underline px-1 py-0.5">Todos</button>
+                    <span class="text-slate-600 text-[10px]">|</span>
+                    <button type="button" onclick="toggleModulePerms('${m.id}', false)" class="text-[10px] text-slate-400 hover:text-slate-300 hover:underline px-1 py-0.5">Ninguno</button>
+                  </div>
+                ` : ''}
+              </div>
+
+              ${perms.length > 0 ? `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  ${perms.map(p => {
+                    const pChecked = isChecked && selectedPerms.includes(p.id);
+                    return `
+                      <label class="flex items-start space-x-2 p-1.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 cursor-pointer transition">
+                        <input type="checkbox" data-perm-id="${p.id}" ${pChecked ? 'checked' : ''} onchange="updateModulePermCount('${m.id}')" class="mt-0.5 rounded border-white/20 text-blue-600 focus:ring-0 focus:ring-offset-0 bg-white/5">
+                        <div class="min-w-0 pr-1">
+                          <div class="text-[11px] font-medium text-slate-200 leading-tight">${escapeHtml(p.name)}</div>
+                          <div class="text-[9px] text-slate-400 leading-tight truncate mt-0.5">${escapeHtml(p.description)}</div>
+                          <span class="font-mono text-[8px] text-slate-500">${escapeHtml(p.id)}</span>
+                        </div>
+                      </label>
+                    `;
+                  }).join('')}
+                </div>
+              ` : `
+                <div class="text-[10px] text-slate-500 italic py-1">Acceso directo al habilitar el módulo (no requiere permisos adicionales).</div>
+              `}
+            </div>
           </div>
         `;
       }).join('');
+
+      // Actualizar contadores iniciales
+      SYSTEM_MODULES.forEach(m => updateModulePermCount(m.id));
+    }
+
+    function handleRoleModuleToggle(modId, isChecked) {
+      const permsDiv = document.getElementById(`role-mod-perms-${modId}`);
+      if (permsDiv) {
+        permsDiv.classList.toggle('hidden', !isChecked);
+        if (!isChecked) {
+          // Desmarcar todos los permisos si se oculta el módulo
+          permsDiv.querySelectorAll('input[data-perm-id]').forEach(cb => cb.checked = false);
+          updateModulePermCount(modId);
+        } else {
+          // Si se activa y no tenía permisos marcados, marcar todos por defecto
+          const allCbs = permsDiv.querySelectorAll('input[data-perm-id]');
+          const anyChecked = Array.from(allCbs).some(cb => cb.checked);
+          if (!anyChecked && allCbs.length > 0) {
+            allCbs.forEach(cb => cb.checked = true);
+          }
+          updateModulePermCount(modId);
+        }
+      }
+    }
+
+    function updateModulePermCount(modId) {
+      const permsDiv = document.getElementById(`role-mod-perms-${modId}`);
+      const badge = document.getElementById(`role-mod-perms-count-${modId}`);
+      if (permsDiv && badge) {
+        const allCb = permsDiv.querySelectorAll('input[data-perm-id]');
+        const checkedCb = permsDiv.querySelectorAll('input[data-perm-id]:checked');
+        badge.textContent = `${checkedCb.length}/${allCb.length}`;
+        if (checkedCb.length > 0) {
+          badge.className = "text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold";
+        } else {
+          badge.className = "text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400";
+        }
+      }
+    }
+
+    function toggleModulePerms(modId, select) {
+      const permsDiv = document.getElementById(`role-mod-perms-${modId}`);
+      if (permsDiv) {
+        permsDiv.querySelectorAll('input[data-perm-id]').forEach(cb => {
+          cb.checked = select;
+        });
+        updateModulePermCount(modId);
+      }
     }
 
     function toggleAllRoleModules(enable) {
-      document.querySelectorAll('#role-modules-grid input[type="checkbox"]').forEach(cb => {
+      document.querySelectorAll('#role-modules-grid input[data-mod-id]').forEach(cb => {
         cb.checked = enable;
+        const modId = cb.getAttribute('data-mod-id');
+        handleRoleModuleToggle(modId, enable);
       });
     }
 
     function toggleAllRolePermissions(select) {
-      document.querySelectorAll('#role-permissions-list input[type="checkbox"]').forEach(cb => {
+      document.querySelectorAll('#role-modules-grid input[data-perm-id]').forEach(cb => {
+        const permsDiv = cb.closest('[id^="role-mod-perms-"]');
+        if (select && permsDiv && permsDiv.classList.contains('hidden')) {
+          return; // No marcar permisos de módulos ocultos
+        }
         cb.checked = select;
       });
+      SYSTEM_MODULES.forEach(m => updateModulePermCount(m.id));
     }
 
     function openCreateRoleModal() {
@@ -16079,7 +16376,7 @@ Estamos atentos para brindarle asistencia inmediata.
       document.getElementById('role-desc-input').value = "";
       document.getElementById('role-modal-error').textContent = "";
       document.getElementById('btn-save-role-text').textContent = "Crear Rol";
-      renderRoleModulesCheckboxes(SYSTEM_MODULES.map(m => m.id));
+      renderRoleModulesCheckboxes(SYSTEM_MODULES.map(m => m.id), []);
       renderRolePermissionsCheckboxes([]);
       document.getElementById('role-modal').classList.remove('hidden');
     }
@@ -16101,7 +16398,7 @@ Estamos atentos para brindarle asistencia inmediata.
       document.getElementById('role-desc-input').value = role.description || "";
       document.getElementById('role-modal-error').textContent = "";
       document.getElementById('btn-save-role-text').textContent = "Guardar Cambios";
-      renderRoleModulesCheckboxes(role.allowedModules || SYSTEM_MODULES.map(m => m.id));
+      renderRoleModulesCheckboxes(role.allowedModules || SYSTEM_MODULES.map(m => m.id), role.permissions || []);
       renderRolePermissionsCheckboxes(role.permissions || []);
       document.getElementById('role-modal').classList.remove('hidden');
     }
@@ -16123,16 +16420,24 @@ Estamos atentos para brindarle asistencia inmediata.
         return;
       }
 
-      // Permisos seleccionados
-      const checkedPerms = [];
-      document.querySelectorAll('#role-permissions-list input[type="checkbox"]:checked').forEach(cb => {
-        checkedPerms.push(cb.getAttribute('data-perm-id'));
-      });
-
       // Módulos visibles seleccionados
       const checkedModules = [];
-      document.querySelectorAll('#role-modules-grid input[type="checkbox"]:checked').forEach(cb => {
+      document.querySelectorAll('#role-modules-grid input[data-mod-id]:checked').forEach(cb => {
         checkedModules.push(cb.getAttribute('data-mod-id'));
+      });
+
+      // Permisos seleccionados (solo de módulos habilitados y activos)
+      const checkedPerms = [];
+      document.querySelectorAll('#role-modules-grid input[data-perm-id]:checked').forEach(cb => {
+        const permsDiv = cb.closest('[id^="role-mod-perms-"]');
+        if (permsDiv && !permsDiv.classList.contains('hidden')) {
+          checkedPerms.push(cb.getAttribute('data-perm-id'));
+        }
+      });
+      // Revisar si queda algún permiso en role-permissions-list
+      document.querySelectorAll('#role-permissions-list input[data-perm-id]:checked').forEach(cb => {
+        const id = cb.getAttribute('data-perm-id');
+        if (!checkedPerms.includes(id)) checkedPerms.push(id);
       });
 
       const payload = { 
@@ -16165,7 +16470,9 @@ Estamos atentos para brindarle asistencia inmediata.
             try {
               localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser));
             } catch (e) {}
-            applyRbacPermissions();
+            if (typeof applyRbacPermissions === 'function') {
+              applyRbacPermissions();
+            }
           }
           await loadConfigModule();
         } else {
@@ -16249,6 +16556,11 @@ Estamos atentos para brindarle asistencia inmediata.
       document.getElementById('nmodal-hire-date').value = "";
       document.getElementById('nmodal-birth-date').value = "";
       document.getElementById('nmodal-modal-error').textContent = "";
+      const nTotp = document.getElementById('nmodal-require-totp');
+      if (nTotp) {
+        nTotp.checked = false;
+        updateFormTotpLabel('nmodal-totp-label', false);
+      }
       populateRoleSelect(currentRoles);
       populateAssignedTenantSelects();
       const nTenant = document.getElementById('nmodal-assigned-tenant');
@@ -16284,6 +16596,7 @@ Estamos atentos para brindarle asistencia inmediata.
       const hireDate = document.getElementById('nmodal-hire-date').value;
       const birthDate = document.getElementById('nmodal-birth-date').value;
       const pin = document.getElementById('nmodal-pin').value.trim();
+      const requireTotp = document.getElementById('nmodal-require-totp')?.checked || false;
 
       if (!name) {
         errorDiv.textContent = "El nombre no puede estar vacío";
@@ -16315,7 +16628,8 @@ Estamos atentos para brindarle asistencia inmediata.
             scheduleEndDate,
             hireDate,
             birthDate,
-            assignedTenantId: document.getElementById('nmodal-assigned-tenant')?.value || null
+            assignedTenantId: document.getElementById('nmodal-assigned-tenant')?.value || null,
+            requireTotp
           })
         });
         const data = await res.json();
@@ -16351,6 +16665,7 @@ Estamos atentos para brindarle asistencia inmediata.
       const birthDate = document.getElementById('nu-birth-date').value;
       const pin = document.getElementById('nu-pin').value.trim();
       const assignedTenantId = document.getElementById('nu-assigned-tenant')?.value || null;
+      const requireTotp = document.getElementById('nu-require-totp')?.checked || false;
 
       try {
         const res = await fetch('/api/users', {
@@ -16366,7 +16681,8 @@ Estamos atentos para brindarle asistencia inmediata.
             scheduleEndDate,
             hireDate,
             birthDate,
-            assignedTenantId
+            assignedTenantId,
+            requireTotp
           })
         });
         const data = await res.json();
@@ -16375,6 +16691,11 @@ Estamos atentos para brindarle asistencia inmediata.
           statusDiv.textContent = "Operador registrado correctamente";
           statusDiv.className = "text-xs dynamic-accent-text font-mono";
           document.getElementById('new-user-form').reset();
+          const nuTotp = document.getElementById('nu-require-totp');
+          if (nuTotp) {
+            nuTotp.checked = false;
+            updateFormTotpLabel('nu-totp-label', false);
+          }
           await loadConfigModule();
           showToast("Operador creado con éxito");
         } else {
@@ -16415,6 +16736,12 @@ Estamos atentos para brindarle asistencia inmediata.
       document.getElementById('ue-pin').value = "";
       document.getElementById('ue-modal-error').textContent = "";
       
+      const ueTotp = document.getElementById('ue-require-totp');
+      if (ueTotp) {
+        ueTotp.checked = Boolean(user.requireTotp);
+        updateFormTotpLabel('ue-totp-label', ueTotp.checked);
+      }
+
       const avatarImg = document.getElementById('ue-avatar-preview');
       if (avatarImg) avatarImg.src = user.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(user.name));
 
@@ -16478,6 +16805,7 @@ Estamos atentos para brindarle asistencia inmediata.
       const hireDate = document.getElementById('ue-hire-date').value;
       const birthDate = document.getElementById('ue-birth-date').value;
       const pin = document.getElementById('ue-pin').value.trim();
+      const requireTotp = document.getElementById('ue-require-totp')?.checked || false;
 
       if (!name) {
         errorDiv.textContent = "El nombre no puede estar vacío";
@@ -16505,7 +16833,8 @@ Estamos atentos para brindarle asistencia inmediata.
         scheduleEndDate: document.getElementById('ue-schedule-end')?.value || '',
         hireDate: hireDate,
         birthDate: birthDate,
-        assignedTenantId: document.getElementById('emodal-assigned-tenant')?.value || null
+        assignedTenantId: document.getElementById('emodal-assigned-tenant')?.value || null,
+        requireTotp
       };
       if (pin) {
         payload.pin = pin;
@@ -16529,6 +16858,7 @@ Estamos atentos para brindarle asistencia inmediata.
             currentUser.email = email;
             currentUser.roleId = roleId;
             currentUser.workSchedule = schedule;
+            currentUser.requireTotp = requireTotp;
             currentUser.hireDate = hireDate;
             currentUser.birthDate = birthDate;
             const updatedRole = currentRoles.find(r => r.id === roleId);
@@ -16574,6 +16904,51 @@ Estamos atentos para brindarle asistencia inmediata.
         }
       } catch (err) {
         showToast("Error de conexión al eliminar operador", "error");
+      }
+    }
+
+    // Actualizar etiqueta del switch en formularios (Con Código / Sin Código)
+    function updateFormTotpLabel(labelId, isChecked) {
+      const lbl = document.getElementById(labelId);
+      if (!lbl) return;
+      if (isChecked) {
+        lbl.textContent = "Con Código";
+        lbl.className = "text-[10px] font-bold text-emerald-400";
+      } else {
+        lbl.textContent = "Sin Código";
+        lbl.className = "text-[10px] font-semibold text-slate-500 dark:text-slate-400";
+      }
+    }
+
+    // Switcher rápido: Alternar acceso con o sin Google Authenticator directamente desde la tabla
+    async function handleQuickToggleUserTotp(id, newStatus) {
+      if (!hasPermission('users:manage')) {
+        showToast("Acceso denegado: No tienes permiso para configurar seguridad de operadores.", "error");
+        return;
+      }
+      try {
+        const res = await fetch(`/api/users/${id}/toggle-totp`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'x-tenant-id': activeTenantId },
+          body: JSON.stringify({ requireTotp: Boolean(newStatus) })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const user = currentUsers.find(u => u.id === id);
+          if (user) {
+            user.requireTotp = data.requireTotp;
+          }
+          if (currentUser && currentUser.id === id) {
+            currentUser.requireTotp = data.requireTotp;
+            try { localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser)); } catch (e) {}
+          }
+          renderUsers(currentUsers);
+          showToast(data.message || (data.requireTotp ? "Acceso CON CÓDIGO 2FA activado" : "Acceso SIN CÓDIGO configurado"), "success");
+        } else {
+          showToast(data.message || "Error al actualizar seguridad", "error");
+        }
+      } catch (err) {
+        showToast("Error de conexión al cambiar regla de código", "error");
       }
     }
 
@@ -17802,6 +18177,28 @@ Estamos atentos para brindarle asistencia inmediata.
       try {
         await loadTenants();
       } catch (e) {}
+
+      // 1.9. PERSISTENCIA DE 2FA: Si hay una verificación de Google Authenticator pendiente, restaurarla de inmediato
+      const pending2faRaw = localStorage.getItem('turbonetwork_pending_2fa');
+      if (pending2faRaw) {
+        try {
+          const pending2fa = JSON.parse(pending2faRaw);
+          if (pending2fa && pending2fa.pin) {
+            pendingLoginPin = pending2fa.pin;
+            pendingLoginTenantId = pending2fa.tenantId || '';
+            document.documentElement.classList.remove('has-session');
+            const pinScreen = document.getElementById('pin-login-screen');
+            if (pinScreen) pinScreen.classList.remove('hidden');
+            showLogin2faStep(pending2fa);
+            try {
+              history.pushState({ step: 'totp_2fa' }, '', window.location.href);
+            } catch (err) {}
+            return; // Bloquear restauración de sesión hasta que valide el código TOTP
+          }
+        } catch (e) {
+          localStorage.removeItem('turbonetwork_pending_2fa');
+        }
+      }
 
       // 2. Restaurar sesión activa de operador si existe en localStorage
       const sessionStr = localStorage.getItem('turbonetwork_session');

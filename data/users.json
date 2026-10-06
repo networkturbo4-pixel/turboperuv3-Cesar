@@ -19,7 +19,8 @@
       "themeMode": "light",
       "darkBgColor": "#18181b"
     },
-    "assignedTenantId": "turbonetwork"
+    "assignedTenantId": "turbonetwork",
+    "requireTotp": true
   },
   {
     "id": 1790781290504,
@@ -50,7 +51,8 @@
     },
     "assignedTenantId": null,
     "scheduleStartDate": "",
-    "scheduleEndDate": ""
+    "scheduleEndDate": "",
+    "requireTotp": false
   },
   {
     "id": 1790787042063,
@@ -76,7 +78,8 @@
       "themeMode": "light"
     },
     "scheduleStartDate": "",
-    "scheduleEndDate": ""
+    "scheduleEndDate": "",
+    "requireTotp": false
   },
   {
     "id": 1790806727208,
@@ -99,6 +102,7 @@
     "scheduleEndDate": "2026-10-10",
     "hireDate": "2026-09-01",
     "birthDate": "2026-09-23",
-    "preferences": {}
+    "preferences": {},
+    "requireTotp": false
   }
 ]

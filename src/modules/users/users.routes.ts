@@ -113,6 +113,7 @@ export interface SystemUser {
   hireDate?: string;
   birthDate?: string;
   preferences?: Record<string, any>;
+  requireTotp?: boolean; // Switcher para exigir o no Google Authenticator por usuario
 }
 
 export const DEFAULT_ROLES: Role[] = [
@@ -282,6 +283,7 @@ let usersStore: SystemUser[] = [
     allowedTenants: ["*"],
     workSchedule: "08:00 - 17:00",
     preferences: {},
+    requireTotp: true,
   },
   {
     id: 2,
@@ -297,6 +299,7 @@ let usersStore: SystemUser[] = [
     allowedTenants: ["turbonetwork", "loanetwork"],
     workSchedule: "08:30 - 17:30",
     preferences: {},
+    requireTotp: false,
   },
   {
     id: 3,
@@ -312,6 +315,7 @@ let usersStore: SystemUser[] = [
     allowedTenants: ["turbonetwork"],
     workSchedule: "08:00 - 16:30",
     preferences: {},
+    requireTotp: false,
   },
 ];
 
@@ -371,6 +375,7 @@ const createUserSchema = z.object({
   birthDate: z.string().nullable().optional(),
   assignedTenantId: z.string().nullable().optional(),
   allowedTenants: z.array(z.string()).nullable().optional(),
+  requireTotp: z.boolean().optional(),
 });
 
 const updateUserSchema = z.object({
@@ -388,6 +393,7 @@ const updateUserSchema = z.object({
   assignedTenantId: z.string().nullable().optional(),
   allowedTenants: z.array(z.string()).nullable().optional(),
   preferences: z.record(z.any()).optional(),
+  requireTotp: z.boolean().optional(),
 });
 
 const createRoleSchema = z.object({
@@ -420,8 +426,9 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     const assignedTenant = requestedTenant || user.assignedTenantId || (user.allowedTenants && user.allowedTenants[0] !== "*" ? user.allowedTenants[0] : "turbonetwork");
 
-    // Verificar si esta empresa/sede tiene activa la regla estricta de 2FA
-    const require2fa = is2faRequiredForTenant(assignedTenant);
+    // Verificar si el operador tiene activo el switcher de Google Authenticator (o regla estricta de sede)
+    const tenantRequires2fa = is2faRequiredForTenant(assignedTenant);
+    const require2fa = user.requireTotp !== undefined ? Boolean(user.requireTotp) : tenantRequires2fa;
 
     if (require2fa) {
       const cleanTotp = (totpCode || "").trim();
@@ -434,7 +441,9 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(200).send({
           success: false,
           require2fa: true,
-          message: `Regla Estricta Activa: Ingrese el código dinámico de Google Authenticator de ${tenantName}.`,
+          message: user.requireTotp 
+            ? `Acceso Protegido: Ingrese el código dinámico de Google Authenticator de ${tenantName}.`
+            : `Regla Estricta Activa: Ingrese el código dinámico de Google Authenticator de ${tenantName}.`,
           tenantId: assignedTenant,
           tenantName,
           user: {
@@ -608,9 +617,41 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       scheduleStartDate: safeUser.scheduleStartDate || "",
       scheduleEndDate: safeUser.scheduleEndDate || "",
       preferences: safeUser.preferences || {},
+      requireTotp: Boolean(safeUser.requireTotp),
       pinMasked: "••••••••",
     }));
     return reply.send({ success: true, count: sanitized.length, data: sanitized });
+  });
+
+  // Switcher rápido: Alternar acceso con código Google Authenticator (2FA) o sin código
+  fastify.patch("/users/:id/toggle-totp", async (request, reply) => {
+    usersStore = loadUsersFromDisk();
+    const { id } = request.params as { id: string };
+    const userId = parseInt(id, 10);
+
+    const user = usersStore.find((u) => u.id === userId);
+    if (!user) {
+      return reply.status(404).send({ success: false, message: "Operador no encontrado" });
+    }
+
+    const body = (request.body as { requireTotp?: boolean }) || {};
+    if (typeof body.requireTotp === "boolean") {
+      user.requireTotp = body.requireTotp;
+    } else {
+      user.requireTotp = !user.requireTotp;
+    }
+
+    saveUsersToDisk();
+
+    const { pin, ...safeUser } = user;
+    return reply.send({
+      success: true,
+      message: user.requireTotp
+        ? `Acceso CON CÓDIGO de Google Authenticator activado para ${user.name}`
+        : `Acceso SIN CÓDIGO (directo con PIN) configurado para ${user.name}`,
+      requireTotp: user.requireTotp,
+      data: { ...safeUser, pinMasked: "••••••••" },
+    });
   });
 
   // Registrar nuevo usuario con rol, PIN de 8 dígitos y horario
@@ -656,6 +697,7 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       hireDate: parse.data.hireDate || "",
       birthDate: parse.data.birthDate || "",
       preferences: {},
+      requireTotp: parse.data.requireTotp === true,
     };
 
     usersStore.push(newUser);
@@ -717,6 +759,7 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       user.allowedTenants = user.allowedTenants.filter(Boolean);
     }
     if (data.preferences !== undefined) user.preferences = { ...(user.preferences || {}), ...data.preferences };
+    if (data.requireTotp !== undefined) user.requireTotp = Boolean(data.requireTotp);
 
     saveUsersToDisk();
 
