@@ -30,6 +30,7 @@
     "dotenv": "^16.4.5",
     "drizzle-kit": "^0.24.2",
     "drizzle-orm": "^0.33.0",
+    "fast-decode-uri-component": "^1.0.1",
     "fastify": "^4.28.1",
     "light-my-request": "^6.6.0",
     "mime": "^4.1.0",

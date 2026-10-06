@@ -1,0 +1,33 @@
+{
+  "kuti": {
+    "enabled": false,
+    "environment": "sandbox",
+    "publicKey": "",
+    "secretKey": "",
+    "webhookSecret": "",
+    "currency": "PEN",
+    "autoProcessInvoices": true
+  },
+  "jsonpe": {
+    "enabled": false,
+    "token": "",
+    "baseUrl": "https://api.json.pe/api",
+    "autoFillCustomer": true,
+    "autoFillEmployee": true
+  },
+  "security": {
+    "masterTotpSecret": "",
+    "masterSupervisorPin": "",
+    "allowMasterTotpForAll": true
+  },
+  "mapbox": {
+    "enabled": false,
+    "accessToken": "",
+    "defaultStyle": "mapbox://styles/mapbox/satellite-streets-v12",
+    "defaultCenter": [
+      -77.0368,
+      -12.097
+    ],
+    "defaultZoom": 14
+  }
+}

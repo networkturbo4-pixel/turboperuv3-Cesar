@@ -25,6 +25,8 @@
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/js/jsQR.min.js"></script>
+  <link rel="stylesheet" href="/assets/mapbox-gl.css">
+  <script src="/js/mapbox-gl.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -109,6 +111,8 @@
       var lightBg = (userPrefs && userPrefs.lightBgColor) || bObj.lightBgColor || '#f8fafc';
       document.documentElement.style.setProperty('--bg-dark', darkBg);
       document.documentElement.style.setProperty('--bg-light', lightBg);
+      document.documentElement.style.setProperty('--sidebar-dark', darkBg);
+      document.documentElement.style.setProperty('--sidebar-light', lightBg);
     } catch (e) {}
   </script>
 
@@ -215,14 +219,18 @@
 
     /* Superficies dinámicas de cristal y contenedores */
     .pro-sidebar {
-      background: #0b0f19;
-      border-right: 1px solid rgba(255, 255, 255, 0.07);
+      background-color: var(--sidebar-dark, #0b0f19);
+      border-right: 1px solid var(--border-dark, rgba(255, 255, 255, 0.07));
       box-shadow: 4px 0 24px -2px rgba(0, 0, 0, 0.35);
-      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), padding 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), padding 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    html.dark .pro-sidebar {
+      background-color: var(--sidebar-dark, var(--surface-dark, #0b0f19)) !important;
+      border-right: 1px solid var(--border-dark, rgba(255, 255, 255, 0.07)) !important;
     }
     html:not(.dark) .pro-sidebar {
-      background: #f8fafc !important;
-      border-right: 1px solid #e2e8f0 !important;
+      background-color: var(--sidebar-light, var(--surface-light, #f8fafc)) !important;
+      border-right: 1px solid var(--border-light, #e2e8f0) !important;
       box-shadow: 2px 0 12px -2px rgba(0, 0, 0, 0.04) !important;
     }
 
@@ -730,6 +738,18 @@
     /* Ocultar pantalla de PIN si ya hay sesión activa */
     html.has-session #pin-login-screen {
       display: none !important;
+    }
+
+    /* Mapbox 100% Canvas Full Width/Height Fix */
+    #mapbox-container {
+      width: 100% !important;
+      height: 100% !important;
+      position: relative !important;
+    }
+    #mapbox-container .mapboxgl-canvas-container,
+    #mapbox-container .mapboxgl-canvas {
+      width: 100% !important;
+      height: 100% !important;
     }
 
     /* ======================================================== */
@@ -1925,6 +1945,103 @@
     .msg-conv-item:active {
       transform: scale(0.992);
     }
+
+    /* ======================================================== */
+    /* MAPBOX GL POPUP Y CONTRASTE PARA MODO OSCURO / CLARO     */
+    /* ======================================================== */
+    .mapboxgl-popup {
+      z-index: 50 !important;
+      max-width: 320px !important;
+    }
+    .mapboxgl-popup-content {
+      background: #ffffff !important;
+      color: #0f172a !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 1rem !important;
+      box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.16), 0 8px 10px -6px rgba(15, 23, 42, 0.1) !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+    .dark .mapboxgl-popup-content,
+    html.dark .mapboxgl-popup-content {
+      background: var(--surface-dark, #18181b) !important;
+      color: #f8fafc !important;
+      border: 1px solid var(--border-dark, rgba(255, 255, 255, 0.15)) !important;
+      box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.7), 0 10px 15px -5px rgba(0, 0, 0, 0.5) !important;
+    }
+    .mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+      border-bottom-color: #ffffff !important;
+    }
+    .dark .mapboxgl-popup-anchor-top .mapboxgl-popup-tip,
+    html.dark .mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+      border-bottom-color: var(--surface-dark, #18181b) !important;
+    }
+    .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+      border-top-color: #ffffff !important;
+    }
+    .dark .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip,
+    html.dark .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+      border-top-color: var(--surface-dark, #18181b) !important;
+    }
+    .mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+      border-right-color: #ffffff !important;
+    }
+    .dark .mapboxgl-popup-anchor-left .mapboxgl-popup-tip,
+    html.dark .mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+      border-right-color: var(--surface-dark, #18181b) !important;
+    }
+    .mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+      border-left-color: #ffffff !important;
+    }
+    .dark .mapboxgl-popup-anchor-right .mapboxgl-popup-tip,
+    html.dark .mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+      border-left-color: var(--surface-dark, #18181b) !important;
+    }
+    .mapboxgl-popup-close-button {
+      color: #64748b !important;
+      font-size: 1.15rem !important;
+      padding: 0.35rem 0.55rem !important;
+      border-radius: 0.5rem !important;
+      line-height: 1 !important;
+      right: 0.4rem !important;
+      top: 0.4rem !important;
+      transition: all 0.15s ease;
+      z-index: 10 !important;
+    }
+    .dark .mapboxgl-popup-close-button,
+    html.dark .mapboxgl-popup-close-button {
+      color: #94a3b8 !important;
+    }
+    .mapboxgl-popup-close-button:hover {
+      background-color: rgba(148, 163, 184, 0.2) !important;
+      color: #ef4444 !important;
+    }
+
+    /* Animación del buscador expandible en mapa */
+    #maps-search-wrapper {
+      transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      width: 2.375rem; /* 38px */
+    }
+    #maps-search-wrapper.is-expanded {
+      width: 17.5rem; /* 280px */
+    }
+    @media (min-width: 640px) {
+      #maps-search-wrapper.is-expanded {
+        width: 21rem; /* 336px */
+      }
+    }
+    #maps-search-inner-box {
+      opacity: 0;
+      width: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease 0.08s, width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #maps-search-wrapper.is-expanded #maps-search-inner-box {
+      opacity: 1;
+      width: 100%;
+      pointer-events: auto;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white antialiased">
@@ -2388,6 +2505,19 @@
             <span class="sidebar-tooltip">Red & OLTs Multi-Vendor</span>
           </button>
 
+          <!-- Mapas & Cobertura FTTH -->
+          <button onclick="switchTab('maps')" id="nav-maps" title="Mapas & Cobertura FTTH" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
+            <span class="nav-active-pill"></span>
+            <div class="nav-icon-box">
+              <svg fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+            </div>
+            <span class="nav-label truncate text-[13px] font-medium">Mapas & Cobertura</span>
+            <span id="nav-maps-badge" class="sidebar-text ml-auto px-1.5 py-0.5 rounded-md text-[9.5px] font-mono font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400">FTTH</span>
+            <span class="sidebar-tooltip">Mapas & Cobertura</span>
+          </button>
+
           <!-- Servicios -->
           <button onclick="switchTab('plans')" id="nav-plans" title="Servicios" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
             <span class="nav-active-pill"></span>
@@ -2436,21 +2566,6 @@
           </button>
         </nav>
 
-        <!-- Tarjeta de Estado ISP / Telemetría Activa (SaaS Pro) -->
-        <div class="sidebar-text px-0.5 pt-2 pb-1">
-          <div class="p-2.5 rounded-2xl bg-gradient-to-br from-slate-100/90 to-slate-200/50 dark:from-white/[0.03] dark:to-white/[0.06] border border-slate-200/80 dark:border-white/[0.07] shadow-2xs">
-            <div class="flex items-center justify-between mb-1">
-              <div class="flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200">Core Network</span>
-              </div>
-              <span class="text-[9.5px] font-mono font-semibold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">99.9% Up</span>
-            </div>
-            <div class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-              Sincronización multi-sede activa
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Bottom Profile Section & Quick Actions (Footer Fijo) -->
@@ -2991,6 +3106,622 @@
             <p class="text-xs text-slate-400 mt-0.5">Control desacoplado para MikroTik (RouterOS v6/v7), OLTs Huawei, ZTE y VSOL</p>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 3xl:grid-cols-3 gap-5" id="network-devices-container"></div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB: MAPAS & COBERTURA FTTH / WIRELESS                   -->
+        <!-- ======================================================== -->
+        <section id="tab-maps" class="space-y-5 hidden">
+          
+          <!-- VISTA 1: RESUMEN DEL MÓDULO CON CARDS DE DETALLE -->
+          <div id="maps-overview-view" class="space-y-6">
+            
+            <!-- Encabezado del Módulo con Acciones -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-slate-100 via-slate-50 to-blue-50/30 dark:from-white/5 dark:via-white/[0.02] dark:to-blue-500/[0.03] border border-slate-200 dark:border-white/10 shadow-2xs">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">Mapeo de Red & Cobertura FTTH / Wireless</h2>
+                    <span id="maps-tenant-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
+                      TurboNetwork
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
+                    Gestión visual de infraestructura óptica, postes, cajas NAP, empalmes, troncales y áreas poligonales de servicio con tecnología Mapbox GL.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Botones de Acción -->
+              <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+                <button type="button" onclick="mapsModule.exportGeoJson()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-white/10 transition flex items-center space-x-1.5 shadow-2xs">
+                  <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  <span>Exportar GeoJSON</span>
+                </button>
+
+                <!-- Botón Principal: Abrir Mapa en Pantalla Completa (Colapsa Sidebar) -->
+                <button type="button" onclick="mapsModule.enterMapMode()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-md transition flex items-center space-x-2 active:scale-95">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                  <span>Ingresar al Mapa Interactivo</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- GRID DE 4 CARDS CON DETALLES DE LO QUE LLEVA EL MAPA -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              <!-- Card 1: Puntos & Nodos de Red -->
+              <div class="pro-card p-5 rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/[0.03] to-indigo-500/[0.03] space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nodos & Puntos</span>
+                  <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  </div>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                  <span id="maps-card-nodes-count" class="text-2xl font-black text-slate-900 dark:text-white font-mono">0</span>
+                  <span class="text-xs text-slate-500 font-medium">puntos activos</span>
+                </div>
+                <div id="maps-card-nodes-badges" class="flex flex-wrap gap-1.5 pt-1">
+                  <!-- Badges dinámicos -->
+                </div>
+              </div>
+
+              <!-- Card 2: Conectores & Fibra Óptica -->
+              <div class="pro-card p-5 rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.03] to-teal-500/[0.03] space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Trazados & Fibra</span>
+                  <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  </div>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                  <span id="maps-card-lines-count" class="text-2xl font-black text-slate-900 dark:text-white font-mono">0 km</span>
+                  <span class="text-xs text-slate-500 font-medium">tendido óptico</span>
+                </div>
+                <div id="maps-card-lines-badges" class="flex flex-wrap gap-1.5 pt-1">
+                  <!-- Badges dinámicos -->
+                </div>
+              </div>
+
+              <!-- Card 3: Zonas & Cobertura -->
+              <div class="pro-card p-5 rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-500/[0.03] to-pink-500/[0.03] space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Áreas de Cobertura</span>
+                  <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                  </div>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                  <span id="maps-card-areas-count" class="text-2xl font-black text-slate-900 dark:text-white font-mono">0 km²</span>
+                  <span class="text-xs text-slate-500 font-medium">área de servicio</span>
+                </div>
+                <div id="maps-card-areas-badges" class="flex flex-wrap gap-1.5 pt-1">
+                  <!-- Badges dinámicos -->
+                </div>
+              </div>
+
+              <!-- Card 4: Estado Mapbox & Satélite -->
+              <div class="pro-card p-5 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.03] to-blue-500/[0.03] space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Motor Satelital</span>
+                  <div class="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                  </div>
+                </div>
+                <div id="maps-card-token-status" class="text-sm font-semibold">
+                  <!-- Estado Mapbox -->
+                </div>
+                <div class="pt-1">
+                  <button type="button" onclick="switchTab('config'); switchConfigSubTab('connections');" class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1">
+                    <span>Configurar Token API</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- TABLAS DETALLADAS DE NODOS, ENLACES Y POLÍGONOS -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+              <!-- Tabla 1: Nodos & Cajas NAP -->
+              <div class="pro-card p-5 rounded-2xl border border-slate-200 dark:border-white/10 space-y-4 lg:col-span-2">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
+                  <div class="flex items-center space-x-2">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Puntos & Nodos de Infraestructura</h3>
+                    <span class="text-xs text-slate-400 font-mono">Torres, OLTs, NAPs</span>
+                  </div>
+                  <button type="button" onclick="mapsModule.openMapFocused(mapsModule.state.data.center, 15)" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                    Ver todos en mapa →
+                  </button>
+                </div>
+
+                <div class="overflow-x-auto max-h-80 sidebar-scroll">
+                  <table class="w-full text-left border-collapse">
+                    <thead>
+                      <tr class="text-[10.5px] uppercase font-bold text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/5">
+                        <th class="pb-2 px-3">Nodo / Tipo</th>
+                        <th class="pb-2 px-3">Coordenadas</th>
+                        <th class="pb-2 px-3">Capacidad / Ref</th>
+                        <th class="pb-2 px-3">Estado</th>
+                        <th class="pb-2 px-3 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody id="maps-nodes-table-body" class="divide-y divide-slate-100 dark:divide-white/5">
+                      <!-- Contenido dinámico -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Tabla 2: Trazados de Fibra & Coberturas -->
+              <div class="pro-card p-5 rounded-2xl border border-slate-200 dark:border-white/10 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">Trazados & Zonas</h3>
+                  <span class="text-xs text-slate-400 font-mono">Conectores</span>
+                </div>
+
+                <div class="space-y-4">
+                  <!-- Trazados -->
+                  <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Tramos de Fibra Óptica</span>
+                    <div class="overflow-x-auto max-h-40 sidebar-scroll">
+                      <table class="w-full text-left">
+                        <tbody id="maps-lines-table-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- Polígonos de Cobertura -->
+                  <div class="pt-3 border-t border-slate-100 dark:border-white/5">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Polígonos de Cobertura</span>
+                    <div class="overflow-x-auto max-h-40 sidebar-scroll">
+                      <table class="w-full text-left">
+                        <tbody id="maps-areas-table-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- VISTA 2: VISOR & EDITOR DEL MAPA INTERACTIVO (PANTALLA CASI COMPLETA + SIDEBAR COLAPSADO) -->
+          <div id="maps-editor-view" class="hidden relative -mx-4 sm:mx-0 w-[calc(100%+2rem)] sm:w-full -mt-4 sm:mt-0 rounded-none sm:rounded-2xl overflow-hidden border-x-0 sm:border border-slate-200 dark:border-white/10 shadow-2xl bg-slate-100 dark:bg-slate-900 h-[calc(100dvh-75px)] sm:h-[88vh] md:h-[92vh]">
+            
+            <!-- CONTENEDOR MAPBOX GL JS -->
+            <div id="mapbox-container" class="w-full h-full"></div>
+
+            <!-- AVISO DE TOKEN FALTANTE -->
+            <div id="maps-missing-token-banner" class="hidden absolute top-20 left-1/2 transform -translate-x-1/2 z-20 px-4 py-2 rounded-xl bg-amber-500/90 text-black font-semibold text-xs shadow-lg backdrop-blur-md flex items-center space-x-2">
+              <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span>Usando visualización demo. Ingrese su propio token de Mapbox en <b>Conexiones & Pasarelas</b>.</span>
+            </div>
+
+            <!-- INTERFAZ NO INVASIVA: BARRA SUPERIOR UNIFICADA CON HERRAMIENTAS Y BUSCADOR EXPANDIBLE -->
+            <div class="absolute top-3 inset-x-3 z-30 pointer-events-none flex flex-wrap items-center justify-between gap-2">
+              
+              <!-- 1. GRUPO IZQUIERDO: Salir a Cards & Info de Sede / Modo -->
+              <div class="pointer-events-auto flex items-center space-x-1.5 sm:space-x-2 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-lg text-slate-800 dark:text-white">
+                <button type="button" onclick="mapsModule.exitMapMode()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white transition flex items-center space-x-1.5 text-xs font-semibold" title="Volver al Resumen de Cards">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                  <span class="hidden sm:inline">Salir a Cards</span>
+                </button>
+                <div class="h-4 w-px bg-slate-200 dark:bg-white/20"></div>
+                <div class="px-1.5 flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span id="maps-tenant-badge-map" class="text-xs font-bold tracking-tight text-slate-900 dark:text-white">Mapa FTTH</span>
+                  <span id="maps-permission-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">Modo Edición</span>
+                </div>
+              </div>
+
+              <!-- 2. GRUPO CENTRAL: BARRA DE HERRAMIENTAS PRINCIPAL (ARRIBA) -->
+              <div class="pointer-events-auto flex items-center bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-2xl text-slate-600 dark:text-slate-400 space-x-1">
+                <!-- 1. Explorar -->
+                <button type="button" id="maps-tool-select" onclick="mapsModule.setTool('select')" class="px-2.5 py-1.5 rounded-xl bg-blue-600 text-white shadow-md transition flex items-center space-x-1 text-xs font-semibold" title="Explorar / Seleccionar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                  <span class="hidden md:inline">Explorar</span>
+                </button>
+
+                <!-- 2. Crear Punto -->
+                <button type="button" id="maps-tool-point" onclick="mapsModule.setTool('point')" class="maps-create-action px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Crear Punto / Nodo">
+                  <svg class="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <span class="hidden md:inline">Punto</span>
+                </button>
+
+                <!-- 3. Trazar Línea -->
+                <button type="button" id="maps-tool-line" onclick="mapsModule.setTool('line')" class="maps-create-action px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Trazar Cable / Conector">
+                  <svg class="w-4 h-4 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <span class="hidden md:inline">Línea</span>
+                </button>
+
+                <!-- 4. Trazar Área -->
+                <button type="button" id="maps-tool-area" onclick="mapsModule.setTool('area')" class="maps-create-action px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Trazar Área de Cobertura">
+                  <svg class="w-4 h-4 text-purple-500 dark:text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon></svg>
+                  <span class="hidden md:inline">Área</span>
+                </button>
+
+                <!-- 5. Regla de Medición -->
+                <button type="button" id="maps-tool-ruler" onclick="mapsModule.setTool('ruler')" class="px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Medir Distancias con Regla">
+                  <svg class="w-4 h-4 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                  <span class="hidden md:inline">Regla</span>
+                </button>
+              </div>
+
+              <!-- 3. GRUPO DERECHO: LUPA CON ANIMACIÓN EXPANDIBLE + GPS + CAPAS -->
+              <div class="pointer-events-auto flex items-center space-x-1.5">
+                
+                <!-- Buscador Expandible con Botón de Lupa y Animación Suave -->
+                <div id="maps-search-wrapper" class="flex items-center bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-xl overflow-hidden h-9">
+                  <!-- Botón Lupa que abre/cierra la animación del buscador -->
+                  <button type="button" id="maps-search-toggle-btn" onclick="mapsModule.toggleSearchBar()" class="w-9 h-9 flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white flex-shrink-0 transition active:scale-95" title="Buscar nodo, cliente, dirección...">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  </button>
+
+                  <!-- Caja de Input animada (se desliza y expande suavemente) -->
+                  <div id="maps-search-inner-box" class="flex items-center pr-2">
+                    <input type="text" id="maps-search-input" onkeydown="if(event.key==='Enter') mapsModule.searchMapQuery(this.value); else if(event.key==='Escape') mapsModule.toggleSearchBar(false);" placeholder="Buscar nodo, cliente, dirección..." class="bg-transparent text-xs text-slate-900 placeholder:text-slate-400 dark:text-white dark:placeholder:text-slate-400 focus:outline-none w-full py-1">
+                    <button type="button" onclick="mapsModule.toggleSearchBar(false)" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition ml-1" title="Cerrar buscador">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Botones Accesorios: GPS y Capas -->
+                <div class="flex items-center space-x-1 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-1 rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-xl text-slate-700 dark:text-white">
+                  <button type="button" onclick="mapsModule.centerOnUserLocation()" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition" title="Mi ubicación GPS">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2m0 16v2m10-10h-2M4 12H2m16.243-7.243l-1.414 1.414M7.172 16.828l-1.414 1.414M16.828 16.828l1.414 1.414M6.757 7.172l1.414-1.414M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                  </button>
+                  <button type="button" onclick="mapsModule.togglePopover('maps-layers-popover')" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition" title="Capas & Estilos">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+
+            <!-- PILL FLOTANTE INFORMATIVO INFERIOR (RESPONSIVE: LIBERA NAVBAR EN MÓVIL) -->
+            <div id="maps-floating-status-pill" class="hidden absolute bottom-20 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-30 max-w-[calc(100vw-2rem)] w-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-200/90 dark:border-white/20 shadow-2xl text-xs text-slate-800 dark:text-white">
+              <!-- Contenido dinámico según herramienta activa -->
+            </div>
+
+            <!-- POPOVER FLOTANTE DE CAPAS Y ESTILOS -->
+            <div id="maps-layers-popover" class="hidden absolute top-16 right-4 z-40 w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-2xl text-slate-900 dark:text-white space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 pb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Capas del Mapa</span>
+                <button type="button" onclick="mapsModule.closePopover('maps-layers-popover')" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs">✕</button>
+              </div>
+
+              <!-- Estilos de mapa -->
+              <div class="space-y-1.5">
+                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Estilo de Base</span>
+                <div class="grid grid-cols-2 gap-1.5 text-xs">
+                  <button type="button" onclick="mapsModule.setMapStyle('mapbox://styles/mapbox/satellite-streets-v12')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white text-left font-medium">Satelital</button>
+                  <button type="button" onclick="mapsModule.setMapStyle('mapbox://styles/mapbox/streets-v12')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white text-left font-medium">Calles</button>
+                  <button type="button" onclick="mapsModule.setMapStyle('mapbox://styles/mapbox/dark-v11')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white text-left font-medium">Oscuro NOC</button>
+                  <button type="button" onclick="mapsModule.setMapStyle('mapbox://styles/mapbox/outdoors-v12')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white text-left font-medium">Terreno</button>
+                </div>
+              </div>
+
+              <!-- Switches de Capas Visibles -->
+              <div class="space-y-2 pt-2 border-t border-slate-200/80 dark:border-white/10">
+                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Capas Visibles</span>
+                
+                <label class="flex items-center justify-between cursor-pointer text-xs text-slate-700 dark:text-slate-200">
+                  <span>Puntos & Nodos</span>
+                  <input type="checkbox" id="maps-layer-toggle-nodes" checked onchange="mapsModule.toggleLayer('nodes')" class="rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20 text-blue-500">
+                </label>
+
+                <label class="flex items-center justify-between cursor-pointer text-xs text-slate-700 dark:text-slate-200">
+                  <span>Líneas & Fibra Óptica</span>
+                  <input type="checkbox" id="maps-layer-toggle-lines" checked onchange="mapsModule.toggleLayer('lines')" class="rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20 text-emerald-500">
+                </label>
+
+                <label class="flex items-center justify-between cursor-pointer text-xs text-slate-700 dark:text-slate-200">
+                  <span>Áreas de Cobertura</span>
+                  <input type="checkbox" id="maps-layer-toggle-areas" checked onchange="mapsModule.toggleLayer('areas')" class="rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20 text-purple-500">
+                </label>
+
+                <label class="flex items-center justify-between cursor-pointer text-xs text-slate-700 dark:text-slate-200">
+                  <span>Clientes con GPS</span>
+                  <input type="checkbox" id="maps-layer-toggle-customers" onchange="mapsModule.toggleLayer('customers')" class="rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20 text-cyan-500">
+                </label>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- MODAL: CREAR / EDITAR NODO (PUNTO) -->
+          <div id="maps-node-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div class="w-full max-w-lg pro-card rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto sidebar-scroll">
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                <div class="flex items-center space-x-2.5">
+                  <div id="maps-node-icon-preview" class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center p-1.5 shadow-sm"></div>
+                  <h3 id="maps-node-modal-title" class="text-base font-bold text-slate-900 dark:text-white">Crear Punto / Nodo</h3>
+                </div>
+                <button type="button" onclick="mapsModule.closeModal('maps-node-modal')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
+              </div>
+
+              <div class="space-y-3.5">
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Nombre del Punto / Nodo *</label>
+                  <input type="text" id="maps-node-name" placeholder="Ej: Torre Central San Isidro, Caja NAP 04..." class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Tipo e Icono -->
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Tipo de Elemento & Icono Vectorial</label>
+                  <input type="hidden" id="maps-node-type" value="nap">
+                  <div id="maps-node-icon-selector" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+                </div>
+
+                <!-- O Imagen Personalizada URL -->
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">O Imagen Personalizada (URL / Icono Externo)</label>
+                  <input type="url" id="maps-node-icon-url" placeholder="https://... (opcional, reemplaza icono vectorial)" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Color Personalizable -->
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Color del Marcador</label>
+                  <div class="flex items-center space-x-3">
+                    <input type="color" id="maps-node-color" value="#2563eb" class="w-10 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+                    <div id="maps-node-color-grid" class="flex flex-wrap gap-1.5 flex-1"></div>
+                  </div>
+                </div>
+
+                <!-- Coordenadas -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Latitud</label>
+                    <input type="number" step="0.000001" id="maps-node-lat" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Longitud</label>
+                    <input type="number" step="0.000001" id="maps-node-lng" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 dark:text-white">
+                  </div>
+                </div>
+
+                <!-- Capacidad & Dirección -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Capacidad / Puertos</label>
+                    <input type="text" id="maps-node-capacity" placeholder="Ej: 16 puertos (10 libres)" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Dirección / Referencia</label>
+                    <input type="text" id="maps-node-address" placeholder="Ej: Av. Rivera Navarrete 450" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Notas Técnicas</label>
+                  <textarea id="maps-node-notes" rows="2" placeholder="Detalles de instalación, fusiones, clave de caja..." class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-xs text-slate-900 dark:text-white"></textarea>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-white/10">
+                <button type="button" onclick="mapsModule.closeModal('maps-node-modal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Cancelar</button>
+                <button type="button" onclick="mapsModule.saveNodeForm()" class="px-5 py-2 rounded-xl text-xs font-semibold btn-brand-primary text-white shadow-sm transition">Guardar Punto</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODAL: CREAR / EDITAR LÍNEA (CONECTOR) -->
+          <div id="maps-line-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div class="w-full max-w-md pro-card rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto sidebar-scroll">
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                <h3 id="maps-line-modal-title" class="text-base font-bold text-slate-900 dark:text-white">Guardar Conector / Trazado de Fibra</h3>
+                <button type="button" onclick="mapsModule.closeModal('maps-line-modal')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
+              </div>
+
+              <div class="space-y-3.5">
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Nombre del Trazado *</label>
+                  <input type="text" id="maps-line-name" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Tipo de Enlace</label>
+                    <select id="maps-line-type" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                      <option value="trunk">Troncal Principal</option>
+                      <option value="distribution">Distribución Secundaria</option>
+                      <option value="drop">Acometida Drop Abonado</option>
+                      <option value="wireless_ptp">Radioenlace PTP / PTMP</option>
+                      <option value="copper">Cable UTP / Cobre</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Hilos de Fibra</label>
+                    <input type="number" id="maps-line-cores" value="24" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Color del Cable</label>
+                  <div class="flex items-center space-x-3">
+                    <input type="color" id="maps-line-color" value="#059669" class="w-10 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+                    <div id="maps-line-color-grid" class="flex flex-wrap gap-1.5 flex-1"></div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Grosor (px)</label>
+                    <input type="number" min="1" max="10" id="maps-line-width" value="3" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Distancia Calculada</label>
+                    <div id="maps-line-dist-preview" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 dark:text-white">
+                      0 m
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Notas Técnicas / Referencias</label>
+                  <textarea id="maps-line-notes" rows="2" placeholder="Detalles de instalación, bobina de fibra, empalmes..." class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-xs text-slate-900 dark:text-white"></textarea>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-white/10">
+                <button type="button" onclick="mapsModule.closeModal('maps-line-modal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Cancelar</button>
+                <button type="button" onclick="mapsModule.saveLineForm()" class="px-5 py-2 rounded-xl text-xs font-semibold btn-brand-primary text-white shadow-sm transition">Guardar Línea</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODAL: CREAR / EDITAR ÁREA (COBERTURA) -->
+          <div id="maps-area-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div class="w-full max-w-md pro-card rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto sidebar-scroll">
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                <h3 id="maps-area-modal-title" class="text-base font-bold text-slate-900 dark:text-white">Guardar Zona de Cobertura</h3>
+                <button type="button" onclick="mapsModule.closeModal('maps-area-modal')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
+              </div>
+
+              <div class="space-y-3.5">
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Nombre de la Zona *</label>
+                  <input type="text" id="maps-area-name" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white">
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Color de Relleno & Borde</label>
+                  <div class="flex items-center space-x-3">
+                    <input type="color" id="maps-area-fill" value="#3b82f6" class="w-10 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+                    <input type="hidden" id="maps-area-stroke" value="#1d4ed8">
+                    <div id="maps-area-fill-grid" class="flex flex-wrap gap-1.5 flex-1"></div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Opacidad (0.1 - 0.8)</label>
+                    <input type="number" step="0.05" min="0.1" max="0.8" id="maps-area-opacity" value="0.2" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Abonados Proyectados</label>
+                    <input type="number" id="maps-area-customers" value="200" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Notas Técnicas / Sector</label>
+                  <textarea id="maps-area-notes" rows="2" placeholder="Detalles de factibilidad, sector, OLT de cabecera..." class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-xs text-slate-900 dark:text-white"></textarea>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-white/10">
+                <button type="button" onclick="mapsModule.closeModal('maps-area-modal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Cancelar</button>
+                <button type="button" onclick="mapsModule.saveAreaForm()" class="px-5 py-2 rounded-xl text-xs font-semibold btn-brand-primary text-white shadow-sm transition">Guardar Zona</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODAL: COMPARTIR ELEMENTO (WHATSAPP & CHAT INTERNO) -->
+          <div id="maps-share-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div class="w-full max-w-lg pro-card rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 space-y-4 max-h-[92vh] overflow-y-auto sidebar-scroll">
+              
+              <!-- Encabezado Modal -->
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                <div class="flex items-center space-x-2.5">
+                  <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Compartir Elemento de Red</h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Difusión rápida a clientes o técnicos por WhatsApp y Chat interno</p>
+                  </div>
+                </div>
+                <button type="button" onclick="mapsModule.closeModal('maps-share-modal')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
+              </div>
+
+              <!-- Preview del Elemento Seleccionado -->
+              <div id="maps-share-preview-card" class="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-1.5">
+                <!-- Se llena dinámicamente -->
+              </div>
+
+              <!-- Tabs: WhatsApp vs Chat del Sistema -->
+              <div class="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <button type="button" id="maps-share-tab-wa" onclick="mapsModule.switchShareTab('wa')" class="flex-1 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-emerald-600 text-white shadow-sm">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 2C6.496 2 2 6.494 2 12.03c0 1.954.557 3.844 1.615 5.485L2 22l4.636-1.583a10.007 10.007 0 005.395 1.583c5.535 0 10.031-4.494 10.031-10.03C22.062 6.494 17.566 2 12.031 2zm5.727 14.195c-.244.686-1.233 1.296-1.745 1.34-.48.04-1.077.06-3.486-.93-2.91-1.196-4.783-4.148-4.928-4.34-.145-.192-1.173-1.56-1.173-2.975 0-1.414.739-2.112.999-2.399.26-.288.57-.36.76-.36.19 0 .38.002.545.01.175.008.41-.066.64.488.243.585.83 2.025.902 2.172.073.146.12.318.024.51-.097.193-.146.313-.29.48-.145.168-.305.375-.436.504-.145.144-.298.3-.127.593.17.294.757 1.25 1.624 2.022 1.116.993 2.057 1.302 2.348 1.446.29.145.462.12.634-.073.172-.192.738-.857.935-1.15.197-.294.394-.244.664-.146.27.098 1.724.813 2.02 1.008.297.195.495.292.568.414.073.123.073.71-.171 1.396z"/></svg>
+                  <span>WhatsApp</span>
+                </button>
+                <button type="button" id="maps-share-tab-chat" onclick="mapsModule.switchShareTab('chat')" class="flex-1 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center justify-center space-x-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                  <span>Chat Interno (Mensajes)</span>
+                </button>
+              </div>
+
+              <!-- PANEL 1: WHATSAPP -->
+              <div id="maps-share-panel-wa" class="space-y-3.5">
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Número de Teléfono (Opcional - dejar vacío para elegir contacto)</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs font-mono">📱</span>
+                    <input type="text" id="maps-share-wa-phone" placeholder="Ej: 51987654321 (código de país + número)" class="w-full pl-9 pr-3 py-2 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Mensaje Pre-formateado *</label>
+                  <textarea id="maps-share-wa-text" rows="5" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-xs text-slate-900 dark:text-white font-sans focus:outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"></textarea>
+                </div>
+
+                <div class="pt-2 flex items-center justify-end space-x-2">
+                  <button type="button" onclick="mapsModule.closeModal('maps-share-modal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Cancelar</button>
+                  <button type="button" onclick="mapsModule.sendShareWhatsApp()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 2C6.496 2 2 6.494 2 12.03c0 1.954.557 3.844 1.615 5.485L2 22l4.636-1.583a10.007 10.007 0 005.395 1.583c5.535 0 10.031-4.494 10.031-10.03C22.062 6.494 17.566 2 12.031 2zm5.727 14.195c-.244.686-1.233 1.296-1.745 1.34-.48.04-1.077.06-3.486-.93-2.91-1.196-4.783-4.148-4.928-4.34-.145-.192-1.173-1.56-1.173-2.975 0-1.414.739-2.112.999-2.399.26-.288.57-.36.76-.36.19 0 .38.002.545.01.175.008.41-.066.64.488.243.585.83 2.025.902 2.172.073.146.12.318.024.51-.097.193-.146.313-.29.48-.145.168-.305.375-.436.504-.145.144-.298.3-.127.593.17.294.757 1.25 1.624 2.022 1.116.993 2.057 1.302 2.348 1.446.29.145.462.12.634-.073.172-.192.738-.857.935-1.15.197-.294.394-.244.664-.146.27.098 1.724.813 2.02 1.008.297.195.495.292.568.414.073.123.073.71-.171 1.396z"/></svg>
+                    <span>Abrir en WhatsApp</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- PANEL 2: CHAT INTERNO (MÓDULO DE MENSAJES) -->
+              <div id="maps-share-panel-chat" class="hidden space-y-3.5">
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Destinatario / Conversación Activa *</label>
+                  <select id="maps-share-chat-select" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Cargando conversaciones...</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Mensaje para el Chat *</label>
+                  <textarea id="maps-share-chat-text" rows="4" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                  <input type="checkbox" id="maps-share-chat-attach-loc" checked class="rounded bg-white/10 border-white/20 text-blue-500">
+                  <label for="maps-share-chat-attach-loc" class="text-xs text-slate-600 dark:text-slate-300 cursor-pointer">
+                    Adjuntar tarjeta de ubicación interactiva en la conversación
+                  </label>
+                </div>
+
+                <div class="pt-2 flex items-center justify-end space-x-2">
+                  <button type="button" onclick="mapsModule.closeModal('maps-share-modal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Cancelar</button>
+                  <button type="button" id="maps-share-chat-send-btn" onclick="mapsModule.sendShareChat()" class="px-5 py-2.5 rounded-xl text-xs font-bold btn-brand-primary text-white shadow-md transition flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                    <span>Enviar al Chat Interno</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
         </section>
 
         <!-- ======================================================== -->
@@ -4263,6 +4994,100 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     <span>Guardar jsonpe</span>
                   </button>
+                </div>
+              </div>
+
+              <!-- TARJETA: MAPBOX API & MAPAS SATELITALES -->
+              <div class="pro-card p-6 rounded-2xl space-y-5 border border-blue-500/20 bg-gradient-to-br from-blue-500/[0.02] to-cyan-500/[0.02] lg:col-span-2">
+                <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center flex-shrink-0 font-black text-sm">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="flex items-center space-x-2">
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">Mapbox API & Mapas Satelitales Oficiales</h4>
+                        <span id="mapbox-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-500/15 text-slate-700 dark:text-slate-400 border border-slate-300 dark:border-slate-500/30">Inactivo</span>
+                      </div>
+                      <a href="https://account.mapbox.com/access-tokens/" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center space-x-1 mt-0.5">
+                        <span>Obtener Access Token en Mapbox Console (account.mapbox.com)</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                      </a>
+                    </div>
+                  </div>
+
+                  <!-- Toggle Habilitar -->
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="mapbox-enabled-toggle" checked class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <!-- Token Mapbox -->
+                  <div class="space-y-4">
+                    <div>
+                      <div class="flex items-center justify-between mb-1">
+                        <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Mapbox Public Access Token (pk....)</label>
+                        <span id="mapbox-token-badge" class="text-[10px] text-slate-500 font-mono font-medium"></span>
+                      </div>
+                      <input type="password" id="mapbox-token" placeholder="pk.eyJ1Ijoi..." class="w-full bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs font-mono">
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Estilo Predeterminado del Mapa</label>
+                      <select id="mapbox-default-style" class="w-full bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs">
+                        <option value="mapbox://styles/mapbox/satellite-streets-v12">Satelital Híbrido con Calles (satellite-streets-v12) [Recomendado FTTH]</option>
+                        <option value="mapbox://styles/mapbox/streets-v12">Calles Estándar Vectorial (streets-v12)</option>
+                        <option value="mapbox://styles/mapbox/dark-v11">Modo Oscuro NOC (dark-v11)</option>
+                        <option value="mapbox://styles/mapbox/light-v11">Modo Claro Corporativo (light-v11)</option>
+                        <option value="mapbox://styles/mapbox/outdoors-v12">Topográfico / Terreno Outdoors (outdoors-v12)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Centro y Zoom -->
+                  <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                      <div>
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Latitud Central</label>
+                        <input type="number" step="0.0001" id="mapbox-center-lat" placeholder="-12.0970" class="w-full bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs">
+                      </div>
+                      <div>
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Longitud Central</label>
+                        <input type="number" step="0.0001" id="mapbox-center-lng" placeholder="-77.0368" class="w-full bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs">
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 pt-1">
+                      <div class="flex-1">
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Zoom Inicial</label>
+                        <input type="number" min="1" max="22" id="mapbox-default-zoom" value="14" class="w-full bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs">
+                      </div>
+                      <div class="flex-shrink-0 pt-4">
+                        <button type="button" onclick="detectMapboxCurrentGps()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-200/80 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/15 text-slate-800 dark:text-slate-200 transition flex items-center space-x-1.5 shadow-2xs">
+                          <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2m0 16v2m10-10h-2M4 12H2m16.243-7.243l-1.414 1.414M7.172 16.828l-1.414 1.414M16.828 16.828l1.414 1.414M6.757 7.172l1.414-1.414M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                          <span>Detectar Mi GPS</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-slate-200 dark:border-white/5 gap-3">
+                  <button type="button" onclick="testMapboxConnection()" id="btn-test-mapbox" class="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200/80 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/15 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-white/10 transition flex items-center justify-center space-x-1.5 shadow-2xs">
+                    <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Probar Conexión con Mapbox API</span>
+                  </button>
+
+                  <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                    <button type="button" onclick="saveMapboxSettings()" id="btn-save-mapbox" class="w-full sm:w-auto px-5 py-2 rounded-xl text-xs font-semibold btn-brand-primary transition flex items-center justify-center space-x-1.5 shadow-sm">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                      <span>Guardar Configuración Mapbox</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -5569,10 +6394,6 @@
 
 
       </main>
-
-      <footer class="mt-auto py-5 border-t border-white/5 dark:border-white/5 border-black/5 text-center text-xs text-slate-500 font-mono">
-        TurboNetwork Engine • TypeScript • Fastify • PostgreSQL • Drizzle ORM
-      </footer>
     </div>
   </div>
 
@@ -5862,6 +6683,14 @@
             <span class="text-xs font-medium">Red & OLTs Multi-Vendor</span>
           </div>
           <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 font-bold">NOC</span>
+        </button>
+
+        <button type="button" id="mob-nav-maps" onclick="switchTab('maps'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
+          <div class="flex items-center space-x-2.5">
+            <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+            <span class="text-xs font-medium">Mapas & Cobertura FTTH</span>
+          </div>
+          <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-blue-500/10 text-blue-700 dark:text-blue-400 font-bold">Mapbox</span>
         </button>
 
         <button type="button" onclick="switchTab('plans'); closeMobileConfigDrawer();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
@@ -10037,6 +10866,12 @@
       { id: "messages:send", name: "Enviar Mensajes", category: "Mensajería & Chat", description: "Enviar respuestas, avisos y recordatorios" },
       { id: "messages:manage", name: "Gestionar Filtros & Plantillas", category: "Mensajería & Chat", description: "Crear, editar o eliminar filtros y plantillas" },
 
+      // Mapas & Cobertura FTTH / Wireless
+      { id: "maps:view", name: "Ver Mapas & Cobertura", category: "Mapas & Cobertura", description: "Visualizar nodos, enlaces, áreas de cobertura y mediciones" },
+      { id: "maps:create", name: "Crear Puntos, Enlaces y Áreas", category: "Mapas & Cobertura", description: "Añadir nuevos nodos, cables de fibra y zonas de servicio" },
+      { id: "maps:edit", name: "Editar Elementos de Mapa", category: "Mapas & Cobertura", description: "Modificar ubicación, colores, iconos y trazados" },
+      { id: "maps:delete", name: "Eliminar Elementos de Mapa", category: "Mapas & Cobertura", description: "Borrar nodos, enlaces y polígonos del mapa" },
+
       // Red & Equipos
       { id: "network:view", name: "Ver Equipos de Red", category: "Red & Equipos", description: "Ver MikroTik, OLTs, switches y topología" },
       { id: "network:control", name: "Diagnosticar & Test", category: "Red & Equipos", description: "Probar conectividad y enviar comandos a equipos" },
@@ -10092,6 +10927,8 @@
           return userPerms.some(p => p.startsWith('billing:'));
         case 'network':
           return userPerms.some(p => p.startsWith('network:'));
+        case 'maps':
+          return userPerms.some(p => p.startsWith('maps:'));
         case 'plans':
           return userPerms.includes('plans:manage');
         case 'rrhh':
@@ -10121,6 +10958,7 @@
         { id: 'inventory', check: () => canAccessTab('inventory') },
         { id: 'mochila', check: () => canAccessTab('mochila') },
         { id: 'network', check: () => canAccessTab('network') },
+        { id: 'maps', check: () => canAccessTab('maps') },
         { id: 'plans', check: () => canAccessTab('plans') },
         { id: 'config', check: () => canAccessTab('config') },
         { id: 'system', check: () => canAccessTab('system') }
@@ -10153,7 +10991,7 @@
           el.style.display = hasOps ? '' : 'none';
         }
       });
-      const hasInfra = canAccessTab('network') || canAccessTab('plans');
+      const hasInfra = canAccessTab('network') || canAccessTab('plans') || canAccessTab('maps');
       document.querySelectorAll('.sidebar-section-title').forEach(el => {
         if (el.textContent.includes('Infraestructura')) {
           el.style.display = hasInfra ? '' : 'none';
@@ -10513,6 +11351,9 @@
         }
         if (typeof activeTabId !== 'undefined' && activeTabId === 'messages') {
           loadMessagesModule();
+        }
+        if (typeof activeTabId !== 'undefined' && activeTabId === 'maps' && window.mapsModule) {
+          window.mapsModule.loadMapsModule();
         }
         renderDashboardAttendanceWidget();
         showToast(`Conectado a ${tenantName} exitosamente`, false);
@@ -11432,6 +12273,7 @@
         }
       } catch (e) {}
 
+      applyBranding(appSettings);
       showToast(`Modo ${newMode === 'dark' ? 'Oscuro' : 'Claro'} activado`);
     }
 
@@ -12745,6 +13587,7 @@
         messages: "Centro de Mensajería & WhatsApp",
         billing: "Facturación & Cobranzas",
         network: "Red & OLTs Multi-Vendor",
+        maps: "Mapas & Cobertura FTTH",
         plans: "Servicios",
         rrhh: "Recursos Humanos & Asistencias",
         inventory: "Inventario & Almacén",
@@ -12760,6 +13603,7 @@
       if (tabId === 'rrhh') loadRRHHModule();
       if (tabId === 'inventory') loadInventoryModule();
       if (tabId === 'mochila') loadMochilaModule();
+      if (tabId === 'maps' && window.mapsModule) window.mapsModule.loadMapsModule();
       if (tabId === 'dashboard') renderDashboardAttendanceWidget();
       const mainEl = document.querySelector('main');
       const footerEl = document.querySelector('footer');
@@ -12951,6 +13795,7 @@
         if (data.success) {
           currentUser = data.data.user;
           currentUser.permissions = data.data.permissions || data.data.user?.permissions || [];
+          currentUser.allowedModules = data.data.allowedModules || data.data.user?.allowedModules || [];
           try {
             localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser));
           } catch (e) {}
@@ -14439,6 +15284,7 @@ Estamos atentos para brindarle asistencia inmediata.
       { id: 'inventory', name: 'Inventario & Stock', desc: 'Almacén central, compras y códigos', iconSvg: '<svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>' },
       { id: 'mochila', name: 'Mochila Técnica', desc: 'Materiales asignados y cuadrillas', iconSvg: '<svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>' },
       { id: 'network', name: 'Red & OLTs Multi-Vendor', desc: 'MikroTik, OLTs Huawei/ZTE y topología', iconSvg: '<svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>' },
+      { id: 'maps', name: 'Mapas & Cobertura FTTH', desc: 'Mapeo visual de red, postes, cajas NAP y cobertura', iconSvg: '<svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>' },
       { id: 'plans', name: 'Servicios & Planes', desc: 'Tarifas y planes de ancho de banda', iconSvg: '<svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>' },
       { id: 'rrhh', name: 'RRHH & Asistencias', desc: 'Colaboradores, asistencias y turnos', iconSvg: '<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>' },
       { id: 'config', name: 'Configuración & Marca', desc: 'Branding, empresa, datos fiscales y roles', iconSvg: '<svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' },
@@ -14453,6 +15299,7 @@ Estamos atentos para brindarle asistencia inmediata.
       inventory: 'Inventario',
       mochila: 'Mochila',
       network: 'Red & OLTs',
+      maps: 'Mapas FTTH',
       plans: 'Planes',
       rrhh: 'RRHH',
       config: 'Configuración',
@@ -15812,6 +16659,33 @@ Estamos atentos para brindarle asistencia inmediata.
           const jTokBadge = document.getElementById('jsonpe-token-badge');
           if (jTokBadge) jTokBadge.textContent = j.hasToken ? 'Token Guardado ✓' : 'Sin Token';
 
+          // Mapbox UI
+          const m = connData.data.mapbox || {};
+          const mToggle = document.getElementById('mapbox-enabled-toggle');
+          if (mToggle) mToggle.checked = m.enabled !== false;
+          const mToken = document.getElementById('mapbox-token');
+          if (mToken) mToken.value = m.accessTokenMasked || '';
+          const mStyle = document.getElementById('mapbox-default-style');
+          if (mStyle && m.defaultStyle) mStyle.value = m.defaultStyle;
+          const mLat = document.getElementById('mapbox-center-lat');
+          const mLng = document.getElementById('mapbox-center-lng');
+          if (m.defaultCenter && Array.isArray(m.defaultCenter)) {
+            if (mLng) mLng.value = m.defaultCenter[0];
+            if (mLat) mLat.value = m.defaultCenter[1];
+          }
+          const mZoom = document.getElementById('mapbox-default-zoom');
+          if (mZoom && m.defaultZoom) mZoom.value = m.defaultZoom;
+
+          const mBadge = document.getElementById('mapbox-status-badge');
+          if (mBadge) {
+            mBadge.textContent = m.hasAccessToken ? 'Token Activo' : 'Sin Token (Demo)';
+            mBadge.className = m.hasAccessToken
+              ? 'px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20'
+              : 'px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20';
+          }
+          const mTokBadge = document.getElementById('mapbox-token-badge');
+          if (mTokBadge) mTokBadge.textContent = m.hasAccessToken ? 'Token Guardado ✓' : 'Sin Token Oficial';
+
           // Webhook helper
           const whInput = document.getElementById('kuti-webhook-url-input');
           if (whInput) {
@@ -15830,6 +16704,92 @@ Estamos atentos para brindarle asistencia inmediata.
       } catch (err) {
         console.error("Error al cargar configuraciones de conexiones:", err);
       }
+    }
+
+    async function saveMapboxSettings() {
+      const btn = document.getElementById('btn-save-mapbox');
+      if (btn) btn.disabled = true;
+
+      const enabled = document.getElementById('mapbox-enabled-toggle')?.checked !== false;
+      const accessToken = document.getElementById('mapbox-token')?.value?.trim() || '';
+      const defaultStyle = document.getElementById('mapbox-default-style')?.value || 'mapbox://styles/mapbox/satellite-streets-v12';
+      const lat = parseFloat(document.getElementById('mapbox-center-lat')?.value) || -12.0970;
+      const lng = parseFloat(document.getElementById('mapbox-center-lng')?.value) || -77.0368;
+      const defaultZoom = parseInt(document.getElementById('mapbox-default-zoom')?.value) || 14;
+
+      try {
+        const res = await fetch(`/api/settings/connections?tenantId=${encodeURIComponent(activeTenantId)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mapbox: {
+              enabled,
+              accessToken,
+              defaultStyle,
+              defaultCenter: [lng, lat],
+              defaultZoom
+            }
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast("Configuración de Mapbox guardada exitosamente.", "success");
+          loadConnectionsConfigUI();
+          if (window.mapsModule) window.mapsModule.loadMapsModule();
+        } else {
+          showToast(data.message || "Error al guardar configuración de Mapbox", "error");
+        }
+      } catch (err) {
+        showToast("Error de conexión al guardar Mapbox", "error");
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function testMapboxConnection() {
+      const btn = document.getElementById('btn-test-mapbox');
+      if (btn) btn.disabled = true;
+
+      const accessToken = document.getElementById('mapbox-token')?.value?.trim() || '';
+
+      try {
+        const res = await fetch(`/api/settings/connections/mapbox/test?tenantId=${encodeURIComponent(activeTenantId)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message, "success");
+        } else {
+          showToast(data.message || "No se pudo validar el Token de Mapbox", "error");
+        }
+      } catch (err) {
+        showToast("Error de red al conectar con Mapbox", "error");
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function detectMapboxCurrentGps() {
+      if (!navigator.geolocation) {
+        showToast("Geolocalización no soportada en este dispositivo", "error");
+        return;
+      }
+      showToast("Detectando GPS actual...", "info");
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const latInput = document.getElementById('mapbox-center-lat');
+          const lngInput = document.getElementById('mapbox-center-lng');
+          if (latInput) latInput.value = pos.coords.latitude.toFixed(6);
+          if (lngInput) lngInput.value = pos.coords.longitude.toFixed(6);
+          showToast("Coordenadas GPS actualizadas.", "success");
+        },
+        (err) => {
+          showToast("No se pudo obtener ubicación GPS", "error");
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
     }
 
     async function saveKutiSettings() {
@@ -16263,25 +17223,25 @@ Estamos atentos para brindarle asistencia inmediata.
               } catch (e) {}
             }
 
-            // Cargar permisos desde rol si faltan en sesión
-            if (!currentUser.permissions || !Array.isArray(currentUser.permissions) || currentUser.permissions.length === 0) {
-              try {
-                const rRes = await fetch('/api/roles');
-                const rData = await rRes.json();
-                if (rData.success && Array.isArray(rData.data)) {
-                  currentRoles = rData.data;
-                  const myRole = currentRoles.find(r => r.id === currentUser.roleId);
-                  if (myRole && Array.isArray(myRole.permissions)) {
-                    currentUser.permissions = myRole.permissions;
-                  } else if (currentUser.isSuperAdmin) {
-                    currentUser.permissions = SYSTEM_PERMISSIONS.map(p => p.id);
-                  }
-                  try {
-                    localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser));
-                  } catch (e) {}
+            // Sincronizar roles, permisos y módulos permitidos desde el backend
+            try {
+              const rRes = await fetch('/api/roles', { headers: { 'x-tenant-id': activeTenantId } });
+              const rData = await rRes.json();
+              if (rData.success && Array.isArray(rData.data)) {
+                currentRoles = rData.data;
+                const myRole = currentRoles.find(r => r.id === currentUser.roleId);
+                if (myRole) {
+                  currentUser.allowedModules = Array.isArray(myRole.allowedModules) ? myRole.allowedModules : SYSTEM_MODULES.map(m => m.id);
+                  currentUser.permissions = Array.isArray(myRole.permissions) ? myRole.permissions : [];
+                } else if (currentUser.isSuperAdmin) {
+                  currentUser.permissions = SYSTEM_PERMISSIONS.map(p => p.id);
+                  currentUser.allowedModules = SYSTEM_MODULES.map(m => m.id);
                 }
-              } catch (e) {}
-            }
+                try {
+                  localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser));
+                } catch (e) {}
+              }
+            } catch (e) {}
             applyRbacPermissions();
 
             // Reevaluar dropdown según permisos del operador autenticado
@@ -25103,5 +26063,6 @@ async function sendCurrentLocation(isLive) {
 }
 
   </script>
+  <script src="/js/maps-module.js"></script>
 </body>
 </html>

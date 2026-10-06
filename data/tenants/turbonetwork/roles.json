@@ -26,11 +26,17 @@
       "users:view",
       "users:manage",
       "roles:manage",
+      "maps:view",
+      "maps:create",
+      "maps:edit",
+      "maps:delete",
       "system:config"
     ],
     "allowedModules": [
       "dashboard",
       "customers",
+      "messages",
+      "maps",
       "billing",
       "inventory",
       "mochila",
@@ -51,12 +57,17 @@
       "network:view",
       "network:control",
       "network:manage",
-      "plans:manage"
+      "plans:manage",
+      "maps:view",
+      "maps:create",
+      "maps:edit",
+      "maps:delete"
     ],
     "allowedModules": [
       "dashboard",
       "customers",
       "network",
+      "maps",
       "plans",
       "system"
     ]
@@ -73,7 +84,8 @@
       "rrhh:attendance",
       "messages:view",
       "messages:send",
-      "messages:manage"
+      "messages:manage",
+      "maps:view"
     ],
     "allowedModules": [
       "dashboard",

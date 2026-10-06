@@ -26,6 +26,9 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
     const safeJsonPeToken = config.jsonpe.token
       ? config.jsonpe.token.substring(0, 4) + "••••••••" + config.jsonpe.token.slice(-4)
       : "";
+    const safeMapboxToken = config.mapbox?.accessToken
+      ? config.mapbox.accessToken.substring(0, 8) + "••••••••" + config.mapbox.accessToken.slice(-4)
+      : "";
 
     return reply.send({
       success: true,
@@ -43,6 +46,17 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
           ...config.jsonpe,
           tokenMasked: safeJsonPeToken,
           hasToken: !!config.jsonpe.token,
+        },
+        mapbox: {
+          ...(config.mapbox || {
+            enabled: true,
+            accessToken: "",
+            defaultStyle: "mapbox://styles/mapbox/satellite-streets-v12",
+            defaultCenter: [-77.0368, -12.0970],
+            defaultZoom: 14,
+          }),
+          accessTokenMasked: safeMapboxToken,
+          hasAccessToken: !!config.mapbox?.accessToken,
         },
       },
     });
@@ -71,6 +85,11 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
       jsonPeToken = body.jsonpe.token.trim();
     }
 
+    let mapboxToken = current.mapbox?.accessToken || "";
+    if (body.mapbox?.accessToken && !body.mapbox.accessToken.includes("••••")) {
+      mapboxToken = body.mapbox.accessToken.trim();
+    }
+
     const updated = saveConnectionsConfig(
       {
         kuti: {
@@ -94,6 +113,13 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
           masterSupervisorPin: (body.security?.masterSupervisorPin || current.security?.masterSupervisorPin || DEFAULT_SUPERVISOR_PIN).trim(),
           allowMasterTotpForAll: body.security?.allowMasterTotpForAll !== false,
         },
+        mapbox: {
+          enabled: body.mapbox?.enabled !== false,
+          accessToken: mapboxToken,
+          defaultStyle: body.mapbox?.defaultStyle || current.mapbox?.defaultStyle || "mapbox://styles/mapbox/satellite-streets-v12",
+          defaultCenter: Array.isArray(body.mapbox?.defaultCenter) ? body.mapbox.defaultCenter : current.mapbox?.defaultCenter || [-77.0368, -12.0970],
+          defaultZoom: typeof body.mapbox?.defaultZoom === "number" ? body.mapbox.defaultZoom : current.mapbox?.defaultZoom || 14,
+        },
       },
       tenantId
     );
@@ -103,6 +129,57 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
       message: "Configuración de Conexiones e Integraciones guardada exitosamente.",
       data: updated,
     });
+  });
+
+  // 2.1 Probar Token de Mapbox API
+  fastify.post("/settings/connections/mapbox/test", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const body = (request.body as any) || {};
+    const config = loadConnectionsConfig(tenantId);
+
+    let token = (body.accessToken || body.token || config.mapbox?.accessToken || "").trim();
+    if (token.includes("••••")) {
+      token = config.mapbox?.accessToken || "";
+    }
+
+    if (!token) {
+      return reply.status(400).send({
+        success: false,
+        message: "Debe proporcionar un Access Token de Mapbox (comienza típicamente con 'pk.').",
+      });
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/Peru.json?access_token=${encodeURIComponent(token)}&limit=1`,
+        { signal: controller.signal }
+      );
+      clearTimeout(timeoutId);
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        return reply.send({
+          success: true,
+          message: "¡Conexión exitosa con Mapbox API! Token oficial verificado y operativo.",
+          details: { status: res.status, valid: true },
+        });
+      } else {
+        return reply.status(res.status || 400).send({
+          success: false,
+          message: data?.message || `Mapbox devolvió error HTTP ${res.status}. Verifique que el token sea válido.`,
+          status: res.status,
+        });
+      }
+    } catch (err: any) {
+      return reply.status(500).send({
+        success: false,
+        message: `Error al verificar con Mapbox: ${err.message}`,
+      });
+    }
   });
 
   // 3. Probar Conexión con Pasarela Kuti (kuti.pe)

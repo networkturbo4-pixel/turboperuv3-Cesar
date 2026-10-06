@@ -27,10 +27,19 @@ export interface MasterSecuritySettings {
   allowMasterTotpForAll: boolean;
 }
 
+export interface MapboxSettings {
+  enabled: boolean;
+  accessToken: string;
+  defaultStyle: string;
+  defaultCenter: [number, number];
+  defaultZoom: number;
+}
+
 export interface ConnectionsConfig {
   kuti: KutiSettings;
   jsonpe: JsonPeSettings;
   security: MasterSecuritySettings;
+  mapbox: MapboxSettings;
   updatedAt?: string;
 }
 
@@ -58,6 +67,13 @@ const defaultConnections: ConnectionsConfig = {
     masterTotpSecret: DEFAULT_MASTER_TOTP_SECRET,
     masterSupervisorPin: DEFAULT_SUPERVISOR_PIN,
     allowMasterTotpForAll: true,
+  },
+  mapbox: {
+    enabled: true,
+    accessToken: "",
+    defaultStyle: "mapbox://styles/mapbox/satellite-streets-v12",
+    defaultCenter: [-77.0368, -12.0970],
+    defaultZoom: 14,
   },
 };
 
@@ -93,6 +109,7 @@ export function saveConnectionsConfig(config: Partial<ConnectionsConfig>, tenant
     kuti: { ...current.kuti, ...(config.kuti || {}) },
     jsonpe: { ...current.jsonpe, ...(config.jsonpe || {}) },
     security: { ...current.security, ...(config.security || {}) },
+    mapbox: { ...current.mapbox, ...(config.mapbox || {}) },
     updatedAt: new Date().toISOString(),
   };
 

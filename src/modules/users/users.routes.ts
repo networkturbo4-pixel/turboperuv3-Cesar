@@ -50,6 +50,12 @@ export const ALL_PERMISSIONS: PermissionDefinition[] = [
   { id: "messages:send", name: "Enviar Mensajes", category: "messages", description: "Enviar respuestas, avisos y recordatorios" },
   { id: "messages:manage", name: "Gestionar Filtros & Plantillas", category: "messages", description: "Crear, editar o eliminar filtros y plantillas" },
 
+  // Mapas & Cobertura FTTH / Wireless
+  { id: "maps:view", name: "Ver Mapas & Cobertura", category: "maps", description: "Visualizar nodos, enlaces, áreas de cobertura y mediciones" },
+  { id: "maps:create", name: "Crear Puntos, Enlaces y Áreas", category: "maps", description: "Añadir nuevos nodos, cables de fibra y zonas de servicio" },
+  { id: "maps:edit", name: "Editar Elementos de Mapa", category: "maps", description: "Modificar ubicación, colores, iconos y trazados" },
+  { id: "maps:delete", name: "Eliminar Elementos de Mapa", category: "maps", description: "Borrar nodos, enlaces y polígonos del mapa" },
+
   // Planes
   { id: "plans:manage", name: "Administrar Planes", category: "plans", description: "Crear o modificar tarifas de ancho de banda" },
 
@@ -70,6 +76,7 @@ export const ALL_MODULE_IDS = [
   "inventory",
   "mochila",
   "network",
+  "maps",
   "plans",
   "rrhh",
   "config",

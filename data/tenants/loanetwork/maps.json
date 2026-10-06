@@ -1,0 +1,103 @@
+{
+  "tenantId": "loanetwork",
+  "center": [
+    -71.5375,
+    -16.409
+  ],
+  "zoom": 14,
+  "style": "mapbox://styles/mapbox/satellite-streets-v12",
+  "nodes": [
+    {
+      "id": "node_loa_01",
+      "name": "Torre Central Misti",
+      "type": "tower",
+      "icon": "tower",
+      "color": "#7c3aed",
+      "lat": -16.409,
+      "lng": -71.5375,
+      "address": "Calle Mercaderes 210, Arequipa",
+      "capacity": "4 Radios PTP + Switch 10G",
+      "status": "active",
+      "createdAt": "2026-10-06T17:58:45.417Z",
+      "updatedAt": "2026-10-06T17:58:45.417Z"
+    },
+    {
+      "id": "node_loa_02",
+      "name": "Caja NAP Loa 01",
+      "type": "nap",
+      "icon": "box",
+      "color": "#06b6d4",
+      "lat": -16.4112,
+      "lng": -71.535,
+      "address": "Av. Cayma 550, Arequipa",
+      "capacity": "16 puertos (10 clientes)",
+      "status": "active",
+      "createdAt": "2026-10-06T17:58:45.417Z",
+      "updatedAt": "2026-10-06T17:58:45.417Z"
+    }
+  ],
+  "lines": [
+    {
+      "id": "line_loa_01",
+      "name": "Troncal Fibra Misti-Cayma 24FO",
+      "type": "trunk",
+      "fromNodeId": "node_loa_01",
+      "toNodeId": "node_loa_02",
+      "coordinates": [
+        [
+          -71.5375,
+          -16.409
+        ],
+        [
+          -71.5362,
+          -16.4101
+        ],
+        [
+          -71.535,
+          -16.4112
+        ]
+      ],
+      "color": "#7c3aed",
+      "width": 3,
+      "style": "solid",
+      "distanceMeters": 380,
+      "cores": 24,
+      "status": "active",
+      "createdAt": "2026-10-06T17:58:45.417Z",
+      "updatedAt": "2026-10-06T17:58:45.417Z"
+    }
+  ],
+  "areas": [
+    {
+      "id": "area_loa_01",
+      "name": "Cobertura Fibra Cayma & Centro",
+      "coordinates": [
+        [
+          -71.541,
+          -16.406
+        ],
+        [
+          -71.533,
+          -16.406
+        ],
+        [
+          -71.532,
+          -16.414
+        ],
+        [
+          -71.54,
+          -16.414
+        ]
+      ],
+      "fillColor": "#7c3aed",
+      "strokeColor": "#06b6d4",
+      "fillOpacity": 0.2,
+      "surfaceAreaKm2": 0.72,
+      "status": "active",
+      "targetCustomers": 450,
+      "createdAt": "2026-10-06T17:58:45.417Z",
+      "updatedAt": "2026-10-06T17:58:45.417Z"
+    }
+  ],
+  "updatedAt": "2026-10-06T17:58:45.417Z"
+}

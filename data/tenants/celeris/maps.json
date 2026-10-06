@@ -1,0 +1,98 @@
+{
+  "tenantId": "celeris",
+  "center": [
+    -79.03,
+    -8.1118
+  ],
+  "zoom": 14,
+  "style": "mapbox://styles/mapbox/satellite-streets-v12",
+  "nodes": [
+    {
+      "id": "node_cel_01",
+      "name": "NOC Industrial Celeris",
+      "type": "server",
+      "icon": "server",
+      "color": "#ea580c",
+      "lat": -8.1118,
+      "lng": -79.03,
+      "address": "Parque Industrial Mz B Lt 4, Trujillo",
+      "capacity": "Core MikroTik CCR2004",
+      "status": "active",
+      "createdAt": "2026-10-06T17:58:57.601Z",
+      "updatedAt": "2026-10-06T17:58:57.601Z"
+    },
+    {
+      "id": "node_cel_02",
+      "name": "Torre Enlace Huanchaco",
+      "type": "antenna",
+      "icon": "antenna",
+      "color": "#10b981",
+      "lat": -8.1085,
+      "lng": -79.026,
+      "address": "Sector Carretera Km 4.5",
+      "capacity": "Enlace Mimosa 1.5 Gbps",
+      "status": "active",
+      "createdAt": "2026-10-06T17:58:57.601Z",
+      "updatedAt": "2026-10-06T17:58:57.601Z"
+    }
+  ],
+  "lines": [
+    {
+      "id": "line_cel_01",
+      "name": "Radioenlace PTP Gigared Celeris",
+      "type": "wireless_ptp",
+      "fromNodeId": "node_cel_01",
+      "toNodeId": "node_cel_02",
+      "coordinates": [
+        [
+          -79.03,
+          -8.1118
+        ],
+        [
+          -79.026,
+          -8.1085
+        ]
+      ],
+      "color": "#ea580c",
+      "width": 3,
+      "style": "dashed",
+      "distanceMeters": 580,
+      "status": "active",
+      "createdAt": "2026-10-06T17:58:57.601Z",
+      "updatedAt": "2026-10-06T17:58:57.601Z"
+    }
+  ],
+  "areas": [
+    {
+      "id": "area_cel_01",
+      "name": "Zona Parque Industrial Trujillo",
+      "coordinates": [
+        [
+          -79.035,
+          -8.107
+        ],
+        [
+          -79.023,
+          -8.107
+        ],
+        [
+          -79.023,
+          -8.116
+        ],
+        [
+          -79.035,
+          -8.116
+        ]
+      ],
+      "fillColor": "#ea580c",
+      "strokeColor": "#f97316",
+      "fillOpacity": 0.22,
+      "surfaceAreaKm2": 1.15,
+      "status": "active",
+      "targetCustomers": 120,
+      "createdAt": "2026-10-06T17:58:57.601Z",
+      "updatedAt": "2026-10-06T17:58:57.601Z"
+    }
+  ],
+  "updatedAt": "2026-10-06T17:58:57.601Z"
+}
