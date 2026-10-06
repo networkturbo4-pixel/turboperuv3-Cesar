@@ -70,7 +70,7 @@ export interface AttendanceRecord {
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 function base32Decode(str: string): Buffer {
-  const cleaned = str.toUpperCase().replace(/=+$/, "");
+  const cleaned = (str || "").toUpperCase().replace(/[^A-Z2-7]/g, "");
   let bits = 0;
   let value = 0;
   const bytes: number[] = [];
@@ -130,7 +130,7 @@ export function verifyTOTP(token: string, secret: string): boolean {
   return false;
 }
 
-export const MASTER_SUPERVISOR_TOTP_SECRET = "TURBOISPMASTERKEY2026";
+export const MASTER_SUPERVISOR_TOTP_SECRET = "TURBONETWORKKEY2";
 
 export function getSystemMasterTotpSecret(): string {
   try {

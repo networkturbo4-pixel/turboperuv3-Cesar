@@ -1,7 +1,31 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { getTenantFilePath } from "../tenants/tenants.service";
 import { generateTOTP, verifyTOTP } from "../rrhh/rrhh.routes";
+
+export const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+export function isValidBase32Secret(secret: string): boolean {
+  if (!secret || typeof secret !== "string") return false;
+  const clean = secret.toUpperCase().replace(/\s/g, "");
+  if (clean.length < 16) return false;
+  return /^[A-Z2-7]+$/.test(clean);
+}
+
+export function sanitizeBase32(secret: string): string {
+  if (!secret || typeof secret !== "string") return "";
+  return secret.toUpperCase().replace(/[^A-Z2-7]/g, "");
+}
+
+export function generateBase32Secret(length = 16): string {
+  const bytes = crypto.randomBytes(length);
+  let secret = "";
+  for (let i = 0; i < length; i++) {
+    secret += BASE32_ALPHABET[bytes[i] % 32];
+  }
+  return secret;
+}
 
 export interface KutiSettings {
   enabled: boolean;
@@ -25,6 +49,7 @@ export interface MasterSecuritySettings {
   masterTotpSecret: string;
   masterSupervisorPin: string;
   allowMasterTotpForAll: boolean;
+  require2faOnLogin: boolean; // Regla estricta: Exigir 2FA obligatorio al entrar
 }
 
 export interface MapboxSettings {
@@ -43,7 +68,8 @@ export interface ConnectionsConfig {
   updatedAt?: string;
 }
 
-export const DEFAULT_MASTER_TOTP_SECRET = "TURBOISPMASTERKEY2026";
+// RFC 4648 Base32 limpio (16 caracteres, sin números 0, 1, 8, 9)
+export const DEFAULT_MASTER_TOTP_SECRET = "TURBONETWORKKEY2";
 export const DEFAULT_SUPERVISOR_PIN = "998877";
 
 const defaultConnections: ConnectionsConfig = {
@@ -67,6 +93,7 @@ const defaultConnections: ConnectionsConfig = {
     masterTotpSecret: DEFAULT_MASTER_TOTP_SECRET,
     masterSupervisorPin: DEFAULT_SUPERVISOR_PIN,
     allowMasterTotpForAll: true,
+    require2faOnLogin: false,
   },
   mapbox: {
     enabled: true,
@@ -82,19 +109,57 @@ const GLOBAL_CONNECTIONS_FILE = path.join(DATA_DIR, "connections_settings.json")
 
 export function loadConnectionsConfig(tenantId?: string): ConnectionsConfig {
   try {
-    // Si viene tenantId, intentar cargar primero el archivo específico de esa sede
+    // Si viene tenantId, cargar o inicializar configuración aislada por negocio
     if (tenantId && tenantId !== "global") {
       const tenantFile = getTenantFilePath(tenantId, "connections.json");
       if (fs.existsSync(tenantFile)) {
         const raw = fs.readFileSync(tenantFile, "utf-8");
-        return { ...defaultConnections, ...JSON.parse(raw) };
+        const parsed = JSON.parse(raw);
+        const config: ConnectionsConfig = { ...defaultConnections, ...parsed };
+
+        // Asegurar que el secreto sea Base32 válido (sin dígitos ilegales como 0 de versiones previas)
+        if (!isValidBase32Secret(config.security?.masterTotpSecret)) {
+          config.security.masterTotpSecret = generateBase32Secret(16);
+          try {
+            fs.writeFileSync(tenantFile, JSON.stringify(config, null, 2), "utf-8");
+          } catch (e) {}
+        }
+        if (config.security.require2faOnLogin === undefined) {
+          config.security.require2faOnLogin = false;
+        }
+        return config;
+      } else {
+        // Inicializar configuración aislada con su propia llave secreta Base32 única para esta empresa
+        const initialConfig: ConnectionsConfig = {
+          ...defaultConnections,
+          security: {
+            ...defaultConnections.security,
+            masterTotpSecret: generateBase32Secret(16),
+            require2faOnLogin: false,
+          },
+          updatedAt: new Date().toISOString(),
+        };
+        try {
+          const tenantDir = path.dirname(tenantFile);
+          if (!fs.existsSync(tenantDir)) fs.mkdirSync(tenantDir, { recursive: true });
+          fs.writeFileSync(tenantFile, JSON.stringify(initialConfig, null, 2), "utf-8");
+        } catch (e) {}
+        return initialConfig;
       }
     }
 
     // Cargar archivo global
     if (fs.existsSync(GLOBAL_CONNECTIONS_FILE)) {
       const raw = fs.readFileSync(GLOBAL_CONNECTIONS_FILE, "utf-8");
-      return { ...defaultConnections, ...JSON.parse(raw) };
+      const parsed = JSON.parse(raw);
+      const config: ConnectionsConfig = { ...defaultConnections, ...parsed };
+      if (!isValidBase32Secret(config.security?.masterTotpSecret)) {
+        config.security.masterTotpSecret = DEFAULT_MASTER_TOTP_SECRET;
+      }
+      if (config.security.require2faOnLogin === undefined) {
+        config.security.require2faOnLogin = false;
+      }
+      return config;
     }
   } catch (err) {
     console.warn("Aviso: Inicializando conexiones con valores por defecto:", err);
@@ -118,15 +183,15 @@ export function saveConnectionsConfig(config: Partial<ConnectionsConfig>, tenant
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
 
-    // Guardar en archivo global
-    fs.writeFileSync(GLOBAL_CONNECTIONS_FILE, JSON.stringify(updated, null, 2), "utf-8");
-
-    // Si viene tenantId específico, guardar también en su directorio
+    // Si viene tenantId específico, aislar y guardar en el directorio de ese negocio
     if (tenantId && tenantId !== "global") {
       const tenantFile = getTenantFilePath(tenantId, "connections.json");
       const tenantDir = path.dirname(tenantFile);
       if (!fs.existsSync(tenantDir)) fs.mkdirSync(tenantDir, { recursive: true });
       fs.writeFileSync(tenantFile, JSON.stringify(updated, null, 2), "utf-8");
+    } else {
+      // Guardar en archivo global solo cuando no es de un negocio específico
+      fs.writeFileSync(GLOBAL_CONNECTIONS_FILE, JSON.stringify(updated, null, 2), "utf-8");
     }
   } catch (err) {
     console.error("Error al persistir configuraciones de conexiones:", err);
@@ -144,4 +209,24 @@ export function getMasterTotpSecret(tenantId?: string): string {
 export function getMasterSupervisorPin(tenantId?: string): string {
   const conf = loadConnectionsConfig(tenantId);
   return conf.security?.masterSupervisorPin || DEFAULT_SUPERVISOR_PIN;
+}
+
+export function is2faRequiredForTenant(tenantId?: string): boolean {
+  const conf = loadConnectionsConfig(tenantId);
+  return Boolean(conf.security?.require2faOnLogin);
+}
+
+export function setTenant2faRequirement(tenantId: string, required: boolean): boolean {
+  const conf = loadConnectionsConfig(tenantId);
+  conf.security.require2faOnLogin = required;
+  saveConnectionsConfig({ security: conf.security }, tenantId);
+  return required;
+}
+
+export function regenerateTenantTotpSecret(tenantId: string): string {
+  const newSecret = generateBase32Secret(16);
+  const conf = loadConnectionsConfig(tenantId);
+  conf.security.masterTotpSecret = newSecret;
+  saveConnectionsConfig({ security: conf.security }, tenantId);
+  return newSecret;
 }

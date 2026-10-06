@@ -1,5 +1,596 @@
 {
   "tenantId": "turbonetwork",
+  "activeMapId": "map_san_isidro",
+  "maps": [
+    {
+      "id": "map_san_isidro",
+      "name": "Mapa San Isidro (Troncal & NAPs)",
+      "district": "San Isidro, Lima",
+      "description": "Red principal y distribución FTTH activa",
+      "color": "#2563eb",
+      "center": [
+        -77.0368,
+        -12.097
+      ],
+      "zoom": 14.5,
+      "style": "mapbox://styles/mapbox/satellite-streets-v12",
+      "nodes": [
+        {
+          "id": "node_turbo_01",
+          "name": "Torre Matriz San Isidro",
+          "type": "tower",
+          "icon": "tower",
+          "color": "#2563eb",
+          "lat": -12.097,
+          "lng": -77.0368,
+          "address": "Av. Rivera Navarrete 450, San Isidro",
+          "capacity": "Master Hub • 4 OLT Huawei MA5608T",
+          "status": "active",
+          "notes": "Nodo principal de distribución de fibra óptica troncal",
+          "createdAt": "2026-10-06T17:58:33.349Z",
+          "updatedAt": "2026-10-06T17:58:33.349Z"
+        },
+        {
+          "id": "node_turbo_02",
+          "name": "OLT Core 01 (GPON/XGS-PON)",
+          "type": "olt",
+          "icon": "router",
+          "color": "#7c3aed",
+          "lat": -12.0985,
+          "lng": -77.0348,
+          "address": "Calle Begonias 120",
+          "capacity": "16 Puertos GPON • 1024 ONUs máx",
+          "status": "active",
+          "notes": "Alimentado por UPS redundante 3kVA",
+          "createdAt": "2026-10-06T17:58:33.349Z",
+          "updatedAt": "2026-10-06T17:58:33.349Z"
+        },
+        {
+          "id": "node_turbo_03",
+          "name": "Manga de Empalme Troncal F-01",
+          "type": "switch",
+          "icon": "box",
+          "color": "#059669",
+          "lat": -12.1008,
+          "lng": -77.0332,
+          "address": "Cruce Av. Canaval y Moreyra",
+          "capacity": "48 Fibras fusionadas",
+          "status": "active",
+          "notes": "Manga subterránea en cámara de registro",
+          "createdAt": "2026-10-06T17:58:33.349Z",
+          "updatedAt": "2026-10-06T17:58:33.349Z"
+        },
+        {
+          "id": "node_turbo_04",
+          "name": "Caja NAP-01 Residencial (1:16)",
+          "type": "nap",
+          "icon": "box",
+          "color": "#ea580c",
+          "lat": -12.1032,
+          "lng": -77.0315,
+          "address": "Calle Los Ruiseñores 320",
+          "capacity": "16 puertos (11 abonados activos)",
+          "status": "active",
+          "notes": "Acometidas drop listas",
+          "createdAt": "2026-10-06T17:58:33.349Z",
+          "updatedAt": "2026-10-06T17:58:33.349Z"
+        },
+        {
+          "id": "node_turbo_05",
+          "name": "Caja NAP-02 Financiero (1:8)",
+          "type": "nap",
+          "icon": "box",
+          "color": "#06b6d4",
+          "lat": -12.0948,
+          "lng": -77.0388,
+          "address": "Calle Las Camelias 210",
+          "capacity": "8 puertos dedicados (6 en uso)",
+          "status": "active",
+          "notes": "Clientes corporativos con SLA 99.9%",
+          "createdAt": "2026-10-06T17:58:33.349Z",
+          "updatedAt": "2026-10-06T17:58:33.349Z"
+        },
+        {
+          "id": "node_1791309623362_uwoie",
+          "name": "Ejemplo",
+          "type": "nap",
+          "icon": "https://store.comutelperu.com/web/image/product.template/1138/image_1024?unique=7372560",
+          "color": "#2563eb",
+          "lat": -11.84034,
+          "lng": -77.104844,
+          "address": "",
+          "capacity": "",
+          "status": "active",
+          "notes": "",
+          "createdAt": "2026-10-06T18:00:23.362Z",
+          "updatedAt": "2026-10-06T18:00:23.362Z"
+        }
+      ],
+      "lines": [
+        {
+          "id": "line_turbo_03",
+          "name": "Ramal FTTH - Manga a Caja NAP-01",
+          "type": "drop",
+          "fromNodeId": "node_turbo_03",
+          "toNodeId": "node_turbo_04",
+          "coordinates": [
+            [
+              -77.0332,
+              -12.1008
+            ],
+            [
+              -77.0323,
+              -12.102
+            ],
+            [
+              -77.0315,
+              -12.1032
+            ]
+          ],
+          "color": "#ea580c",
+          "width": 2.5,
+          "style": "solid",
+          "distanceMeters": 340,
+          "cores": 8,
+          "status": "active",
+          "notes": "Distribución secundaria hacia viviendas",
+          "createdAt": "2026-10-06T17:58:33.349Z",
+          "updatedAt": "2026-10-06T17:58:33.349Z"
+        },
+        {
+          "id": "line_turbo_04",
+          "name": "Distribución Corporativa - Torre Matriz a NAP-02",
+          "type": "distribution",
+          "fromNodeId": "node_turbo_01",
+          "toNodeId": "node_turbo_05",
+          "coordinates": [
+            [
+              -77.0368,
+              -12.097
+            ],
+            [
+              -77.0378,
+              -12.096
+            ],
+            [
+              -77.0388,
+              -12.0948
+            ]
+          ],
+          "color": "#06b6d4",
+          "width": 3,
+          "style": "solid",
+          "distanceMeters": 310,
+          "cores": 12,
+          "status": "active",
+          "notes": "Enlace exclusivo edificios corporativos",
+          "createdAt": "2026-10-06T17:58:33.349Z",
+          "updatedAt": "2026-10-06T17:58:33.349Z"
+        },
+        {
+          "id": "line_1791309565917_mxyoq",
+          "name": "Troncal FO (4.70 km)",
+          "type": "distribution",
+          "coordinates": [
+            [
+              -77.084435,
+              -11.85688
+            ],
+            [
+              -77.089083,
+              -11.85305
+            ],
+            [
+              -77.095696,
+              -11.847938
+            ],
+            [
+              -77.101893,
+              -11.842795
+            ],
+            [
+              -77.109976,
+              -11.836542
+            ],
+            [
+              -77.117128,
+              -11.843743
+            ]
+          ],
+          "color": "#059669",
+          "width": 3,
+          "style": "solid",
+          "distanceMeters": 4700,
+          "cores": 24,
+          "status": "active",
+          "notes": "",
+          "createdAt": "2026-10-06T17:59:25.917Z",
+          "updatedAt": "2026-10-06T17:59:25.917Z"
+        },
+        {
+          "id": "line_1791310423445_klvjd",
+          "name": "Troncal FO (997 m)",
+          "type": "distribution",
+          "coordinates": [
+            [
+              -77.028335,
+              -12.07845
+            ],
+            [
+              -77.026586,
+              -12.081965
+            ],
+            [
+              -77.024836,
+              -12.086719
+            ]
+          ],
+          "color": "#059669",
+          "width": 3,
+          "style": "solid",
+          "distanceMeters": 997,
+          "cores": 24,
+          "status": "active",
+          "notes": "",
+          "createdAt": "2026-10-06T18:13:43.445Z",
+          "updatedAt": "2026-10-06T18:13:43.445Z"
+        }
+      ],
+      "areas": [
+        {
+          "id": "area_turbo_01",
+          "name": "Zona Cobertura FTTH San Isidro Centro",
+          "coordinates": [
+            [
+              -77.042,
+              -12.092
+            ],
+            [
+              -77.031,
+              -12.092
+            ],
+            [
+              -77.029,
+              -12.105
+            ],
+            [
+              -77.04,
+              -12.105
+            ]
+          ],
+          "fillColor": "#2563eb",
+          "strokeColor": "#1d4ed8",
+          "fillOpacity": 0.2,
+          "surfaceAreaKm2": 1.58,
+          "status": "active",
+          "targetCustomers": 1200,
+          "notes": "Área activa de comercialización con 8 NAPs proyectadas",
+          "createdAt": "2026-10-06T17:58:33.349Z",
+          "updatedAt": "2026-10-06T17:58:33.349Z"
+        },
+        {
+          "id": "area_1791310452344_xqhck",
+          "name": "Zona de Cobertura FTTH",
+          "coordinates": [
+            [
+              -77.022486,
+              -12.075466
+            ],
+            [
+              -77.023881,
+              -12.076211
+            ],
+            [
+              -77.024117,
+              -12.077596
+            ],
+            [
+              -77.024085,
+              -12.078456
+            ],
+            [
+              -77.023044,
+              -12.079212
+            ],
+            [
+              -77.021177,
+              -12.079044
+            ],
+            [
+              -77.020383,
+              -12.077806
+            ],
+            [
+              -77.020426,
+              -12.076725
+            ],
+            [
+              -77.021102,
+              -12.075949
+            ],
+            [
+              -77.022432,
+              -12.075476
+            ]
+          ],
+          "fillColor": "#dc2626",
+          "strokeColor": "#1d4ed8",
+          "fillOpacity": 0.2,
+          "surfaceAreaKm2": 0.066,
+          "status": "active",
+          "targetCustomers": 250,
+          "notes": "",
+          "createdAt": "2026-10-06T18:14:12.344Z",
+          "updatedAt": "2026-10-06T18:14:12.344Z"
+        },
+        {
+          "id": "area_1791313723732_x0fhx",
+          "name": "Zona de Cobertura FTTH",
+          "coordinates": [
+            [
+              -77.036305,
+              -11.834183
+            ],
+            [
+              -77.029579,
+              -11.841822
+            ],
+            [
+              -77.025423,
+              -11.845983
+            ],
+            [
+              -77.033418,
+              -11.852131
+            ],
+            [
+              -77.043031,
+              -11.844896
+            ],
+            [
+              -77.052962,
+              -11.836916
+            ],
+            [
+              -77.050995,
+              -11.831544
+            ],
+            [
+              -77.042492,
+              -11.834028
+            ],
+            [
+              -77.036273,
+              -11.834183
+            ]
+          ],
+          "fillColor": "#7c3aed",
+          "strokeColor": "#1d4ed8",
+          "fillOpacity": 0.2,
+          "surfaceAreaKm2": 1.635,
+          "status": "active",
+          "targetCustomers": 250,
+          "notes": "",
+          "createdAt": "2026-10-06T19:08:43.732Z",
+          "updatedAt": "2026-10-06T19:08:43.732Z"
+        },
+        {
+          "id": "area_1791316763736_fcdlu",
+          "name": "Zona de Cobertura FTTH",
+          "coordinates": [
+            [
+              -77.059528,
+              -11.86083
+            ],
+            [
+              -77.062758,
+              -11.860242
+            ],
+            [
+              -77.06616,
+              -11.862678
+            ],
+            [
+              -77.066128,
+              -11.866081
+            ],
+            [
+              -77.064261,
+              -11.866816
+            ],
+            [
+              -77.060644,
+              -11.867047
+            ],
+            [
+              -77.058874,
+              -11.866364
+            ],
+            [
+              -77.057499,
+              -11.8643
+            ],
+            [
+              -77.057886,
+              -11.861937
+            ],
+            [
+              -77.059527,
+              -11.860835
+            ]
+          ],
+          "fillColor": "#06b6d4",
+          "strokeColor": "#1d4ed8",
+          "fillOpacity": 0.2,
+          "surfaceAreaKm2": 0.281,
+          "status": "active",
+          "targetCustomers": 250,
+          "notes": "",
+          "createdAt": "2026-10-06T19:59:23.736Z",
+          "updatedAt": "2026-10-06T19:59:23.736Z"
+        }
+      ],
+      "createdAt": "2026-10-06T19:59:23.737Z",
+      "updatedAt": "2026-10-06T19:59:23.737Z"
+    },
+    {
+      "id": "map_carabayllo",
+      "name": "Mapa Zona Carabayllo",
+      "district": "Carabayllo, Lima Norte",
+      "description": "Zona de cobertura norte, troncal Túpac Amaru y NAPs de expansión",
+      "color": "#059669",
+      "center": [
+        -77.0345,
+        -11.8755
+      ],
+      "zoom": 14.5,
+      "style": "mapbox://styles/mapbox/satellite-streets-v12",
+      "nodes": [
+        {
+          "id": "node_carab_01",
+          "name": "Torre Principal Carabayllo San Pedro",
+          "type": "tower",
+          "icon": "tower",
+          "color": "#059669",
+          "lat": -11.8755,
+          "lng": -77.0345,
+          "address": "Av. Túpac Amaru Km 22, Carabayllo",
+          "capacity": "Torre Ventada 36m • OLT Huawei 8 Puertos",
+          "status": "active",
+          "notes": "Estación de cabecera para Lima Norte",
+          "createdAt": "2026-10-06T21:44:25.206Z",
+          "updatedAt": "2026-10-06T21:44:25.206Z"
+        },
+        {
+          "id": "node_carab_02",
+          "name": "Caja NAP-01 Carabayllo Centro (1:16)",
+          "type": "nap",
+          "icon": "box",
+          "color": "#2563eb",
+          "lat": -11.878,
+          "lng": -77.032,
+          "address": "Jr. Puno 140, Carabayllo",
+          "capacity": "16 Puertos GPON (11 activos)",
+          "status": "active",
+          "notes": "Poste de concreto con cruceta de protección",
+          "createdAt": "2026-10-06T21:44:25.206Z",
+          "updatedAt": "2026-10-06T21:44:25.206Z"
+        },
+        {
+          "id": "node_carab_03",
+          "name": "Caja NAP-02 Progreso (1:16)",
+          "type": "nap",
+          "icon": "box",
+          "color": "#ea580c",
+          "lat": -11.873,
+          "lng": -77.036,
+          "address": "Av. San Martín 320, El Progreso",
+          "capacity": "16 Puertos GPON (8 activos)",
+          "status": "active",
+          "notes": "Mufa aérea FTTx",
+          "createdAt": "2026-10-06T21:44:25.206Z",
+          "updatedAt": "2026-10-06T21:44:25.206Z"
+        }
+      ],
+      "lines": [
+        {
+          "id": "line_carab_01",
+          "name": "Troncal ADSS Túpac Amaru 24FO",
+          "type": "trunk",
+          "fromNodeId": "node_carab_01",
+          "toNodeId": "node_carab_02",
+          "coordinates": [
+            [
+              -77.0345,
+              -11.8755
+            ],
+            [
+              -77.0335,
+              -11.8765
+            ],
+            [
+              -77.032,
+              -11.878
+            ]
+          ],
+          "color": "#059669",
+          "width": 4,
+          "style": "solid",
+          "distanceMeters": 410,
+          "cores": 24,
+          "status": "active",
+          "notes": "Cable de fibra óptica autosoportado ADSS G.652D",
+          "createdAt": "2026-10-06T21:44:25.206Z",
+          "updatedAt": "2026-10-06T21:44:25.206Z"
+        },
+        {
+          "id": "line_carab_02",
+          "name": "Distribución Secundaria El Progreso",
+          "type": "distribution",
+          "fromNodeId": "node_carab_01",
+          "toNodeId": "node_carab_03",
+          "coordinates": [
+            [
+              -77.0345,
+              -11.8755
+            ],
+            [
+              -77.0352,
+              -11.8742
+            ],
+            [
+              -77.036,
+              -11.873
+            ]
+          ],
+          "color": "#ea580c",
+          "width": 3,
+          "style": "solid",
+          "distanceMeters": 360,
+          "cores": 12,
+          "status": "active",
+          "notes": "Tendido secundario hacia El Progreso",
+          "createdAt": "2026-10-06T21:44:25.206Z",
+          "updatedAt": "2026-10-06T21:44:25.206Z"
+        }
+      ],
+      "areas": [
+        {
+          "id": "area_carab_01",
+          "name": "Sector Cobertura Carabayllo Centro & Progreso",
+          "coordinates": [
+            [
+              -77.04,
+              -11.87
+            ],
+            [
+              -77.028,
+              -11.87
+            ],
+            [
+              -77.028,
+              -11.882
+            ],
+            [
+              -77.04,
+              -11.882
+            ]
+          ],
+          "fillColor": "#059669",
+          "strokeColor": "#047857",
+          "fillOpacity": 0.2,
+          "surfaceAreaKm2": 1.74,
+          "status": "active",
+          "targetCustomers": 850,
+          "notes": "Zona residencial con alta demanda de fibra óptica",
+          "createdAt": "2026-10-06T21:44:25.206Z",
+          "updatedAt": "2026-10-06T21:44:25.206Z"
+        }
+      ],
+      "createdAt": "2026-10-06T21:44:25.206Z",
+      "updatedAt": "2026-10-06T21:44:25.206Z"
+    }
+  ],
   "center": [
     -77.0368,
     -12.097
@@ -422,5 +1013,5 @@
       "updatedAt": "2026-10-06T19:59:23.736Z"
     }
   ],
-  "updatedAt": "2026-10-06T19:59:23.737Z"
+  "updatedAt": "2026-10-06T21:44:25.206Z"
 }

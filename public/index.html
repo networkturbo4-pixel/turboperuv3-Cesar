@@ -142,7 +142,29 @@
       font-size: 15px;
     }
 
+    /* =======================================================
+       ANIMACIÓN MOTION MODERNA (VIEW TRANSITIONS RIPPLE REVEAL)
+       ======================================================= */
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none;
+      mix-blend-mode: normal;
+    }
+    ::view-transition-old(root) {
+      z-index: 1;
+    }
+    ::view-transition-new(root) {
+      z-index: 9999;
+    }
+    .dark::view-transition-old(root) {
+      z-index: 9999;
+    }
+    .dark::view-transition-new(root) {
+      z-index: 1;
+    }
+
     html, body {
+      height: 100dvh;
       min-height: 100dvh;
       overscroll-behavior-y: contain;
     }
@@ -152,7 +174,9 @@
       color: #f1f5f9;
       font-feature-settings: "cv02", "cv03", "cv04", "cv11";
       -webkit-font-smoothing: antialiased;
-      transition: background-color 0.25s ease, color 0.25s ease, font-size 0.15s ease;
+      transition: background-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                  color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                  font-size 0.15s ease;
     }
 
     html:not(.dark) body {
@@ -160,21 +184,30 @@
       color: #0f172a;
     }
 
-    /* Adaptación Nativa Móvil: Safe Area & Sin Zoom Involuntario */
+    /* Adaptación Nativa Móvil: Safe Area, Aceleración Táctil & Cero Lag */
+    button, a, [role="button"], input, select, textarea, .nav-item {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Optimización de Renderizado para Listas Masivas en Móviles */
+    .mobile-fast-render {
+      content-visibility: auto;
+      contain-intrinsic-size: 0 68px;
+    }
+
     @media (max-width: 1023px) {
       body {
         padding-top: var(--sat);
       }
       #content-container {
-        padding-bottom: calc(5.2rem + var(--sab)) !important;
+        padding-bottom: calc(5.4rem + var(--sab)) !important;
+      }
+      #mobile-bottom-nav {
+        padding-bottom: max(0.5rem, var(--sab)) !important;
       }
       input, select, textarea {
-        font-size: 16px !important;
-        touch-action: manipulation;
-      }
-      button, a, [role="button"] {
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
+        font-size: 16px !important; /* Previene auto-zoom en iOS Safari */
       }
     }
 
@@ -2147,82 +2180,134 @@
           <img id="login-custom-img" class="w-full h-full object-contain p-1 hidden" alt="Brand Logo">
         </div>
 
-        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full glass-badge text-[10px] font-mono text-slate-200 mb-2">
-          <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg animate-pulse"></span>
-          <span class="tracking-wider">TERMINAL AUTORIZADA</span>
+        <!-- PASO 1: TECLADO Y PIN DE 8 DÍGITOS -->
+        <div id="login-pin-step" class="w-full flex flex-col items-center">
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full glass-badge text-[10px] font-mono text-slate-200 mb-2">
+            <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg animate-pulse"></span>
+            <span class="tracking-wider">TERMINAL AUTORIZADA</span>
+          </div>
+
+          <h1 id="login-system-title" class="text-lg font-semibold tracking-tight text-white drop-shadow-sm">TurboNetwork Enterprise</h1>
+          <p id="login-system-tagline" class="text-xs text-slate-300/80 mt-0.5 font-normal">Ingrese el PIN de acceso de 8 dígitos</p>
+
+          <!-- 8-Digit Security Dots -->
+          <div id="pin-dots-container" class="flex items-center justify-center space-x-2.5 my-5">
+            <div class="security-dot glass-dot" id="dot-0"></div>
+            <div class="security-dot glass-dot" id="dot-1"></div>
+            <div class="security-dot glass-dot" id="dot-2"></div>
+            <div class="security-dot glass-dot" id="dot-3"></div>
+            <div class="security-dot glass-dot" id="dot-4"></div>
+            <div class="security-dot glass-dot" id="dot-5"></div>
+            <div class="security-dot glass-dot" id="dot-6"></div>
+            <div class="security-dot glass-dot" id="dot-7"></div>
+          </div>
+
+          <!-- Feedback -->
+          <div id="login-feedback" class="text-xs min-h-[20px] text-rose-400 font-medium mb-3 font-mono drop-shadow"></div>
+
+          <!-- Precision Numeric Keypad with High Contrast & Tactical Feel -->
+          <div class="grid grid-cols-3 gap-3 w-full max-w-[280px]">
+            <button type="button" onclick="pressDigit('1')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
+              <span class="keypad-number">1</span>
+              <span class="keypad-subtext">&nbsp;</span>
+            </button>
+            <button type="button" onclick="pressDigit('2')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
+              <span class="keypad-number">2</span>
+              <span class="keypad-subtext">ABC</span>
+            </button>
+            <button type="button" onclick="pressDigit('3')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
+              <span class="keypad-number">3</span>
+              <span class="keypad-subtext">DEF</span>
+            </button>
+            
+            <button type="button" onclick="pressDigit('4')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
+              <span class="keypad-number">4</span>
+              <span class="keypad-subtext">GHI</span>
+            </button>
+            <button type="button" onclick="pressDigit('5')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
+              <span class="keypad-number">5</span>
+              <span class="keypad-subtext">JKL</span>
+            </button>
+            <button type="button" onclick="pressDigit('6')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
+              <span class="keypad-number">6</span>
+              <span class="keypad-subtext">MNO</span>
+            </button>
+
+            <button type="button" onclick="pressDigit('7')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
+              <span class="keypad-number">7</span>
+              <span class="keypad-subtext">PQRS</span>
+            </button>
+            <button type="button" onclick="pressDigit('8')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
+              <span class="keypad-number">8</span>
+              <span class="keypad-subtext">TUV</span>
+            </button>
+            <button type="button" onclick="pressDigit('9')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
+              <span class="keypad-number">9</span>
+              <span class="keypad-subtext">WXYZ</span>
+            </button>
+
+            <button type="button" onclick="clearPin()" class="glass-action-btn h-13 sm:h-14 rounded-2xl flex flex-col items-center justify-center text-xs font-semibold tracking-wide">
+              <span class="text-[10px] font-bold tracking-wider uppercase">Borrar</span>
+            </button>
+            <button type="button" onclick="pressDigit('0')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
+              <span class="keypad-number">0</span>
+              <span class="keypad-subtext">+</span>
+            </button>
+            <button type="button" onclick="backspacePin()" class="glass-action-btn h-13 sm:h-14 rounded-2xl flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6-6h12a2 2 0 012 2v8a2 2 0 01-2 2H9l-6-6z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <h1 id="login-system-title" class="text-lg font-semibold tracking-tight text-white drop-shadow-sm">TurboNetwork Enterprise</h1>
-        <p id="login-system-tagline" class="text-xs text-slate-300/80 mt-0.5 font-normal">Ingrese el PIN de acceso de 8 dígitos</p>
+        <!-- PASO 2: VERIFICACIÓN GOOGLE AUTHENTICATOR (REGLA ESTRICTA 2FA POR NEGOCIO) -->
+        <div id="login-2fa-step" class="hidden flex-col items-center w-full max-w-[320px] text-center space-y-4">
+          <!-- Avatar del Usuario -->
+          <div class="relative mt-1">
+            <div class="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-purple-500 to-indigo-500 shadow-xl overflow-hidden mx-auto">
+              <img id="login-2fa-avatar" class="w-full h-full rounded-full object-cover" src="https://api.dicebear.com/7.x/bottts/svg?seed=Cesar" alt="Avatar">
+            </div>
+            <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-500 border-2 border-slate-900 flex items-center justify-center shadow">
+              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+          </div>
 
-        <!-- 8-Digit Security Dots -->
-        <div id="pin-dots-container" class="flex items-center justify-center space-x-2.5 my-5">
-          <div class="security-dot glass-dot" id="dot-0"></div>
-          <div class="security-dot glass-dot" id="dot-1"></div>
-          <div class="security-dot glass-dot" id="dot-2"></div>
-          <div class="security-dot glass-dot" id="dot-3"></div>
-          <div class="security-dot glass-dot" id="dot-4"></div>
-          <div class="security-dot glass-dot" id="dot-5"></div>
-          <div class="security-dot glass-dot" id="dot-6"></div>
-          <div class="security-dot glass-dot" id="dot-7"></div>
-        </div>
+          <div>
+            <h2 id="login-2fa-user-name" class="text-base font-bold text-white tracking-tight">¡Hola!</h2>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 mt-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-medium shadow-xs">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+              <span id="login-2fa-tenant-name">Sede Activa</span>
+            </div>
+          </div>
 
-        <!-- Feedback -->
-        <div id="login-feedback" class="text-xs min-h-[20px] text-rose-400 font-medium mb-3 font-mono drop-shadow"></div>
+          <div class="p-3.5 rounded-2xl bg-white/[0.06] border border-white/10 text-left space-y-1">
+            <span class="text-[11px] font-bold text-amber-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              Regla Estricta 2FA Activa
+            </span>
+            <p class="text-[11px] text-slate-300/80 leading-relaxed font-normal">
+              Ingrese el código dinámico de 6 dígitos que muestra su app <strong class="text-white">Google Authenticator</strong> para este negocio:
+            </p>
+          </div>
 
-        <!-- Precision Numeric Keypad with High Contrast & Tactical Feel -->
-        <div class="grid grid-cols-3 gap-3 w-full max-w-[280px]">
-          <button type="button" onclick="pressDigit('1')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-            <span class="keypad-number">1</span>
-            <span class="keypad-subtext">&nbsp;</span>
-          </button>
-          <button type="button" onclick="pressDigit('2')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-            <span class="keypad-number">2</span>
-            <span class="keypad-subtext">ABC</span>
-          </button>
-          <button type="button" onclick="pressDigit('3')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-            <span class="keypad-number">3</span>
-            <span class="keypad-subtext">DEF</span>
-          </button>
-          
-          <button type="button" onclick="pressDigit('4')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-            <span class="keypad-number">4</span>
-            <span class="keypad-subtext">GHI</span>
-          </button>
-          <button type="button" onclick="pressDigit('5')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-            <span class="keypad-number">5</span>
-            <span class="keypad-subtext">JKL</span>
-          </button>
-          <button type="button" onclick="pressDigit('6')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-            <span class="keypad-number">6</span>
-            <span class="keypad-subtext">MNO</span>
-          </button>
+          <!-- Input de 6 Dígitos -->
+          <div class="w-full space-y-2">
+            <input type="text" id="login-totp-input" maxlength="6" pattern="\d{6}" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" class="w-full h-14 bg-white/10 dark:bg-black/50 border-2 border-amber-500/60 focus:border-amber-400 rounded-2xl px-4 text-center text-2xl font-mono font-black tracking-[0.35em] text-white placeholder:text-white/20 focus:outline-none focus:ring-4 focus:ring-amber-500/25 shadow-inner transition">
+            <div id="login-2fa-feedback" class="text-xs min-h-[18px] text-rose-400 font-medium font-mono drop-shadow"></div>
+          </div>
 
-          <button type="button" onclick="pressDigit('7')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-            <span class="keypad-number">7</span>
-            <span class="keypad-subtext">PQRS</span>
-          </button>
-          <button type="button" onclick="pressDigit('8')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-            <span class="keypad-number">8</span>
-            <span class="keypad-subtext">TUV</span>
-          </button>
-          <button type="button" onclick="pressDigit('9')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-            <span class="keypad-number">9</span>
-            <span class="keypad-subtext">WXYZ</span>
-          </button>
-
-          <button type="button" onclick="clearPin()" class="glass-action-btn h-13 sm:h-14 rounded-2xl flex flex-col items-center justify-center text-xs font-semibold tracking-wide">
-            <span class="text-[10px] font-bold tracking-wider uppercase">Borrar</span>
-          </button>
-          <button type="button" onclick="pressDigit('0')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-            <span class="keypad-number">0</span>
-            <span class="keypad-subtext">+</span>
-          </button>
-          <button type="button" onclick="backspacePin()" class="glass-action-btn h-13 sm:h-14 rounded-2xl flex items-center justify-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6-6h12a2 2 0 012 2v8a2 2 0 01-2 2H9l-6-6z" />
-            </svg>
-          </button>
+          <!-- Botones de Acción -->
+          <div class="w-full space-y-2 pt-1">
+            <button type="button" onclick="submitTotpLogin()" id="btn-submit-totp-login" class="w-full h-12 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition active:scale-[0.98]">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>Verificar y Entrar</span>
+            </button>
+            <button type="button" onclick="cancelTotpLogin()" class="w-full py-2 text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              <span>Volver / Cambiar PIN</span>
+            </button>
+          </div>
         </div>
 
         <!-- Indicador alternativo visible en móviles -->
@@ -2486,25 +2571,6 @@
             <span class="sidebar-text w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
           </div>
 
-          <!-- Red & OLTs Multi-Vendor -->
-          <button onclick="switchTab('network')" id="nav-network" title="Red & OLTs Multi-Vendor" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
-            <span class="nav-active-pill"></span>
-            <div class="nav-icon-box">
-              <svg fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
-                <rect x="2" y="3" width="20" height="6" rx="2"></rect>
-                <rect x="2" y="15" width="20" height="6" rx="2"></rect>
-                <circle cx="6" cy="6" r="1" fill="currentColor"></circle>
-                <circle cx="6" cy="18" r="1" fill="currentColor"></circle>
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m-4 0h8"></path>
-              </svg>
-            </div>
-            <span class="nav-label truncate text-[13px] font-medium">Red & OLTs Multi-Vendor</span>
-            <span class="sidebar-text ml-auto flex items-center gap-1 text-[9.5px] font-semibold text-emerald-500">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>OLT
-            </span>
-            <span class="sidebar-tooltip">Red & OLTs Multi-Vendor</span>
-          </button>
-
           <!-- Mapas & Cobertura FTTH -->
           <button onclick="switchTab('maps')" id="nav-maps" title="Mapas & Cobertura FTTH" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
             <span class="nav-active-pill"></span>
@@ -2549,21 +2615,6 @@
             <span class="nav-label truncate text-[13px] font-medium">Configuración & Marca</span>
             <span class="sidebar-tooltip">Configuración & Marca</span>
           </button>
-
-          <!-- Diagnóstico & RAM -->
-          <button onclick="switchTab('system')" id="nav-system" title="Diagnóstico & RAM" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
-            <span class="nav-active-pill"></span>
-            <div class="nav-icon-box">
-              <svg fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-              </svg>
-            </div>
-            <span class="nav-label truncate text-[13px] font-medium">Diagnóstico & RAM</span>
-            <span class="sidebar-text ml-auto flex items-center gap-1 text-[9.5px] font-mono text-emerald-600 dark:text-emerald-400">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Live
-            </span>
-            <span class="sidebar-tooltip">Diagnóstico & RAM</span>
-          </button>
         </nav>
 
       </div>
@@ -2587,7 +2638,7 @@
           <!-- Quick Actions: Theme Mode Switcher & Logout -->
           <div class="sidebar-user-actions flex items-center space-x-1 flex-shrink-0">
             <!-- Theme Toggle Button -->
-            <button id="sidebar-theme-toggle-btn" type="button" onclick="toggleThemeMode()" title="Cambiar a Modo Claro / Oscuro" class="w-7 h-7 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200/90 dark:bg-white/5 dark:hover:bg-white/15 text-slate-600 dark:text-amber-400 border border-slate-200/80 dark:border-white/10 shadow-2xs transition group/theme relative">
+            <button id="sidebar-theme-toggle-btn" type="button" onclick="toggleThemeMode(event)" title="Cambiar a Modo Claro / Oscuro" class="w-7 h-7 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200/90 dark:bg-white/5 dark:hover:bg-white/15 text-slate-600 dark:text-amber-400 border border-slate-200/80 dark:border-white/10 shadow-2xs transition group/theme relative">
               <!-- Sun Icon for Dark Mode -->
               <svg class="w-3.5 h-3.5 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="5"></circle>
@@ -2702,7 +2753,7 @@
           </button>
 
           <!-- Theme Toggle -->
-          <button onclick="toggleThemeMode()" id="theme-toggle-btn" title="Modo Claro / Oscuro" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition border border-slate-200 dark:border-white/5">
+          <button onclick="toggleThemeMode(event)" id="theme-toggle-btn" title="Modo Claro / Oscuro" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition border border-slate-200 dark:border-white/5">
             <svg id="theme-icon-sun" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="5"></circle>
               <line x1="12" y1="12" x2="12" y2="3"></line>
@@ -3062,7 +3113,7 @@
                     <th class="px-5 py-3.5 text-center">Acción</th>
                   </tr>
                 </thead>
-                <tbody id="customers-table-body" class="divide-y divide-white/5 dark:divide-white/5 divide-black/5"></tbody>
+                <tbody id="customers-table-body" class="divide-y divide-white/5 dark:divide-white/5 divide-black/5 mobile-fast-render"></tbody>
               </table>
             </div>
           </div>
@@ -3091,7 +3142,7 @@
                     <th class="px-5 py-3.5 text-right">Acción</th>
                   </tr>
                 </thead>
-                <tbody id="invoices-table-body" class="divide-y divide-white/5 dark:divide-white/5 divide-black/5"></tbody>
+                <tbody id="invoices-table-body" class="divide-y divide-white/5 dark:divide-white/5 divide-black/5 mobile-fast-render"></tbody>
               </table>
             </div>
           </div>
@@ -3229,69 +3280,38 @@
 
             </div>
 
-            <!-- TABLAS DETALLADAS DE NODOS, ENLACES Y POLÍGONOS -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-              <!-- Tabla 1: Nodos & Cajas NAP -->
-              <div class="pro-card p-5 rounded-2xl border border-slate-200 dark:border-white/10 space-y-4 lg:col-span-2">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
+            <!-- SECCIÓN: MIS MAPAS Y ZONAS DE COBERTURA (MULTI-MAPA) -->
+            <div class="space-y-4">
+              <!-- Encabezado de la Sección con Buscador y Botón de Crear Mapa -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-white/[0.02] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
+                <div>
                   <div class="flex items-center space-x-2">
-                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Puntos & Nodos de Infraestructura</h3>
-                    <span class="text-xs text-slate-400 font-mono">Torres, OLTs, NAPs</span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Mis Mapas & Zonas de Cobertura</h3>
+                    <span id="maps-projects-count-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">0 Mapas</span>
                   </div>
-                  <button type="button" onclick="mapsModule.openMapFocused(mapsModule.state.data.center, 15)" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-                    Ver todos en mapa →
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Gestione proyectos GIS independientes por distrito o sector. Cada mapa almacena exclusivamente sus propios puntos, líneas y áreas.</p>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                  <!-- Buscador de mapas -->
+                  <div class="relative w-full sm:w-60">
+                    <input type="text" id="maps-project-search-input" oninput="mapsModule.handleProjectSearch(this.value)" placeholder="Buscar mapa o distrito..." class="w-full pl-8 pr-3 py-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  </div>
+
+                  <!-- Botón Crear Nuevo Mapa -->
+                  <button type="button" onclick="mapsModule.openCreateMapModal()" class="px-3.5 py-2 rounded-xl btn-brand-primary text-white text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95 flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    <span>+ Crear Nuevo Mapa</span>
                   </button>
                 </div>
-
-                <div class="overflow-x-auto max-h-80 sidebar-scroll">
-                  <table class="w-full text-left border-collapse">
-                    <thead>
-                      <tr class="text-[10.5px] uppercase font-bold text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/5">
-                        <th class="pb-2 px-3">Nodo / Tipo</th>
-                        <th class="pb-2 px-3">Coordenadas</th>
-                        <th class="pb-2 px-3">Capacidad / Ref</th>
-                        <th class="pb-2 px-3">Estado</th>
-                        <th class="pb-2 px-3 text-right">Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody id="maps-nodes-table-body" class="divide-y divide-slate-100 dark:divide-white/5">
-                      <!-- Contenido dinámico -->
-                    </tbody>
-                  </table>
-                </div>
               </div>
 
-              <!-- Tabla 2: Trazados de Fibra & Coberturas -->
-              <div class="pro-card p-5 rounded-2xl border border-slate-200 dark:border-white/10 space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
-                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">Trazados & Zonas</h3>
-                  <span class="text-xs text-slate-400 font-mono">Conectores</span>
-                </div>
-
-                <div class="space-y-4">
-                  <!-- Trazados -->
-                  <div>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Tramos de Fibra Óptica</span>
-                    <div class="overflow-x-auto max-h-40 sidebar-scroll">
-                      <table class="w-full text-left">
-                        <tbody id="maps-lines-table-body"></tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <!-- Polígonos de Cobertura -->
-                  <div class="pt-3 border-t border-slate-100 dark:border-white/5">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Polígonos de Cobertura</span>
-                    <div class="overflow-x-auto max-h-40 sidebar-scroll">
-                      <table class="w-full text-left">
-                        <tbody id="maps-areas-table-body"></tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
+              <!-- Grid de Tarjetas de Mapas -->
+              <div id="maps-projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Se puebla dinámicamente con mapas (ej: Mapa Zona Carabayllo) -->
               </div>
-
             </div>
 
           </div>
@@ -3313,14 +3333,14 @@
               
               <!-- 1. GRUPO IZQUIERDO: Salir a Cards & Info de Sede / Modo -->
               <div class="pointer-events-auto flex items-center space-x-1.5 sm:space-x-2 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-lg text-slate-800 dark:text-white">
-                <button type="button" onclick="mapsModule.exitMapMode()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white transition flex items-center space-x-1.5 text-xs font-semibold" title="Volver al Resumen de Cards">
+                <button type="button" onclick="mapsModule.exitMapMode()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white transition flex items-center space-x-1.5 text-xs font-semibold" title="Volver al Resumen de Mis Mapas">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                  <span class="hidden sm:inline">Salir a Cards</span>
+                  <span>← Mis Mapas</span>
                 </button>
                 <div class="h-4 w-px bg-slate-200 dark:bg-white/20"></div>
                 <div class="px-1.5 flex items-center space-x-2">
                   <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span id="maps-tenant-badge-map" class="text-xs font-bold tracking-tight text-slate-900 dark:text-white">Mapa FTTH</span>
+                  <span id="maps-current-project-title" class="text-xs font-bold tracking-tight text-slate-900 dark:text-white">Mapa Zona Carabayllo</span>
                   <span id="maps-permission-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">Modo Edición</span>
                 </div>
               </div>
@@ -3449,6 +3469,123 @@
               </div>
             </div>
 
+            <!-- DRAWER / BIBLIOTECA FLOTANTE DE ELEMENTOS GIS (PUNTOS, LÍNEAS, ÁREAS) -->
+            <div id="maps-library-drawer" class="hidden absolute top-14 sm:top-16 right-3 sm:right-6 z-50 w-[calc(100vw-1.5rem)] sm:w-96 max-h-[calc(100%-5rem)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl border border-slate-200/90 dark:border-white/15 shadow-2xl flex flex-col overflow-hidden text-slate-900 dark:text-white transition-all duration-200">
+              
+              <!-- Drawer Header -->
+              <div class="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center space-x-2.5 min-w-0">
+                  <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                  </div>
+                  <div class="min-w-0">
+                    <h3 class="text-xs font-bold text-slate-900 dark:text-white leading-tight truncate" id="maps-lib-map-title">Biblioteca de Red GIS</h3>
+                    <p class="text-[10.5px] text-slate-500 dark:text-slate-400 truncate" id="maps-lib-map-subtitle">Elementos del mapa activo</p>
+                  </div>
+                </div>
+                <button type="button" onclick="mapsModule.toggleLibraryDrawer(false)" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
+              </div>
+
+              <!-- Buscador en Vivo -->
+              <div class="p-3 border-b border-slate-200 dark:border-white/10 flex-shrink-0 space-y-2">
+                <div class="relative">
+                  <input type="text" id="maps-lib-search-input" oninput="mapsModule.handleLibrarySearch(this.value)" placeholder="Buscar por nombre, tipo, referencia..." class="w-full pl-8 pr-3 py-1.5 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+
+                <!-- Segmented Tabs: Todos / Nodos / Líneas / Áreas -->
+                <div class="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-white/5 rounded-xl text-[11px] font-semibold text-center">
+                  <button type="button" id="maps-lib-tab-all" onclick="mapsModule.setLibraryTab('all')" class="py-1 rounded-lg bg-indigo-600 text-white shadow-xs transition">Todos (<span id="maps-lib-cnt-all">0</span>)</button>
+                  <button type="button" id="maps-lib-tab-nodes" onclick="mapsModule.setLibraryTab('nodes')" class="py-1 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">Nodos (<span id="maps-lib-cnt-nodes">0</span>)</button>
+                  <button type="button" id="maps-lib-tab-lines" onclick="mapsModule.setLibraryTab('lines')" class="py-1 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">Líneas (<span id="maps-lib-cnt-lines">0</span>)</button>
+                  <button type="button" id="maps-lib-tab-areas" onclick="mapsModule.setLibraryTab('areas')" class="py-1 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">Áreas (<span id="maps-lib-cnt-areas">0</span>)</button>
+                </div>
+              </div>
+
+              <!-- Listado Scrollable de Elementos -->
+              <div id="maps-library-items-list" class="flex-1 overflow-y-auto sidebar-scroll p-3 space-y-2">
+                <!-- Se puebla dinámicamente con los elementos del mapa activo -->
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- MODAL: CREAR / EDITAR MAPA O ZONA DE COBERTURA -->
+          <div id="modal-create-map-project" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div class="w-full max-w-lg pro-card rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 space-y-4 max-h-[92vh] overflow-y-auto sidebar-scroll">
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                <div class="flex items-center space-x-2.5">
+                  <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                  </div>
+                  <div>
+                    <h3 id="modal-create-map-title" class="text-base font-bold text-slate-900 dark:text-white">Crear Nuevo Mapa de Cobertura</h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Nuevo proyecto GIS aislado para su distrito o sector</p>
+                  </div>
+                </div>
+                <button type="button" onclick="mapsModule.closeCreateMapModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
+              </div>
+
+              <input type="hidden" id="maps-project-id" value="">
+
+              <div class="space-y-3.5">
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Nombre del Mapa *</label>
+                  <input type="text" id="maps-project-name" placeholder="Ej: Mapa Zona Carabayllo, San Isidro Centro..." class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Distrito / Sector</label>
+                    <input type="text" id="maps-project-district" placeholder="Ej: Carabayllo, Lima Norte" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Color Distintivo</label>
+                    <div class="flex items-center space-x-2">
+                      <input type="color" id="maps-project-color" value="#059669" oninput="document.getElementById('maps-project-color-text').value = this.value" class="w-8 h-8 rounded-lg cursor-pointer border border-slate-200 dark:border-white/10 p-0.5 bg-transparent">
+                      <input type="text" id="maps-project-color-text" value="#059669" oninput="document.getElementById('maps-project-color').value = this.value" class="flex-1 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Coordenadas de Cabecera (Centro)</label>
+                    <span class="text-[10px] text-slate-400">O use un sector rápido</span>
+                  </div>
+                  
+                  <!-- Selectores de sectores rápidos -->
+                  <div class="flex flex-wrap gap-1.5 mb-2">
+                    <button type="button" onclick="mapsModule.setProjectCoordsPreset(-11.8755, -77.0345, 'Carabayllo, Lima Norte')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 text-[10.5px] font-semibold transition">Carabayllo</button>
+                    <button type="button" onclick="mapsModule.setProjectCoordsPreset(-12.0970, -77.0368, 'San Isidro, Lima')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 text-[10.5px] font-semibold transition">San Isidro</button>
+                    <button type="button" onclick="mapsModule.setProjectCoordsPreset(-11.9680, -77.0690, 'Los Olivos, Lima Norte')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 text-[10.5px] font-semibold transition">Los Olivos</button>
+                    <button type="button" onclick="mapsModule.setProjectCoordsPreset(-12.0150, -77.0780, 'SMP, Lima Norte')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 text-[10.5px] font-semibold transition">San Martín</button>
+                    <button type="button" onclick="mapsModule.setProjectCoordsPreset(-16.4090, -71.5375, 'Arequipa Centro')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 text-[10.5px] font-semibold transition">Arequipa</button>
+                    <button type="button" onclick="mapsModule.setProjectCoordsPreset(-8.1118, -79.0300, 'Trujillo Centro')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 text-[10.5px] font-semibold transition">Trujillo</button>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <input type="number" step="0.0001" id="maps-project-lat" placeholder="Latitud: -11.8755" value="-11.8755" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white font-mono">
+                    </div>
+                    <div>
+                      <input type="number" step="0.0001" id="maps-project-lng" placeholder="Longitud: -77.0345" value="-77.0345" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white font-mono">
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Descripción / Notas Técnicas</label>
+                  <textarea id="maps-project-desc" rows="2" placeholder="Sector de despliegue, OLT de cabecera, cobertura..." class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-white/10">
+                <button type="button" onclick="mapsModule.closeCreateMapModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Cancelar</button>
+                <button type="button" onclick="mapsModule.submitMapProjectForm()" class="px-5 py-2 rounded-xl text-xs font-semibold btn-brand-primary text-white shadow-sm transition">Guardar Mapa</button>
+              </div>
+            </div>
           </div>
 
           <!-- MODAL: CREAR / EDITAR NODO (PUNTO) -->
@@ -3878,46 +4015,6 @@
             <div id="maps-lightbox-footer-info" class="w-full max-w-5xl text-center p-2 text-xs text-slate-400">
               <!-- Información de verificación de la foto -->
             </div>
-          </div>
-
-          <!-- DRAWER / BIBLIOTECA FLOTANTE DE ELEMENTOS GIS (PUNTOS, LÍNEAS, ÁREAS) -->
-          <div id="maps-library-drawer" class="hidden absolute top-14 sm:top-16 right-2 sm:right-4 z-40 w-[calc(100vw-1rem)] sm:w-96 max-h-[calc(100vh-8.5rem)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl border border-slate-200/90 dark:border-white/15 shadow-2xl flex flex-col overflow-hidden text-slate-900 dark:text-white transition-all duration-200">
-            
-            <!-- Drawer Header -->
-            <div class="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between flex-shrink-0">
-              <div class="flex items-center space-x-2.5">
-                <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold text-slate-900 dark:text-white leading-tight">Biblioteca de Red GIS</h3>
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400">Búsqueda rápida y navegación directa</p>
-                </div>
-              </div>
-              <button type="button" onclick="mapsModule.toggleLibraryDrawer(false)" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
-            </div>
-
-            <!-- Buscador en Vivo -->
-            <div class="p-3 border-b border-slate-200 dark:border-white/10 flex-shrink-0 space-y-2">
-              <div class="relative">
-                <input type="text" id="maps-lib-search-input" oninput="mapsModule.handleLibrarySearch(this.value)" placeholder="Buscar por nombre, tipo, referencia..." class="w-full pl-8 pr-3 py-1.5 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              </div>
-
-              <!-- Segmented Tabs: Todos / Nodos / Líneas / Áreas -->
-              <div class="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-white/5 rounded-xl text-[11px] font-semibold text-center">
-                <button type="button" id="maps-lib-tab-all" onclick="mapsModule.setLibraryTab('all')" class="py-1 rounded-lg bg-indigo-600 text-white shadow-xs transition">Todos (<span id="maps-lib-cnt-all">0</span>)</button>
-                <button type="button" id="maps-lib-tab-nodes" onclick="mapsModule.setLibraryTab('nodes')" class="py-1 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">Nodos (<span id="maps-lib-cnt-nodes">0</span>)</button>
-                <button type="button" id="maps-lib-tab-lines" onclick="mapsModule.setLibraryTab('lines')" class="py-1 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">Líneas (<span id="maps-lib-cnt-lines">0</span>)</button>
-                <button type="button" id="maps-lib-tab-areas" onclick="mapsModule.setLibraryTab('areas')" class="py-1 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">Áreas (<span id="maps-lib-cnt-areas">0</span>)</button>
-              </div>
-            </div>
-
-            <!-- Listado Scrollable de Elementos -->
-            <div id="maps-library-items-list" class="flex-1 overflow-y-auto sidebar-scroll p-3 space-y-2">
-              <!-- Se puebla dinámicamente con tarjetas interactivas -->
-            </div>
-
           </div>
 
         </section>
@@ -5291,7 +5388,7 @@
 
             </div>
 
-            <!-- TARJETA 3: GOOGLE AUTHENTICATOR MAESTRO (SUPERVISOR TOTP GLOBAL) -->
+            <!-- TARJETA 3: GOOGLE AUTHENTICATOR POR NEGOCIO (2FA MULTI-TENANT & REGLA ESTRICTA) -->
             <div class="pro-card p-6 rounded-2xl space-y-6 border border-purple-500/20 bg-gradient-to-br from-purple-500/[0.02] to-indigo-500/[0.02]">
               <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-4">
                 <div class="flex items-center space-x-3.5">
@@ -5302,54 +5399,84 @@
                   </div>
                   <div>
                     <div class="flex items-center space-x-2">
-                      <h4 class="text-base font-bold text-slate-900 dark:text-white">Google Authenticator Maestro de Supervisión (TOTP Global)</h4>
-                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
-                        1 Solo Código Desbloquea a Todos
+                      <h4 class="text-base font-bold text-slate-900 dark:text-white">Google Authenticator por Negocio (2FA Multi-Tenant)</h4>
+                      <span id="totp-tenant-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                        Sede: TurboNetwork
                       </span>
                     </div>
                     <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
-                      Los supervisores solo necesitan escanear este código QR en su app Google Authenticator. El código dinámico de 6 dígitos que aparezca desbloqueará la tardanza de cualquier colaborador en cualquier empresa.
+                      Cada sede o negocio cuenta con su propio código QR y llave Base32 independiente compatible con la aplicación Google Authenticator (Android / iOS).
                     </p>
                   </div>
                 </div>
 
-                <div class="flex items-center space-x-2">
-                  <span class="px-3.5 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-500/15 border border-purple-300 dark:border-purple-500/30 text-purple-800 dark:text-purple-300 text-xs font-mono font-bold shadow-2xs">
-                    Clave Emergencia: 998877
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="regenerateMasterTotpSecret()" class="px-3.5 py-2 rounded-xl bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/30 text-purple-700 dark:text-purple-300 text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <span>Regenerar Llave & QR</span>
+                  </button>
+                  <span class="px-3 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-500/15 border border-purple-300 dark:border-purple-500/30 text-purple-800 dark:text-purple-300 text-xs font-mono font-bold shadow-2xs">
+                    Emergencia: 998877
                   </span>
                 </div>
               </div>
 
+              <!-- REGLA ESTRICTA 2FA PARA INICIO DE SESIÓN -->
+              <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 dark:border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+                <div class="flex items-start space-x-3">
+                  <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h5 class="text-sm font-bold text-slate-900 dark:text-white">Regla Estricta: Exigir Google Authenticator Obligatorio para Entrar</h5>
+                      <span id="totp-strict-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300">Desactivada</span>
+                    </div>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                      Al activar esta regla, <strong>todo operador o usuario que ingrese a esta sede</strong> deberá introducir obligatoriamente el código de 6 dígitos de Google Authenticator después de su PIN para acceder al sistema.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3 self-end sm:self-center">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="totp-strict-toggle" onchange="toggleStrictTotpRequirement(this.checked)" class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-300 dark:bg-white/15 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                  </label>
+                </div>
+              </div>
+
               <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                <!-- QR del Supervisor -->
+                <!-- QR del Supervisor con fallback -->
                 <div class="flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-center shadow-2xs">
                   <div class="p-2.5 bg-white rounded-2xl shadow-md border border-slate-200/80 dark:border-white/20">
-                    <img id="master-totp-qr-img" class="w-36 h-36 object-contain rounded-lg" src="" alt="Master QR">
+                    <img id="master-totp-qr-img" class="w-36 h-36 object-contain rounded-lg" src="" alt="Master QR" onerror="handleQrError(this)">
                   </div>
                   <span class="text-[11px] text-slate-600 dark:text-slate-400 font-semibold mt-2.5">Escanear con Google Authenticator</span>
+                  <span id="totp-qr-tenant-sub" class="text-[10px] font-mono font-bold text-purple-600 dark:text-purple-400 mt-0.5">TurboNetwork</span>
                 </div>
 
                 <!-- Detalles y Llave Secreta -->
                 <div class="md:col-span-2 space-y-4">
                   <div class="p-4 rounded-2xl bg-purple-50/80 dark:bg-white/5 border border-purple-200/90 dark:border-white/10 space-y-2.5 shadow-2xs">
                     <div class="flex items-center justify-between">
-                      <span class="text-xs font-bold text-purple-900 dark:text-purple-300">Llave Secreta Base32 del Supervisor:</span>
+                      <span class="text-xs font-bold text-purple-900 dark:text-purple-300">Llave Secreta Base32 (RFC 4648 Estricta):</span>
                       <button type="button" onclick="copyMasterTotpSecret()" class="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                         <span>Copiar Llave</span>
                       </button>
                     </div>
                     <div id="master-totp-secret-text" class="text-sm font-mono font-black text-purple-950 dark:text-purple-200 tracking-widest bg-white dark:bg-black/50 border border-purple-300/80 dark:border-white/15 p-2.5 rounded-xl select-all shadow-xs">
-                      TURBOISPMASTERKEY2026
+                      TURBONETWORKKEY2
                     </div>
                     <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                      Si no puedes escanear la cámara, introduce manualmente esta clave en la aplicación Google Authenticator o Authy eligiendo "Clave basada en tiempo (TOTP)".
+                      Si no puedes escanear con la cámara, pulsa "+ > Ingresar clave de configuración" en la app Google Authenticator e ingresa esta clave eligiendo "Basada en tiempo (TOTP)".
                     </p>
                   </div>
 
                   <!-- Tester del Código de 6 dígitos -->
                   <div class="p-4 rounded-2xl bg-purple-50/90 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 space-y-2.5 shadow-2xs">
-                    <span class="text-xs font-bold text-slate-900 dark:text-slate-200">Verificar Código Dinámico en Vivo:</span>
+                    <span class="text-xs font-bold text-slate-900 dark:text-slate-200">Verificar Código Dinámico en Vivo para este Negocio:</span>
                     <div class="flex items-center space-x-2">
                       <input type="text" id="master-totp-test-code" maxlength="6" pattern="\d{6}" placeholder="000000" class="w-36 bg-white dark:bg-black/50 border border-purple-300 dark:border-white/15 rounded-xl px-3 py-2 text-center text-sm font-mono font-black tracking-widest text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-2xs">
                       <button type="button" onclick="verifyMasterTotpLive()" id="btn-verify-master-totp" class="px-4 py-2 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white transition flex items-center space-x-1 shadow-sm">
@@ -6875,14 +7002,6 @@
           <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-purple-500/10 text-purple-700 dark:text-purple-400 font-bold">EPP</span>
         </button>
 
-        <button type="button" onclick="switchTab('network'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <div class="flex items-center space-x-2.5">
-            <svg class="w-4 h-4 text-cyan-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"></rect><rect x="2" y="14" width="20" height="8" rx="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-            <span class="text-xs font-medium">Red & OLTs Multi-Vendor</span>
-          </div>
-          <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 font-bold">NOC</span>
-        </button>
-
         <button type="button" id="mob-nav-maps" onclick="switchTab('maps'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
           <div class="flex items-center space-x-2.5">
             <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
@@ -6934,13 +7053,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
           <span class="text-xs font-medium">Conexiones & Pasarelas</span>
-        </button>
-
-        <button type="button" onclick="switchTab('system'); closeMobileConfigDrawer();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <svg class="w-4 h-4 text-cyan-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2" />
-          </svg>
-          <span class="text-xs font-medium">Diagnóstico & RAM Servidor</span>
         </button>
       </div>
 
@@ -11544,6 +11656,9 @@
         if (typeof activeConfigSubTab !== 'undefined' && activeConfigSubTab === 'company') {
           loadCompanyInfo(activeTenantId);
         }
+        if (typeof activeConfigSubTab !== 'undefined' && activeConfigSubTab === 'connections') {
+          loadConnectionsConfigUI();
+        }
         if (typeof activeTabId !== 'undefined' && activeTabId === 'mochila') {
           loadMochilaModule();
         }
@@ -12439,40 +12554,93 @@
       if (inp) inp.value = val;
     }
 
-    function toggleThemeMode() {
+    function toggleThemeMode(event) {
+      const ev = event || window.event;
       const isDark = document.documentElement.classList.contains('dark');
       const newMode = isDark ? 'light' : 'dark';
-      
-      if (newMode === 'light') {
-        document.documentElement.classList.remove('dark');
-      } else {
-        document.documentElement.classList.add('dark');
-      }
 
-      localStorage.setItem('turbonetwork_theme', newMode);
-      appSettings.themeMode = newMode;
-      if (currentUser) {
-        currentUser.preferences = currentUser.preferences || {};
-        currentUser.preferences.themeMode = newMode;
-        try {
-          localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser));
-        } catch (e) {}
-        fetch(`/api/users/${currentUser.id}/preferences`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ themeMode: newMode })
-        }).catch(() => {});
-      }
-
-      try {
-        localStorage.setItem('turbonetwork_branding', JSON.stringify(appSettings));
-        if (typeof activeTenantId !== 'undefined') {
-          localStorage.setItem('turbonetwork_branding_' + activeTenantId, JSON.stringify(appSettings));
+      const applyChanges = () => {
+        if (newMode === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
         }
-      } catch (e) {}
 
-      applyBranding(appSettings);
-      showToast(`Modo ${newMode === 'dark' ? 'Oscuro' : 'Claro'} activado`);
+        localStorage.setItem('turbonetwork_theme', newMode);
+        appSettings.themeMode = newMode;
+        if (currentUser) {
+          currentUser.preferences = currentUser.preferences || {};
+          currentUser.preferences.themeMode = newMode;
+          try {
+            localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser));
+          } catch (e) {}
+          fetch(`/api/users/${currentUser.id}/preferences`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ themeMode: newMode })
+          }).catch(() => {});
+        }
+
+        try {
+          localStorage.setItem('turbonetwork_branding', JSON.stringify(appSettings));
+          if (typeof activeTenantId !== 'undefined') {
+            localStorage.setItem('turbonetwork_branding_' + activeTenantId, JSON.stringify(appSettings));
+          }
+        } catch (e) {}
+
+        applyBranding(appSettings);
+      };
+
+      // Fallback si el navegador no soporta View Transitions o si se prefiere movimiento reducido
+      if (!document.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        applyChanges();
+        showToast(`Modo ${newMode === 'dark' ? 'Oscuro' : 'Claro'} activado`);
+        return;
+      }
+
+      // Origen del efecto Ripple (coordenadas del clic/toque o centro de la pantalla)
+      let x = window.innerWidth / 2;
+      let y = window.innerHeight / 2;
+
+      if (ev) {
+        if (typeof ev.clientX === 'number' && typeof ev.clientY === 'number' && (ev.clientX > 0 || ev.clientY > 0)) {
+          x = ev.clientX;
+          y = ev.clientY;
+        } else if (ev.target && typeof ev.target.getBoundingClientRect === 'function') {
+          const rect = ev.target.getBoundingClientRect();
+          x = rect.left + rect.width / 2;
+          y = rect.top + rect.height / 2;
+        }
+      }
+
+      const endRadius = Math.hypot(
+        Math.max(x, window.innerWidth - x),
+        Math.max(y, window.innerHeight - y)
+      );
+
+      const transition = document.startViewTransition(() => {
+        applyChanges();
+      });
+
+      transition.ready.then(() => {
+        const clipPath = [
+          `circle(0px at ${x}px ${y}px)`,
+          `circle(${endRadius}px at ${x}px ${y}px)`
+        ];
+        document.documentElement.animate(
+          {
+            clipPath: newMode === 'dark' ? clipPath : [...clipPath].reverse()
+          },
+          {
+            duration: 440,
+            easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            pseudoElement: newMode === 'dark' ? '::view-transition-new(root)' : '::view-transition-old(root)'
+          }
+        );
+        showToast(`Modo ${newMode === 'dark' ? 'Oscuro' : 'Claro'} activado`);
+      }).catch(() => {
+        showToast(`Modo ${newMode === 'dark' ? 'Oscuro' : 'Claro'} activado`);
+      });
     }
 
     function previewFontFamily(font) {
@@ -13968,14 +14136,55 @@
       }
     }
 
+    let pendingLoginPin = "";
+    let pendingLoginTenantId = "";
+
     window.addEventListener('keydown', (e) => {
       const loginScreen = document.getElementById('pin-login-screen');
+      const totpStep = document.getElementById('login-2fa-step');
+      if (totpStep && !totpStep.classList.contains('hidden')) {
+        // Permitir escribir con normalidad en el input del 2FA
+        return;
+      }
       if (loginScreen && !loginScreen.classList.contains('hidden')) {
         if (/^[0-9]$/.test(e.key)) pressDigit(e.key);
         else if (e.key === 'Backspace') backspacePin();
         else if (e.key === 'Escape') clearPin();
       }
     });
+
+    async function completeLoginSuccess(data) {
+      currentUser = data.data.user;
+      currentUser.permissions = data.data.permissions || data.data.user?.permissions || [];
+      currentUser.allowedModules = data.data.allowedModules || data.data.user?.allowedModules || [];
+      try {
+        localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser));
+      } catch (e) {}
+      document.documentElement.classList.add('has-session');
+      const feedback = document.getElementById('login-feedback');
+      if (feedback) feedback.textContent = "";
+      applyBranding(appSettings);
+      applyRbacPermissions();
+      try {
+        await loadTenants();
+      } catch (e) {}
+
+      // Si el usuario tiene una empresa/negocio asignada, cambiar automáticamente a su negocio establecido
+      if (currentUser.assignedTenantId && typeof switchActiveCompany === 'function') {
+        try {
+          await switchActiveCompany(currentUser.assignedTenantId);
+        } catch (e) {
+          console.warn('Error auto-switching company for user:', e);
+        }
+      }
+
+      // Verificar marcación biométrica de asistencia
+      const proceed = await checkAttendanceOnLogin(currentUser);
+      if (proceed) {
+        showWelcomeGreeting(currentUser);
+        renderDashboardAttendanceWidget();
+      }
+    }
 
     async function submitPinLogin() {
       const feedback = document.getElementById('login-feedback');
@@ -13990,36 +14199,16 @@
         });
         const data = await res.json();
 
+        if (data.require2fa) {
+          // El negocio tiene activa la regla estricta de 2FA
+          pendingLoginPin = currentPin;
+          pendingLoginTenantId = data.tenantId || '';
+          showLogin2faStep(data);
+          return;
+        }
+
         if (data.success) {
-          currentUser = data.data.user;
-          currentUser.permissions = data.data.permissions || data.data.user?.permissions || [];
-          currentUser.allowedModules = data.data.allowedModules || data.data.user?.allowedModules || [];
-          try {
-            localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser));
-          } catch (e) {}
-          document.documentElement.classList.add('has-session');
-          feedback.textContent = "";
-          applyBranding(appSettings);
-          applyRbacPermissions();
-          try {
-            await loadTenants();
-          } catch (e) {}
-
-          // Si el usuario tiene una empresa/negocio asignada, cambiar automáticamente a su negocio establecido
-          if (currentUser.assignedTenantId && typeof switchActiveCompany === 'function') {
-            try {
-              await switchActiveCompany(currentUser.assignedTenantId);
-            } catch (e) {
-              console.warn('Error auto-switching company for user:', e);
-            }
-          }
-
-          // Verificar marcación biométrica de asistencia
-          const proceed = await checkAttendanceOnLogin(currentUser);
-          if (proceed) {
-            showWelcomeGreeting(currentUser);
-            renderDashboardAttendanceWidget();
-          }
+          completeLoginSuccess(data);
         } else {
           feedback.textContent = data.message || "PIN no reconocido";
           feedback.className = "text-xs min-h-[20px] text-rose-400 font-medium mb-3 font-mono";
@@ -14030,6 +14219,113 @@
       } catch (err) {
         feedback.textContent = "Error al conectar con el servidor";
         shakeKeypad();
+      }
+    }
+
+    function showLogin2faStep(data) {
+      const pinStep = document.getElementById('login-pin-step');
+      const totpStep = document.getElementById('login-2fa-step');
+      if (pinStep) pinStep.classList.add('hidden');
+      if (totpStep) {
+        totpStep.classList.remove('hidden');
+        totpStep.classList.add('flex');
+      }
+
+      const userName = document.getElementById('login-2fa-user-name');
+      if (userName && data.user?.name) userName.textContent = `¡Hola, ${data.user.name}!`;
+
+      const userAvatar = document.getElementById('login-2fa-avatar');
+      if (userAvatar && data.user?.avatar) userAvatar.src = data.user.avatar;
+
+      const tenantName = document.getElementById('login-2fa-tenant-name');
+      if (tenantName && data.tenantName) tenantName.textContent = `Sede: ${data.tenantName}`;
+
+      const totpInp = document.getElementById('login-totp-input');
+      const totpFeedback = document.getElementById('login-2fa-feedback');
+      if (totpFeedback) totpFeedback.textContent = '';
+      if (totpInp) {
+        totpInp.value = '';
+        setTimeout(() => totpInp.focus(), 150);
+
+        totpInp.oninput = () => {
+          totpInp.value = totpInp.value.replace(/\D/g, '').slice(0, 6);
+          if (totpInp.value.length === 6) {
+            submitTotpLogin();
+          }
+        };
+        totpInp.onkeydown = (e) => {
+          if (e.key === 'Enter') {
+            submitTotpLogin();
+          } else if (e.key === 'Escape') {
+            cancelTotpLogin();
+          }
+        };
+      }
+    }
+
+    function cancelTotpLogin() {
+      pendingLoginPin = "";
+      pendingLoginTenantId = "";
+      const pinStep = document.getElementById('login-pin-step');
+      const totpStep = document.getElementById('login-2fa-step');
+      if (totpStep) {
+        totpStep.classList.add('hidden');
+        totpStep.classList.remove('flex');
+      }
+      if (pinStep) pinStep.classList.remove('hidden');
+      clearPin();
+    }
+
+    async function submitTotpLogin() {
+      const totpInp = document.getElementById('login-totp-input');
+      const totpFeedback = document.getElementById('login-2fa-feedback');
+      const code = totpInp?.value?.trim() || '';
+
+      if (code.length !== 6) {
+        if (totpFeedback) {
+          totpFeedback.textContent = "Ingrese los 6 dígitos del Authenticator";
+          totpFeedback.className = "text-xs min-h-[18px] text-amber-400 font-medium font-mono";
+        }
+        totpInp?.focus();
+        return;
+      }
+
+      if (totpFeedback) {
+        totpFeedback.textContent = "Verificando código de seguridad...";
+        totpFeedback.className = "text-xs min-h-[18px] text-amber-300 font-medium font-mono";
+      }
+
+      try {
+        const res = await fetch('/api/auth/pin-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pin: pendingLoginPin,
+            totpCode: code,
+            tenantId: pendingLoginTenantId
+          })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          cancelTotpLogin();
+          completeLoginSuccess(data);
+        } else {
+          if (totpFeedback) {
+            totpFeedback.textContent = data.message || "Código incorrecto o expirado";
+            totpFeedback.className = "text-xs min-h-[18px] text-rose-400 font-medium font-mono";
+          }
+          if (totpInp) {
+            totpInp.classList.add('ring-2', 'ring-rose-500');
+            setTimeout(() => totpInp.classList.remove('ring-2', 'ring-rose-500'), 800);
+            totpInp.select();
+          }
+        }
+      } catch (err) {
+        if (totpFeedback) {
+          totpFeedback.textContent = "Error al conectar con el servidor";
+          totpFeedback.className = "text-xs min-h-[18px] text-rose-400 font-medium font-mono";
+        }
       }
     }
 
@@ -16940,13 +17236,30 @@ Estamos atentos para brindarle asistencia inmediata.
           }
         }
 
-        // Master TOTP UI
+        // Master TOTP UI por Negocio
         if (totpData.success && totpData.data) {
           const t = totpData.data;
           const qrImg = document.getElementById('master-totp-qr-img');
-          if (qrImg) qrImg.src = t.qrCodeUrl;
+          if (qrImg) {
+            qrImg.dataset.rawOtpUrl = t.otpauthUrl;
+            delete qrImg.dataset.fallbackTried;
+            qrImg.src = t.qrCodeUrl;
+          }
           const secText = document.getElementById('master-totp-secret-text');
           if (secText) secText.textContent = t.masterSecret;
+          const badge = document.getElementById('totp-tenant-badge');
+          if (badge) badge.textContent = `Sede: ${t.tenantName || activeTenantId}`;
+          const qrSub = document.getElementById('totp-qr-tenant-sub');
+          if (qrSub) qrSub.textContent = t.tenantName || activeTenantId;
+          const toggle = document.getElementById('totp-strict-toggle');
+          if (toggle) toggle.checked = !!t.require2faOnLogin;
+          const statusBadge = document.getElementById('totp-strict-status-badge');
+          if (statusBadge) {
+            statusBadge.textContent = t.require2faOnLogin ? 'Activa Obligatoria' : 'Desactivada';
+            statusBadge.className = t.require2faOnLogin
+              ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30'
+              : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300';
+          }
         }
       } catch (err) {
         console.error("Error al cargar configuraciones de conexiones:", err);
@@ -17222,6 +17535,71 @@ Estamos atentos para brindarle asistencia inmediata.
       });
     }
 
+    function handleQrError(imgEl) {
+      if (!imgEl || imgEl.dataset.fallbackTried) return;
+      imgEl.dataset.fallbackTried = "true";
+      const raw = imgEl.dataset.rawOtpUrl;
+      if (raw) {
+        // Fallback a QuickChart QR API si qrserver tiene bloqueo de red
+        imgEl.src = `https://quickchart.io/qr?size=220&text=${encodeURIComponent(raw)}`;
+      }
+    }
+
+    async function toggleStrictTotpRequirement(isRequired) {
+      try {
+        const res = await fetch(`/api/settings/connections/master-totp/toggle-strict?tenantId=${encodeURIComponent(activeTenantId)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ required: isRequired, tenantId: activeTenantId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const statusBadge = document.getElementById('totp-strict-status-badge');
+          if (statusBadge) {
+            statusBadge.textContent = isRequired ? 'Activa Obligatoria' : 'Desactivada';
+            statusBadge.className = isRequired
+              ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30'
+              : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300';
+          }
+          showToast(data.message, isRequired ? "warning" : "info");
+        } else {
+          showToast(data.message || "Error al actualizar regla estricta", "error");
+        }
+      } catch (err) {
+        showToast("Error de conexión al cambiar regla de 2FA", "error");
+      }
+    }
+
+    async function regenerateMasterTotpSecret() {
+      if (!confirm("¿Deseas generar una NUEVA llave secreta y código QR de Google Authenticator para esta sede? Deberás volver a escanear el QR en la app.")) {
+        return;
+      }
+      try {
+        const res = await fetch(`/api/settings/connections/master-totp/regenerate?tenantId=${encodeURIComponent(activeTenantId)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tenantId: activeTenantId })
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          const t = data.data;
+          const qrImg = document.getElementById('master-totp-qr-img');
+          if (qrImg) {
+            qrImg.dataset.rawOtpUrl = t.otpauthUrl;
+            delete qrImg.dataset.fallbackTried;
+            qrImg.src = t.qrCodeUrl;
+          }
+          const secText = document.getElementById('master-totp-secret-text');
+          if (secText) secText.textContent = t.masterSecret;
+          showToast("¡Nueva llave y código QR generados exitosamente!", "success");
+        } else {
+          showToast(data.message || "Error al regenerar llave", "error");
+        }
+      } catch (err) {
+        showToast("Error de conexión al regenerar", "error");
+      }
+    }
+
     async function verifyMasterTotpLive() {
       const input = document.getElementById('master-totp-test-code');
       const feedback = document.getElementById('master-totp-verify-feedback');
@@ -17239,7 +17617,7 @@ Estamos atentos para brindarle asistencia inmediata.
         const res = await fetch('/api/settings/connections/master-totp/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code })
+          body: JSON.stringify({ code, tenantId: activeTenantId })
         });
         const data = await res.json();
         if (data.success) {
@@ -17247,7 +17625,7 @@ Estamos atentos para brindarle asistencia inmediata.
             feedback.textContent = '¡Código Válido! Sincronizado ✓';
             feedback.className = 'text-xs font-mono text-emerald-400 font-bold';
           }
-          showToast("¡Google Authenticator Maestro verificado!", "success");
+          showToast("¡Google Authenticator verificado correctamente!", "success");
         } else {
           if (feedback) {
             feedback.textContent = 'Código Incorrecto ✗';

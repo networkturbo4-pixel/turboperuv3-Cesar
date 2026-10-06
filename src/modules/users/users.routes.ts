@@ -2,7 +2,9 @@ import { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
-import { resolveTenantId, getTenantFilePath, getTenantDataDir } from "../tenants/tenants.service";
+import { resolveTenantId, getTenantFilePath, getTenantDataDir, loadTenantsFromDisk } from "../tenants/tenants.service";
+import { is2faRequiredForTenant, getMasterTotpSecret, getMasterSupervisorPin } from "../settings/connections.service";
+import { verifyTOTP } from "../rrhh/rrhh.routes";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const ROLES_FILE = path.join(DATA_DIR, "roles.json");
@@ -353,6 +355,8 @@ if (!fs.existsSync(USERS_FILE)) saveUsersToDisk();
 
 const pinLoginSchema = z.object({
   pin: z.string().length(8, "El PIN debe contener exactamente 8 dígitos").regex(/^\d{8}$/, "Solo dígitos numéricos"),
+  totpCode: z.string().optional(),
+  tenantId: z.string().optional(),
 });
 
 const createUserSchema = z.object({
@@ -394,7 +398,7 @@ const createRoleSchema = z.object({
 });
 
 export const usersRoutes: FastifyPluginAsync = async (fastify) => {
-  // Autenticación por PIN de 8 dígitos
+  // Autenticación por PIN de 8 dígitos con soporte de regla estricta Google Authenticator (TOTP)
   fastify.post("/auth/pin-login", async (request, reply) => {
     // Recargar usuarios desde disco para asegurar que cambios recientes estén disponibles
     usersStore = loadUsersFromDisk();
@@ -404,7 +408,7 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ success: false, message: "El PIN debe ser exactamente de 8 dígitos numéricos" });
     }
 
-    const { pin } = parse.data;
+    const { pin, totpCode, tenantId: requestedTenant } = parse.data;
     const user = usersStore.find((u) => u.pin === pin && u.isActive);
 
     if (!user) {
@@ -414,7 +418,50 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const assignedTenant = user.assignedTenantId || (user.allowedTenants && user.allowedTenants[0] !== "*" ? user.allowedTenants[0] : "turbonetwork");
+    const assignedTenant = requestedTenant || user.assignedTenantId || (user.allowedTenants && user.allowedTenants[0] !== "*" ? user.allowedTenants[0] : "turbonetwork");
+
+    // Verificar si esta empresa/sede tiene activa la regla estricta de 2FA
+    const require2fa = is2faRequiredForTenant(assignedTenant);
+
+    if (require2fa) {
+      const cleanTotp = (totpCode || "").trim();
+      const allTenants = loadTenantsFromDisk();
+      const tenantObj = allTenants.find((t) => t.id === assignedTenant) || allTenants[0];
+      const tenantName = tenantObj?.name || assignedTenant;
+
+      // Si no se proporcionó el código TOTP todavía, requerirlo al frontend
+      if (!cleanTotp) {
+        return reply.status(200).send({
+          success: false,
+          require2fa: true,
+          message: `Regla Estricta Activa: Ingrese el código dinámico de Google Authenticator de ${tenantName}.`,
+          tenantId: assignedTenant,
+          tenantName,
+          user: {
+            id: user.id,
+            name: user.name,
+            avatar: user.avatar,
+            roleName: user.roleName,
+          },
+        });
+      }
+
+      // Validar el código TOTP con el secreto de esta sede
+      const tenantSecret = getMasterTotpSecret(assignedTenant);
+      const supervisorPin = getMasterSupervisorPin(assignedTenant);
+      const isTotpValid = verifyTOTP(cleanTotp, tenantSecret) || cleanTotp === supervisorPin;
+
+      if (!isTotpValid) {
+        return reply.status(401).send({
+          success: false,
+          require2fa: true,
+          message: `Código de Google Authenticator incorrecto o expirado para ${tenantName}. Verifique la hora de su dispositivo e intente de nuevo.`,
+          tenantId: assignedTenant,
+          tenantName,
+        });
+      }
+    }
+
     const tenantRoles = loadRolesForTenant(assignedTenant);
     const role = tenantRoles.find((r) => r.id === user.roleId) || rolesStore.find((r) => r.id === user.roleId);
 

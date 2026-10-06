@@ -6,8 +6,11 @@ import {
   getMasterTotpSecret,
   DEFAULT_MASTER_TOTP_SECRET,
   DEFAULT_SUPERVISOR_PIN,
+  is2faRequiredForTenant,
+  setTenant2faRequirement,
+  regenerateTenantTotpSecret,
 } from "./connections.service";
-import { resolveTenantId } from "../tenants/tenants.service";
+import { resolveTenantId, loadTenantsFromDisk } from "../tenants/tenants.service";
 import { generateTOTP, verifyTOTP } from "../rrhh/rrhh.routes";
 
 export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
@@ -112,6 +115,7 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
           masterTotpSecret: (body.security?.masterTotpSecret || current.security?.masterTotpSecret || DEFAULT_MASTER_TOTP_SECRET).trim(),
           masterSupervisorPin: (body.security?.masterSupervisorPin || current.security?.masterSupervisorPin || DEFAULT_SUPERVISOR_PIN).trim(),
           allowMasterTotpForAll: body.security?.allowMasterTotpForAll !== false,
+          require2faOnLogin: body.security?.require2faOnLogin !== undefined ? Boolean(body.security.require2faOnLogin) : current.security?.require2faOnLogin || false,
         },
         mapbox: {
           enabled: body.mapbox?.enabled !== false,
@@ -417,44 +421,103 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // 7. Información del Google Authenticator Maestro (Supervisor TOTP)
+  // 7. Información del Google Authenticator Maestro (Supervisor TOTP) por Negocio
   fastify.get("/settings/connections/master-totp", async (request, reply) => {
-    const tenantId = resolveTenantId(request);
+    const queryTenant = (request.query as any)?.tenantId;
+    const tenantId = (queryTenant && queryTenant !== "undefined" && queryTenant !== "null") ? queryTenant : resolveTenantId(request);
+    const tenants = loadTenantsFromDisk();
+    const tenant = tenants.find((t) => t.id === tenantId) || tenants[0];
+    const tenantName = tenant?.name || "TurboNetwork ISP";
+
     const masterSecret = getMasterTotpSecret(tenantId);
-    const issuer = "TurboNetwork ISP";
-    const label = "Supervisor Maestro";
-    const otpauthUrl = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(label)}?secret=${masterSecret}&issuer=${encodeURIComponent(issuer)}`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=${encodeURIComponent(otpauthUrl)}`;
+    const cleanIssuer = tenantName.replace(/[:?&=]/g, " ").trim();
+    const label = `Supervisor (${cleanIssuer})`;
+    const otpauthUrl = `otpauth://totp/${encodeURIComponent(cleanIssuer)}:${encodeURIComponent(label)}?secret=${masterSecret}&issuer=${encodeURIComponent(cleanIssuer)}&algorithm=SHA1&digits=6&period=30`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(otpauthUrl)}`;
+    const require2faOnLogin = is2faRequiredForTenant(tenantId);
 
     return reply.send({
       success: true,
       data: {
+        tenantId,
+        tenantName,
         masterSecret,
         supervisorPin: DEFAULT_SUPERVISOR_PIN,
         otpauthUrl,
         qrCodeUrl,
         label,
-        issuer,
+        issuer: cleanIssuer,
+        require2faOnLogin,
         currentOtp: generateTOTP(masterSecret),
       },
     });
   });
 
+  // 7.1 Regenerar nueva llave secreta Base32 y QR para el negocio activo
+  fastify.post("/settings/connections/master-totp/regenerate", async (request, reply) => {
+    const queryTenant = (request.query as any)?.tenantId;
+    const bodyTenant = (request.body as any)?.tenantId;
+    const tenantId = bodyTenant || queryTenant || resolveTenantId(request);
+
+    const tenants = loadTenantsFromDisk();
+    const tenant = tenants.find((t) => t.id === tenantId) || tenants[0];
+    const tenantName = tenant?.name || "TurboNetwork ISP";
+
+    const newSecret = regenerateTenantTotpSecret(tenantId);
+    const cleanIssuer = tenantName.replace(/[:?&=]/g, " ").trim();
+    const label = `Supervisor (${cleanIssuer})`;
+    const otpauthUrl = `otpauth://totp/${encodeURIComponent(cleanIssuer)}:${encodeURIComponent(label)}?secret=${newSecret}&issuer=${encodeURIComponent(cleanIssuer)}&algorithm=SHA1&digits=6&period=30`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(otpauthUrl)}`;
+
+    return reply.send({
+      success: true,
+      message: `Nueva llave secreta generada exitosamente para ${tenantName}.`,
+      data: {
+        tenantId,
+        tenantName,
+        masterSecret: newSecret,
+        otpauthUrl,
+        qrCodeUrl,
+      },
+    });
+  });
+
+  // 7.2 Activar o desactivar regla estricta de 2FA para el negocio
+  fastify.post("/settings/connections/master-totp/toggle-strict", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const tenantId = body.tenantId || (request.query as any)?.tenantId || resolveTenantId(request);
+    const required = Boolean(body.required);
+
+    setTenant2faRequirement(tenantId, required);
+
+    const tenants = loadTenantsFromDisk();
+    const tenant = tenants.find((t) => t.id === tenantId);
+    const tenantName = tenant?.name || tenantId;
+
+    return reply.send({
+      success: true,
+      require2faOnLogin: required,
+      message: required
+        ? `Regla Estricta ACTIVA para ${tenantName}: Todo usuario deberá ingresar el código Google Authenticator de este negocio para iniciar sesión.`
+        : `Regla Estricta DESACTIVADA para ${tenantName}.`,
+    });
+  });
+
   // 8. Probar código del Google Authenticator Maestro en vivo
   fastify.post("/settings/connections/master-totp/verify", async (request, reply) => {
-    const { code } = (request.body as { code: string }) || {};
+    const { code, tenantId: bodyTenant } = (request.body as { code: string; tenantId?: string }) || {};
     if (!code || code.length !== 6) {
       return reply.status(400).send({ success: false, message: "Ingrese un código numérico de 6 dígitos" });
     }
 
-    const tenantId = resolveTenantId(request);
+    const tenantId = bodyTenant || (request.query as any)?.tenantId || resolveTenantId(request);
     const masterSecret = getMasterTotpSecret(tenantId);
     const isValid = verifyTOTP(code, masterSecret) || code === DEFAULT_SUPERVISOR_PIN;
 
     if (isValid) {
       return reply.send({
         success: true,
-        message: "¡Código de Google Authenticator válido! Este código desbloqueará a cualquier colaborador en el sistema.",
+        message: "¡Código de Google Authenticator válido y sincronizado para este negocio!",
       });
     } else {
       return reply.status(400).send({

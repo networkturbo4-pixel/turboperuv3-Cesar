@@ -22,6 +22,9 @@
     activeMode: 'overview', // 'overview' | 'map'
     activeTool: 'select', // 'select' | 'point' | 'line' | 'area' | 'ruler'
     tenantId: 'turbonetwork',
+    activeMapId: null, // ID del mapa activo (ej: 'map_carabayllo')
+    projects: [], // Colección de proyectos de mapas independientes
+    projectSearchQuery: '',
     data: {
       center: [-77.0368, -12.0970],
       zoom: 14,
@@ -151,6 +154,15 @@
     return meters + ' m';
   }
 
+  // Helper para obtener el proyecto de mapa activo
+  function getActiveMap() {
+    if (!state.projects || state.projects.length === 0) {
+      return null;
+    }
+    const found = state.projects.find(p => p.id === state.activeMapId);
+    return found || state.projects[0];
+  }
+
   // 1. CARGA PRINCIPAL DEL MÓDULO DE MAPAS
   async function loadMapsModule() {
     const currentTenant = typeof window.activeTenantId !== 'undefined' ? window.activeTenantId : 'turbonetwork';
@@ -167,21 +179,27 @@
       // 1. Cargar configuraciones de Mapbox
       await loadMapboxConfig();
 
-      // 2. Cargar datos del mapa para este tenant
-      const res = await fetch(`/api/maps/data?tenantId=${encodeURIComponent(state.tenantId)}`);
+      // 2. Cargar datos del mapa para este tenant (incluyendo mapas independientes)
+      const mapParam = state.activeMapId ? `&mapId=${encodeURIComponent(state.activeMapId)}` : '';
+      const res = await fetch(`/api/maps/data?tenantId=${encodeURIComponent(state.tenantId)}${mapParam}`);
       const json = await res.json();
 
       if (json.success && json.data) {
         state.data = json.data;
         state.stats = json.stats || state.stats;
         state.customers = json.customers || [];
+        state.projects = json.maps || (json.data && json.data.maps) || [];
+        if (!state.activeMapId || !state.projects.some(p => p.id === state.activeMapId)) {
+          state.activeMapId = json.activeMapId || (json.data && json.data.activeMapId) || (state.projects[0] ? state.projects[0].id : null);
+        }
       }
     } catch (err) {
       console.warn('[MAPS] Error al cargar datos del mapa:', err);
     }
 
-    // Renderizar las Cards de Resumen del Módulo
+    // Renderizar las Cards de Resumen del Módulo y el Grid de Proyectos
     renderOverviewCards();
+    renderMapProjectsGrid();
     renderEntitiesTables();
     updateLibraryBadge();
 
@@ -439,21 +457,343 @@
     }
   }
 
-  // 5. ENTRAR AL MODO MAPA EXPANDIDO (COLAPSANDO SIDEBAR)
-  function enterMapMode() {
+  // 4b. GESTIÓN MULTI-MAPA & ZONAS DE COBERTURA
+  function renderMapProjectsGrid() {
+    const container = document.getElementById('maps-projects-grid');
+    if (!container) return;
+
+    const q = state.projectSearchQuery;
+    let list = state.projects || [];
+    if (q) {
+      list = list.filter(p => {
+        const name = (p.name || '').toLowerCase();
+        const dist = (p.district || '').toLowerCase();
+        const desc = (p.description || '').toLowerCase();
+        return name.includes(q) || dist.includes(q) || desc.includes(q);
+      });
+    }
+
+    const badge = document.getElementById('maps-projects-count-badge');
+    if (badge) {
+      badge.textContent = `${list.length} ${list.length === 1 ? 'Mapa' : 'Mapas'}`;
+    }
+
+    const cardsHtml = list.map(p => {
+      const nodesCount = (p.nodes || []).length;
+      const linesCount = (p.lines || []).length;
+      const areasCount = (p.areas || []).length;
+      const distKm = (p.lines || []).reduce((acc, l) => acc + ((l.distanceMeters || 0) / 1000), 0);
+      const color = p.color || '#059669';
+      const isActive = p.id === state.activeMapId;
+
+      return `
+        <div class="pro-card rounded-2xl border border-slate-200 dark:border-white/10 hover:border-blue-500/40 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between overflow-hidden group">
+          <!-- Card Header -->
+          <div class="p-5 pb-3">
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <div class="flex items-center space-x-2.5 min-w-0">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-sm" style="background-color: ${color}">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                </div>
+                <div class="min-w-0">
+                  <h4 class="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">${escapeHtml(p.name)}</h4>
+                  <div class="flex items-center space-x-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <span class="inline-block w-1.5 h-1.5 rounded-full" style="background-color: ${color}"></span>
+                    <span class="truncate font-medium">${escapeHtml(p.district || 'Sector GIS')}</span>
+                  </div>
+                </div>
+              </div>
+
+              ${isActive ? `
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex-shrink-0">
+                  Activo
+                </span>
+              ` : ''}
+            </div>
+
+            <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-2 leading-relaxed">
+              ${escapeHtml(p.description || 'Sector de infraestructura y distribución de red.')}
+            </p>
+
+            <!-- Métricas del Mapa -->
+            <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-white/5 text-center">
+              <div class="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03]">
+                <div class="text-[10px] uppercase font-bold text-slate-400">Puntos</div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white mt-0.5 flex items-center justify-center gap-1">
+                  <span class="text-blue-500">📍</span> ${nodesCount}
+                </div>
+              </div>
+              <div class="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03]">
+                <div class="text-[10px] uppercase font-bold text-slate-400">Fibra</div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white mt-0.5 flex items-center justify-center gap-1">
+                  <span class="text-emerald-500">⚡</span> ${distKm >= 1 ? distKm.toFixed(1) + ' km' : Math.round(distKm * 1000) + ' m'}
+                </div>
+              </div>
+              <div class="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03]">
+                <div class="text-[10px] uppercase font-bold text-slate-400">Zonas</div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white mt-0.5 flex items-center justify-center gap-1">
+                  <span class="text-purple-500">🌐</span> ${areasCount}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Actions Footer -->
+          <div class="p-4 bg-slate-50/70 dark:bg-white/[0.02] border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-2">
+            <button type="button" onclick="mapsModule.enterMapMode('${p.id}')" class="flex-1 px-3.5 py-2 rounded-xl btn-brand-primary text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-95">
+              <span>Entrar al Mapa</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+            <div class="flex items-center space-x-1">
+              <button type="button" onclick="mapsModule.openCreateMapModal('${p.id}')" class="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition" title="Editar detalles del mapa">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+              ${list.length > 1 ? `
+              <button type="button" onclick="mapsModule.deleteMapProject('${p.id}')" class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition" title="Eliminar este mapa">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const addCardHtml = `
+      <div onclick="mapsModule.openCreateMapModal()" class="rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/15 hover:border-blue-500/60 hover:bg-blue-50/40 dark:hover:bg-blue-500/5 p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all group min-h-[240px]">
+        <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition mb-3 shadow-xs">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        </div>
+        <h4 class="text-sm font-bold text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">Crear Nuevo Mapa</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400 max-w-[200px] mt-1">Añada otro sector independiente (ej: Los Olivos, San Isidro, etc.)</p>
+      </div>
+    `;
+
+    container.innerHTML = cardsHtml + addCardHtml;
+  }
+
+  function handleProjectSearch(query) {
+    state.projectSearchQuery = (query || '').toLowerCase().trim();
+    renderMapProjectsGrid();
+  }
+
+  function openCreateMapModal(editMapId) {
+    const modal = document.getElementById('modal-create-map-project');
+    if (!modal) return;
+
+    const modalTitle = document.getElementById('modal-create-map-title');
+    const inputId = document.getElementById('maps-project-id');
+    const inputName = document.getElementById('maps-project-name');
+    const inputDistrict = document.getElementById('maps-project-district');
+    const inputColor = document.getElementById('maps-project-color');
+    const inputColorText = document.getElementById('maps-project-color-text');
+    const inputLat = document.getElementById('maps-project-lat');
+    const inputLng = document.getElementById('maps-project-lng');
+    const inputDesc = document.getElementById('maps-project-desc');
+
+    if (editMapId) {
+      const p = (state.projects || []).find(x => x.id === editMapId);
+      if (!p) {
+        showToast('No se encontró el mapa a editar.', 'error');
+        return;
+      }
+      if (modalTitle) modalTitle.textContent = `Editar: ${p.name}`;
+      if (inputId) inputId.value = p.id;
+      if (inputName) inputName.value = p.name;
+      if (inputDistrict) inputDistrict.value = p.district || '';
+      const col = p.color || '#059669';
+      if (inputColor) inputColor.value = col;
+      if (inputColorText) inputColorText.value = col;
+      const lat = p.center && Array.isArray(p.center) ? p.center[1] : -11.8755;
+      const lng = p.center && Array.isArray(p.center) ? p.center[0] : -77.0345;
+      if (inputLat) inputLat.value = lat;
+      if (inputLng) inputLng.value = lng;
+      if (inputDesc) inputDesc.value = p.description || '';
+    } else {
+      if (modalTitle) modalTitle.textContent = 'Crear Nuevo Mapa de Cobertura';
+      if (inputId) inputId.value = '';
+      if (inputName) inputName.value = '';
+      if (inputDistrict) inputDistrict.value = '';
+      if (inputColor) inputColor.value = '#059669';
+      if (inputColorText) inputColorText.value = '#059669';
+      if (inputLat) inputLat.value = -11.8755;
+      if (inputLng) inputLng.value = -77.0345;
+      if (inputDesc) inputDesc.value = '';
+    }
+
+    modal.classList.remove('hidden');
+    if (inputName) setTimeout(() => inputName.focus(), 100);
+  }
+
+  function closeCreateMapModal() {
+    const modal = document.getElementById('modal-create-map-project');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function setProjectCoordsPreset(lat, lng, district) {
+    const inputLat = document.getElementById('maps-project-lat');
+    const inputLng = document.getElementById('maps-project-lng');
+    const inputDistrict = document.getElementById('maps-project-district');
+    if (inputLat) inputLat.value = lat;
+    if (inputLng) inputLng.value = lng;
+    if (inputDistrict && (!inputDistrict.value || inputDistrict.value.trim() === '')) {
+      inputDistrict.value = district;
+    }
+  }
+
+  async function submitMapProjectForm() {
+    const inputId = document.getElementById('maps-project-id');
+    const name = document.getElementById('maps-project-name')?.value?.trim();
+    const district = document.getElementById('maps-project-district')?.value?.trim() || '';
+    const color = document.getElementById('maps-project-color')?.value || '#059669';
+    const lat = parseFloat(document.getElementById('maps-project-lat')?.value) || -11.8755;
+    const lng = parseFloat(document.getElementById('maps-project-lng')?.value) || -77.0345;
+    const description = document.getElementById('maps-project-desc')?.value?.trim() || '';
+
+    if (!name) {
+      showToast('Por favor ingrese el nombre del mapa (ej: Mapa Zona Carabayllo).', 'error');
+      return;
+    }
+
+    const editId = inputId ? inputId.value : '';
+    const payload = {
+      name,
+      district,
+      color,
+      center: [lng, lat],
+      zoom: 14,
+      description,
+    };
+
+    try {
+      let res;
+      if (editId) {
+        res = await fetch(`/api/maps/projects/${encodeURIComponent(editId)}?tenantId=${encodeURIComponent(state.tenantId)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch(`/api/maps/projects?tenantId=${encodeURIComponent(state.tenantId)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      const json = await res.json();
+      if (json.success) {
+        showToast(json.message || 'Mapa guardado con éxito.', 'success');
+        closeCreateMapModal();
+        await loadMapsModule();
+        // Si fue una creación nueva, entramos automáticamente al nuevo mapa
+        if (!editId && json.project && json.project.id) {
+          enterMapMode(json.project.id);
+        }
+      } else {
+        showToast(json.message || 'Error al guardar el mapa.', 'error');
+      }
+    } catch (e) {
+      showToast('Error de conexión al guardar el proyecto de mapa.', 'error');
+    }
+  }
+
+  async function deleteMapProject(id) {
+    const project = (state.projects || []).find(p => p.id === id);
+    const mapName = project ? project.name : id;
+
+    if (!confirm(`¿Está seguro de eliminar "${mapName}"?\nSe eliminarán todos sus puntos, líneas y áreas asociadas de forma permanente.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/maps/projects/${encodeURIComponent(id)}?tenantId=${encodeURIComponent(state.tenantId)}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(json.message || 'Mapa eliminado exitosamente.', 'info');
+        await loadMapsModule();
+      } else {
+        showToast(json.message || 'Error al eliminar el mapa.', 'error');
+      }
+    } catch (e) {
+      showToast('Error de red al eliminar el mapa.', 'error');
+    }
+  }
+
+  // 5. ENTRAR AL MODO MAPA EXPANDIDO (AISLADO POR PROYECTO)
+  async function enterMapMode(mapId) {
+    if (mapId) {
+      state.activeMapId = mapId;
+      try {
+        const res = await fetch(`/api/maps/projects/${encodeURIComponent(mapId)}/activate?tenantId=${encodeURIComponent(state.tenantId)}`, {
+          method: 'POST',
+        });
+        const json = await res.json();
+        if (json.success) {
+          if (json.data) state.data = json.data;
+          if (json.stats) state.stats = json.stats;
+          if (json.maps) state.projects = json.maps;
+        }
+      } catch (e) {
+        console.warn('[MAPS] Error activando mapa:', e);
+      }
+    }
+
+    const activeMap = getActiveMap();
+    if (activeMap) {
+      state.activeMapId = activeMap.id;
+      // Sincronizar datos locales con el mapa seleccionado
+      state.data.center = activeMap.center || state.data.center;
+      state.data.zoom = activeMap.zoom || 14;
+      state.data.nodes = activeMap.nodes || [];
+      state.data.lines = activeMap.lines || [];
+      state.data.areas = activeMap.areas || [];
+
+      // Actualizar título en el toolbar superior del editor
+      const titleEl = document.getElementById('maps-current-project-title');
+      if (titleEl) {
+        titleEl.textContent = activeMap.name || 'Mapa Activo';
+      }
+
+      // Actualizar encabezados de la biblioteca
+      const libTitle = document.getElementById('maps-lib-map-title');
+      if (libTitle) libTitle.textContent = `Biblioteca: ${activeMap.name}`;
+      const libSubtitle = document.getElementById('maps-lib-map-subtitle');
+      if (libSubtitle) {
+        libSubtitle.textContent = `Elementos en ${activeMap.district || activeMap.name}`;
+      }
+    }
+
     state.activeMode = 'map';
     const overviewEl = document.getElementById('maps-overview-view');
     const editorEl = document.getElementById('maps-editor-view');
     if (overviewEl) overviewEl.classList.add('hidden');
     if (editorEl) editorEl.classList.remove('hidden');
 
-    // Colapsar el sidebar automáticamente como pidió el usuario
+    // Colapsar el sidebar automáticamente
     if (typeof window.applySidebarState === 'function') {
       window.applySidebarState(true);
     }
 
     // Inicializar Mapbox si no está montado
     initMapbox();
+
+    if (state.map) {
+      if (activeMap && activeMap.center && Array.isArray(activeMap.center)) {
+        state.map.flyTo({
+          center: activeMap.center,
+          zoom: activeMap.zoom || 14,
+          essential: true,
+        });
+      }
+      renderAllMapLayers();
+    }
+
+    // Actualizar biblioteca y badges
+    updateLibraryBadge();
+    renderLibraryList();
 
     // Redimensionar el mapa tras el cambio de layout para asegurar 100% ancho y alto
     [50, 150, 300, 600, 1000].forEach(ms => {
@@ -471,13 +811,17 @@
     if (editorEl) editorEl.classList.add('hidden');
     if (overviewEl) overviewEl.classList.remove('hidden');
 
+    // Cerrar biblioteca flotante si estaba abierta
+    toggleLibraryDrawer(false);
+
     // Descolapsar sidebar si el usuario lo prefiere
     if (typeof window.applySidebarState === 'function') {
       window.applySidebarState(false);
     }
 
-    // Actualizar cards y tablas con datos recientes
+    // Actualizar cards y listado de proyectos con datos recientes
     renderOverviewCards();
+    renderMapProjectsGrid();
     renderEntitiesTables();
   }
 
@@ -1548,6 +1892,7 @@
     }
 
     const payload = {
+      mapId: state.activeMapId,
       name,
       type,
       color,
@@ -1584,7 +1929,13 @@
         closeModal('maps-node-modal');
         setTool('select');
         await loadMapsModule();
+        const am = getActiveMap();
+        if (am) {
+          state.data.nodes = am.nodes || [];
+        }
         renderAllMapLayers();
+        renderLibraryList();
+        updateLibraryBadge();
       } else {
         showToast(json.message || 'Error al guardar nodo', 'error');
       }
@@ -1608,7 +1959,13 @@
       if (json.success) {
         showToast('Punto eliminado exitosamente.', 'info');
         await loadMapsModule();
+        const am = getActiveMap();
+        if (am) {
+          state.data.nodes = am.nodes || [];
+        }
         renderAllMapLayers();
+        renderLibraryList();
+        updateLibraryBadge();
       }
     } catch (e) {
       showToast('Error al eliminar punto.', 'error');
@@ -1690,6 +2047,7 @@
           return;
         }
         const payload = {
+          mapId: state.activeMapId,
           name,
           type,
           color,
@@ -1711,7 +2069,13 @@
           closeModal('maps-line-modal');
           state.editingLine = null;
           await loadMapsModule();
+          const am = getActiveMap();
+          if (am) {
+            state.data.lines = am.lines || [];
+          }
           renderAllMapLayers();
+          renderLibraryList();
+          updateLibraryBadge();
         } else {
           showToast(json.message || 'Error al actualizar línea.', 'error');
         }
@@ -1725,6 +2089,7 @@
           return;
         }
         const payload = {
+          mapId: state.activeMapId,
           name,
           type,
           color,
@@ -1746,7 +2111,13 @@
           closeModal('maps-line-modal');
           setTool('select');
           await loadMapsModule();
+          const am = getActiveMap();
+          if (am) {
+            state.data.lines = am.lines || [];
+          }
           renderAllMapLayers();
+          renderLibraryList();
+          updateLibraryBadge();
         } else {
           showToast(json.message || 'Error al guardar línea.', 'error');
         }
@@ -1770,7 +2141,13 @@
       if (json.success) {
         showToast('Trazado eliminado.', 'info');
         await loadMapsModule();
+        const am = getActiveMap();
+        if (am) {
+          state.data.lines = am.lines || [];
+        }
         renderAllMapLayers();
+        renderLibraryList();
+        updateLibraryBadge();
       }
     } catch (e) {
       showToast('Error al eliminar línea.', 'error');
@@ -1845,6 +2222,7 @@
           return;
         }
         const payload = {
+          mapId: state.activeMapId,
           name,
           fillColor,
           strokeColor,
@@ -1865,7 +2243,13 @@
           closeModal('maps-area-modal');
           state.editingArea = null;
           await loadMapsModule();
+          const am = getActiveMap();
+          if (am) {
+            state.data.areas = am.areas || [];
+          }
           renderAllMapLayers();
+          renderLibraryList();
+          updateLibraryBadge();
         } else {
           showToast(json.message || 'Error al actualizar zona.', 'error');
         }
@@ -1879,6 +2263,7 @@
           return;
         }
         const payload = {
+          mapId: state.activeMapId,
           name,
           fillColor,
           strokeColor,
@@ -1899,7 +2284,13 @@
           closeModal('maps-area-modal');
           setTool('select');
           await loadMapsModule();
+          const am = getActiveMap();
+          if (am) {
+            state.data.areas = am.areas || [];
+          }
           renderAllMapLayers();
+          renderLibraryList();
+          updateLibraryBadge();
         } else {
           showToast(json.message || 'Error al guardar área.', 'error');
         }
@@ -1923,7 +2314,13 @@
       if (json.success) {
         showToast('Área eliminada.', 'info');
         await loadMapsModule();
+        const am = getActiveMap();
+        if (am) {
+          state.data.areas = am.areas || [];
+        }
         renderAllMapLayers();
+        renderLibraryList();
+        updateLibraryBadge();
       }
     } catch (e) {
       showToast('Error al eliminar área.', 'error');
@@ -3071,12 +3468,26 @@
     const container = document.getElementById('maps-library-items-list');
     if (!container) return;
 
+    const activeMap = getActiveMap();
+    const mapName = activeMap ? activeMap.name : 'Mapa Activo';
+    const libTitle = document.getElementById('maps-lib-map-title');
+    if (libTitle) libTitle.textContent = `Biblioteca: ${mapName}`;
+    const libSubtitle = document.getElementById('maps-lib-map-subtitle');
+    if (libSubtitle) {
+      libSubtitle.textContent = activeMap ? `Elementos en ${activeMap.district || activeMap.name}` : 'Elementos del mapa actual';
+    }
+
     const q = state.librarySearchQuery;
     const tab = state.libraryFilter;
 
-    const nodes = (state.data.nodes || []).map(n => ({ ...n, _category: 'node' }));
-    const lines = (state.data.lines || []).map(l => ({ ...l, _category: 'line' }));
-    const areas = (state.data.areas || []).map(a => ({ ...a, _category: 'area' }));
+    // Obtener elementos EXCLUSIVAMENTE del mapa activo
+    const sourceNodes = (activeMap ? activeMap.nodes : state.data.nodes) || [];
+    const sourceLines = (activeMap ? activeMap.lines : state.data.lines) || [];
+    const sourceAreas = (activeMap ? activeMap.areas : state.data.areas) || [];
+
+    const nodes = sourceNodes.map(n => ({ ...n, _category: 'node' }));
+    const lines = sourceLines.map(l => ({ ...l, _category: 'line' }));
+    const areas = sourceAreas.map(a => ({ ...a, _category: 'area' }));
 
     // Actualizar contadores
     const cntAll = document.getElementById('maps-lib-cnt-all');
@@ -3112,8 +3523,8 @@
       container.innerHTML = `
         <div class="p-6 text-center text-slate-400">
           <svg class="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-          <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">No se encontraron elementos</p>
-          <p class="text-[11px] text-slate-400 mt-0.5">Pruebe con otro término de búsqueda.</p>
+          <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">No se encontraron elementos en ${escapeHtml(mapName)}</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Agregue puntos, líneas o zonas a este mapa.</p>
         </div>
       `;
       return;
@@ -3221,8 +3632,13 @@
 
   function flyToElement(type, id) {
     if (!state.map) return;
+    const activeMap = getActiveMap();
+    const sourceNodes = (activeMap ? activeMap.nodes : state.data.nodes) || [];
+    const sourceLines = (activeMap ? activeMap.lines : state.data.lines) || [];
+    const sourceAreas = (activeMap ? activeMap.areas : state.data.areas) || [];
+
     if (type === 'node') {
-      const node = (state.data.nodes || []).find(n => n.id === id);
+      const node = sourceNodes.find(n => n.id === id);
       if (node) {
         state.map.flyTo({ center: [node.lng, node.lat], zoom: 17, essential: true });
         const marker = state.markers.find(m => {
@@ -3234,13 +3650,13 @@
         }
       }
     } else if (type === 'line') {
-      const line = (state.data.lines || []).find(l => l.id === id);
+      const line = sourceLines.find(l => l.id === id);
       if (line && line.coordinates && line.coordinates.length > 0) {
         const mid = line.coordinates[Math.floor(line.coordinates.length / 2)];
         state.map.flyTo({ center: mid, zoom: 16, essential: true });
       }
     } else if (type === 'area') {
-      const area = (state.data.areas || []).find(a => a.id === id);
+      const area = sourceAreas.find(a => a.id === id);
       if (area && area.coordinates && area.coordinates.length > 0) {
         const mid = area.coordinates[0];
         state.map.flyTo({ center: mid, zoom: 15, essential: true });
@@ -3252,7 +3668,11 @@
   }
 
   function updateLibraryBadge() {
-    const total = (state.data.nodes || []).length + (state.data.lines || []).length + (state.data.areas || []).length;
+    const activeMap = getActiveMap();
+    const sourceNodes = (activeMap ? activeMap.nodes : state.data.nodes) || [];
+    const sourceLines = (activeMap ? activeMap.lines : state.data.lines) || [];
+    const sourceAreas = (activeMap ? activeMap.areas : state.data.areas) || [];
+    const total = sourceNodes.length + sourceLines.length + sourceAreas.length;
     const badge = document.getElementById('maps-library-badge-count');
     if (badge) badge.textContent = total;
   }
@@ -3325,6 +3745,16 @@
     handleLibrarySearch,
     renderLibraryList,
     flyToElement,
+    updateLibraryBadge,
+    // Gestión Multi-Mapa
+    getActiveMap,
+    renderMapProjectsGrid,
+    handleProjectSearch,
+    openCreateMapModal,
+    closeCreateMapModal,
+    setProjectCoordsPreset,
+    submitMapProjectForm,
+    deleteMapProject,
   };
 
   // Manejo de tecla Escape para cerrar visor lightbox, modal de fotos o drawer

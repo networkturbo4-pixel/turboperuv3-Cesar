@@ -1,5 +1,6 @@
 import { FastifyPluginAsync } from "fastify";
 import os from "os";
+import { dbCircuitBreaker } from "../../db";
 
 export const healthRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get("/health", async (_request, reply) => {
@@ -12,6 +13,7 @@ export const healthRoutes: FastifyPluginAsync = async (fastify) => {
       uptimeSeconds: Math.floor(process.uptime()),
       environment: process.env.NODE_ENV || "development",
       engine: "Fastify + TypeScript + Drizzle",
+      databaseCircuitBreaker: dbCircuitBreaker.getStatus(),
       system: {
         platform: os.platform(),
         cpus: os.cpus().length,

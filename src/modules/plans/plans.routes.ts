@@ -2,8 +2,8 @@ import { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
-import { db, schema } from "../../db";
-import { eq } from "drizzle-orm";
+import { db, schema, dbCircuitBreaker } from "../../db";
+import { eq, and } from "drizzle-orm";
 import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
@@ -171,15 +171,21 @@ export const plansRoutes: FastifyPluginAsync = async (fastify) => {
     saveServicesToDisk(tenantId, services);
 
     try {
-      await db.insert(schema.plans).values({
-        name: newService.name,
-        downloadSpeedMbps: newService.downloadSpeedMbps,
-        uploadSpeedMbps: newService.uploadSpeedMbps,
-        price: newService.price,
-        currency: newService.currency,
-        burstLimit: newService.burstLimit,
-        priority: newService.priority,
-      });
+      await dbCircuitBreaker.executeSafe(
+        async () => {
+          await db.insert(schema.plans).values({
+            tenantId,
+            name: newService.name,
+            downloadSpeedMbps: newService.downloadSpeedMbps,
+            uploadSpeedMbps: newService.uploadSpeedMbps,
+            price: newService.price,
+            currency: newService.currency,
+            burstLimit: newService.burstLimit,
+            priority: newService.priority,
+          });
+        },
+        () => null
+      );
     } catch {}
 
     return reply.status(201).send({ success: true, tenantId, data: newService });
@@ -217,18 +223,23 @@ export const plansRoutes: FastifyPluginAsync = async (fastify) => {
     syncCustomersServiceUpdate(tenantId, serviceId, updated.name, speedStr);
 
     try {
-      await db
-        .update(schema.plans)
-        .set({
-          name: updated.name,
-          downloadSpeedMbps: updated.downloadSpeedMbps,
-          uploadSpeedMbps: updated.uploadSpeedMbps,
-          price: updated.price,
-          currency: updated.currency,
-          burstLimit: updated.burstLimit,
-          priority: updated.priority,
-        })
-        .where(eq(schema.plans.id, serviceId));
+      await dbCircuitBreaker.executeSafe(
+        async () => {
+          await db
+            .update(schema.plans)
+            .set({
+              name: updated.name,
+              downloadSpeedMbps: updated.downloadSpeedMbps,
+              uploadSpeedMbps: updated.uploadSpeedMbps,
+              price: updated.price,
+              currency: updated.currency,
+              burstLimit: updated.burstLimit,
+              priority: updated.priority,
+            })
+            .where(and(eq(schema.plans.id, serviceId), eq(schema.plans.tenantId, tenantId)));
+        },
+        () => null
+      );
     } catch {}
 
     return reply.send({
@@ -255,7 +266,12 @@ export const plansRoutes: FastifyPluginAsync = async (fastify) => {
     saveServicesToDisk(tenantId, services);
 
     try {
-      await db.delete(schema.plans).where(eq(schema.plans.id, serviceId));
+      await dbCircuitBreaker.executeSafe(
+        async () => {
+          await db.delete(schema.plans).where(and(eq(schema.plans.id, serviceId), eq(schema.plans.tenantId, tenantId)));
+        },
+        () => null
+      );
     } catch {}
 
     return reply.send({

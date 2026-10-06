@@ -2,7 +2,7 @@ import { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
-import { db, schema } from "../../db";
+import { db, schema, dbCircuitBreaker } from "../../db";
 import { eq } from "drizzle-orm";
 import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
 
@@ -374,8 +374,13 @@ export const customersRoutes: FastifyPluginAsync = async (fastify) => {
     const { search, status } = request.query as { search?: string; status?: string };
 
     try {
-      const data = await db.select().from(schema.customers);
-      if (data.length > 0) {
+      const data = await dbCircuitBreaker.executeSafe(
+        async () => {
+          return await db.select().from(schema.customers).where(eq(schema.customers.tenantId, tenantId));
+        },
+        () => []
+      );
+      if (data && data.length > 0) {
         let filtered = data as any[];
         if (status) filtered = filtered.filter((c) => c.status === status);
         if (search) {
@@ -479,15 +484,21 @@ export const customersRoutes: FastifyPluginAsync = async (fastify) => {
     saveCustomersToDisk(tenantId, customers);
 
     try {
-      await db.insert(schema.customers).values({
-        customerCode: newCustomer.customerCode,
-        fullName: newCustomer.fullName,
-        identification: newCustomer.identification,
-        phone: newCustomer.phone,
-        email: newCustomer.email,
-        address: newCustomer.address,
-        status: newCustomer.status as any,
-      });
+      await dbCircuitBreaker.executeSafe(
+        async () => {
+          await db.insert(schema.customers).values({
+            tenantId,
+            customerCode: newCustomer.customerCode,
+            fullName: newCustomer.fullName,
+            identification: newCustomer.identification,
+            phone: newCustomer.phone,
+            email: newCustomer.email,
+            address: newCustomer.address,
+            status: newCustomer.status as any,
+          });
+        },
+        () => null
+      );
     } catch {
       // Guardado exitoso en almacenamiento persistente
     }

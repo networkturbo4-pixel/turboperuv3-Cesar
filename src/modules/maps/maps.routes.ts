@@ -7,6 +7,11 @@ import {
   calculateHaversineDistance,
   calculatePolygonAreaKm2,
   getTenantCustomersWithCoordinates,
+  createMapProject,
+  updateMapProject,
+  deleteMapProject,
+  setActiveMapProject,
+  syncActiveMapFields,
 } from "./maps.service";
 import { MapNode, MapLine, MapArea } from "./maps.types";
 
@@ -14,17 +19,137 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
   // 1. Obtener datos completos del mapa para el tenant activo
   fastify.get("/maps/data", async (request, reply) => {
     const tenantId = resolveTenantId(request);
+    const { mapId } = (request.query as { mapId?: string }) || {};
     const data = loadMapData(tenantId);
+
+    if (mapId && Array.isArray(data.maps) && data.maps.some((m) => m.id === mapId)) {
+      data.activeMapId = mapId;
+      syncActiveMapFields(data);
+      saveMapData(data, tenantId);
+    }
+
     const stats = calculateMapStats(data);
     const customers = getTenantCustomersWithCoordinates(tenantId);
 
     return reply.send({
       success: true,
       tenantId,
+      activeMapId: data.activeMapId,
+      maps: data.maps,
       data,
       stats,
       customers,
     });
+  });
+
+  // 1b. Obtener listado de proyectos/mapas del tenant
+  fastify.get("/maps/projects", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const data = loadMapData(tenantId);
+    const stats = calculateMapStats(data);
+
+    return reply.send({
+      success: true,
+      tenantId,
+      activeMapId: data.activeMapId,
+      maps: data.maps,
+      stats,
+    });
+  });
+
+  // 1c. Crear nuevo proyecto de mapa (ej: "Mapa Zona Carabayllo")
+  fastify.post("/maps/projects", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const body = (request.body as any) || {};
+
+    if (!body.name || !body.name.trim()) {
+      return reply.status(400).send({
+        success: false,
+        message: "El nombre del mapa es requerido (ej: Mapa Zona Carabayllo).",
+      });
+    }
+
+    try {
+      const { data, newProject } = createMapProject(tenantId, body);
+      const stats = calculateMapStats(data);
+      return reply.send({
+        success: true,
+        message: `Mapa "${newProject.name}" creado exitosamente.`,
+        project: newProject,
+        activeMapId: data.activeMapId,
+        maps: data.maps,
+        data,
+        stats,
+      });
+    } catch (err: any) {
+      return reply.status(400).send({ success: false, message: err.message });
+    }
+  });
+
+  // 1d. Actualizar un proyecto de mapa
+  fastify.put("/maps/projects/:id", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const body = (request.body as any) || {};
+
+    try {
+      const { data, updatedProject } = updateMapProject(tenantId, id, body);
+      const stats = calculateMapStats(data);
+      return reply.send({
+        success: true,
+        message: `Mapa "${updatedProject.name}" actualizado.`,
+        project: updatedProject,
+        activeMapId: data.activeMapId,
+        maps: data.maps,
+        data,
+        stats,
+      });
+    } catch (err: any) {
+      return reply.status(400).send({ success: false, message: err.message });
+    }
+  });
+
+  // 1e. Eliminar un proyecto de mapa
+  fastify.delete("/maps/projects/:id", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+
+    try {
+      const result = deleteMapProject(tenantId, id);
+      const stats = calculateMapStats(result.data);
+      return reply.send({
+        success: true,
+        message: result.message,
+        activeMapId: result.data.activeMapId,
+        maps: result.data.maps,
+        data: result.data,
+        stats,
+      });
+    } catch (err: any) {
+      return reply.status(400).send({ success: false, message: err.message });
+    }
+  });
+
+  // 1f. Activar un proyecto de mapa específico
+  fastify.post("/maps/projects/:id/activate", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+
+    try {
+      const updated = setActiveMapProject(tenantId, id);
+      const stats = calculateMapStats(updated);
+      const activeMap = updated.maps.find((m) => m.id === id);
+      return reply.send({
+        success: true,
+        message: `Mapa "${activeMap?.name || id}" activado.`,
+        activeMapId: updated.activeMapId,
+        activeMap,
+        data: updated,
+        stats,
+      });
+    } catch (err: any) {
+      return reply.status(400).send({ success: false, message: err.message });
+    }
   });
 
   // 2. Guardar estado completo del mapa (sincronización total)
@@ -39,6 +164,8 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       success: true,
       message: "Mapa y trazados guardados exitosamente.",
       tenantId,
+      activeMapId: saved.activeMapId,
+      maps: saved.maps,
       data: saved,
       stats,
     });
@@ -57,6 +184,9 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const current = loadMapData(tenantId);
+    const targetMapId = body.mapId || (request.query as any)?.mapId || current.activeMapId;
+    const targetMap = current.maps.find((m) => m.id === targetMapId) || current.maps[0];
+
     const now = new Date().toISOString();
     const newNode: MapNode = {
       id: body.id || `node_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -76,13 +206,16 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       updatedAt: now,
     };
 
-    current.nodes.push(newNode);
+    targetMap.nodes.push(newNode);
+    targetMap.updatedAt = now;
+    syncActiveMapFields(current);
     saveMapData(current, tenantId);
 
     return reply.send({
       success: true,
-      message: `Punto "${newNode.name}" creado exitosamente.`,
+      message: `Punto "${newNode.name}" creado en "${targetMap.name}".`,
       node: newNode,
+      mapId: targetMap.id,
       stats: calculateMapStats(current),
     });
   });
@@ -94,8 +227,10 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     const body = request.body as any;
 
     const current = loadMapData(tenantId);
-    const idx = current.nodes.findIndex((n) => n.id === id);
+    let targetMap = current.maps.find((m) => m.nodes.some((n) => n.id === id));
+    if (!targetMap) targetMap = current.maps.find((m) => m.id === current.activeMapId) || current.maps[0];
 
+    const idx = targetMap.nodes.findIndex((n) => n.id === id);
     if (idx === -1) {
       return reply.status(404).send({
         success: false,
@@ -103,20 +238,23 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const existing = current.nodes[idx];
-    current.nodes[idx] = {
+    const existing = targetMap.nodes[idx];
+    targetMap.nodes[idx] = {
       ...existing,
       ...body,
       id: existing.id, // Inmutable
       updatedAt: new Date().toISOString(),
     };
+    targetMap.updatedAt = new Date().toISOString();
 
+    syncActiveMapFields(current);
     saveMapData(current, tenantId);
 
     return reply.send({
       success: true,
-      message: `Nodo "${current.nodes[idx].name}" actualizado.`,
-      node: current.nodes[idx],
+      message: `Nodo "${targetMap.nodes[idx].name}" actualizado.`,
+      node: targetMap.nodes[idx],
+      mapId: targetMap.id,
       stats: calculateMapStats(current),
     });
   });
@@ -132,13 +270,21 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const current = loadMapData(tenantId);
-    const node = current.nodes.find((n) => n.id === id);
-    if (!node) {
+    let targetNode: MapNode | undefined;
+    for (const map of current.maps) {
+      const n = map.nodes.find((x) => x.id === id);
+      if (n) {
+        targetNode = n;
+        break;
+      }
+    }
+
+    if (!targetNode) {
       return reply.status(404).send({ success: false, message: "Nodo no encontrado." });
     }
 
-    if (!Array.isArray(node.photos)) {
-      node.photos = [];
+    if (!Array.isArray(targetNode.photos)) {
+      targetNode.photos = [];
     }
 
     const now = new Date();
@@ -150,21 +296,22 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       dateFormatted: body.dateFormatted || now.toLocaleString("es-PE"),
       user: body.user || "Operador",
       tenantName: body.tenantName || tenantId,
-      lat: typeof body.lat === "number" ? body.lat : node.lat,
-      lng: typeof body.lng === "number" ? body.lng : node.lng,
+      lat: typeof body.lat === "number" ? body.lat : targetNode.lat,
+      lng: typeof body.lng === "number" ? body.lng : targetNode.lng,
       notes: body.notes || "",
     };
 
-    node.photos.unshift(newPhoto); // El más reciente primero
-    node.updatedAt = now.toISOString();
+    targetNode.photos.unshift(newPhoto);
+    targetNode.updatedAt = now.toISOString();
 
+    syncActiveMapFields(current);
     saveMapData(current, tenantId);
 
     return reply.send({
       success: true,
       message: "Foto de estado agregada exitosamente.",
       photo: newPhoto,
-      photosCount: node.photos.length,
+      photosCount: targetNode.photos.length,
     });
   });
 
@@ -174,22 +321,31 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     const { id, photoId } = request.params as { id: string; photoId: string };
 
     const current = loadMapData(tenantId);
-    const node = current.nodes.find((n) => n.id === id);
-    if (!node) {
+    let targetNode: MapNode | undefined;
+    for (const map of current.maps) {
+      const n = map.nodes.find((x) => x.id === id);
+      if (n) {
+        targetNode = n;
+        break;
+      }
+    }
+
+    if (!targetNode) {
       return reply.status(404).send({ success: false, message: "Nodo no encontrado." });
     }
 
-    if (Array.isArray(node.photos)) {
-      node.photos = node.photos.filter((p) => p.id !== photoId);
+    if (Array.isArray(targetNode.photos)) {
+      targetNode.photos = targetNode.photos.filter((p) => p.id !== photoId);
     }
-    node.updatedAt = new Date().toISOString();
+    targetNode.updatedAt = new Date().toISOString();
 
+    syncActiveMapFields(current);
     saveMapData(current, tenantId);
 
     return reply.send({
       success: true,
       message: "Foto eliminada del historial.",
-      photosCount: node.photos ? node.photos.length : 0,
+      photosCount: targetNode.photos ? targetNode.photos.length : 0,
     });
   });
 
@@ -199,22 +355,30 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     const { id } = request.params as { id: string };
 
     const current = loadMapData(tenantId);
-    const initialLen = current.nodes.length;
-    current.nodes = current.nodes.filter((n) => n.id !== id);
+    let found = false;
 
-    if (current.nodes.length === initialLen) {
+    for (const map of current.maps) {
+      const initialLen = map.nodes.length;
+      map.nodes = map.nodes.filter((n) => n.id !== id);
+      if (map.nodes.length !== initialLen) {
+        found = true;
+        map.updatedAt = new Date().toISOString();
+        // Limpiar enlaces dependientes en este mapa
+        for (const line of map.lines) {
+          if (line.fromNodeId === id) line.fromNodeId = undefined;
+          if (line.toNodeId === id) line.toNodeId = undefined;
+        }
+      }
+    }
+
+    if (!found) {
       return reply.status(404).send({
         success: false,
         message: `Nodo con ID "${id}" no encontrado.`,
       });
     }
 
-    // Limpiar enlaces que dependían de este nodo si es necesario
-    for (const line of current.lines) {
-      if (line.fromNodeId === id) line.fromNodeId = undefined;
-      if (line.toNodeId === id) line.toNodeId = undefined;
-    }
-
+    syncActiveMapFields(current);
     saveMapData(current, tenantId);
 
     return reply.send({
@@ -243,6 +407,9 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const current = loadMapData(tenantId);
+    const targetMapId = body.mapId || (request.query as any)?.mapId || current.activeMapId;
+    const targetMap = current.maps.find((m) => m.id === targetMapId) || current.maps[0];
+
     const now = new Date().toISOString();
     const newLine: MapLine = {
       id: body.id || `line_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -262,13 +429,17 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       updatedAt: now,
     };
 
-    current.lines.push(newLine);
+    targetMap.lines.push(newLine);
+    targetMap.updatedAt = now;
+
+    syncActiveMapFields(current);
     saveMapData(current, tenantId);
 
     return reply.send({
       success: true,
-      message: `Trazado "${newLine.name}" guardado (${(newLine.distanceMeters / 1000).toFixed(2)} km).`,
+      message: `Trazado "${newLine.name}" guardado (${(newLine.distanceMeters / 1000).toFixed(2)} km) en "${targetMap.name}".`,
       line: newLine,
+      mapId: targetMap.id,
       stats: calculateMapStats(current),
     });
   });
@@ -280,8 +451,10 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     const body = request.body as any;
 
     const current = loadMapData(tenantId);
-    const idx = current.lines.findIndex((l) => l.id === id);
+    let targetMap = current.maps.find((m) => m.lines.some((l) => l.id === id));
+    if (!targetMap) targetMap = current.maps.find((m) => m.id === current.activeMapId) || current.maps[0];
 
+    const idx = targetMap.lines.findIndex((l) => l.id === id);
     if (idx === -1) {
       return reply.status(404).send({
         success: false,
@@ -289,7 +462,7 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const existing = current.lines[idx];
+    const existing = targetMap.lines[idx];
     const coords = Array.isArray(body.coordinates) ? body.coordinates : existing.coordinates;
 
     let totalDist = 0;
@@ -297,7 +470,7 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       totalDist += calculateHaversineDistance(coords[i], coords[i + 1]);
     }
 
-    current.lines[idx] = {
+    targetMap.lines[idx] = {
       ...existing,
       ...body,
       coordinates: coords,
@@ -305,13 +478,16 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       id: existing.id,
       updatedAt: new Date().toISOString(),
     };
+    targetMap.updatedAt = new Date().toISOString();
 
+    syncActiveMapFields(current);
     saveMapData(current, tenantId);
 
     return reply.send({
       success: true,
-      message: `Trazado "${current.lines[idx].name}" actualizado.`,
-      line: current.lines[idx],
+      message: `Trazado "${targetMap.lines[idx].name}" actualizado.`,
+      line: targetMap.lines[idx],
+      mapId: targetMap.id,
       stats: calculateMapStats(current),
     });
   });
@@ -322,16 +498,25 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     const { id } = request.params as { id: string };
 
     const current = loadMapData(tenantId);
-    const initialLen = current.lines.length;
-    current.lines = current.lines.filter((l) => l.id !== id);
+    let found = false;
 
-    if (current.lines.length === initialLen) {
+    for (const map of current.maps) {
+      const initialLen = map.lines.length;
+      map.lines = map.lines.filter((l) => l.id !== id);
+      if (map.lines.length !== initialLen) {
+        found = true;
+        map.updatedAt = new Date().toISOString();
+      }
+    }
+
+    if (!found) {
       return reply.status(404).send({
         success: false,
         message: `Línea con ID "${id}" no encontrada.`,
       });
     }
 
+    syncActiveMapFields(current);
     saveMapData(current, tenantId);
 
     return reply.send({
@@ -355,8 +540,10 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
 
     const surface = calculatePolygonAreaKm2(body.coordinates);
     const current = loadMapData(tenantId);
-    const now = new Date().toISOString();
+    const targetMapId = body.mapId || (request.query as any)?.mapId || current.activeMapId;
+    const targetMap = current.maps.find((m) => m.id === targetMapId) || current.maps[0];
 
+    const now = new Date().toISOString();
     const newArea: MapArea = {
       id: body.id || `area_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       name: body.name.trim(),
@@ -372,13 +559,17 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       updatedAt: now,
     };
 
-    current.areas.push(newArea);
+    targetMap.areas.push(newArea);
+    targetMap.updatedAt = now;
+
+    syncActiveMapFields(current);
     saveMapData(current, tenantId);
 
     return reply.send({
       success: true,
-      message: `Zona "${newArea.name}" guardada (${newArea.surfaceAreaKm2} km²).`,
+      message: `Zona "${newArea.name}" guardada (${newArea.surfaceAreaKm2} km²) en "${targetMap.name}".`,
       area: newArea,
+      mapId: targetMap.id,
       stats: calculateMapStats(current),
     });
   });
@@ -390,8 +581,10 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     const body = request.body as any;
 
     const current = loadMapData(tenantId);
-    const idx = current.areas.findIndex((a) => a.id === id);
+    let targetMap = current.maps.find((m) => m.areas.some((a) => a.id === id));
+    if (!targetMap) targetMap = current.maps.find((m) => m.id === current.activeMapId) || current.maps[0];
 
+    const idx = targetMap.areas.findIndex((a) => a.id === id);
     if (idx === -1) {
       return reply.status(404).send({
         success: false,
@@ -399,11 +592,11 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const existing = current.areas[idx];
+    const existing = targetMap.areas[idx];
     const coords = Array.isArray(body.coordinates) ? body.coordinates : existing.coordinates;
     const surface = calculatePolygonAreaKm2(coords);
 
-    current.areas[idx] = {
+    targetMap.areas[idx] = {
       ...existing,
       ...body,
       coordinates: coords,
@@ -411,13 +604,16 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       id: existing.id,
       updatedAt: new Date().toISOString(),
     };
+    targetMap.updatedAt = new Date().toISOString();
 
+    syncActiveMapFields(current);
     saveMapData(current, tenantId);
 
     return reply.send({
       success: true,
-      message: `Zona "${current.areas[idx].name}" actualizada.`,
-      area: current.areas[idx],
+      message: `Zona "${targetMap.areas[idx].name}" actualizada.`,
+      area: targetMap.areas[idx],
+      mapId: targetMap.id,
       stats: calculateMapStats(current),
     });
   });
@@ -428,16 +624,25 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     const { id } = request.params as { id: string };
 
     const current = loadMapData(tenantId);
-    const initialLen = current.areas.length;
-    current.areas = current.areas.filter((a) => a.id !== id);
+    let found = false;
 
-    if (current.areas.length === initialLen) {
+    for (const map of current.maps) {
+      const initialLen = map.areas.length;
+      map.areas = map.areas.filter((a) => a.id !== id);
+      if (map.areas.length !== initialLen) {
+        found = true;
+        map.updatedAt = new Date().toISOString();
+      }
+    }
+
+    if (!found) {
       return reply.status(404).send({
         success: false,
         message: `Área con ID "${id}" no encontrada.`,
       });
     }
 
+    syncActiveMapFields(current);
     saveMapData(current, tenantId);
 
     return reply.send({

@@ -88,15 +88,48 @@ export interface MapboxSettings {
   defaultZoom: number;
 }
 
-export interface MapTenantData {
-  tenantId: string;
-  center: [number, number];
+export interface MapProject {
+  id: string;
+  name: string;
+  district?: string;
+  description?: string;
+  color?: string;
+  center: [number, number]; // [lng, lat]
   zoom: number;
-  style: string;
+  style?: string;
   nodes: MapNode[];
   lines: MapLine[];
   areas: MapArea[];
+  createdAt: string;
   updatedAt: string;
+}
+
+export interface MapProjectStats {
+  id: string;
+  name: string;
+  district?: string;
+  color?: string;
+  totalNodes: number;
+  totalLines: number;
+  totalAreas: number;
+  totalDistanceKm: number;
+  totalSurfaceKm2: number;
+  nodesByType: Record<string, number>;
+  linesByType: Record<string, number>;
+}
+
+export interface MapTenantData {
+  tenantId: string;
+  activeMapId: string;
+  maps: MapProject[];
+  updatedAt: string;
+  // Campos de compatibilidad sincronizados con el mapa activo:
+  center?: [number, number];
+  zoom?: number;
+  style?: string;
+  nodes?: MapNode[];
+  lines?: MapLine[];
+  areas?: MapArea[];
 }
 
 export interface MapStats {
@@ -107,4 +140,5 @@ export interface MapStats {
   totalSurfaceKm2: number;
   nodesByType: Record<string, number>;
   linesByType: Record<string, number>;
+  projects?: MapProjectStats[];
 }
