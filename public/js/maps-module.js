@@ -59,6 +59,11 @@
     },
     mapboxToken: '',
     mapStyle: 'mapbox://styles/mapbox/satellite-streets-v12',
+    newNodePhotos: [], // Fotos agregadas en modal de creación/edición de punto
+    activePhotoNodeId: null, // ID del nodo actualmente abierto en modal de fotos
+    libraryFilter: 'all', // 'all' | 'nodes' | 'lines' | 'areas'
+    librarySearchQuery: '',
+    activeLightboxPhoto: null,
   };
 
   // Iconos predefinidos SVG nítidos y vectoriales
@@ -178,6 +183,7 @@
     // Renderizar las Cards de Resumen del Módulo
     renderOverviewCards();
     renderEntitiesTables();
+    updateLibraryBadge();
 
     // Actualizar indicador de permisos en el HUD
     updatePermissionsUI();
@@ -507,11 +513,24 @@
         center: state.data.center || [-77.0368, -12.0970],
         zoom: state.data.zoom || 14,
         attributionControl: false,
+        trackResize: true,
+        touchZoomRotate: true,
+        touchPitch: true,
+        fadeDuration: 0, // Elimina transiciones lentas de tile en GPUs móviles
+        preserveDrawingBuffer: false, // Libera memoria RAM y GPU
+        maxTileCacheSize: 50, // Límite eficiente para no saturar memoria en móviles
       });
 
       // Controles nativos no invasivos
       map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'bottom-right');
       map.addControl(new mapboxgl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-left');
+
+      // Aceleración por hardware para el canvas del mapa
+      const canvasEl = map.getCanvas();
+      if (canvasEl) {
+        canvasEl.style.transform = 'translate3d(0, 0, 0)';
+        canvasEl.style.willChange = 'transform';
+      }
 
       // Observador de cambio de dimensiones para ajustar el canvas automáticamente
       if (window.ResizeObserver && container) {
@@ -744,10 +763,11 @@
     const iconDef = NODE_ICONS[node.type] || NODE_ICONS.custom;
     const color = node.color || '#2563eb';
 
-    // Si tiene imagen personalizada URL
+    // Si tiene imagen personalizada (customImage) o icono externo
     let innerContent = '';
-    if (node.icon && (node.icon.startsWith('http') || node.icon.startsWith('data:image'))) {
-      innerContent = `<img src="${node.icon}" class="w-full h-full object-cover rounded-full" alt="Icon">`;
+    const imgSource = node.customImage || (node.icon && (node.icon.startsWith('http') || node.icon.startsWith('data:image')) ? node.icon : null);
+    if (imgSource) {
+      innerContent = `<img src="${imgSource}" class="w-full h-full object-cover rounded-full" alt="Icon">`;
     } else {
       innerContent = `<div class="w-3.5 h-3.5 text-white">${iconDef.svg}</div>`;
     }
@@ -768,14 +788,17 @@
       </div>
     `;
 
+    const photosList = Array.isArray(node.photos) ? node.photos : [];
+    const photoCount = photosList.length;
+
     // Popup detallado interactivo de ALTO CONTRASTE (Modo Claro & Oscuro)
     const popupHtml = `
       <div class="w-72 bg-white dark:bg-[var(--surface-dark,#18181b)] rounded-2xl overflow-hidden shadow-2xl text-slate-900 dark:text-white border border-slate-200 dark:border-white/10">
         <!-- Header con gradiente suave del color del nodo -->
         <div class="p-3.5 flex items-center justify-between border-b border-slate-100 dark:border-white/10" style="background: linear-gradient(135deg, ${color}20, transparent);">
           <div class="flex items-center space-x-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-sm flex-shrink-0" style="background-color: ${color}">
-              <span class="w-4 h-4">${iconDef.svg}</span>
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-sm flex-shrink-0 overflow-hidden" style="background-color: ${color}">
+              ${imgSource ? `<img src="${imgSource}" class="w-full h-full object-cover">` : `<span class="w-4 h-4">${iconDef.svg}</span>`}
             </div>
             <div class="min-w-0">
               <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">${escapeHtml(node.name)}</h4>
@@ -789,6 +812,28 @@
 
         <!-- Body de datos técnicos -->
         <div class="p-3.5 space-y-2 text-xs">
+          <!-- Preview de foto o botón de fotos -->
+          ${(imgSource || photoCount > 0) ? `
+          <div class="flex items-center space-x-2.5 p-2 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/5">
+            <div class="relative w-11 h-11 rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 flex-shrink-0 cursor-pointer" onclick="mapsModule.openLightbox('${imgSource || photosList[0].url}', 'Punto: ${escapeHtml(node.name)}')">
+              <img src="${imgSource || photosList[0].thumbnail || photosList[0].url}" class="w-full h-full object-cover" alt="Foto">
+            </div>
+            <div class="flex-1 min-w-0">
+              <span class="text-[10px] text-slate-400 font-semibold block">Fotos de Estado</span>
+              <button type="button" onclick="mapsModule.openPhotosModal('${node.id}')" class="mt-0.5 px-2 py-0.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-[10.5px] font-bold transition flex items-center space-x-1 shadow-xs">
+                <span>📸 Historial (${photoCount})</span>
+              </button>
+            </div>
+          </div>
+          ` : `
+          <div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-white/5">
+            <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Fotos de Estado</span>
+            <button type="button" onclick="mapsModule.openPhotosModal('${node.id}')" class="px-2 py-0.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10.5px] font-bold transition border border-indigo-500/20">
+              <span>+ Tomar Foto</span>
+            </button>
+          </div>
+          `}
+
           <div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-white/5">
             <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Coordenadas</span>
             <button type="button" onclick="navigator.clipboard.writeText('${node.lat}, ${node.lng}'); showToast('Coordenadas copiadas al portapapeles', 'info');" class="font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200 hover:text-blue-500 dark:hover:text-blue-400 transition flex items-center gap-1" title="Copiar coordenadas">
@@ -815,23 +860,26 @@
           ` : ''}
         </div>
 
-        <!-- Footer con Acciones (Editar, Compartir, Eliminar) -->
-        <div class="p-2.5 bg-slate-50 dark:bg-white/[0.02] border-t border-slate-100 dark:border-white/10 flex items-center justify-between gap-1.5">
-          <div class="flex items-center space-x-1.5">
+        <!-- Footer con Acciones (Editar, Fotos, Compartir, Eliminar) -->
+        <div class="p-2.5 bg-slate-50 dark:bg-white/[0.02] border-t border-slate-100 dark:border-white/10 flex items-center justify-between gap-1">
+          <div class="flex items-center space-x-1">
             ${can('maps:edit') ? `
-            <button type="button" onclick="mapsModule.openEditNodeModal('${node.id}')" class="px-2.5 py-1.5 rounded-xl bg-white dark:bg-white/10 text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/20 text-xs font-semibold flex items-center space-x-1 shadow-2xs transition">
+            <button type="button" onclick="mapsModule.openEditNodeModal('${node.id}')" class="px-2 py-1.5 rounded-xl bg-white dark:bg-white/10 text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/20 text-xs font-semibold flex items-center space-x-1 shadow-2xs transition">
               <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
               <span>Editar</span>
             </button>
             ` : `
-            <button type="button" disabled class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-white/5 text-xs font-semibold flex items-center space-x-1 opacity-40 cursor-not-allowed" title="Sin permiso de edición">
+            <button type="button" disabled class="px-2 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-white/5 text-xs font-semibold flex items-center space-x-1 opacity-40 cursor-not-allowed" title="Sin permiso de edición">
               <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
               <span>Editar</span>
             </button>
             `}
-            <button type="button" onclick="mapsModule.openShareModal('node', '${node.id}')" class="px-2.5 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-semibold flex items-center space-x-1 border border-emerald-500/20 transition" title="Compartir por WhatsApp o Chat">
+            <button type="button" onclick="mapsModule.openPhotosModal('${node.id}')" class="px-2 py-1.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 text-xs font-semibold flex items-center space-x-1 border border-indigo-500/20 transition" title="Línea de tiempo de fotos">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+              <span>Fotos</span>
+            </button>
+            <button type="button" onclick="mapsModule.openShareModal('node', '${node.id}')" class="px-2 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-semibold flex items-center space-x-1 border border-emerald-500/20 transition" title="Compartir por WhatsApp o Chat">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-              <span>Compartir</span>
             </button>
           </div>
           ${can('maps:delete') ? `
@@ -1409,6 +1457,7 @@
   // Modal Nodo
   function openCreateNodeModal(coords) {
     state.editingNode = null;
+    state.newNodePhotos = [];
     const modal = document.getElementById('maps-node-modal');
     if (!modal) return;
 
@@ -1424,8 +1473,17 @@
     document.getElementById('maps-node-address').value = '';
     document.getElementById('maps-node-notes').value = '';
 
+    // Reset de imagen personalizada
+    const customImgInput = document.getElementById('maps-node-custom-image-data');
+    if (customImgInput) customImgInput.value = '';
+    const customPreviewBox = document.getElementById('maps-node-custom-preview-box');
+    if (customPreviewBox) customPreviewBox.classList.add('hidden');
+    const customPreviewImg = document.getElementById('maps-node-custom-preview-img');
+    if (customPreviewImg) customPreviewImg.src = '';
+
     renderColorPickerGrid('maps-node-color', '#2563eb');
     renderIconSelector('maps-node-type', 'nap');
+    renderNewNodePhotosGrid();
 
     modal.classList.remove('hidden');
   }
@@ -1434,6 +1492,7 @@
     const node = (state.data.nodes || []).find(n => n.id === nodeId);
     if (!node) return;
     state.editingNode = node;
+    state.newNodePhotos = [];
 
     const modal = document.getElementById('maps-node-modal');
     if (!modal) return;
@@ -1449,8 +1508,24 @@
     document.getElementById('maps-node-address').value = node.address || '';
     document.getElementById('maps-node-notes').value = node.notes || '';
 
+    // Imagen personalizada existente
+    const customImgInput = document.getElementById('maps-node-custom-image-data');
+    const customPreviewBox = document.getElementById('maps-node-custom-preview-box');
+    const customPreviewImg = document.getElementById('maps-node-custom-preview-img');
+
+    if (node.customImage) {
+      if (customImgInput) customImgInput.value = node.customImage;
+      if (customPreviewImg) customPreviewImg.src = node.customImage;
+      if (customPreviewBox) customPreviewBox.classList.remove('hidden');
+    } else {
+      if (customImgInput) customImgInput.value = '';
+      if (customPreviewImg) customPreviewImg.src = '';
+      if (customPreviewBox) customPreviewBox.classList.add('hidden');
+    }
+
     renderColorPickerGrid('maps-node-color', node.color || '#2563eb');
     renderIconSelector('maps-node-type', node.type || 'nap');
+    renderNewNodePhotosGrid();
 
     modal.classList.remove('hidden');
   }
@@ -1460,6 +1535,7 @@
     const type = document.getElementById('maps-node-type')?.value;
     const color = document.getElementById('maps-node-color')?.value;
     const iconUrl = document.getElementById('maps-node-icon-url')?.value?.trim();
+    const customImageData = document.getElementById('maps-node-custom-image-data')?.value?.trim();
     const lat = parseFloat(document.getElementById('maps-node-lat')?.value);
     const lng = parseFloat(document.getElementById('maps-node-lng')?.value);
     const capacity = document.getElementById('maps-node-capacity')?.value?.trim();
@@ -1476,6 +1552,8 @@
       type,
       color,
       icon: iconUrl || type,
+      customImage: customImageData || (iconUrl && (iconUrl.startsWith('http') || iconUrl.startsWith('data:image')) ? iconUrl : undefined),
+      photos: state.editingNode ? (Array.isArray(state.editingNode.photos) ? state.editingNode.photos.concat(state.newNodePhotos) : state.newNodePhotos) : state.newNodePhotos,
       lat,
       lng,
       capacity,
@@ -2478,6 +2556,707 @@
       .replace(/"/g, '&quot;');
   }
 
+  // ========================================================
+  // 21. SISTEMA DE FOTOS, MARCA DE AGUA & BIBLIOTECA GIS
+  // ========================================================
+
+  function getActiveTenantName() {
+    const tenantBadge = document.getElementById('maps-tenant-badge-map') || document.getElementById('maps-tenant-badge');
+    if (tenantBadge && tenantBadge.textContent) return tenantBadge.textContent.trim();
+    if (typeof window.activeTenantId !== 'undefined' && typeof window.tenantsList !== 'undefined') {
+      const t = window.tenantsList.find(x => x.id === window.activeTenantId);
+      if (t && t.name) return t.name;
+    }
+    return state.tenantId || 'TurboNetwork Perú';
+  }
+
+  function getActiveUserName() {
+    const userEl = document.getElementById('sidebar-user-name');
+    if (userEl && userEl.textContent && userEl.textContent !== '--') return userEl.textContent.trim();
+    if (typeof window.currentUser !== 'undefined' && window.currentUser && window.currentUser.name) {
+      return window.currentUser.name;
+    }
+    return 'Operador FTTH';
+  }
+
+  /**
+   * Genera foto con Marca de Agua indeleble grabada con Canvas HTML5
+   * - Tenant / Empresa activa
+   * - Coordenadas GPS (Latitud, Longitud)
+   * - Fecha y hora local
+   * - Usuario / Operador autenticado
+   * - Optimización fluida para dispositivos móviles
+   */
+  async function generateWatermarkedPhoto(fileOrBlob, metadata) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            // Máximo 1600px para calidad nítida sin agotar memoria móvil ni red
+            const maxDim = 1600;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            // Dibujar imagen original
+            ctx.drawImage(img, 0, 0, w, h);
+
+            // Metadatos
+            const now = new Date();
+            const dateFormatted = metadata.dateFormatted || now.toLocaleString('es-PE', {
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+            const tenantName = metadata.tenantName || getActiveTenantName();
+            const userName = metadata.userName || getActiveUserName();
+            const lat = typeof metadata.lat === 'number' ? metadata.lat.toFixed(6) : (metadata.lat || '--');
+            const lng = typeof metadata.lng === 'number' ? metadata.lng.toFixed(6) : (metadata.lng || '--');
+            const notes = (metadata.notes || '').trim();
+
+            // Altura del banner inferior
+            const bannerHeight = Math.max(90, Math.round(h * 0.13));
+            const bannerY = h - bannerHeight;
+
+            // Fondo translúcido con gradiente de contraste
+            const grad = ctx.createLinearGradient(0, bannerY, 0, h);
+            grad.addColorStop(0, 'rgba(15, 23, 42, 0.82)');
+            grad.addColorStop(1, 'rgba(2, 6, 23, 0.96)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, bannerY, w, bannerHeight);
+
+            // Borde superior azul brillante
+            ctx.fillStyle = '#2563eb';
+            ctx.fillRect(0, bannerY, w, Math.max(3, Math.round(h * 0.004)));
+
+            // Sombra para contraste garantizado
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+
+            const baseFontSize = Math.max(13, Math.round(w * 0.016));
+            const titleFontSize = Math.max(15, Math.round(w * 0.019));
+
+            // Línea 1: Empresa + Badge
+            ctx.font = `bold ${titleFontSize}px "Inter", "Segoe UI", sans-serif`;
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillText(`🏢 ${tenantName.toUpperCase()}`, 24, bannerY + (bannerHeight * 0.32));
+
+            ctx.font = `bold ${Math.round(baseFontSize * 0.9)}px "Inter", "Segoe UI", sans-serif`;
+            ctx.fillStyle = '#4ade80';
+            const verifiedText = '✓ GPS CERTIFICADO';
+            const verifiedWidth = ctx.measureText(verifiedText).width;
+            ctx.fillText(verifiedText, w - verifiedWidth - 24, bannerY + (bannerHeight * 0.32));
+
+            // Línea 2: Coords y Fecha
+            ctx.font = `600 ${baseFontSize}px "Inter", "Segoe UI", sans-serif`;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(`📍 Coords: ${lat}, ${lng}   |   📅 ${dateFormatted}`, 24, bannerY + (bannerHeight * 0.62));
+
+            // Línea 3: Operador y Nota
+            ctx.font = `500 ${Math.round(baseFontSize * 0.95)}px "Inter", "Segoe UI", sans-serif`;
+            ctx.fillStyle = '#cbd5e1';
+            const opText = `👤 Operador: ${userName}${notes ? `   |   📝 ${notes}` : ''}`;
+            ctx.fillText(opText, 24, bannerY + (bannerHeight * 0.88));
+
+            // Exportar data URL JPEG
+            const fullDataUrl = canvas.toDataURL('image/jpeg', 0.84);
+
+            // Generar miniatura rápida para timeline
+            const thumbCanvas = document.createElement('canvas');
+            const thumbW = 240;
+            const thumbH = Math.round((h * thumbW) / w);
+            thumbCanvas.width = thumbW;
+            thumbCanvas.height = thumbH;
+            const thumbCtx = thumbCanvas.getContext('2d');
+            thumbCtx.drawImage(canvas, 0, 0, thumbW, thumbH);
+            const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.72);
+
+            resolve({
+              id: `photo_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+              url: fullDataUrl,
+              thumbnail: thumbDataUrl,
+              timestamp: now.toISOString(),
+              dateFormatted,
+              user: userName,
+              tenantName,
+              lat: typeof metadata.lat === 'number' ? metadata.lat : parseFloat(lat) || 0,
+              lng: typeof metadata.lng === 'number' ? metadata.lng : parseFloat(lng) || 0,
+              notes,
+            });
+          } catch (err) {
+            reject(err);
+          }
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(fileOrBlob);
+    });
+  }
+
+  // Manejo de imagen personalizada de punto (PC o Cámara)
+  function handleCustomNodeImage(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        // Redimensionar para icono de pin en mapa (avatar optimizado)
+        const maxDim = 350;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+          else { w = Math.round((w * maxDim) / h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', 0.85);
+
+        const input = document.getElementById('maps-node-custom-image-data');
+        const previewBox = document.getElementById('maps-node-custom-preview-box');
+        const previewImg = document.getElementById('maps-node-custom-preview-img');
+
+        if (input) input.value = compressed;
+        if (previewImg) previewImg.src = compressed;
+        if (previewBox) previewBox.classList.remove('hidden');
+
+        showToast('Foto del marcador cargada con éxito', 'success');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeCustomNodeImage() {
+    const input = document.getElementById('maps-node-custom-image-data');
+    const previewBox = document.getElementById('maps-node-custom-preview-box');
+    const previewImg = document.getElementById('maps-node-custom-preview-img');
+    if (input) input.value = '';
+    if (previewImg) previewImg.src = '';
+    if (previewBox) previewBox.classList.add('hidden');
+  }
+
+  // Galería de fotos iniciales en creación / edición de punto
+  async function handleInitialNodePhoto(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    const lat = parseFloat(document.getElementById('maps-node-lat')?.value) || 0;
+    const lng = parseFloat(document.getElementById('maps-node-lng')?.value) || 0;
+
+    showToast('Generando foto con marca de agua...', 'info');
+    try {
+      const photo = await generateWatermarkedPhoto(file, {
+        lat,
+        lng,
+        tenantName: getActiveTenantName(),
+        userName: getActiveUserName(),
+        notes: 'Foto inicial registrada con el punto'
+      });
+
+      state.newNodePhotos.push(photo);
+      renderNewNodePhotosGrid();
+      showToast('Foto agregada a la galería inicial', 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('Error al procesar la foto', 'error');
+    } finally {
+      event.target.value = '';
+    }
+  }
+
+  function renderNewNodePhotosGrid() {
+    const grid = document.getElementById('maps-node-form-photos-grid');
+    const countBadge = document.getElementById('maps-node-form-photos-count');
+    if (countBadge) countBadge.textContent = `${state.newNodePhotos.length} fotos`;
+    if (!grid) return;
+
+    if (state.newNodePhotos.length === 0) {
+      grid.innerHTML = '<span class="text-[11px] text-slate-400 italic">No hay fotos añadidas aún.</span>';
+      return;
+    }
+
+    grid.innerHTML = state.newNodePhotos.map((p, idx) => `
+      <div class="relative group w-14 h-14 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-xs">
+        <img src="${p.thumbnail || p.url}" class="w-full h-full object-cover cursor-pointer" onclick="mapsModule.openLightbox('${p.url}', 'Foto Inicial #${idx + 1}')">
+        <button type="button" onclick="mapsModule.removeInitialNodePhoto(${idx})" class="absolute top-0.5 right-0.5 w-4 h-4 bg-rose-600 text-white rounded-full flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition shadow-sm">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function removeInitialNodePhoto(index) {
+    state.newNodePhotos.splice(index, 1);
+    renderNewNodePhotosGrid();
+  }
+
+  // Modal de Historial y Línea de Tiempo de Fotos
+  function openPhotosModal(nodeId) {
+    const node = (state.data.nodes || []).find(n => n.id === nodeId);
+    if (!node) return;
+    state.activePhotoNodeId = nodeId;
+
+    const modal = document.getElementById('maps-photos-modal');
+    if (!modal) return;
+
+    const titleEl = document.getElementById('maps-photos-modal-title');
+    const subEl = document.getElementById('maps-photos-modal-subtitle');
+    if (titleEl) titleEl.textContent = `Fotos de Estado: ${node.name}`;
+    if (subEl) subEl.textContent = `Tipo: ${node.type.toUpperCase()} | Coordenadas: ${node.lat.toFixed(5)}, ${node.lng.toFixed(5)}`;
+
+    renderPhotosTimeline(node);
+    modal.classList.remove('hidden');
+  }
+
+  function renderPhotosTimeline(node) {
+    const container = document.getElementById('maps-photos-timeline-container');
+    const badge = document.getElementById('maps-photos-count-badge');
+    const photos = Array.isArray(node.photos) ? node.photos : [];
+    if (badge) badge.textContent = `${photos.length} fotos`;
+    if (!container) return;
+
+    if (photos.length === 0) {
+      container.innerHTML = `
+        <div class="flex flex-col items-center justify-center p-8 text-center text-slate-400">
+          <svg class="w-12 h-12 text-slate-300 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+          <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">No hay fotos de estado en el historial</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Tome una foto con la cámara del celular o suba un archivo desde su PC.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-white/10">
+        ${photos.map((photo) => `
+          <div class="relative group">
+            <!-- Punto de la línea de tiempo -->
+            <div class="absolute -left-6 top-1.5 w-3.5 h-3.5 rounded-full bg-indigo-600 border-2 border-white dark:border-slate-900 shadow-sm"></div>
+            
+            <!-- Tarjeta de la foto -->
+            <div class="p-3 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200/90 dark:border-white/10 shadow-xs hover:shadow-md transition">
+              <div class="flex flex-col sm:flex-row gap-3">
+                <!-- Miniatura con botón de zoom -->
+                <div class="relative w-full sm:w-36 h-28 sm:h-24 rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex-shrink-0 cursor-pointer group/thumb" onclick="mapsModule.openLightbox('${photo.url}', 'Foto del Nodo: ${escapeHtml(node.name)}', ${JSON.stringify(photo).replace(/"/g, '&quot;')})">
+                  <img src="${photo.thumbnail || photo.url}" class="w-full h-full object-cover transition-transform duration-200 group-hover/thumb:scale-105" alt="Foto">
+                  <div class="absolute inset-0 bg-black/30 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                  </div>
+                </div>
+
+                <!-- Datos técnicos de la foto -->
+                <div class="flex-1 min-w-0 space-y-1.5 flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        ${photo.dateFormatted}
+                      </span>
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 truncate">
+                        👤 ${escapeHtml(photo.user)}
+                      </span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-2">
+                      <span>🏢 ${escapeHtml(photo.tenantName || state.tenantId)}</span>
+                      <span>•</span>
+                      <span class="font-mono">📍 ${photo.lat ? photo.lat.toFixed(5) : '--'}, ${photo.lng ? photo.lng.toFixed(5) : '--'}</span>
+                    </div>
+                    ${photo.notes ? `
+                      <p class="text-[11px] text-slate-600 dark:text-slate-300 italic bg-slate-50 dark:bg-white/[0.02] p-1.5 rounded-lg border border-slate-100 dark:border-white/5 mt-1.5">
+                        "${escapeHtml(photo.notes)}"
+                      </p>
+                    ` : ''}
+                  </div>
+
+                  <!-- Acciones -->
+                  <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5">
+                    <button type="button" onclick="mapsModule.openLightbox('${photo.url}', 'Foto del Nodo: ${escapeHtml(node.name)}', ${JSON.stringify(photo).replace(/"/g, '&quot;')})" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                      <span>Ver en Visor Completo</span>
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </button>
+                    ${can('maps:delete') ? `
+                      <button type="button" onclick="mapsModule.deletePhotoFromNode('${node.id}', '${photo.id}')" class="p-1 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-xs font-medium transition" title="Eliminar Foto del Historial">
+                        🗑️ Eliminar
+                      </button>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  async function handlePhotoUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file || !state.activePhotoNodeId) return;
+
+    const node = (state.data.nodes || []).find(n => n.id === state.activePhotoNodeId);
+    if (!node) return;
+
+    const notesInput = document.getElementById('maps-photo-notes-input');
+    const notes = notesInput ? notesInput.value.trim() : '';
+
+    showToast('Aplicando marca de agua certificada y optimizando foto...', 'info');
+
+    try {
+      const watermarked = await generateWatermarkedPhoto(file, {
+        lat: node.lat,
+        lng: node.lng,
+        tenantName: getActiveTenantName(),
+        userName: getActiveUserName(),
+        notes
+      });
+
+      const res = await fetch(`/api/maps/nodes/${node.id}/photos?tenantId=${encodeURIComponent(state.tenantId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(watermarked),
+      });
+
+      const json = await res.json();
+      if (json.success) {
+        showToast('Foto agregada a la línea de tiempo exitosamente', 'success');
+        if (!Array.isArray(node.photos)) node.photos = [];
+        node.photos.unshift(json.photo || watermarked);
+        if (notesInput) notesInput.value = '';
+        renderPhotosTimeline(node);
+        renderAllMapLayers();
+        updateLibraryBadge();
+      } else {
+        showToast(json.message || 'Error al guardar foto', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error al procesar la foto', 'error');
+    } finally {
+      event.target.value = '';
+    }
+  }
+
+  async function deletePhotoFromNode(nodeId, photoId) {
+    if (!confirm('¿Confirma que desea eliminar esta foto del historial?')) return;
+
+    try {
+      const res = await fetch(`/api/maps/nodes/${nodeId}/photos/${photoId}?tenantId=${encodeURIComponent(state.tenantId)}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast('Foto eliminada del historial', 'info');
+        const node = (state.data.nodes || []).find(n => n.id === nodeId);
+        if (node && Array.isArray(node.photos)) {
+          node.photos = node.photos.filter(p => p.id !== photoId);
+          renderPhotosTimeline(node);
+          renderAllMapLayers();
+          updateLibraryBadge();
+        }
+      } else {
+        showToast(json.message || 'Error al eliminar foto', 'error');
+      }
+    } catch (e) {
+      showToast('Error de red al eliminar foto', 'error');
+    }
+  }
+
+  // Visor Lightbox
+  function openLightbox(imgUrl, title, meta) {
+    state.activeLightboxPhoto = { url: imgUrl, title, meta };
+    const modal = document.getElementById('maps-lightbox-modal');
+    const img = document.getElementById('maps-lightbox-img');
+    const titleEl = document.getElementById('maps-lightbox-title');
+    const metaEl = document.getElementById('maps-lightbox-meta');
+    const footerEl = document.getElementById('maps-lightbox-footer-info');
+    if (!modal || !img) return;
+
+    img.src = imgUrl;
+    if (titleEl) titleEl.textContent = title || 'Visor de Foto';
+    if (metaEl) {
+      if (meta) {
+        metaEl.textContent = `${meta.dateFormatted || ''} • Operador: ${meta.user || 'Operador'} • Empresa: ${meta.tenantName || state.tenantId}`;
+      } else {
+        metaEl.textContent = 'TurboNetwork Sistema GIS';
+      }
+    }
+    if (footerEl) {
+      if (meta && (meta.lat || meta.lng)) {
+        footerEl.innerHTML = `<span class="font-mono text-emerald-400">📍 Coordenadas Certificadas: ${meta.lat}, ${meta.lng}</span>`;
+      } else {
+        footerEl.innerHTML = '';
+      }
+    }
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeLightbox() {
+    const modal = document.getElementById('maps-lightbox-modal');
+    if (modal) modal.classList.add('hidden');
+    state.activeLightboxPhoto = null;
+  }
+
+  function downloadLightboxImage() {
+    if (!state.activeLightboxPhoto || !state.activeLightboxPhoto.url) return;
+    const a = document.createElement('a');
+    a.href = state.activeLightboxPhoto.url;
+    a.download = `GIS_Foto_${Date.now()}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('Descargando imagen con marca de agua...', 'info');
+  }
+
+  // Biblioteca / Explorador de Elementos GIS
+  function toggleLibraryDrawer(forceOpen) {
+    const drawer = document.getElementById('maps-library-drawer');
+    if (!drawer) return;
+    const isOpen = !drawer.classList.contains('hidden');
+    const willOpen = typeof forceOpen === 'boolean' ? forceOpen : !isOpen;
+
+    if (willOpen) {
+      drawer.classList.remove('hidden');
+      renderLibraryList();
+    } else {
+      drawer.classList.add('hidden');
+    }
+  }
+
+  function setLibraryTab(tab) {
+    state.libraryFilter = tab;
+    ['all', 'nodes', 'lines', 'areas'].forEach(t => {
+      const btn = document.getElementById(`maps-lib-tab-${t}`);
+      if (btn) {
+        if (t === tab) {
+          btn.className = 'py-1 rounded-lg bg-indigo-600 text-white shadow-xs transition';
+        } else {
+          btn.className = 'py-1 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition';
+        }
+      }
+    });
+    renderLibraryList();
+  }
+
+  function handleLibrarySearch(query) {
+    state.librarySearchQuery = (query || '').toLowerCase().trim();
+    renderLibraryList();
+  }
+
+  function renderLibraryList() {
+    const container = document.getElementById('maps-library-items-list');
+    if (!container) return;
+
+    const q = state.librarySearchQuery;
+    const tab = state.libraryFilter;
+
+    const nodes = (state.data.nodes || []).map(n => ({ ...n, _category: 'node' }));
+    const lines = (state.data.lines || []).map(l => ({ ...l, _category: 'line' }));
+    const areas = (state.data.areas || []).map(a => ({ ...a, _category: 'area' }));
+
+    // Actualizar contadores
+    const cntAll = document.getElementById('maps-lib-cnt-all');
+    const cntNodes = document.getElementById('maps-lib-cnt-nodes');
+    const cntLines = document.getElementById('maps-lib-cnt-lines');
+    const cntAreas = document.getElementById('maps-lib-cnt-areas');
+    const badgeCount = document.getElementById('maps-library-badge-count');
+
+    const totalCount = nodes.length + lines.length + areas.length;
+    if (cntAll) cntAll.textContent = totalCount;
+    if (cntNodes) cntNodes.textContent = nodes.length;
+    if (cntLines) cntLines.textContent = lines.length;
+    if (cntAreas) cntAreas.textContent = areas.length;
+    if (badgeCount) badgeCount.textContent = totalCount;
+
+    let items = [];
+    if (tab === 'nodes') items = nodes;
+    else if (tab === 'lines') items = lines;
+    else if (tab === 'areas') items = areas;
+    else items = [...nodes, ...lines, ...areas];
+
+    if (q) {
+      items = items.filter(it => {
+        const name = (it.name || '').toLowerCase();
+        const type = (it.type || '').toLowerCase();
+        const addr = (it.address || '').toLowerCase();
+        const notes = (it.notes || '').toLowerCase();
+        return name.includes(q) || type.includes(q) || addr.includes(q) || notes.includes(q);
+      });
+    }
+
+    if (items.length === 0) {
+      container.innerHTML = `
+        <div class="p-6 text-center text-slate-400">
+          <svg class="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">No se encontraron elementos</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Pruebe con otro término de búsqueda.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = items.map(it => {
+      if (it._category === 'node') {
+        const ic = NODE_ICONS[it.type] || NODE_ICONS.custom;
+        const photoCount = Array.isArray(it.photos) ? it.photos.length : 0;
+        return `
+          <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-blue-500/40 transition space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2 min-w-0">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white flex-shrink-0 shadow-xs overflow-hidden" style="background-color: ${it.color || '#2563eb'}">
+                  ${it.customImage ? `<img src="${it.customImage}" class="w-full h-full object-cover">` : `<span class="w-3.5 h-3.5">${ic.svg}</span>`}
+                </div>
+                <div class="min-w-0">
+                  <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(it.name)}</h5>
+                  <span class="text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase">${ic.name}</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${it.status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/15 text-amber-500'}">Punto</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+              <span class="font-mono">📍 ${it.lat.toFixed(4)}, ${it.lng.toFixed(4)}</span>
+              ${photoCount > 0 ? `<span class="text-indigo-600 dark:text-indigo-400 font-bold">📸 ${photoCount} fotos</span>` : ''}
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-white/5">
+              <button type="button" onclick="mapsModule.flyToElement('node', '${it.id}')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+                <span>Volar</span>
+              </button>
+              <div class="flex items-center space-x-1">
+                <button type="button" onclick="mapsModule.openPhotosModal('${it.id}')" class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-xs font-semibold" title="Ver / Tomar Fotos">📸</button>
+                <button type="button" onclick="mapsModule.openEditNodeModal('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-blue-500 text-xs font-semibold" title="Editar">✏️</button>
+                <button type="button" onclick="mapsModule.deleteNode('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 text-xs font-semibold" title="Eliminar">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (it._category === 'line') {
+        return `
+          <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2 min-w-0">
+                <div class="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: ${it.color || '#059669'}">
+                  <div class="w-3 h-0.5 bg-white rounded-full"></div>
+                </div>
+                <div class="min-w-0">
+                  <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(it.name)}</h5>
+                  <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase">${it.type}</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Línea</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+              <span class="font-mono font-bold">${it.distanceMeters ? formatDistance(it.distanceMeters) : '--'}</span>
+              <span>${it.fiberCores || 24} hilos</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-white/5">
+              <button type="button" onclick="mapsModule.flyToElement('line', '${it.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+                <span>Volar</span>
+              </button>
+              <div class="flex items-center space-x-1">
+                <button type="button" onclick="mapsModule.openEditLineModal('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-500 text-xs font-semibold" title="Editar">✏️</button>
+                <button type="button" onclick="mapsModule.deleteLine('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 text-xs font-semibold" title="Eliminar">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (it._category === 'area') {
+        return `
+          <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-purple-500/40 transition space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2 min-w-0">
+                <div class="w-6 h-6 rounded-lg border flex-shrink-0" style="background-color: ${it.fillColor || '#3b82f6'}; border-color: ${it.strokeColor || '#1d4ed8'}"></div>
+                <div class="min-w-0">
+                  <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(it.name)}</h5>
+                  <span class="text-[10px] text-purple-600 dark:text-purple-400 font-semibold uppercase">Zona Cobertura</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400">Área</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+              <span class="font-mono font-bold">${it.surfaceAreaKm2 || 0} km²</span>
+              <span>${it.targetCustomers ? it.targetCustomers + ' abonados' : ''}</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-white/5">
+              <button type="button" onclick="mapsModule.flyToElement('area', '${it.id}')" class="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+                <span>Volar</span>
+              </button>
+              <div class="flex items-center space-x-1">
+                <button type="button" onclick="mapsModule.openEditAreaModal('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-purple-500 text-xs font-semibold" title="Editar">✏️</button>
+                <button type="button" onclick="mapsModule.deleteArea('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 text-xs font-semibold" title="Eliminar">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      return '';
+    }).join('');
+  }
+
+  function flyToElement(type, id) {
+    if (!state.map) return;
+    if (type === 'node') {
+      const node = (state.data.nodes || []).find(n => n.id === id);
+      if (node) {
+        state.map.flyTo({ center: [node.lng, node.lat], zoom: 17, essential: true });
+        const marker = state.markers.find(m => {
+          const lngLat = m.getLngLat();
+          return Math.abs(lngLat.lng - node.lng) < 0.0001 && Math.abs(lngLat.lat - node.lat) < 0.0001;
+        });
+        if (marker && marker.getPopup()) {
+          setTimeout(() => marker.togglePopup(), 600);
+        }
+      }
+    } else if (type === 'line') {
+      const line = (state.data.lines || []).find(l => l.id === id);
+      if (line && line.coordinates && line.coordinates.length > 0) {
+        const mid = line.coordinates[Math.floor(line.coordinates.length / 2)];
+        state.map.flyTo({ center: mid, zoom: 16, essential: true });
+      }
+    } else if (type === 'area') {
+      const area = (state.data.areas || []).find(a => a.id === id);
+      if (area && area.coordinates && area.coordinates.length > 0) {
+        const mid = area.coordinates[0];
+        state.map.flyTo({ center: mid, zoom: 15, essential: true });
+      }
+    }
+    if (window.innerWidth < 640) {
+      toggleLibraryDrawer(false);
+    }
+  }
+
+  function updateLibraryBadge() {
+    const total = (state.data.nodes || []).length + (state.data.lines || []).length + (state.data.areas || []).length;
+    const badge = document.getElementById('maps-library-badge-count');
+    if (badge) badge.textContent = total;
+  }
+
   // Exponer API global
   window.mapsModule = {
     state,
@@ -2527,7 +3306,47 @@
     closeModal,
     togglePopover,
     closePopover,
+    // Nuevas funcionalidades avanzadas
+    generateWatermarkedPhoto,
+    handleCustomNodeImage,
+    removeCustomNodeImage,
+    handleInitialNodePhoto,
+    renderNewNodePhotosGrid,
+    removeInitialNodePhoto,
+    openPhotosModal,
+    renderPhotosTimeline,
+    handlePhotoUpload,
+    deletePhotoFromNode,
+    openLightbox,
+    closeLightbox,
+    downloadLightboxImage,
+    toggleLibraryDrawer,
+    setLibraryTab,
+    handleLibrarySearch,
+    renderLibraryList,
+    flyToElement,
   };
+
+  // Manejo de tecla Escape para cerrar visor lightbox, modal de fotos o drawer
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const lb = document.getElementById('maps-lightbox-modal');
+      if (lb && !lb.classList.contains('hidden')) {
+        closeLightbox();
+        return;
+      }
+      const pm = document.getElementById('maps-photos-modal');
+      if (pm && !pm.classList.contains('hidden')) {
+        closeModal('maps-photos-modal');
+        return;
+      }
+      const lib = document.getElementById('maps-library-drawer');
+      if (lib && !lib.classList.contains('hidden')) {
+        toggleLibraryDrawer(false);
+        return;
+      }
+    }
+  });
 
   // Inicialización cuando el documento esté listo
   if (document.readyState === 'loading') {
@@ -2536,6 +3355,10 @@
       window.addEventListener('resize', () => {
         if (state.map && state.activeMode === 'map') state.map.resize();
       });
+    });
+  } else {
+    window.addEventListener('resize', () => {
+      if (state.map && state.activeMode === 'map') state.map.resize();
     });
   }
 })();

@@ -16,11 +16,26 @@ export type LineType =
   | 'wireless_ptp' 
   | 'copper';
 
+export interface NodePhoto {
+  id: string;
+  url: string; // Base64 con marca de agua o URL
+  thumbnail?: string;
+  timestamp: string;
+  dateFormatted: string;
+  user: string;
+  tenantName: string;
+  lat: number;
+  lng: number;
+  notes?: string;
+}
+
 export interface MapNode {
   id: string;
   name: string;
   type: NodeType;
-  icon: string; // Key or URL
+  icon: string; // Clave o URL
+  customImage?: string; // Imagen personalizada o foto tomada del punto
+  photos?: NodePhoto[]; // Línea de tiempo de fotos de estado con marca de agua
   color: string;
   lat: number;
   lng: number;

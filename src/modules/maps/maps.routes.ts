@@ -63,6 +63,8 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       name: body.name.trim(),
       type: body.type || "nap",
       icon: body.icon || "box",
+      customImage: body.customImage || (body.icon && body.icon.startsWith("data:image") ? body.icon : undefined),
+      photos: Array.isArray(body.photos) ? body.photos : [],
       color: body.color || "#2563eb",
       lat: body.lat,
       lng: body.lng,
@@ -116,6 +118,78 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       message: `Nodo "${current.nodes[idx].name}" actualizado.`,
       node: current.nodes[idx],
       stats: calculateMapStats(current),
+    });
+  });
+
+  // 4b. Agregar foto a la línea de tiempo del nodo con marca de agua
+  fastify.post("/maps/nodes/:id/photos", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const body = request.body as any;
+
+    if (!body.url) {
+      return reply.status(400).send({ success: false, message: "La imagen de la foto es requerida." });
+    }
+
+    const current = loadMapData(tenantId);
+    const node = current.nodes.find((n) => n.id === id);
+    if (!node) {
+      return reply.status(404).send({ success: false, message: "Nodo no encontrado." });
+    }
+
+    if (!Array.isArray(node.photos)) {
+      node.photos = [];
+    }
+
+    const now = new Date();
+    const newPhoto = {
+      id: body.id || `photo_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      url: body.url,
+      thumbnail: body.thumbnail || body.url,
+      timestamp: now.toISOString(),
+      dateFormatted: body.dateFormatted || now.toLocaleString("es-PE"),
+      user: body.user || "Operador",
+      tenantName: body.tenantName || tenantId,
+      lat: typeof body.lat === "number" ? body.lat : node.lat,
+      lng: typeof body.lng === "number" ? body.lng : node.lng,
+      notes: body.notes || "",
+    };
+
+    node.photos.unshift(newPhoto); // El más reciente primero
+    node.updatedAt = now.toISOString();
+
+    saveMapData(current, tenantId);
+
+    return reply.send({
+      success: true,
+      message: "Foto de estado agregada exitosamente.",
+      photo: newPhoto,
+      photosCount: node.photos.length,
+    });
+  });
+
+  // 4c. Eliminar una foto específica del historial del nodo
+  fastify.delete("/maps/nodes/:id/photos/:photoId", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, photoId } = request.params as { id: string; photoId: string };
+
+    const current = loadMapData(tenantId);
+    const node = current.nodes.find((n) => n.id === id);
+    if (!node) {
+      return reply.status(404).send({ success: false, message: "Nodo no encontrado." });
+    }
+
+    if (Array.isArray(node.photos)) {
+      node.photos = node.photos.filter((p) => p.id !== photoId);
+    }
+    node.updatedAt = new Date().toISOString();
+
+    saveMapData(current, tenantId);
+
+    return reply.send({
+      success: true,
+      message: "Foto eliminada del historial.",
+      photosCount: node.photos ? node.photos.length : 0,
     });
   });
 

@@ -3356,6 +3356,15 @@
                   <svg class="w-4 h-4 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                   <span class="hidden md:inline">Regla</span>
                 </button>
+
+                <div class="h-4 w-px bg-slate-200 dark:bg-white/10 hidden sm:block"></div>
+
+                <!-- 6. Biblioteca / Explorador de Elementos -->
+                <button type="button" id="maps-tool-library" onclick="mapsModule.toggleLibraryDrawer()" class="px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1.5 text-xs font-semibold" title="Biblioteca y Buscador Ágil de Elementos GIS">
+                  <svg class="w-4 h-4 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                  <span class="hidden md:inline">Biblioteca</span>
+                  <span id="maps-library-badge-count" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30">0</span>
+                </button>
               </div>
 
               <!-- 3. GRUPO DERECHO: LUPA CON ANIMACIÓN EXPANDIBLE + GPS + CAPAS -->
@@ -3466,10 +3475,67 @@
                   <div id="maps-node-icon-selector" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
                 </div>
 
-                <!-- O Imagen Personalizada URL -->
-                <div>
-                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">O Imagen Personalizada (URL / Icono Externo)</label>
-                  <input type="url" id="maps-node-icon-url" placeholder="https://... (opcional, reemplaza icono vectorial)" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <!-- Imagen / Foto Personalizada del Punto (PC o Cámara) -->
+                <div class="space-y-2 p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10">
+                  <div class="flex items-center justify-between">
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Imagen / Foto del Punto (Marcador)</label>
+                    <span class="text-[10px] text-slate-400">PC o Cámara Móvil</span>
+                  </div>
+
+                  <!-- Botones de Acción de Imagen -->
+                  <div class="flex items-center gap-2">
+                    <input type="file" id="maps-node-custom-file" accept="image/*" class="hidden" onchange="mapsModule.handleCustomNodeImage(event)">
+                    <button type="button" onclick="document.getElementById('maps-node-custom-file').click()" class="flex-1 py-1.5 px-2.5 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-800 dark:text-white text-xs font-semibold transition flex items-center justify-center space-x-1.5 active:scale-95">
+                      <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                      <span>📁 Desde PC</span>
+                    </button>
+
+                    <input type="file" id="maps-node-custom-camera" accept="image/*" capture="environment" class="hidden" onchange="mapsModule.handleCustomNodeImage(event)">
+                    <button type="button" onclick="document.getElementById('maps-node-custom-camera').click()" class="flex-1 py-1.5 px-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition flex items-center justify-center space-x-1.5 active:scale-95 shadow-xs">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+                      <span>📸 Tomar Foto</span>
+                    </button>
+                  </div>
+
+                  <!-- Preview de la Imagen Seleccionada -->
+                  <div id="maps-node-custom-preview-box" class="hidden flex items-center justify-between p-2 rounded-xl bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10">
+                    <div class="flex items-center space-x-2.5 min-w-0">
+                      <img id="maps-node-custom-preview-img" src="" class="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-white/10 shadow-xs" alt="Preview">
+                      <div class="min-w-0">
+                        <span class="text-xs font-bold text-slate-800 dark:text-white block truncate">Imagen personalizada activa</span>
+                        <span class="text-[10px] text-slate-400">Se mostrará en el marcador del mapa</span>
+                      </div>
+                    </div>
+                    <button type="button" onclick="mapsModule.removeCustomNodeImage()" class="p-1 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-xs font-bold" title="Quitar imagen">✕</button>
+                  </div>
+
+                  <input type="hidden" id="maps-node-custom-image-data" value="">
+                  <input type="url" id="maps-node-icon-url" placeholder="O pegar URL de imagen externa: https://..." class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Galería Inicial de Fotos de Estado (Para cuando se crea o edita) -->
+                <div class="space-y-2 p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10">
+                  <div class="flex items-center justify-between">
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Fotos de Estado (Con Marca de Agua)</label>
+                    <span id="maps-node-form-photos-count" class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">0 fotos</span>
+                  </div>
+                  
+                  <div class="flex items-center gap-2">
+                    <input type="file" id="maps-node-init-photo-file" accept="image/*" class="hidden" onchange="mapsModule.handleInitialNodePhoto(event)">
+                    <button type="button" onclick="document.getElementById('maps-node-init-photo-file').click()" class="py-1 px-2.5 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-800 dark:text-white text-[11px] font-medium transition flex items-center space-x-1 active:scale-95">
+                      <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                      <span>+ Subir Foto</span>
+                    </button>
+
+                    <input type="file" id="maps-node-init-photo-camera" accept="image/*" capture="environment" class="hidden" onchange="mapsModule.handleInitialNodePhoto(event)">
+                    <button type="button" onclick="document.getElementById('maps-node-init-photo-camera').click()" class="py-1 px-2.5 rounded-xl bg-indigo-600/15 hover:bg-indigo-600/25 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 text-[11px] font-semibold transition flex items-center space-x-1 active:scale-95">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+                      <span>📸 Tomar con Cámara</span>
+                    </button>
+                  </div>
+
+                  <!-- Miniaturas de fotos cargadas en el formulario -->
+                  <div id="maps-node-form-photos-grid" class="flex flex-wrap gap-2 pt-1"></div>
                 </div>
 
                 <!-- Color Personalizable -->
@@ -3719,7 +3785,139 @@
                 </div>
               </div>
 
+          <!-- MODAL: HISTORIAL Y LÍNEA DE TIEMPO DE FOTOS DE ESTADO CON MARCA DE AGUA -->
+          <div id="maps-photos-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md">
+            <div class="w-full max-w-2xl pro-card rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl p-5 sm:p-6 space-y-4 max-h-[92vh] flex flex-col">
+              
+              <!-- Header -->
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3 flex-shrink-0">
+                <div class="flex items-center space-x-3 min-w-0">
+                  <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center space-x-2">
+                      <h3 id="maps-photos-modal-title" class="text-base font-bold text-slate-900 dark:text-white truncate">Historial de Fotos de Estado</h3>
+                      <span id="maps-photos-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30">0 fotos</span>
+                    </div>
+                    <p id="maps-photos-modal-subtitle" class="text-xs text-slate-500 dark:text-slate-400 truncate">Punto: --</p>
+                  </div>
+                </div>
+                <button type="button" onclick="mapsModule.closeModal('maps-photos-modal')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition">✕</button>
+              </div>
+
+              <!-- Action Bar: Tomar foto con cámara o Subir foto -->
+              <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-3 flex-shrink-0">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                  <div class="flex items-center space-x-2">
+                    <!-- Cámara Móvil Directa -->
+                    <input type="file" id="maps-photo-camera-input" accept="image/*" capture="environment" class="hidden" onchange="mapsModule.handlePhotoUpload(event)">
+                    <button type="button" onclick="document.getElementById('maps-photo-camera-input').click()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md transition flex items-center justify-center space-x-1.5 active:scale-95">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+                      <span>Tomar con Cámara</span>
+                    </button>
+
+                    <!-- Subir desde PC / Galería -->
+                    <input type="file" id="maps-photo-file-input" accept="image/*" class="hidden" onchange="mapsModule.handlePhotoUpload(event)">
+                    <button type="button" onclick="document.getElementById('maps-photo-file-input').click()" class="px-3.5 py-2 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-800 dark:text-white text-xs font-semibold transition flex items-center justify-center space-x-1.5 active:scale-95">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                      <span>Subir Imagen</span>
+                    </button>
+                  </div>
+
+                  <!-- Badge de Marca de Agua Activa -->
+                  <div class="flex items-center space-x-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-500/10 px-2.5 py-1.5 rounded-xl border border-emerald-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <span>Marca de agua certificada (Empresa, GPS, Fecha, Operador)</span>
+                  </div>
+                </div>
+
+                <div>
+                  <input type="text" id="maps-photo-notes-input" placeholder="Nota técnica opcional de la foto (ej: Fusiones realizadas en splitter 1:8, estado limpio...)" class="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+              </div>
+
+              <!-- Contenedor con Scroll de la Línea de Tiempo -->
+              <div class="flex-1 overflow-y-auto sidebar-scroll pr-1 space-y-4" id="maps-photos-timeline-container">
+                <!-- Se llena dinámicamente -->
+              </div>
+
+              <!-- Footer -->
+              <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-end flex-shrink-0">
+                <button type="button" onclick="mapsModule.closeModal('maps-photos-modal')" class="px-5 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Cerrar</button>
+              </div>
+
             </div>
+          </div>
+
+          <!-- MODAL: VISOR DE FOTO COMPLETA (LIGHTBOX CON ZOOM Y DESCARGA) -->
+          <div id="maps-lightbox-modal" class="hidden fixed inset-0 z-60 flex flex-col items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-xl">
+            <!-- Barra superior del visor -->
+            <div class="w-full max-w-5xl flex items-center justify-between p-3 text-white z-10">
+              <div class="min-w-0 pr-4">
+                <h4 id="maps-lightbox-title" class="text-sm font-bold truncate">Visor de Foto de Red</h4>
+                <p id="maps-lightbox-meta" class="text-xs text-slate-300 truncate">Detalles técnicos</p>
+              </div>
+              <div class="flex items-center space-x-2 flex-shrink-0">
+                <button type="button" id="maps-lightbox-download-btn" onclick="mapsModule.downloadLightboxImage()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition flex items-center space-x-1.5 text-xs font-semibold" title="Descargar Imagen Original con Marca de Agua">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  <span class="hidden sm:inline">Descargar</span>
+                </button>
+                <button type="button" onclick="mapsModule.closeLightbox()" class="p-2 rounded-xl bg-white/10 hover:bg-rose-600 text-white transition" title="Cerrar Visor (Esc)">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Contenedor Central de la Imagen -->
+            <div class="flex-1 flex items-center justify-center overflow-hidden max-w-5xl w-full p-2 relative">
+              <img id="maps-lightbox-img" src="" alt="Visor de Foto" class="max-h-[82vh] max-w-full object-contain rounded-2xl shadow-2xl transition-transform duration-200">
+            </div>
+
+            <!-- Pie con datos de la marca de agua -->
+            <div id="maps-lightbox-footer-info" class="w-full max-w-5xl text-center p-2 text-xs text-slate-400">
+              <!-- Información de verificación de la foto -->
+            </div>
+          </div>
+
+          <!-- DRAWER / BIBLIOTECA FLOTANTE DE ELEMENTOS GIS (PUNTOS, LÍNEAS, ÁREAS) -->
+          <div id="maps-library-drawer" class="hidden absolute top-14 sm:top-16 right-2 sm:right-4 z-40 w-[calc(100vw-1rem)] sm:w-96 max-h-[calc(100vh-8.5rem)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl border border-slate-200/90 dark:border-white/15 shadow-2xl flex flex-col overflow-hidden text-slate-900 dark:text-white transition-all duration-200">
+            
+            <!-- Drawer Header -->
+            <div class="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between flex-shrink-0">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white leading-tight">Biblioteca de Red GIS</h3>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">Búsqueda rápida y navegación directa</p>
+                </div>
+              </div>
+              <button type="button" onclick="mapsModule.toggleLibraryDrawer(false)" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
+            </div>
+
+            <!-- Buscador en Vivo -->
+            <div class="p-3 border-b border-slate-200 dark:border-white/10 flex-shrink-0 space-y-2">
+              <div class="relative">
+                <input type="text" id="maps-lib-search-input" oninput="mapsModule.handleLibrarySearch(this.value)" placeholder="Buscar por nombre, tipo, referencia..." class="w-full pl-8 pr-3 py-1.5 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+
+              <!-- Segmented Tabs: Todos / Nodos / Líneas / Áreas -->
+              <div class="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-white/5 rounded-xl text-[11px] font-semibold text-center">
+                <button type="button" id="maps-lib-tab-all" onclick="mapsModule.setLibraryTab('all')" class="py-1 rounded-lg bg-indigo-600 text-white shadow-xs transition">Todos (<span id="maps-lib-cnt-all">0</span>)</button>
+                <button type="button" id="maps-lib-tab-nodes" onclick="mapsModule.setLibraryTab('nodes')" class="py-1 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">Nodos (<span id="maps-lib-cnt-nodes">0</span>)</button>
+                <button type="button" id="maps-lib-tab-lines" onclick="mapsModule.setLibraryTab('lines')" class="py-1 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">Líneas (<span id="maps-lib-cnt-lines">0</span>)</button>
+                <button type="button" id="maps-lib-tab-areas" onclick="mapsModule.setLibraryTab('areas')" class="py-1 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">Áreas (<span id="maps-lib-cnt-areas">0</span>)</button>
+              </div>
+            </div>
+
+            <!-- Listado Scrollable de Elementos -->
+            <div id="maps-library-items-list" class="flex-1 overflow-y-auto sidebar-scroll p-3 space-y-2">
+              <!-- Se puebla dinámicamente con tarjetas interactivas -->
+            </div>
+
           </div>
 
         </section>
