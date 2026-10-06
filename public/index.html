@@ -3182,8 +3182,8 @@
                       TurboNetwork
                     </span>
                   </div>
-                  <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
-                    Gestión visual de infraestructura óptica, postes, cajas NAP, empalmes, troncales y áreas poligonales de servicio con tecnología Mapbox GL.
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-normal">
+                    Infraestructura óptica GIS, postes, cajas NAP, empalmes y zonas de cobertura.
                   </p>
                 </div>
               </div>
@@ -3195,94 +3195,19 @@
                   <span>Exportar GeoJSON</span>
                 </button>
 
-                <!-- Botón Principal: Abrir Mapa en Pantalla Completa (Colapsa Sidebar) -->
-                <button type="button" onclick="mapsModule.enterMapMode()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-md transition flex items-center space-x-2 active:scale-95">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                <!-- Botón Principal: Nuevo Mapa -->
+                <button type="button" onclick="mapsModule.openCreateMapModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-white btn-brand-primary shadow-sm transition flex items-center space-x-2 active:scale-95 flex-shrink-0 cursor-pointer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
-                  <span>Ingresar al Mapa Interactivo</span>
+                  <span>+ Nuevo Mapa</span>
                 </button>
               </div>
             </div>
 
-            <!-- GRID DE 4 CARDS CON DETALLES DE LO QUE LLEVA EL MAPA -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              
-              <!-- Card 1: Puntos & Nodos de Red -->
-              <div class="pro-card p-5 rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/[0.03] to-indigo-500/[0.03] space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nodos & Puntos</span>
-                  <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                  </div>
-                </div>
-                <div class="flex items-baseline space-x-2">
-                  <span id="maps-card-nodes-count" class="text-2xl font-black text-slate-900 dark:text-white font-mono">0</span>
-                  <span class="text-xs text-slate-500 font-medium">puntos activos</span>
-                </div>
-                <div id="maps-card-nodes-badges" class="flex flex-wrap gap-1.5 pt-1">
-                  <!-- Badges dinámicos -->
-                </div>
-              </div>
-
-              <!-- Card 2: Conectores & Fibra Óptica -->
-              <div class="pro-card p-5 rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.03] to-teal-500/[0.03] space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Trazados & Fibra</span>
-                  <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                  </div>
-                </div>
-                <div class="flex items-baseline space-x-2">
-                  <span id="maps-card-lines-count" class="text-2xl font-black text-slate-900 dark:text-white font-mono">0 km</span>
-                  <span class="text-xs text-slate-500 font-medium">tendido óptico</span>
-                </div>
-                <div id="maps-card-lines-badges" class="flex flex-wrap gap-1.5 pt-1">
-                  <!-- Badges dinámicos -->
-                </div>
-              </div>
-
-              <!-- Card 3: Zonas & Cobertura -->
-              <div class="pro-card p-5 rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-500/[0.03] to-pink-500/[0.03] space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Áreas de Cobertura</span>
-                  <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                  </div>
-                </div>
-                <div class="flex items-baseline space-x-2">
-                  <span id="maps-card-areas-count" class="text-2xl font-black text-slate-900 dark:text-white font-mono">0 km²</span>
-                  <span class="text-xs text-slate-500 font-medium">área de servicio</span>
-                </div>
-                <div id="maps-card-areas-badges" class="flex flex-wrap gap-1.5 pt-1">
-                  <!-- Badges dinámicos -->
-                </div>
-              </div>
-
-              <!-- Card 4: Estado Mapbox & Satélite -->
-              <div class="pro-card p-5 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.03] to-blue-500/[0.03] space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Motor Satelital</span>
-                  <div class="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-                  </div>
-                </div>
-                <div id="maps-card-token-status" class="text-sm font-semibold">
-                  <!-- Estado Mapbox -->
-                </div>
-                <div class="pt-1">
-                  <button type="button" onclick="switchTab('config'); switchConfigSubTab('connections');" class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1">
-                    <span>Configurar Token API</span>
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                  </button>
-                </div>
-              </div>
-
-            </div>
-
             <!-- SECCIÓN: MIS MAPAS Y ZONAS DE COBERTURA (MULTI-MAPA) -->
             <div class="space-y-4">
-              <!-- Encabezado de la Sección con Buscador y Botón de Crear Mapa -->
+              <!-- Encabezado de la Sección con Buscador (Command Palette Trigger) y Acciones -->
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-white/[0.02] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
                 <div>
                   <div class="flex items-center space-x-2">
@@ -3294,16 +3219,19 @@
                 </div>
                 
                 <div class="flex items-center gap-2">
-                  <!-- Buscador de mapas -->
-                  <div class="relative w-full sm:w-60">
-                    <input type="text" id="maps-project-search-input" oninput="mapsModule.handleProjectSearch(this.value)" placeholder="Buscar mapa o distrito..." class="w-full pl-8 pr-3 py-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                    <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                  </div>
+                  <!-- Buscador como Botón que abre el Command Palette del Módulo Mapas -->
+                  <button type="button" onclick="mapsModule.openCommandPalette()" class="w-full sm:w-72 flex items-center justify-between px-3.5 py-2 bg-slate-100 hover:bg-slate-200/80 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-500 dark:text-slate-400 transition group shadow-2xs cursor-pointer" title="Buscar mapa o acciones rápidas (Ctrl+M)">
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                      <span class="truncate">Buscar mapa o comandos...</span>
+                    </div>
+                    <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-white dark:bg-white/10 border border-slate-300 dark:border-white/10 text-slate-500 dark:text-slate-400 flex-shrink-0">Ctrl+M</kbd>
+                  </button>
 
-                  <!-- Botón Crear Nuevo Mapa -->
-                  <button type="button" onclick="mapsModule.openCreateMapModal()" class="px-3.5 py-2 rounded-xl btn-brand-primary text-white text-xs font-bold transition flex items-center space-x-1.5 shadow-sm active:scale-95 flex-shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                    <span>+ Crear Nuevo Mapa</span>
+                  <!-- Botón Acciones Rápidas -->
+                  <button type="button" onclick="mapsModule.openCommandPalette()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Comandos Rápidos del Mapa (Ctrl+M)">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <span class="hidden sm:inline">Comandos</span>
                   </button>
                 </div>
               </div>
@@ -3509,6 +3437,66 @@
 
             </div>
 
+          </div>
+
+          <!-- MODAL: COMMAND PALETTE DEL MÓDULO MAPAS (BÚSQUEDA RÁPIDA & HERRAMIENTAS GIS) -->
+          <div id="maps-command-palette-modal" class="fixed inset-0 z-[350] hidden flex items-start justify-center pt-10 sm:pt-20 px-3 sm:px-6 bg-slate-950/70 dark:bg-black/80 backdrop-blur-md transition-opacity duration-150" onclick="mapsModule.handlePaletteBackdropClick(event)">
+            <div id="maps-cmd-palette-container" class="w-full max-w-2xl bg-white dark:bg-[#0c121e] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[82vh] transition-all ring-1 ring-black/5 dark:ring-white/10" onclick="event.stopPropagation()">
+              
+              <!-- Search Input Header -->
+              <div class="p-3.5 sm:p-4 border-b border-slate-200 dark:border-white/5 flex items-center gap-3 bg-slate-50/70 dark:bg-white/[0.02]">
+                <div class="w-8 h-8 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                </div>
+                <input 
+                  id="maps-cmd-palette-input" 
+                  type="text" 
+                  autocomplete="off" 
+                  spellcheck="false" 
+                  placeholder="Buscar mapa, distrito, o acción (ej: 'San Isidro', 'crear mapa', 'trazar fibra', 'regla')..." 
+                  class="w-full bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm sm:text-base font-medium focus:outline-none" 
+                  oninput="mapsModule.onCommandPaletteInput(this.value)" 
+                  onkeydown="mapsModule.onCommandPaletteKeydown(event)"
+                />
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                  <button id="maps-cmd-palette-clear-btn" type="button" onclick="mapsModule.clearCommandPaletteInput()" class="hidden p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 dark:hover:text-white transition" title="Limpiar búsqueda">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                  <kbd class="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700 shadow-2xs">ESC</kbd>
+                </div>
+              </div>
+
+              <!-- Filter Chips -->
+              <div class="px-3.5 py-2 border-b border-slate-100 dark:border-white/5 bg-slate-50/40 dark:bg-black/20 flex items-center gap-1.5 overflow-x-auto scrollbar-none text-[11px] font-medium" id="maps-cmd-chips">
+                <button type="button" onclick="mapsModule.setPaletteFilter('all')" data-filter="all" class="cmd-chip px-2.5 py-1 rounded-lg bg-blue-600 text-white shadow-xs transition whitespace-nowrap">✨ Todos</button>
+                <button type="button" onclick="mapsModule.setPaletteFilter('maps')" data-filter="maps" class="cmd-chip px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition whitespace-nowrap">🗺️ Proyectos de Mapas</button>
+                <button type="button" onclick="mapsModule.setPaletteFilter('actions')" data-filter="actions" class="cmd-chip px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition whitespace-nowrap">⚡ Acciones de Creación</button>
+                <button type="button" onclick="mapsModule.setPaletteFilter('tools')" data-filter="tools" class="cmd-chip px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition whitespace-nowrap">📐 Herramientas GIS</button>
+                <button type="button" onclick="mapsModule.setPaletteFilter('layers')" data-filter="layers" class="cmd-chip px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition whitespace-nowrap">⚙️ Capas & Satélite</button>
+              </div>
+
+              <!-- Results List -->
+              <div id="maps-cmd-results" class="flex-1 overflow-y-auto max-h-[50vh] p-2 space-y-1 select-none sidebar-scroll">
+                <!-- Se puebla dinámicamente con mapas y opciones rápidas -->
+              </div>
+
+              <!-- Footer Help Bar -->
+              <div class="p-3 bg-slate-50 dark:bg-[#070b13] border-t border-slate-200/80 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">
+                <div class="flex items-center gap-3 text-[11px]">
+                  <span class="flex items-center gap-1"><kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[10px] font-mono">↑</kbd><kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[10px] font-mono">↓</kbd> Navegar</span>
+                  <span class="flex items-center gap-1"><kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[10px] font-mono">↵</kbd> Ejecutar</span>
+                  <span class="hidden sm:flex items-center gap-1"><kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[10px] font-mono">ESC</kbd> Cerrar</span>
+                </div>
+                <div class="flex items-center gap-2 text-[11px] font-mono">
+                  <span id="maps-cmd-count" class="text-slate-500 dark:text-slate-400">0 opciones</span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                  <span class="hidden sm:inline font-sans text-slate-400 dark:text-slate-500">Mapeo GIS TurboNetwork</span>
+                </div>
+              </div>
+
+            </div>
           </div>
 
           <!-- MODAL: CREAR / EDITAR MAPA O ZONA DE COBERTURA -->

@@ -577,6 +577,432 @@
     renderMapProjectsGrid();
   }
 
+  // ========================================================
+  // COMMAND PALETTE DEL MÓDULO MAPAS
+  // ========================================================
+  let paletteFilter = 'all'; // 'all', 'maps', 'actions', 'tools', 'layers'
+  let selectedPaletteIndex = 0;
+  let currentPaletteItems = [];
+
+  function openCommandPalette() {
+    const modal = document.getElementById('maps-command-palette-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    const input = document.getElementById('maps-cmd-palette-input');
+    if (input) {
+      input.value = '';
+      setTimeout(() => input.focus(), 80);
+    }
+    const clearBtn = document.getElementById('maps-cmd-palette-clear-btn');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    paletteFilter = 'all';
+    updatePaletteChipsUI();
+    renderPaletteResults('');
+  }
+
+  function closeCommandPalette() {
+    const modal = document.getElementById('maps-command-palette-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function handlePaletteBackdropClick(e) {
+    if (e.target && e.target.id === 'maps-command-palette-modal') {
+      closeCommandPalette();
+    }
+  }
+
+  function clearCommandPaletteInput() {
+    const input = document.getElementById('maps-cmd-palette-input');
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+    const clearBtn = document.getElementById('maps-cmd-palette-clear-btn');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    renderPaletteResults('');
+  }
+
+  function onCommandPaletteInput(val) {
+    const clearBtn = document.getElementById('maps-cmd-palette-clear-btn');
+    if (clearBtn) {
+      if (val && val.length > 0) clearBtn.classList.remove('hidden');
+      else clearBtn.classList.add('hidden');
+    }
+    renderPaletteResults(val);
+  }
+
+  function setPaletteFilter(filter) {
+    paletteFilter = filter;
+    updatePaletteChipsUI();
+    const input = document.getElementById('maps-cmd-palette-input');
+    renderPaletteResults(input ? input.value : '');
+  }
+
+  function updatePaletteChipsUI() {
+    const container = document.getElementById('maps-cmd-chips');
+    if (!container) return;
+    container.querySelectorAll('.cmd-chip').forEach(btn => {
+      const f = btn.getAttribute('data-filter');
+      if (f === paletteFilter) {
+        btn.classList.add('bg-blue-600', 'text-white', 'shadow-xs');
+        btn.classList.remove('bg-slate-100', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-400');
+      } else {
+        btn.classList.remove('bg-blue-600', 'text-white', 'shadow-xs');
+        btn.classList.add('bg-slate-100', 'dark:bg-white/5', 'text-slate-600', 'dark:text-slate-400');
+      }
+    });
+  }
+
+  function getBasePaletteActions() {
+    return [
+      {
+        id: 'create-map',
+        type: 'actions',
+        icon: `<svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>`,
+        badge: 'Nuevo Proyecto',
+        badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+        title: 'Crear Nuevo Mapa de Cobertura',
+        subtitle: 'Crea un nuevo proyecto GIS con centro geográfico independiente y sector específico',
+        keywords: 'crear mapa nuevo sector proyecto distrito zona cobertura ftth',
+        action: () => {
+          closeCommandPalette();
+          openCreateMapModal();
+        }
+      },
+      {
+        id: 'fullscreen-map',
+        type: 'actions',
+        icon: `<svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>`,
+        badge: 'Visor',
+        badgeClass: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20',
+        title: 'Abrir Visor Interactivo (Pantalla Completa)',
+        subtitle: 'Accede al editor satelital del mapa activo con barra de herramientas completa',
+        keywords: 'abrir mapa interactivo visor pantalla completa satelital editor',
+        action: () => {
+          closeCommandPalette();
+          enterMapMode();
+        }
+      },
+      {
+        id: 'create-node',
+        type: 'actions',
+        icon: `<svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
+        badge: 'Infraestructura',
+        badgeClass: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20',
+        title: 'Añadir Nuevo Nodo / Poste / Caja NAP',
+        subtitle: 'Registrar punto óptico georreferenciado con tipo, capacidad y fotos de estado',
+        keywords: 'nodo punto poste caja nap mufa olt switch distribucion splitter agregar crear',
+        action: () => {
+          closeCommandPalette();
+          enterMapMode();
+          setTimeout(() => openCreateNodeModal(), 400);
+        }
+      },
+      {
+        id: 'draw-line',
+        type: 'tools',
+        icon: `<svg class="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`,
+        badge: 'Herramienta GIS',
+        badgeClass: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20',
+        title: 'Trazar Tendido de Fibra Óptica',
+        subtitle: 'Iniciar herramienta de trazado punto a punto para cable troncal o distribución',
+        keywords: 'trazar linea fibra cable optico tendido troncal distribucion adss dibujar',
+        action: () => {
+          closeCommandPalette();
+          enterMapMode();
+          setTimeout(() => startDrawLine(), 400);
+        }
+      },
+      {
+        id: 'draw-area',
+        type: 'tools',
+        icon: `<svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>`,
+        badge: 'Cobertura',
+        badgeClass: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20',
+        title: 'Dibujar Polígono de Cobertura',
+        subtitle: 'Trazar perímetro de servicio comercial con cálculo automático de superficie km²',
+        keywords: 'dibujar area poligono zona cobertura sector superficie ftth',
+        action: () => {
+          closeCommandPalette();
+          enterMapMode();
+          setTimeout(() => startDrawArea(), 400);
+        }
+      },
+      {
+        id: 'measure-ruler',
+        type: 'tools',
+        icon: `<svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>`,
+        badge: 'Medición',
+        badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+        title: 'Regla de Medición Óptica',
+        subtitle: 'Medir distancias de tendido en metros y kilómetros con precisión milimétrica',
+        keywords: 'regla medir distancia metros kilometros precision ruta regla',
+        action: () => {
+          closeCommandPalette();
+          enterMapMode();
+          setTimeout(() => toggleRulerTool(), 400);
+        }
+      },
+      {
+        id: 'open-library',
+        type: 'tools',
+        icon: `<svg class="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>`,
+        badge: 'Inventario GIS',
+        badgeClass: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20',
+        title: 'Biblioteca de Elementos & NAPs',
+        subtitle: 'Panel lateral con listado rápido y salto directo con animación flyTo',
+        keywords: 'biblioteca drawer elementos nodos nap lista postes buscar inventario',
+        action: () => {
+          closeCommandPalette();
+          enterMapMode();
+          setTimeout(() => toggleLibraryDrawer(true), 400);
+        }
+      },
+      {
+        id: 'export-geojson',
+        type: 'tools',
+        icon: `<svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>`,
+        badge: 'Exportación',
+        badgeClass: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20',
+        title: 'Exportar Infraestructura en GeoJSON',
+        subtitle: 'Descarga paquete FeatureCollection compatible con QGIS, ArcGIS y Google Earth',
+        keywords: 'exportar geojson descargar archivo qgis kml datos backup capas',
+        action: () => {
+          closeCommandPalette();
+          exportGeoJson();
+        }
+      },
+      {
+        id: 'gps-location',
+        type: 'tools',
+        icon: `<svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>`,
+        badge: 'GPS',
+        badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
+        title: 'Centrar en mi Ubicación Actual (GPS)',
+        subtitle: 'Usa la geolocalización del dispositivo para ubicarte en el mapa',
+        keywords: 'gps ubicacion actual geolocalizacion centrar posicion',
+        action: () => {
+          closeCommandPalette();
+          enterMapMode();
+          setTimeout(() => centerOnUserLocation(), 500);
+        }
+      },
+      {
+        id: 'style-satellite',
+        type: 'layers',
+        icon: `<svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`,
+        badge: 'Capa Base',
+        badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+        title: 'Estilo: Satélite Ultra-HD con Calles',
+        subtitle: 'Fotografía satelital con nombres de avenidas y manzanas',
+        keywords: 'estilo mapa satelite satelital fotogrametria imagen aerea',
+        action: () => {
+          closeCommandPalette();
+          enterMapMode();
+          setTimeout(() => setMapStyle('satellite-streets-v12'), 300);
+        }
+      },
+      {
+        id: 'style-dark',
+        type: 'layers',
+        icon: `<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>`,
+        badge: 'Capa Base',
+        badgeClass: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20',
+        title: 'Estilo: Mapa Nocturno Vectorial (Dark)',
+        subtitle: 'Diseño oscuro de alto contraste ideal para visualizar fibra brillante',
+        keywords: 'estilo oscuro dark noche vectorial contraste',
+        action: () => {
+          closeCommandPalette();
+          enterMapMode();
+          setTimeout(() => setMapStyle('dark-v11'), 300);
+        }
+      },
+      {
+        id: 'config-token',
+        type: 'layers',
+        icon: `<svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`,
+        badge: 'Ajustes',
+        badgeClass: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20',
+        title: 'Configurar Token Oficial de Mapbox GL',
+        subtitle: 'Modifica o actualiza la clave API pública para satélite y geocodificación',
+        keywords: 'token mapbox api conexiones configuracion satelite clave',
+        action: () => {
+          closeCommandPalette();
+          if (typeof switchTab === 'function') switchTab('config');
+          if (typeof switchConfigSubTab === 'function') switchConfigSubTab('connections');
+        }
+      }
+    ];
+  }
+
+  function getProjectPaletteItems() {
+    return (state.projects || []).map(p => {
+      const nodeCount = (p.nodes || []).length;
+      const lineCount = (p.lines || []).length;
+      const areaCount = (p.areas || []).length;
+      const color = p.color || '#2563eb';
+      const isActive = p.id === state.activeMapId;
+      return {
+        id: `project-${p.id}`,
+        type: 'maps',
+        icon: `<div class="w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-xs" style="background-color: ${color};"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg></div>`,
+        badge: isActive ? 'Mapa Activo' : (p.district || 'Proyecto'),
+        badgeClass: isActive ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20',
+        title: p.name,
+        subtitle: `${p.district || 'Sin distrito'} • ${nodeCount} Nodos • ${lineCount} Trazados • ${areaCount} Polígonos`,
+        keywords: `${p.name} ${p.district || ''} ${p.description || ''} mapa proyecto sector zona`,
+        action: () => {
+          closeCommandPalette();
+          enterMapMode(p.id);
+        }
+      };
+    });
+  }
+
+  function renderPaletteResults(query = '') {
+    const q = (query || '').trim().toLowerCase();
+    const resultsContainer = document.getElementById('maps-cmd-results');
+    const countBadge = document.getElementById('maps-cmd-count');
+    if (!resultsContainer) return;
+
+    let items = [...getProjectPaletteItems(), ...getBasePaletteActions()];
+
+    if (paletteFilter !== 'all') {
+      items = items.filter(it => it.type === paletteFilter);
+    }
+
+    if (q) {
+      items = items.filter(it =>
+        it.title.toLowerCase().includes(q) ||
+        it.subtitle.toLowerCase().includes(q) ||
+        (it.keywords && it.keywords.toLowerCase().includes(q))
+      );
+    }
+
+    currentPaletteItems = items;
+    selectedPaletteIndex = 0;
+
+    if (countBadge) {
+      countBadge.textContent = `${items.length} ${items.length === 1 ? 'opción' : 'opciones'}`;
+    }
+
+    if (items.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="py-12 px-4 text-center">
+          <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+          <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">No se encontraron resultados para "${escapeHtml(q)}"</p>
+          <p class="text-xs text-slate-500 mt-1">Prueba con palabras como "Carabayllo", "NAP", "fibra", "exportar" o "satélite".</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    const maps = items.filter(it => it.type === 'maps');
+    const actions = items.filter(it => it.type === 'actions');
+    const tools = items.filter(it => it.type === 'tools');
+    const layers = items.filter(it => it.type === 'layers');
+
+    let globalIndex = 0;
+
+    const renderGroup = (title, groupItems) => {
+      if (groupItems.length === 0) return '';
+      let grpHtml = `<div class="px-2 pt-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">${title}</div>`;
+      grpHtml += groupItems.map(it => {
+        const idx = globalIndex++;
+        const isSel = idx === selectedPaletteIndex;
+        return `
+          <div 
+            id="maps-cmd-item-${idx}" 
+            data-index="${idx}"
+            onclick="mapsModule.executePaletteItem(${idx})"
+            class="palette-item ${isSel ? 'bg-blue-500/10 dark:bg-blue-500/15 border-blue-500/30' : 'hover:bg-slate-100 dark:hover:bg-white/5 border-transparent'} group flex items-center justify-between p-3 rounded-xl border transition cursor-pointer"
+          >
+            <div class="flex items-center space-x-3 min-w-0">
+              <div class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                ${it.icon}
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-semibold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">${escapeHtml(it.title)}</span>
+                  <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${it.badgeClass}">${escapeHtml(it.badge)}</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${escapeHtml(it.subtitle)}</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 flex-shrink-0 pl-3">
+              <span class="text-[10px] font-medium text-slate-400 opacity-0 group-hover:opacity-100 transition">Ejecutar</span>
+              <kbd class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-200 dark:bg-slate-800 text-slate-500 border border-slate-300 dark:border-slate-700 shadow-2xs">↵</kbd>
+            </div>
+          </div>
+        `;
+      }).join('');
+      return grpHtml;
+    };
+
+    html += renderGroup('Proyectos de Mapas & Zonas', maps);
+    html += renderGroup('Acciones Rápidas & Creación', actions);
+    html += renderGroup('Herramientas GIS & Medición', tools);
+    html += renderGroup('Capas Base & Ajustes', layers);
+
+    resultsContainer.innerHTML = html;
+  }
+
+  function onCommandPaletteKeydown(e) {
+    if (e.key === 'Escape') {
+      closeCommandPalette();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (currentPaletteItems.length > 0) {
+        selectedPaletteIndex = (selectedPaletteIndex + 1) % currentPaletteItems.length;
+        updatePaletteSelectionUI();
+      }
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (currentPaletteItems.length > 0) {
+        selectedPaletteIndex = (selectedPaletteIndex - 1 + currentPaletteItems.length) % currentPaletteItems.length;
+        updatePaletteSelectionUI();
+      }
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      executePaletteItem(selectedPaletteIndex);
+      return;
+    }
+  }
+
+  function updatePaletteSelectionUI() {
+    const container = document.getElementById('maps-cmd-results');
+    if (!container) return;
+    container.querySelectorAll('.palette-item').forEach(el => {
+      const idx = parseInt(el.getAttribute('data-index'), 10);
+      if (idx === selectedPaletteIndex) {
+        el.classList.add('bg-blue-500/10', 'dark:bg-blue-500/15', 'border-blue-500/30');
+        el.classList.remove('border-transparent');
+        el.scrollIntoView({ block: 'nearest' });
+      } else {
+        el.classList.remove('bg-blue-500/10', 'dark:bg-blue-500/15', 'border-blue-500/30');
+        el.classList.add('border-transparent');
+      }
+    });
+  }
+
+  function executePaletteItem(index) {
+    if (currentPaletteItems && currentPaletteItems[index]) {
+      const item = currentPaletteItems[index];
+      if (typeof item.action === 'function') {
+        item.action();
+      }
+    }
+  }
+
   function openCreateMapModal(editMapId) {
     const modal = document.getElementById('modal-create-map-project');
     if (!modal) return;
@@ -729,6 +1155,8 @@
       try {
         const res = await fetch(`/api/maps/projects/${encodeURIComponent(mapId)}/activate?tenantId=${encodeURIComponent(state.tenantId)}`, {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
         });
         const json = await res.json();
         if (json.success) {
@@ -3755,11 +4183,35 @@
     setProjectCoordsPreset,
     submitMapProjectForm,
     deleteMapProject,
+    // Command Palette de Mapas
+    openCommandPalette,
+    closeCommandPalette,
+    handlePaletteBackdropClick,
+    clearCommandPaletteInput,
+    onCommandPaletteInput,
+    onCommandPaletteKeydown,
+    setPaletteFilter,
+    executePaletteItem,
   };
 
-  // Manejo de tecla Escape para cerrar visor lightbox, modal de fotos o drawer
+  // Manejo de tecla Escape y atajos de teclado para el módulo de mapas
   document.addEventListener('keydown', (e) => {
+    // Atajo Ctrl+M o Cmd+M para abrir Command Palette de Mapas
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
+      const tabMaps = document.getElementById('tab-maps');
+      if (tabMaps && !tabMaps.classList.contains('hidden')) {
+        e.preventDefault();
+        openCommandPalette();
+        return;
+      }
+    }
+
     if (e.key === 'Escape') {
+      const cp = document.getElementById('maps-command-palette-modal');
+      if (cp && !cp.classList.contains('hidden')) {
+        closeCommandPalette();
+        return;
+      }
       const lb = document.getElementById('maps-lightbox-modal');
       if (lb && !lb.classList.contains('hidden')) {
         closeLightbox();
