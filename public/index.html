@@ -2963,132 +2963,157 @@
         <section id="tab-dashboard" class="space-y-4 sm:space-y-6">
           
           <!-- WIDGET MODERNO: MI JORNADA LABORAL DE HOY -->
-          <div id="dash-attendance-widget" class="pro-card p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm transition">
+          <div id="dash-attendance-widget" class="pro-card p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-sm transition bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm">
             
             <!-- Fila Superior: Perfil + Tiempo en Turno / Registro -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-slate-200 dark:border-white/5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-4 border-b border-slate-100 dark:border-white/5">
               
               <!-- Info Colaborador -->
-              <div class="flex items-start gap-3 min-w-0">
-                <div class="relative flex-shrink-0 mt-0.5">
-                  <img id="dw-user-avatar" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border border-slate-300 dark:border-white/10 shadow-xs" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar">
-                  <span id="dw-birthday-avatar-badge" class="hidden absolute -top-2 -right-1 text-base select-none filter drop-shadow">🎈</span>
-                  <span id="dw-status-dot" class="absolute -bottom-1 -right-1 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-2 border-white dark:border-[#0f172a] bg-slate-400"></span>
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div class="relative flex-shrink-0">
+                  <img id="dw-user-avatar" class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl object-cover ring-2 ring-slate-100 dark:ring-white/10 shadow-xs" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar">
+                  <span id="dw-birthday-avatar-badge" class="hidden absolute -top-1.5 -right-1 text-sm select-none filter drop-shadow">🎂</span>
+                  <span id="dw-status-dot" class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-[#0f172a] bg-slate-400"></span>
                 </div>
                 <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <h3 id="dw-user-name" class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">Mi Jornada Laboral</h3>
-                    <span id="dw-badge-status" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/5">Sin registro</span>
-                    <span id="dw-birthday-tag" class="hidden px-2 py-0.5 rounded-md text-[10px] font-bold bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/25">🎂 Cumpleañero del Mes</span>
+                  <!-- Nombre y Status Badge Principal Único -->
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 id="dw-user-name" class="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 tracking-tight truncate">Mi Jornada Laboral</h3>
+                    <span id="dw-badge-status" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10">
+                      <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                      <span>Sin registro</span>
+                    </span>
+                    <span id="dw-birthday-tag" class="hidden"></span>
                   </div>
-                  <div class="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
+                  <!-- Metadatos Limpios: Rol • Horario • Sede -->
+                  <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
                     <span id="dw-user-role" class="font-medium text-slate-700 dark:text-slate-300">Operador</span>
-                    <span class="text-slate-300 dark:text-slate-600">•</span>
-                    <span class="inline-flex items-center text-[10px] sm:text-[11px] font-mono text-slate-600 dark:text-slate-400">
-                      <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span class="text-slate-300 dark:text-slate-700">•</span>
+                    <span class="inline-flex items-center gap-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                      <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                       <span id="dw-user-schedule">08:00 - 17:00</span>
                     </span>
-                    <span id="dw-tenant-badge" class="px-1.5 sm:px-2 py-0.5 rounded-md text-[9.5px] sm:text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">TurboNetwork</span>
+                    <span class="text-slate-300 dark:text-slate-700">•</span>
+                    <span id="dw-tenant-badge" class="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                      <span>TurboNetwork</span>
+                    </span>
                   </div>
+                  <!-- Saludo de Cumpleaños Sutil / Discreto -->
                   <div id="dw-birthday-greeting-box" class="hidden mt-1.5">
-                    <span id="dw-birthday-greeting-inline" class="inline-flex items-center gap-1 text-[10.5px] sm:text-[11px] font-medium text-pink-600 dark:text-pink-400 bg-pink-500/10 dark:bg-pink-500/15 border border-pink-400/25 px-2.5 py-0.5 rounded-full">
-                      🎂 ¡Feliz Mes de Cumpleaños! 🎈
+                    <span id="dw-birthday-greeting-inline" class="inline-flex items-center gap-1.5 text-[11px] font-medium text-pink-600 dark:text-pink-400 bg-pink-500/10 border border-pink-500/20 px-2.5 py-0.5 rounded-full">
+                      🎂 ¡Feliz Mes de Cumpleaños!
                     </span>
                   </div>
                 </div>
               </div>
 
               <!-- Tiempo en Turno y Botón de Marcación -->
-              <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-white/5">
-                <div class="text-left sm:text-right">
-                  <span class="text-[9.5px] sm:text-[10px] uppercase tracking-wider text-slate-400 font-semibold block">Tiempo en Turno</span>
-                  <span id="dw-timer-display" class="font-mono text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">00:00:00</span>
+              <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-white/5">
+                <div class="px-3.5 py-1.5 sm:py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/5 flex flex-col items-start sm:items-end min-w-[125px]">
+                  <div class="flex items-center gap-1.5">
+                    <span id="dw-timer-dot" class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <span class="text-[9.5px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">Tiempo en Turno</span>
+                  </div>
+                  <span id="dw-timer-display" class="font-mono text-base sm:text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100 tabular-nums">00:00:00</span>
                 </div>
-                <button type="button" onclick="openAttendanceCheckinModal(currentUser)" id="dw-btn-register-now" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+                <button type="button" onclick="openAttendanceCheckinModal(currentUser)" id="dw-btn-register-now" class="px-4 py-2 sm:py-2.5 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-2 shadow-xs hover:shadow transition whitespace-nowrap">
+                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
                   <span>Marcar Asistencia</span>
                 </button>
               </div>
             </div>
 
+            <!-- Barra de Progreso de Hitos -->
+            <div class="hidden sm:grid grid-cols-4 gap-2.5 pt-3 pb-1" id="dw-progress-stepper">
+              <div class="h-1 rounded-full bg-slate-200 dark:bg-white/10 transition-colors" id="dw-step-bar-1"></div>
+              <div class="h-1 rounded-full bg-slate-200 dark:bg-white/10 transition-colors" id="dw-step-bar-2"></div>
+              <div class="h-1 rounded-full bg-slate-200 dark:bg-white/10 transition-colors" id="dw-step-bar-3"></div>
+              <div class="h-1 rounded-full bg-slate-200 dark:bg-white/10 transition-colors" id="dw-step-bar-4"></div>
+            </div>
+
             <!-- 4 Hitos de la Jornada: 2 columnas en móvil, 4 en desktop -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 pt-3 sm:pt-4">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 pt-3">
               <!-- Hito 1: Entrada -->
-              <div class="p-2.5 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-1.5 gap-1">
-                  <span class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1 truncate">
-                    <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
-                    <span class="truncate">1. Entrada</span>
-                  </span>
-                  <span id="dw-step1-badge" class="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400 flex-shrink-0">Pendiente</span>
+              <div id="dw-step1-card" class="p-3 sm:p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 flex flex-col justify-between transition-all">
+                <div class="flex items-center justify-between gap-1 mb-2">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">1. Entrada</span>
+                  </div>
+                  <span id="dw-step1-badge" class="text-[10px] text-slate-400 font-medium flex-shrink-0">Pendiente</span>
                 </div>
-                <div class="mt-1">
-                  <div id="dw-step1-time" class="text-sm sm:text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
-                  <div id="dw-step1-sub" class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">Biometría selfie + GPS</div>
+                <div>
+                  <div id="dw-step1-time" class="text-sm sm:text-base font-bold font-mono tracking-tight text-slate-800 dark:text-slate-100 tabular-nums">--:--:--</div>
+                  <div id="dw-step1-sub" class="text-[10px] text-slate-400 mt-0.5 truncate">Biometría selfie + GPS</div>
                 </div>
               </div>
 
               <!-- Hito 2: Inicio Refrigerio -->
-              <div class="p-2.5 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-1.5 gap-1">
-                  <span class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1 truncate">
-                    <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="truncate">2. Inicio Ref.</span>
-                  </span>
-                  <span id="dw-step2-badge" class="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400 flex-shrink-0">Esperando</span>
-                </div>
-                <div class="mt-1 flex items-center justify-between gap-1">
-                  <div class="min-w-0">
-                    <div id="dw-step2-time" class="text-sm sm:text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
-                    <div class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">Pausa de almuerzo</div>
+              <div id="dw-step2-card" class="p-3 sm:p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 flex flex-col justify-between transition-all">
+                <div class="flex items-center justify-between gap-1 mb-2">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">2. Inicio Ref.</span>
                   </div>
-                  <button type="button" onclick="handleWidgetLunchStart()" id="dw-btn-lunch-start" class="hidden px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[11px] font-semibold border border-amber-500/20 transition whitespace-nowrap">
-                    Iniciar
+                  <span id="dw-step2-badge" class="text-[10px] text-slate-400 font-medium flex-shrink-0">Esperando</span>
+                </div>
+                <div>
+                  <div id="dw-step2-time" class="text-sm sm:text-base font-bold font-mono tracking-tight text-slate-800 dark:text-slate-100 tabular-nums">--:--:--</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5 truncate">Pausa de almuerzo</div>
+                  <button type="button" onclick="handleWidgetLunchStart()" id="dw-btn-lunch-start" class="hidden mt-2.5 w-full py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold shadow-xs transition whitespace-nowrap flex items-center justify-center gap-1">
+                    <span>Iniciar</span>
                   </button>
                 </div>
               </div>
 
               <!-- Hito 3: Fin Refrigerio -->
-              <div class="p-2.5 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-1.5 gap-1">
-                  <span class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1 truncate">
-                    <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="truncate">3. Fin Ref.</span>
-                  </span>
-                  <span id="dw-step3-badge" class="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400 flex-shrink-0">Esperando</span>
-                </div>
-                <div class="mt-1 flex items-center justify-between gap-1">
-                  <div class="min-w-0">
-                    <div id="dw-step3-time" class="text-sm sm:text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
-                    <div class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">Retorno a labores</div>
+              <div id="dw-step3-card" class="p-3 sm:p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 flex flex-col justify-between transition-all">
+                <div class="flex items-center justify-between gap-1 mb-2">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">3. Fin Ref.</span>
                   </div>
-                  <button type="button" onclick="handleWidgetLunchEnd()" id="dw-btn-lunch-end" class="hidden px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-[11px] font-semibold border border-blue-500/20 transition whitespace-nowrap">
-                    Finalizar
+                  <span id="dw-step3-badge" class="text-[10px] text-slate-400 font-medium flex-shrink-0">Esperando</span>
+                </div>
+                <div>
+                  <div id="dw-step3-time" class="text-sm sm:text-base font-bold font-mono tracking-tight text-slate-800 dark:text-slate-100 tabular-nums">--:--:--</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5 truncate">Retorno a labores</div>
+                  <button type="button" onclick="handleWidgetLunchEnd()" id="dw-btn-lunch-end" class="hidden mt-2.5 w-full py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold shadow-xs transition whitespace-nowrap flex items-center justify-center gap-1">
+                    <span>Finalizar</span>
                   </button>
                 </div>
               </div>
 
               <!-- Hito 4: Salida -->
-              <div class="p-2.5 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-1.5 gap-1">
-                  <span class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1 truncate">
-                    <svg class="w-3.5 h-3.5 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                    <span class="truncate">4. Salida</span>
-                  </span>
-                  <span id="dw-step4-badge" class="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400 flex-shrink-0">Esperando</span>
-                </div>
-                <div class="mt-1 flex items-center justify-between gap-1 flex-wrap">
-                  <div class="min-w-0">
-                    <div id="dw-step4-time" class="text-sm sm:text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
-                    <div class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">Fin de jornada</div>
+              <div id="dw-step4-card" class="p-3 sm:p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 flex flex-col justify-between transition-all">
+                <div class="flex items-center justify-between gap-1 mb-2">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">4. Salida</span>
                   </div>
-                  <button type="button" onclick="handleWidgetCheckOut()" id="dw-btn-checkout" class="hidden px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[11px] font-semibold border border-purple-500/20 transition whitespace-nowrap">
-                    Marcar Salida
-                  </button>
-                  <button type="button" onclick="openOvertimeAuthModal(currentTodayAttendance ? currentTodayAttendance.checkOut : '')" id="dw-btn-overtime" class="hidden px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[11px] font-semibold border border-amber-500/30 transition flex items-center space-x-1 shadow-xs">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>Extras</span>
-                  </button>
+                  <span id="dw-step4-badge" class="text-[10px] text-slate-400 font-medium flex-shrink-0">Esperando</span>
+                </div>
+                <div>
+                  <div id="dw-step4-time" class="text-sm sm:text-base font-bold font-mono tracking-tight text-slate-800 dark:text-slate-100 tabular-nums">--:--:--</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5 truncate">Fin de jornada</div>
+                  <div class="flex items-center gap-1.5 mt-2.5">
+                    <button type="button" onclick="handleWidgetCheckOut()" id="dw-btn-checkout" class="hidden w-full py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition whitespace-nowrap flex items-center justify-center gap-1">
+                      <span>Marcar Salida</span>
+                    </button>
+                    <button type="button" onclick="openOvertimeAuthModal(currentTodayAttendance ? currentTodayAttendance.checkOut : '')" id="dw-btn-overtime" class="hidden px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold border border-amber-500/30 transition flex items-center justify-center space-x-1 whitespace-nowrap">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      <span>Extras</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3099,31 +3124,42 @@
         <!-- TAB 2: CLIENTES                                          -->
         <!-- ======================================================== -->
         <section id="tab-customers" class="space-y-5 hidden">
-          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <!-- Encabezado Responsive Móvil / Escritorio -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-1">
             <div>
-              <h2 class="text-lg font-semibold tracking-tight">Directorio de Clientes</h2>
-              <p class="text-xs text-slate-400 mt-0.5">Gestión de abonados, servicios asignados, fechas de inicio y direccionamiento IP</p>
+              <h2 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">Directorio de Clientes</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Gestión de abonados, contratos, estados de servicio y direccionamiento IP</p>
             </div>
-            <div class="flex items-center gap-3 w-full sm:w-auto">
-              <input 
-                type="text" 
-                placeholder="Buscar por cliente, documento o IP..." 
-                class="bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-blue-500 w-full sm:w-72 transition font-mono"
-                oninput="handleCustomerSearch(this.value)"
-              />
-              <button type="button" onclick="openReceiptDispatchModal()" class="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/15 hover:border-blue-500/50 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white text-xs font-semibold flex items-center space-x-2 shadow-sm transition whitespace-nowrap flex-shrink-0" title="Configurar envíos automáticos de recibos en 3 etapas">
-                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <!-- Botones de Acción: en móvil comparten ancho parejo, en escritorio alineados a la derecha -->
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <button type="button" onclick="openReceiptDispatchModal()" class="flex-1 sm:flex-initial px-3.5 py-2.5 sm:py-2 rounded-xl border border-slate-300 dark:border-white/15 hover:border-blue-500/50 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white text-xs font-semibold flex items-center justify-center space-x-1.5 shadow-2xs transition whitespace-nowrap" title="Configurar envíos automáticos de recibos en 3 etapas">
+                <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span>Configurar Envíos de Recibo</span>
+                <span>Avisos de Recibo</span>
               </button>
-              <button type="button" onclick="openCreateCustomerModal()" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap flex-shrink-0">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <button type="button" onclick="openCreateCustomerModal()" class="flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 rounded-xl btn-brand-primary text-xs font-bold flex items-center justify-center space-x-1.5 shadow-sm transition whitespace-nowrap">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                <span>Nuevo Cliente</span>
+                <span>+ Nuevo Cliente</span>
               </button>
             </div>
+          </div>
+
+          <!-- Buscador Prominente y Adaptable (Totalmente Visible en Móvil y Escritorio) -->
+          <div class="relative w-full">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              placeholder="Buscar por cliente, documento, teléfono, dirección o IP..." 
+              class="w-full bg-slate-50 dark:bg-black/25 border border-slate-300 dark:border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition shadow-2xs font-mono"
+              oninput="handleCustomerSearch(this.value)"
+            />
           </div>
 
                     <!-- BARRA CONTEXTUAL DE ACCIONES MASIVAS EN CLIENTES -->
@@ -3184,12 +3220,38 @@
         <!-- TAB 3: FACTURACIÓN & COBRANZAS                           -->
         <!-- ======================================================== -->
         <section id="tab-billing" class="space-y-5 hidden">
-          <div>
-            <h2 class="text-lg font-semibold tracking-tight">Facturación & Liquidación de Cobros</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Gestión interna de recibos en efectivo, transferencias y recibos PDF</p>
+          <!-- Encabezado Responsive Móvil / Escritorio -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-1">
+            <div>
+              <h2 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">Facturación & Liquidación de Cobros</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Gestión interna de recibos en efectivo, transferencias y comprobantes PDF</p>
+            </div>
+            <!-- Botón Refrescar -->
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <button type="button" onclick="loadInvoices()" class="flex-1 sm:flex-initial px-3.5 py-2.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white text-xs font-semibold flex items-center justify-center space-x-1.5 border border-slate-300 dark:border-white/15 shadow-2xs transition" title="Refrescar lista de recibos">
+                <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Refrescar</span>
+              </button>
+            </div>
           </div>
 
-          <div class="pro-card rounded-xl overflow-hidden">
+          <!-- Buscador Prominente y Adaptable de Facturas / Recibos -->
+          <div class="relative w-full">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              id="billing-search-input"
+              placeholder="Buscar recibo por cliente, número o periodo..." 
+              class="w-full bg-slate-50 dark:bg-black/25 border border-slate-300 dark:border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition shadow-2xs font-mono"
+              oninput="handleInvoiceSearch(this.value)"
+            />
+          </div>
+
+          <div class="pro-card rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-xs">
             <!-- Vista de Tarjetas Móviles para Facturas (Pantallas < md) -->
             <div id="invoices-mobile-cards" class="md:hidden space-y-3 p-3"></div>
 
@@ -3222,14 +3284,14 @@
               <h2 class="text-lg font-semibold tracking-tight">Equipos de Red & Topología</h2>
               <p class="text-xs text-slate-400 mt-0.5">Control desacoplado para MikroTik (RouterOS v6/v7), OLTs Huawei, ZTE y VSOL</p>
             </div>
-            <div class="flex items-center flex-wrap gap-2">
-              <button type="button" onclick="syncAllMikroTikCuts()" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <div class="flex items-center flex-wrap gap-2 w-full sm:w-auto">
+              <button type="button" onclick="syncAllMikroTikCuts()" class="flex-1 sm:flex-initial px-3.5 py-2.5 sm:py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 <span>Sincronizar Cortes MikroTik</span>
               </button>
-              <button type="button" onclick="openDatabaseModal()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
-                <span>Base de Datos & PostgreSQL</span>
+              <button type="button" onclick="openDatabaseModal()" class="flex-1 sm:flex-initial px-3.5 py-2.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                <span>Base de Datos</span>
               </button>
             </div>
           </div>
@@ -4079,11 +4141,11 @@
               <h2 class="text-lg font-semibold tracking-tight">Catálogo de Servicios de Internet</h2>
               <p class="text-xs text-slate-400 mt-0.5">Gestión de servicios comerciales, velocidades simétricas/asimétricas, tecnologías y detalles del plan</p>
             </div>
-            <button type="button" onclick="openCreateServiceModal()" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap flex-shrink-0">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <button type="button" onclick="openCreateServiceModal()" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center justify-center space-x-1.5 shadow-sm transition whitespace-nowrap flex-shrink-0">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              <span>Nuevo Servicio</span>
+              <span>+ Nuevo Servicio</span>
             </button>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-4 gap-5" id="plans-container"></div>
@@ -5762,90 +5824,110 @@
           <!-- SUBTAB 1: ASISTENCIAS Y BIOMETRÍA                        -->
           <!-- ======================================================== -->
           <div id="rrhh-subtab-attendance" class="space-y-5">
-            <!-- Métricas KPI de Asistencia -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div class="pro-card p-4 rounded-xl border border-slate-200 dark:border-white/5">
+            <!-- Métricas KPI de Asistencia (2 Columnas en Móvil, 4 en Escritorio) -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div class="pro-card p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs">
                 <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                  <span>Marcaciones de Hoy</span>
-                  <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span class="truncate">Marcaciones Hoy</span>
+                  <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 </div>
-                <div class="mt-2 text-2xl font-bold font-mono text-slate-900 dark:text-slate-100" id="kpi-att-total">0</div>
-                <div class="text-[11px] text-slate-400 mt-1">Colaboradores registrados</div>
+                <div class="mt-2 text-xl sm:text-2xl font-bold font-mono text-slate-900 dark:text-slate-100" id="kpi-att-total">0</div>
+                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 truncate">Colaboradores registrados</div>
               </div>
 
-              <div class="pro-card p-4 rounded-xl border border-slate-200 dark:border-white/5">
+              <div class="pro-card p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs">
                 <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                  <span>Puntuales (A tiempo)</span>
-                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span class="truncate">Puntuales</span>
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
                 </div>
-                <div class="mt-2 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400" id="kpi-att-ontime">0</div>
-                <div class="text-[11px] text-slate-400 mt-1">Con tolerancia de 5 min</div>
+                <div class="mt-2 text-xl sm:text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400" id="kpi-att-ontime">0</div>
+                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 truncate">Con tolerancia de 5 min</div>
               </div>
 
-              <div class="pro-card p-4 rounded-xl border border-slate-200 dark:border-white/5">
+              <div class="pro-card p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs">
                 <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                  <span>Tardanzas Leves</span>
-                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span class="truncate">Tardanzas</span>
+                  <span class="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></span>
                 </div>
-                <div class="mt-2 text-2xl font-bold font-mono text-amber-600 dark:text-amber-400" id="kpi-att-late">0</div>
-                <div class="text-[11px] text-slate-400 mt-1">Entre 5 y 30 minutos</div>
+                <div class="mt-2 text-xl sm:text-2xl font-bold font-mono text-amber-600 dark:text-amber-400" id="kpi-att-late">0</div>
+                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 truncate">Entre 5 y 30 min</div>
               </div>
 
-              <div class="pro-card p-4 rounded-xl border border-slate-200 dark:border-white/5">
+              <div class="pro-card p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs">
                 <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                  <span>Bloqueados / TOTP</span>
-                  <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                  <span class="truncate">Bloqueados</span>
+                  <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse flex-shrink-0"></span>
                 </div>
-                <div class="mt-2 text-2xl font-bold font-mono text-rose-600 dark:text-rose-400" id="kpi-att-blocked">0</div>
-                <div class="text-[11px] text-slate-400 mt-1">Retraso mayor a 30 min</div>
+                <div class="mt-2 text-xl sm:text-2xl font-bold font-mono text-rose-600 dark:text-rose-400" id="kpi-att-blocked">0</div>
+                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 truncate">Retraso mayor a 30 min</div>
               </div>
             </div>
 
-            <!-- Filtros de Asistencias (Con Filtro por Usuario y Exportación PDF) -->
-            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 p-3.5 rounded-xl pro-card border border-slate-200 dark:border-white/5 text-xs">
-              <div class="flex items-center space-x-3 w-full lg:w-auto flex-wrap gap-y-2">
-                <!-- Filtro por Usuario / Colaborador -->
-                <div class="flex items-center space-x-2">
-                  <label class="text-slate-500 font-semibold uppercase tracking-wider text-[11px] flex-shrink-0">Colaborador:</label>
-                  <select id="att-filter-user" onchange="loadAttendance()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                    <option value="">👤 Todos los Colaboradores</option>
-                  </select>
+            <!-- Filtros de Asistencias (Con Buscador Prominente, Filtro por Usuario y Exportación PDF) -->
+            <div class="pro-card p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs space-y-3 text-xs">
+              <!-- Fila 1: Buscador Prominente -->
+              <div class="relative w-full">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </div>
-                <!-- Filtro por Fecha con Opción de Ver Historial Completo -->
-                <div class="flex items-center space-x-2">
-                  <label class="text-slate-500 font-semibold uppercase tracking-wider text-[11px] flex-shrink-0">Fecha:</label>
-                  <div class="flex items-center space-x-1">
-                    <input type="date" id="att-filter-date" onchange="loadAttendance()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-800 dark:text-slate-200">
-                    <button type="button" onclick="clearAttendanceDateFilter()" class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-500 text-[10px] font-bold transition whitespace-nowrap" title="Ver todo el historial (sin límite de fecha)">
-                      Ver Todo
+                <input 
+                  type="text" 
+                  id="att-filter-search" 
+                  oninput="handleAttendanceSearch(this.value)" 
+                  placeholder="Buscar marcación por colaborador o ID..." 
+                  class="w-full bg-slate-50 dark:bg-black/25 border border-slate-300 dark:border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition shadow-2xs font-mono"
+                />
+              </div>
+
+              <!-- Fila 2: Selectores de Filtro y Acciones -->
+              <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1">
+                  <!-- Filtro por Usuario / Colaborador -->
+                  <div class="flex items-center space-x-1.5 bg-slate-50 dark:bg-white/[0.03] p-1.5 rounded-xl border border-slate-200/70 dark:border-white/5">
+                    <label class="text-slate-500 font-semibold uppercase tracking-wider text-[10px] pl-1 flex-shrink-0">Personal:</label>
+                    <select id="att-filter-user" onchange="loadAttendance()" class="bg-transparent border-0 rounded-lg px-1.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 w-full focus:outline-none">
+                      <option value="">👤 Todos</option>
+                    </select>
+                  </div>
+                  <!-- Filtro por Fecha -->
+                  <div class="flex items-center space-x-1 bg-slate-50 dark:bg-white/[0.03] p-1.5 rounded-xl border border-slate-200/70 dark:border-white/5">
+                    <label class="text-slate-500 font-semibold uppercase tracking-wider text-[10px] pl-1 flex-shrink-0">Fecha:</label>
+                    <input type="date" id="att-filter-date" onchange="loadAttendance()" class="bg-transparent border-0 rounded-lg px-1 py-1 text-xs font-mono text-slate-800 dark:text-slate-200 flex-1 min-w-0 focus:outline-none">
+                    <button type="button" onclick="clearAttendanceDateFilter()" class="px-2 py-1 rounded-lg bg-slate-200/80 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/15 text-slate-600 dark:text-slate-300 text-[10px] font-bold transition whitespace-nowrap" title="Ver todo el historial">
+                      Todo
                     </button>
                   </div>
+                  <!-- Filtro por Sede -->
+                  <div class="flex items-center space-x-1.5 bg-slate-50 dark:bg-white/[0.03] p-1.5 rounded-xl border border-slate-200/70 dark:border-white/5">
+                    <label class="text-slate-500 font-semibold uppercase tracking-wider text-[10px] pl-1 flex-shrink-0">Sede:</label>
+                    <select id="att-filter-tenant" onchange="loadAttendance()" class="bg-transparent border-0 rounded-lg px-1.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 w-full focus:outline-none">
+                      <option value="current">🏢 Sede Activa</option>
+                      <option value="shared">🌐 Compartidas</option>
+                      <option value="all">📁 Global</option>
+                    </select>
+                  </div>
                 </div>
-                <!-- Filtro por Sede -->
-                <div class="flex items-center space-x-2">
-                  <label class="text-slate-500 font-semibold uppercase tracking-wider text-[11px] flex-shrink-0">Sede:</label>
-                  <select id="att-filter-tenant" onchange="loadAttendance()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                    <option value="current">🏢 Sede Activa</option>
-                    <option value="shared">🌐 Solo Compartidas</option>
-                    <option value="all">📁 Todas las Empresas (Global)</option>
-                  </select>
+
+                <!-- Botones de Acción -->
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <button type="button" onclick="exportAttendanceReportPdf()" class="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm whitespace-nowrap" title="Exportar reporte ordenado y profesional en PDF">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>📄 Exportar PDF</span>
+                  </button>
+                  <button type="button" onclick="loadAttendance()" class="p-2 sm:px-2.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 font-semibold text-slate-700 dark:text-slate-300 transition border border-slate-200 dark:border-white/10" title="Refrescar tabla">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                  </button>
                 </div>
-              </div>
-              <div class="flex items-center space-x-2 w-full lg:w-auto justify-end">
-                <input type="text" id="att-filter-search" oninput="handleAttendanceSearch(this.value)" placeholder="Buscar por colaborador..." class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 dark:text-slate-200 w-full sm:w-52 focus:outline-none focus:border-blue-500">
-                <button type="button" onclick="exportAttendanceReportPdf()" class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition flex items-center space-x-1.5 shadow-sm whitespace-nowrap" title="Exportar reporte ordenado y profesional en PDF">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                  <span>📄 Exportar PDF</span>
-                </button>
-                <button type="button" onclick="loadAttendance()" class="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 font-semibold text-slate-700 dark:text-slate-300 transition" title="Refrescar tabla">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                </button>
               </div>
             </div>
 
-            <!-- Tabla de Registros de Asistencia -->
-            <div class="pro-card rounded-xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-sm">
-              <div class="overflow-x-auto">
+            <!-- Registros de Asistencia: Tarjetas en Móvil (< md) y Tabla en Escritorio (>= md) -->
+            <div class="pro-card rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-xs">
+              <!-- Vista de Tarjetas Táctiles Móviles (< md) -->
+              <div id="attendance-mobile-cards" class="md:hidden space-y-3 p-3"></div>
+
+              <!-- Vista de Tabla Tradicional para Escritorio (>= md) -->
+              <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left text-xs">
                   <thead class="bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider text-[10px] border-b border-slate-200 dark:border-white/5">
                     <tr>
@@ -5961,11 +6043,12 @@
                 />
               </div>
 
-              <!-- Botones de Acción y Offcanvas Trigger -->
-              <div class="flex items-center flex-wrap gap-2">
+
+              <!-- Botones de Acción y Offcanvas Trigger (Grid en Móvil, Flex en Escritorio) -->
+              <div class="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
                 <!-- Botón Abrir Offcanvas de Filtros -->
-                <button type="button" onclick="openInventoryFiltersOffcanvas()" id="btn-open-inventory-filters" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-300 dark:border-white/10 transition flex items-center space-x-1.5 shadow-2xs">
-                  <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <button type="button" onclick="openInventoryFiltersOffcanvas()" id="btn-open-inventory-filters" class="flex-1 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-300 dark:border-white/10 transition flex items-center justify-center space-x-1.5 shadow-2xs">
+                  <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                   </svg>
                   <span>Filtros</span>
@@ -5973,15 +6056,15 @@
                 </button>
 
                 <!-- Botón Categorías -->
-                <button type="button" onclick="openInventoryCategoriesModal()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-300 dark:border-white/10 transition flex items-center space-x-1.5 shadow-2xs">
-                  <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                  <span>Categorías</span>
+                <button type="button" onclick="openInventoryCategoriesModal()" class="flex-1 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-300 dark:border-white/10 transition flex items-center justify-center space-x-1.5 shadow-2xs">
+                  <svg class="w-4 h-4 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                  <span class="truncate">Categorías</span>
                 </button>
 
                 <!-- Botón Nuevo Producto -->
-                <button type="button" onclick="openCreateProductModal()" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                  <span>+ Nuevo Producto</span>
+                <button type="button" onclick="openCreateProductModal()" class="flex-1 px-3 py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center justify-center space-x-1.5 shadow-sm transition whitespace-nowrap">
+                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                  <span>+ Nuevo</span>
                 </button>
               </div>
             </div>
@@ -5989,9 +6072,13 @@
             <!-- Chips Activos de Filtro Rápido (si los hay) -->
             <div id="inv-active-filter-chips" class="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 empty:hidden"></div>
 
-            <!-- Tabla de Inventario Principal de Alto Rendimiento (100vh adaptive con scroll interno suave) -->
-            <div id="inventory-table-container" class="pro-card rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-xs flex flex-col h-[calc(100vh-210px)] min-h-[500px]">
-              <div class="overflow-x-auto overflow-y-auto flex-1 scrollbar-thin">
+            <!-- Tabla & Tarjetas de Inventario Principal de Alto Rendimiento -->
+            <div id="inventory-table-container" class="pro-card rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-xs flex flex-col md:h-[calc(100vh-210px)] md:min-h-[500px]">
+              <!-- Vista de Tarjetas Táctiles para Móvil (< md) -->
+              <div id="inventory-mobile-cards" class="md:hidden space-y-3 p-3"></div>
+
+              <!-- Vista de Tabla Tradicional para Escritorio (>= md) -->
+              <div class="hidden md:block overflow-x-auto overflow-y-auto flex-1 scrollbar-thin">
                 <table class="w-full text-left text-xs border-collapse">
                   <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-[#0c1222] text-slate-500 dark:text-slate-400 uppercase font-semibold text-[10.5px] border-b border-slate-200 dark:border-white/10 shadow-2xs">
                     <tr>
@@ -6388,54 +6475,54 @@
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Supervisión interactiva en tiempo real de materiales, herramientas y EPP asignados a cada personal</p>
             </div>
-            <button type="button" onclick="openAssignmentManagerModal()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap">
+            <button type="button" onclick="openAssignmentManagerModal()" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold flex items-center justify-center space-x-1.5 shadow-sm transition whitespace-nowrap">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
               <span>+ Asignar Material</span>
             </button>
           </div>
 
-          <!-- 4 KPIs superiores -->
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="pro-card p-4 rounded-2xl flex items-center justify-between border border-slate-200 dark:border-white/10 shadow-xs">
-              <div>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Técnicos con Mochila</span>
-                <div id="kpi-mochila-techs" class="text-2xl font-bold font-mono text-slate-900 dark:text-white mt-1">0</div>
-                <span class="text-[10px] text-slate-400">Personal en campo</span>
+          <!-- 4 KPIs superiores (2 Columnas en Móvil) -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div class="pro-card p-3.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between border border-slate-200 dark:border-white/10 shadow-xs">
+              <div class="min-w-0">
+                <span class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block truncate">Técnicos</span>
+                <div id="kpi-mochila-techs" class="text-xl sm:text-2xl font-bold font-mono text-slate-900 dark:text-white mt-1">0</div>
+                <span class="text-[10px] text-slate-400 block truncate">En campo</span>
               </div>
-              <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+              <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
               </div>
             </div>
 
-            <div class="pro-card p-4 rounded-2xl flex items-center justify-between border border-slate-200 dark:border-white/10 shadow-xs">
-              <div>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Equipos & Herramientas</span>
-                <div id="kpi-mochila-tools" class="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400 mt-1">0</div>
-                <span class="text-[10px] text-slate-400">Custodia activa</span>
+            <div class="pro-card p-3.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between border border-slate-200 dark:border-white/10 shadow-xs">
+              <div class="min-w-0">
+                <span class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block truncate">Herramientas</span>
+                <div id="kpi-mochila-tools" class="text-xl sm:text-2xl font-bold font-mono text-blue-600 dark:text-blue-400 mt-1">0</div>
+                <span class="text-[10px] text-slate-400 block truncate">Custodia activa</span>
               </div>
-              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
               </div>
             </div>
 
-            <div class="pro-card p-4 rounded-2xl flex items-center justify-between border border-slate-200 dark:border-white/10 shadow-xs">
-              <div>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fibra & Insumos</span>
-                <div id="kpi-mochila-supplies" class="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">0</div>
-                <span class="text-[10px] text-slate-400">Despachados a campo</span>
+            <div class="pro-card p-3.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between border border-slate-200 dark:border-white/10 shadow-xs">
+              <div class="min-w-0">
+                <span class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block truncate">Fibra & Insumos</span>
+                <div id="kpi-mochila-supplies" class="text-xl sm:text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">0</div>
+                <span class="text-[10px] text-slate-400 block truncate">Despachados</span>
               </div>
-              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
               </div>
             </div>
 
-            <div class="pro-card p-4 rounded-2xl flex items-center justify-between border border-slate-200 dark:border-white/10 shadow-xs">
-              <div>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">EPPs Asignados</span>
-                <div id="kpi-mochila-epp" class="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400 mt-1">0</div>
-                <span class="text-[10px] text-slate-400">Protección normada</span>
+            <div class="pro-card p-3.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-between border border-slate-200 dark:border-white/10 shadow-xs">
+              <div class="min-w-0">
+                <span class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block truncate">EPPs Asignados</span>
+                <div id="kpi-mochila-epp" class="text-xl sm:text-2xl font-bold font-mono text-amber-600 dark:text-amber-400 mt-1">0</div>
+                <span class="text-[10px] text-slate-400 block truncate">Protección</span>
               </div>
-              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
               </div>
             </div>
@@ -16360,6 +16447,22 @@ Estamos atentos para brindarle asistencia inmediata.
       }
     }
 
+    function handleInvoiceSearch(q) {
+      const query = (q || '').toLowerCase().trim();
+      if (!query) {
+        renderInvoices(currentInvoices);
+        return;
+      }
+      const filtered = (currentInvoices || []).filter(inv => {
+        const num = (inv.invoiceNumber || '').toLowerCase();
+        const client = (inv.customerName || '').toLowerCase();
+        const code = (inv.customerCode || '').toLowerCase();
+        const period = (inv.period || '').toLowerCase();
+        return num.includes(query) || client.includes(query) || code.includes(query) || period.includes(query);
+      });
+      renderInvoices(filtered);
+    }
+
     async function payInvoice(id) {
       if (!confirm("¿Marcar este recibo como pagado?")) return;
       try {
@@ -19731,89 +19834,190 @@ Estamos atentos para brindarle asistencia inmediata.
 
     function renderAttendance(list) {
       const tbody = document.getElementById('attendance-table-body');
-      if (!tbody) return;
+      const mobileContainer = document.getElementById('attendance-mobile-cards');
+      if (!tbody && !mobileContainer) return;
 
       if (!list || list.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="10" class="py-8 text-center text-slate-400 text-xs font-medium">
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="10" class="py-8 text-center text-slate-400 text-xs font-medium">
+                No se registran asistencias para la fecha y sede seleccionadas.
+              </td>
+            </tr>
+          `;
+        }
+        if (mobileContainer) {
+          mobileContainer.innerHTML = `
+            <div class="p-6 text-center text-slate-400 font-medium bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-200 dark:border-white/5 text-xs">
               No se registran asistencias para la fecha y sede seleccionadas.
-            </td>
-          </tr>
-        `;
+            </div>
+          `;
+        }
         return;
       }
 
-      tbody.innerHTML = list.map(a => {
-        let statusBadge = '';
-        if (a.status === 'on_time') {
-          statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Puntual</span>';
-        } else if (a.status === 'late') {
-          statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Tarde (+${a.minutesLate}m)</span>`;
-        } else if (a.status === 'very_late_blocked') {
-          statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> BLOQUEADO (+${a.minutesLate}m)</span>`;
-        } else if (a.status === 'unlocked') {
-          statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Desbloqueado TOTP</span>';
-        }
+      // 1. Render de Tabla para Pantallas Grandes (>= md)
+      if (tbody) {
+        tbody.innerHTML = list.map(a => {
+          let statusBadge = '';
+          if (a.status === 'on_time') {
+            statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Puntual</span>';
+          } else if (a.status === 'late') {
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Tarde (+${a.minutesLate}m)</span>`;
+          } else if (a.status === 'very_late_blocked') {
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> BLOQUEADO (+${a.minutesLate}m)</span>`;
+          } else if (a.status === 'unlocked') {
+            statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Desbloqueado TOTP</span>';
+          }
 
-        const mapsLink = a.location && a.location.latitude
-          ? `https://www.google.com/maps?q=${a.location.latitude},${a.location.longitude}`
-          : '#';
+          const mapsLink = a.location && a.location.latitude
+            ? `https://www.google.com/maps?q=${a.location.latitude},${a.location.longitude}`
+            : '#';
 
-        const isPurged = a.photo === 'purged_after_60_days';
-        const photoPreviewSrc = (!a.photo || isPurged) ? 'https://api.dicebear.com/7.x/bottts/svg?seed=Staff' : a.photo;
-        const safePhotoArg = isPurged ? 'purged_after_60_days' : (a.photo || '').replace(/'/g, "\\'");
+          const isPurged = a.photo === 'purged_after_60_days';
+          const photoPreviewSrc = (!a.photo || isPurged) ? 'https://api.dicebear.com/7.x/bottts/svg?seed=Staff' : a.photo;
+          const safePhotoArg = isPurged ? 'purged_after_60_days' : (a.photo || '').replace(/'/g, "\\'");
 
-        const tenantBadge = a.isShared
-          ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20"><svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 🌐 Compartida</span>'
-          : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10"><svg class="w-3 h-3 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> ${escapeHtml(a.tenantName || a.tenantId || 'TurboNetwork')}</span>`;
+          const tenantBadge = a.isShared
+            ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20"><svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 🌐 Compartida</span>'
+            : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10"><svg class="w-3 h-3 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> ${escapeHtml(a.tenantName || a.tenantId || 'TurboNetwork')}</span>`;
 
-        return `
-          <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition font-sans text-xs">
-            <td class="px-5 py-3.5">
-              <div class="flex items-center space-x-3">
-                <img class="w-8 h-8 rounded-full border border-slate-200 dark:border-white/10 object-cover" src="${photoPreviewSrc}" alt="Avatar">
-                <div>
-                  <span class="font-bold text-slate-900 dark:text-slate-100 block">${escapeHtml(a.employeeName)}</span>
-                  <span class="text-[10px] text-slate-400 font-mono">ID #${a.employeeId}</span>
+          return `
+            <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition font-sans text-xs">
+              <td class="px-5 py-3.5">
+                <div class="flex items-center space-x-3">
+                  <img class="w-8 h-8 rounded-full border border-slate-200 dark:border-white/10 object-cover" src="${photoPreviewSrc}" alt="Avatar">
+                  <div>
+                    <span class="font-bold text-slate-900 dark:text-slate-100 block">${escapeHtml(a.employeeName)}</span>
+                    <span class="text-[10px] text-slate-400 font-mono">ID #${a.employeeId}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="px-3.5 py-3.5 whitespace-nowrap">${tenantBadge}</td>
+              <td class="px-4 py-3.5 font-mono text-slate-600 dark:text-slate-300">${a.date}</td>
+              <td class="px-4 py-3.5 font-mono font-bold text-slate-800 dark:text-slate-200">${a.checkInTime || '--:--'}</td>
+              <td class="px-4 py-3.5 text-center">
+                <button type="button" onclick="openAttendancePhoto('${safePhotoArg}', '${escapeHtml(a.employeeName).replace(/'/g, "\\'")}', '${a.checkInTime}')" class="group relative inline-block" title="${isPurged ? 'Foto purgada tras 60 días' : 'Ver fotografía biométrica'}">
+                  <img class="w-8 h-8 rounded-lg object-cover border border-slate-300 dark:border-white/15 group-hover:scale-110 transition shadow-sm ${isPurged ? 'opacity-40 grayscale' : ''}" src="${photoPreviewSrc}" alt="Selfie">
+                  <span class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  </span>
+                </button>
+              </td>
+              <td class="px-4 py-3.5 text-[11px]">
+                ${a.location ? `
+                  <a href="${mapsLink}" target="_blank" class="inline-flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:underline font-mono">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                    <span>${a.location.latitude.toFixed(4)}, ${a.location.longitude.toFixed(4)}</span>
+                  </a>
+                ` : '<span class="text-slate-400">Sin GPS</span>'}
+              </td>
+              <td class="px-4 py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                ${a.lunchStart ? `${a.lunchStart} - ${a.lunchEndTime || 'En curso'}` : '--:--'}
+              </td>
+              <td class="px-4 py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">${a.checkOut || '--:--'}</td>
+              <td class="px-4 py-3.5">${statusBadge}</td>
+              <td class="px-4 py-3.5 text-center">
+                ${a.status === 'very_late_blocked' ? `
+                  <button type="button" onclick="openTotpUnlockModalForEmployee(${a.employeeId}, '${escapeHtml(a.employeeName).replace(/'/g, "\\'")}', ${a.minutesLate})" class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold shadow-sm transition flex items-center space-x-1 mx-auto">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+                    <span>Desbloquear TOTP</span>
+                  </button>
+                ` : '<span class="text-slate-400 text-[10px]">Normal</span>'}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 2. Render de Tarjetas Táctiles Inteligentes para Celulares (< md)
+      if (mobileContainer) {
+        mobileContainer.innerHTML = list.map(a => {
+          let statusBadge = '';
+          if (a.status === 'on_time') {
+            statusBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Puntual</span>';
+          } else if (a.status === 'late') {
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Tarde (+${a.minutesLate}m)</span>`;
+          } else if (a.status === 'very_late_blocked') {
+            statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> BLOQUEADO (+${a.minutesLate}m)</span>`;
+          } else if (a.status === 'unlocked') {
+            statusBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Desbloqueado TOTP</span>';
+          }
+
+          const mapsLink = a.location && a.location.latitude
+            ? `https://www.google.com/maps?q=${a.location.latitude},${a.location.longitude}`
+            : '#';
+
+          const isPurged = a.photo === 'purged_after_60_days';
+          const photoPreviewSrc = (!a.photo || isPurged) ? 'https://api.dicebear.com/7.x/bottts/svg?seed=Staff' : a.photo;
+          const safePhotoArg = isPurged ? 'purged_after_60_days' : (a.photo || '').replace(/'/g, "\\'");
+
+          const tenantBadge = a.isShared
+            ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">🌐 Compartida</span>'
+            : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 truncate">🏢 ${escapeHtml(a.tenantName || a.tenantId || 'TurboNetwork')}</span>`;
+
+          return `
+            <div class="pro-card p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs space-y-2.5">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center space-x-3 min-w-0">
+                  <img class="w-10 h-10 rounded-xl border border-slate-200 dark:border-white/10 object-cover flex-shrink-0" src="${photoPreviewSrc}" alt="Avatar">
+                  <div class="min-w-0">
+                    <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm truncate">${escapeHtml(a.employeeName)}</h4>
+                    <div class="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
+                      <span>ID #${a.employeeId}</span>
+                      <span>•</span>
+                      <span>${a.date}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex-shrink-0">
+                  ${statusBadge}
                 </div>
               </div>
-            </td>
-            <td class="px-3.5 py-3.5 whitespace-nowrap">${tenantBadge}</td>
-            <td class="px-4 py-3.5 font-mono text-slate-600 dark:text-slate-300">${a.date}</td>
-            <td class="px-4 py-3.5 font-mono font-bold text-slate-800 dark:text-slate-200">${a.checkInTime || '--:--'}</td>
-            <td class="px-4 py-3.5 text-center">
-              <button type="button" onclick="openAttendancePhoto('${safePhotoArg}', '${escapeHtml(a.employeeName).replace(/'/g, "\\'")}', '${a.checkInTime}')" class="group relative inline-block" title="${isPurged ? 'Foto purgada tras 60 días' : 'Ver fotografía biométrica'}">
-                <img class="w-8 h-8 rounded-lg object-cover border border-slate-300 dark:border-white/15 group-hover:scale-110 transition shadow-sm ${isPurged ? 'opacity-40 grayscale' : ''}" src="${photoPreviewSrc}" alt="Selfie">
-                <span class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                </span>
-              </button>
-            </td>
-            <td class="px-4 py-3.5 text-[11px]">
-              ${a.location ? `
-                <a href="${mapsLink}" target="_blank" class="inline-flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:underline font-mono">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
-                  <span>${a.location.latitude.toFixed(4)}, ${a.location.longitude.toFixed(4)}</span>
-                </a>
-              ` : '<span class="text-slate-400">Sin GPS</span>'}
-            </td>
-            <td class="px-4 py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">
-              ${a.lunchStart ? `${a.lunchStart} - ${a.lunchEndTime || 'En curso'}` : '--:--'}
-            </td>
-            <td class="px-4 py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">${a.checkOut || '--:--'}</td>
-            <td class="px-4 py-3.5">${statusBadge}</td>
-            <td class="px-4 py-3.5 text-center">
-              ${a.status === 'very_late_blocked' ? `
-                <button type="button" onclick="openTotpUnlockModalForEmployee(${a.employeeId}, '${escapeHtml(a.employeeName).replace(/'/g, "\\'")}', ${a.minutesLate})" class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold shadow-sm transition flex items-center space-x-1 mx-auto">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
-                  <span>Desbloquear TOTP</span>
-                </button>
-              ` : '<span class="text-slate-400 text-[10px]">Normal</span>'}
-            </td>
-          </tr>
-        `;
-      }).join('');
+
+              <div class="grid grid-cols-3 gap-2 p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-center">
+                <div>
+                  <span class="text-[9.5px] uppercase font-bold text-slate-400 block tracking-wider">Entrada</span>
+                  <span class="font-mono font-bold text-xs text-slate-800 dark:text-slate-200 mt-0.5 block">${a.checkInTime || '--:--'}</span>
+                </div>
+                <div>
+                  <span class="text-[9.5px] uppercase font-bold text-slate-400 block tracking-wider">Refrigerio</span>
+                  <span class="font-mono text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 block truncate">${a.lunchStart ? `${a.lunchStart} - ${a.lunchEndTime || '...'}` : '--:--'}</span>
+                </div>
+                <div>
+                  <span class="text-[9.5px] uppercase font-bold text-slate-400 block tracking-wider">Salida</span>
+                  <span class="font-mono text-xs text-slate-600 dark:text-slate-300 mt-0.5 block">${a.checkOut || '--:--'}</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-white/5 flex-wrap">
+                <div class="min-w-0 flex-1">
+                  ${tenantBadge}
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0">
+                  <button type="button" onclick="openAttendancePhoto('${safePhotoArg}', '${escapeHtml(a.employeeName).replace(/'/g, "\\'")}', '${a.checkInTime}')" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center space-x-1 transition border border-slate-200 dark:border-white/10" title="Ver foto">
+                    <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <span>Foto</span>
+                  </button>
+                  ${a.location && a.location.latitude ? `
+                    <a href="${mapsLink}" target="_blank" class="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center space-x-1 transition border border-blue-200 dark:border-blue-500/20">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                      <span>GPS</span>
+                    </a>
+                  ` : ''}
+                  ${a.status === 'very_late_blocked' ? `
+                    <button type="button" onclick="openTotpUnlockModalForEmployee(${a.employeeId}, '${escapeHtml(a.employeeName).replace(/'/g, "\\'")}', ${a.minutesLate})" class="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition flex items-center space-x-1 animate-pulse">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+                      <span>TOTP</span>
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
     }
 
     function handleAttendanceSearch(q) {
@@ -20919,47 +21123,61 @@ Estamos atentos para brindarle asistencia inmediata.
       const bInlineGreeting = document.getElementById('dw-birthday-greeting-inline');
       const firstName = (currentUser.name || 'Compañero').split(' ')[0];
 
+      if (bTag) bTag.classList.add('hidden'); // Sin acumular badges innecesarios
+
       if (bInfo.isMonth) {
-        if (bTag) {
-          bTag.classList.remove('hidden');
-          bTag.textContent = bInfo.isToday ? '🎉 ¡Hoy es tu Cumpleaños!' : '🎂 Cumpleañero del Mes';
-        }
-        if (bAvatarBadge) bAvatarBadge.classList.remove('hidden');
-        if (bGreetingBox) bGreetingBox.classList.remove('hidden');
-        if (bInlineGreeting) {
-          bInlineGreeting.innerHTML = bInfo.isToday
-            ? `<span>🎉</span> <span>¡Hoy es tu Cumpleaños, ${escapeHtml(firstName)}! 🎂 Te deseamos un día extraordinario.</span>`
-            : `<span>🎂</span> <span>¡Feliz Mes de Cumpleaños, ${escapeHtml(firstName)}! 🎈</span>`;
+        if (bInfo.isToday) {
+          if (bAvatarBadge) bAvatarBadge.classList.remove('hidden');
+          if (bGreetingBox) bGreetingBox.classList.remove('hidden');
+          if (bInlineGreeting) {
+            bInlineGreeting.className = "inline-flex items-center gap-1.5 text-xs font-semibold text-pink-600 dark:text-pink-400 bg-pink-500/10 border border-pink-500/20 px-3 py-1 rounded-full shadow-xs";
+            bInlineGreeting.innerHTML = `<span>🎉</span> <span>¡Hoy es tu Cumpleaños, ${escapeHtml(firstName)}! 🎂 Te deseamos un día extraordinario.</span>`;
+          }
+        } else {
+          if (bAvatarBadge) bAvatarBadge.classList.add('hidden');
+          if (bGreetingBox) bGreetingBox.classList.remove('hidden');
+          if (bInlineGreeting) {
+            bInlineGreeting.className = "inline-flex items-center gap-1.5 text-[11px] font-medium text-pink-600/90 dark:text-pink-400/90 bg-pink-500/[0.07] border border-pink-500/15 px-2.5 py-0.5 rounded-full";
+            bInlineGreeting.innerHTML = `<span>🎂</span> <span>Mes de Cumpleaños: ¡Felicidades este mes, ${escapeHtml(firstName)}!</span>`;
+          }
         }
       } else {
-        if (bTag) bTag.classList.add('hidden');
         if (bAvatarBadge) bAvatarBadge.classList.add('hidden');
         if (bGreetingBox) bGreetingBox.classList.add('hidden');
       }
 
-      // Multi-tenant badge en widget
+      // Multi-tenant en widget: metadato limpio integrado con icono
       const tenantBadge = document.getElementById('dw-tenant-badge');
       const activeTenantObj = (tenantsList || []).find(t => t.id === activeTenantId);
       const activeName = activeTenantObj ? activeTenantObj.name : 'Sede Activa';
 
       if (tenantBadge) {
-        if (currentTodayAttendance) {
-          if (currentTodayAttendance.isShared) {
-            tenantBadge.innerHTML = `<span class="inline-flex items-center gap-1"><svg class="w-3 h-3 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 🌐 Asistencia Compartida</span>`;
-            tenantBadge.className = "px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30";
-          } else {
-            tenantBadge.innerHTML = `<span class="inline-flex items-center gap-1"><svg class="w-3 h-3 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> 🏢 Sede: ${escapeHtml(currentTodayAttendance.tenantName || activeName)}</span>`;
-            tenantBadge.className = "px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20";
-          }
+        if (currentTodayAttendance && currentTodayAttendance.isShared) {
+          tenantBadge.innerHTML = `<svg class="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> <span class="text-indigo-600 dark:text-indigo-400 font-semibold">Asistencia Compartida</span>`;
+          tenantBadge.className = "inline-flex items-center gap-1 text-[11px]";
         } else {
-          tenantBadge.innerHTML = `<span class="inline-flex items-center gap-1"><svg class="w-3 h-3 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> 🏢 Sede Actual: ${escapeHtml(activeName)}</span>`;
-          tenantBadge.className = "px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/5";
+          const tenantDisplay = (currentTodayAttendance && currentTodayAttendance.tenantName) || activeName;
+          tenantBadge.innerHTML = `<svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> <span class="text-slate-600 dark:text-slate-400">Sede: ${escapeHtml(tenantDisplay)}</span>`;
+          tenantBadge.className = "inline-flex items-center gap-1 text-[11px]";
         }
       }
 
       const dot = document.getElementById('dw-status-dot');
       const badge = document.getElementById('dw-badge-status');
       const btnRegister = document.getElementById('dw-btn-register-now');
+      const timerDot = document.getElementById('dw-timer-dot');
+
+      // Barras de progreso de hitos
+      const bar1 = document.getElementById('dw-step-bar-1');
+      const bar2 = document.getElementById('dw-step-bar-2');
+      const bar3 = document.getElementById('dw-step-bar-3');
+      const bar4 = document.getElementById('dw-step-bar-4');
+
+      // Tarjetas de hitos
+      const card1 = document.getElementById('dw-step1-card');
+      const card2 = document.getElementById('dw-step2-card');
+      const card3 = document.getElementById('dw-step3-card');
+      const card4 = document.getElementById('dw-step4-card');
 
       // Hito 1: Entrada
       const s1Time = document.getElementById('dw-step1-time');
@@ -20980,9 +21198,10 @@ Estamos atentos para brindarle asistencia inmediata.
 
       if (!currentTodayAttendance) {
         // No ha marcado entrada
-        dot.className = "absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[#0f172a] bg-amber-500 animate-pulse";
-        badge.textContent = "Pendiente de Entrada";
-        badge.className = "px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20";
+        dot.className = "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-[#0f172a] bg-amber-400 animate-pulse";
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span>Pendiente de Entrada</span>`;
+        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20";
+        if (timerDot) timerDot.className = "w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-white/20";
         if (btnOvertime) btnOvertime.classList.add('hidden');
         if (btnRegister) {
           btnRegister.classList.remove('hidden');
@@ -20991,7 +21210,7 @@ Estamos atentos para brindarle asistencia inmediata.
             const assignedObj = (tenantsList || []).find(t => t.id === currentUser.assignedTenantId);
             const assignedName = assignedObj ? assignedObj.name : currentUser.assignedTenantId;
             btnRegister.disabled = true;
-            btnRegister.className = "px-3.5 py-2 rounded-xl bg-slate-300 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs font-semibold flex items-center space-x-1.5 shadow-none cursor-not-allowed opacity-75 whitespace-nowrap border border-slate-300 dark:border-white/5";
+            btnRegister.className = "px-4 py-2 sm:py-2.5 rounded-xl bg-slate-300 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs font-semibold flex items-center space-x-1.5 shadow-none cursor-not-allowed opacity-75 whitespace-nowrap border border-slate-300 dark:border-white/5";
             btnRegister.title = `Bloqueado: Tu cuenta pertenece exclusivamente a "${assignedName}".`;
             btnRegister.onclick = (e) => {
               e.preventDefault();
@@ -20999,15 +21218,32 @@ Estamos atentos para brindarle asistencia inmediata.
             };
           } else {
             btnRegister.disabled = false;
-            btnRegister.className = "px-3.5 py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap";
+            btnRegister.className = "px-4 py-2 sm:py-2.5 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-2 shadow-xs hover:shadow transition whitespace-nowrap";
             btnRegister.title = "Marcar Asistencia";
             btnRegister.onclick = () => openAttendanceCheckinModal(currentUser);
           }
         }
 
+        if (bar1) bar1.className = "h-1 rounded-full bg-amber-400/80 animate-pulse transition-colors";
+        if (bar2) bar2.className = "h-1 rounded-full bg-slate-200 dark:bg-white/10 transition-colors";
+        if (bar3) bar3.className = "h-1 rounded-full bg-slate-200 dark:bg-white/10 transition-colors";
+        if (bar4) bar4.className = "h-1 rounded-full bg-slate-200 dark:bg-white/10 transition-colors";
+
+        if (card1) card1.className = "p-3 sm:p-3.5 rounded-xl bg-amber-500/[0.02] dark:bg-amber-500/[0.04] border border-amber-500/30 ring-1 ring-amber-500/20 flex flex-col justify-between transition-all";
+        if (card2) card2.className = "p-3 sm:p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 flex flex-col justify-between transition-all";
+        if (card3) card3.className = "p-3 sm:p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 flex flex-col justify-between transition-all";
+        if (card4) card4.className = "p-3 sm:p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 flex flex-col justify-between transition-all";
+
         s1Time.textContent = "--:--:--";
         s1Badge.textContent = "Pendiente";
-        s1Badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-500";
+        s1Badge.className = "text-[10px] text-amber-600 dark:text-amber-400 font-semibold";
+        s2Badge.textContent = "Esperando";
+        s2Badge.className = "text-[10px] text-slate-400 font-medium";
+        s3Badge.textContent = "Esperando";
+        s3Badge.className = "text-[10px] text-slate-400 font-medium";
+        s4Badge.textContent = "Esperando";
+        s4Badge.className = "text-[10px] text-slate-400 font-medium";
+
         btnLunchStart.classList.add('hidden');
         btnLunchEnd.classList.add('hidden');
         btnCheckout.classList.add('hidden');
@@ -21017,68 +21253,100 @@ Estamos atentos para brindarle asistencia inmediata.
       // Ya marcó entrada
       if (btnRegister) btnRegister.classList.add('hidden');
       s1Time.textContent = currentTodayAttendance.checkInTime || 'Registrado';
+      if (bar1) bar1.className = "h-1 rounded-full bg-emerald-500 transition-colors";
+      if (card1) card1.className = "p-3 sm:p-3.5 rounded-xl bg-emerald-500/[0.03] dark:bg-emerald-500/[0.05] border border-emerald-500/25 dark:border-emerald-500/20 flex flex-col justify-between transition-all";
+
       if (currentTodayAttendance.status === 'on_time') {
-        s1Badge.textContent = "Puntual";
-        s1Badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold";
+        s1Badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Puntual</span>`;
       } else {
-        s1Badge.textContent = `Tarde (+${currentTodayAttendance.minutesLate || 0}m)`;
-        s1Badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold";
+        s1Badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"></circle><polyline points="12 6 12 12 16 14" stroke-width="2"></polyline></svg> Tarde (+${currentTodayAttendance.minutesLate || 0}m)</span>`;
       }
 
       // Estado de Refrigerio
       if (currentTodayAttendance.lunchStart) {
         s2Time.textContent = currentTodayAttendance.lunchStart;
-        s2Badge.textContent = "Iniciado";
-        s2Badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold";
+        s2Badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Tomado</span>`;
+        if (bar2) bar2.className = "h-1 rounded-full bg-amber-500 transition-colors";
+        if (card2) card2.className = "p-3 sm:p-3.5 rounded-xl bg-amber-500/[0.03] dark:bg-amber-500/[0.05] border border-amber-500/25 dark:border-amber-500/20 flex flex-col justify-between transition-all";
         btnLunchStart.classList.add('hidden');
 
         if (currentTodayAttendance.lunchEndTime) {
           s3Time.textContent = currentTodayAttendance.lunchEndTime;
-          s3Badge.textContent = "Finalizado";
-          s3Badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold";
+          s3Badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Retornado</span>`;
+          if (bar3) bar3.className = "h-1 rounded-full bg-blue-500 transition-colors";
+          if (card3) card3.className = "p-3 sm:p-3.5 rounded-xl bg-blue-500/[0.03] dark:bg-blue-500/[0.05] border border-blue-500/25 dark:border-blue-500/20 flex flex-col justify-between transition-all";
           btnLunchEnd.classList.add('hidden');
         } else {
           // En almuerzo en este momento
           s3Time.textContent = "En pausa...";
-          s3Badge.textContent = "En curso";
-          s3Badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 animate-pulse font-bold";
+          s3Badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>En curso</span>`;
+          if (bar3) bar3.className = "h-1 rounded-full bg-amber-400 animate-pulse transition-colors";
+          if (card3) card3.className = "p-3 sm:p-3.5 rounded-xl bg-amber-500/[0.04] dark:bg-amber-500/[0.06] border border-amber-500/30 ring-1 ring-amber-500/20 flex flex-col justify-between transition-all";
           btnLunchEnd.classList.remove('hidden');
         }
       } else {
         s2Time.textContent = "--:--:--";
-        s2Badge.textContent = "Pendiente";
+        s2Badge.textContent = "Disponible";
+        s2Badge.className = "text-[10px] text-amber-600 dark:text-amber-400 font-semibold";
+        if (bar2) bar2.className = "h-1 rounded-full bg-slate-200 dark:bg-white/10 transition-colors";
+        if (card2) card2.className = "p-3 sm:p-3.5 rounded-xl bg-amber-500/[0.02] dark:bg-amber-500/[0.03] border border-amber-500/20 flex flex-col justify-between transition-all";
         btnLunchStart.classList.remove('hidden');
         btnLunchEnd.classList.add('hidden');
+
+        s3Time.textContent = "--:--:--";
+        s3Badge.textContent = "Esperando";
+        s3Badge.className = "text-[10px] text-slate-400 font-medium";
+        if (bar3) bar3.className = "h-1 rounded-full bg-slate-200 dark:bg-white/10 transition-colors";
+        if (card3) card3.className = "p-3 sm:p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 flex flex-col justify-between transition-all";
       }
 
       // Estado de Salida
       if (currentTodayAttendance.checkOut) {
         s4Time.textContent = currentTodayAttendance.checkOut;
-        s4Badge.textContent = "Completado";
-        s4Badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-600 dark:text-purple-400 font-bold";
+        s4Badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-purple-600 dark:text-purple-400"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Completado</span>`;
+        if (bar4) bar4.className = "h-1 rounded-full bg-purple-500 transition-colors";
+        if (card4) card4.className = "p-3 sm:p-3.5 rounded-xl bg-purple-500/[0.03] dark:bg-purple-500/[0.05] border border-purple-500/25 dark:border-purple-500/20 flex flex-col justify-between transition-all";
         if (btnCheckout) btnCheckout.classList.add('hidden');
         if (btnOvertime) {
           btnOvertime.classList.remove('hidden');
           btnOvertime.onclick = () => openOvertimeAuthModal(currentTodayAttendance.checkOut);
         }
 
-        dot.className = "absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[#0f172a] bg-slate-400";
-        badge.textContent = "Jornada Finalizada";
-        badge.className = "px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300";
+        dot.className = "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-[#0f172a] bg-slate-400";
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span><span>Jornada Finalizada</span>`;
+        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10";
+        if (timerDot) timerDot.className = "w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-white/20";
       } else {
         if (btnOvertime) btnOvertime.classList.add('hidden');
         s4Time.textContent = "--:--:--";
-        s4Badge.textContent = currentTodayAttendance.isOvertime ? "Horas Extras" : "Pendiente";
-        s4Badge.className = currentTodayAttendance.isOvertime ? "text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold animate-pulse" : "text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400";
+        if (bar4) bar4.className = "h-1 rounded-full bg-slate-200 dark:bg-white/10 transition-colors";
+        if (card4) card4.className = "p-3 sm:p-3.5 rounded-xl bg-purple-500/[0.02] dark:bg-purple-500/[0.03] border border-purple-500/20 flex flex-col justify-between transition-all";
+
+        if (currentTodayAttendance.isOvertime) {
+          s4Badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Extras</span>`;
+        } else {
+          s4Badge.textContent = "Pendiente";
+          s4Badge.className = "text-[10px] text-purple-600 dark:text-purple-400 font-semibold";
+        }
         if (btnCheckout) btnCheckout.classList.remove('hidden');
 
-        dot.className = "absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[#0f172a] bg-emerald-500 animate-pulse";
-        badge.textContent = currentTodayAttendance.lunchStart && !currentTodayAttendance.lunchEndTime 
-          ? "En Refrigerio" 
-          : (currentTodayAttendance.isOvertime ? "En Horas Extras" : "En Turno Activo");
-        badge.className = currentTodayAttendance.isOvertime 
-          ? "px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-          : "px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20";
+        const isLunchNow = currentTodayAttendance.lunchStart && !currentTodayAttendance.lunchEndTime;
+        if (isLunchNow) {
+          dot.className = "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-[#0f172a] bg-amber-500 animate-pulse";
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span><span>En Refrigerio</span>`;
+          badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20";
+          if (timerDot) timerDot.className = "w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse";
+        } else if (currentTodayAttendance.isOvertime) {
+          dot.className = "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-[#0f172a] bg-indigo-500 animate-pulse";
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span><span>Horas Extras</span>`;
+          badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20";
+          if (timerDot) timerDot.className = "w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse";
+        } else {
+          dot.className = "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-[#0f172a] bg-emerald-500 animate-pulse";
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span><span>En Turno Activo</span>`;
+          badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20";
+          if (timerDot) timerDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse";
+        }
       }
 
       // Timer en vivo
@@ -21558,109 +21826,220 @@ function filterAndRenderInventory() {
   renderInventoryTable(filtered);
 }
 
-// 2. RENDERIZADO EN VISTA TABLA (MODO TABLA EXCLUSIVO CON VISOR DE IMÁGENES AL CLIC)
+// 2. RENDERIZADO EN VISTA TABLA (ESCRITORIO) Y TARJETAS TÁCTILES (MÓVIL)
 function renderInventoryTable(products) {
   const tbody = document.getElementById('inventory-table-body');
-  if (!tbody) return;
+  const mobileContainer = document.getElementById('inventory-mobile-cards');
+  if (!tbody && !mobileContainer) return;
 
   if (products.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="8" class="text-center py-10 text-slate-400">
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" class="text-center py-10 text-slate-400">
+            <div class="flex flex-col items-center justify-center space-y-2">
+              <span class="text-2xl">📦</span>
+              <span class="text-xs font-semibold">No se encontraron productos en este catálogo.</span>
+              <button type="button" onclick="openCreateProductModal()" class="px-3.5 py-1.5 rounded-xl btn-brand-primary text-xs font-semibold shadow-2xs mt-1">
+                + Crear Primer Producto
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+    if (mobileContainer) {
+      mobileContainer.innerHTML = `
+        <div class="p-8 text-center text-slate-400 bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-200 dark:border-white/10">
           <div class="flex flex-col items-center justify-center space-y-2">
-            <span class="text-2xl">📦</span>
+            <span class="text-3xl">📦</span>
             <span class="text-xs font-semibold">No se encontraron productos en este catálogo.</span>
-            <button type="button" onclick="openCreateProductModal()" class="px-3.5 py-1.5 rounded-xl btn-brand-primary text-xs font-semibold shadow-2xs mt-1">
+            <button type="button" onclick="openCreateProductModal()" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold shadow-2xs mt-1">
               + Crear Primer Producto
             </button>
           </div>
-        </td>
-      </tr>
-    `;
+        </div>
+      `;
+    }
     return;
   }
 
-  tbody.innerHTML = products.map(p => {
-    const pType = p.type || p.productType || 'simple';
-    const cost = Number(p.baseCost !== undefined ? p.baseCost : (p.cost || 0));
-    const images = p.images && p.images.length > 0 ? p.images : [];
-    const thumb = images[0] || '';
+  // 1. Render de Tabla para Pantallas Grandes (>= md)
+  if (tbody) {
+    tbody.innerHTML = products.map(p => {
+      const pType = p.type || p.productType || 'simple';
+      const cost = Number(p.baseCost !== undefined ? p.baseCost : (p.cost || 0));
+      const images = p.images && p.images.length > 0 ? p.images : [];
+      const thumb = images[0] || '';
 
-    const isCritical = p.stock <= (p.stockCritical || 2);
-    const isLow = p.stock <= (p.stockMin || 5);
-    let statusBadge = '';
-    if (p.stock === 0) {
-      statusBadge = '<span class="px-2 py-0.5 rounded font-bold text-[10px] bg-rose-500/20 text-rose-600 dark:text-rose-400">Agotado</span>';
-    } else if (isCritical) {
-      statusBadge = '<span class="px-2 py-0.5 rounded font-bold text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>Crítico</span>';
-    } else if (isLow) {
-      statusBadge = '<span class="px-2 py-0.5 rounded font-bold text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400">Bajo</span>';
-    } else {
-      statusBadge = '<span class="px-2 py-0.5 rounded font-bold text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Óptimo</span>';
-    }
+      const isCritical = p.stock <= (p.stockCritical || 2);
+      const isLow = p.stock <= (p.stockMin || 5);
+      let statusBadge = '';
+      if (p.stock === 0) {
+        statusBadge = '<span class="px-2 py-0.5 rounded font-bold text-[10px] bg-rose-500/20 text-rose-600 dark:text-rose-400">Agotado</span>';
+      } else if (isCritical) {
+        statusBadge = '<span class="px-2 py-0.5 rounded font-bold text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>Crítico</span>';
+      } else if (isLow) {
+        statusBadge = '<span class="px-2 py-0.5 rounded font-bold text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400">Bajo</span>';
+      } else {
+        statusBadge = '<span class="px-2 py-0.5 rounded font-bold text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Óptimo</span>';
+      }
 
-    let typeBadge = '';
-    if (pType === 'bulk') {
-      typeBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">⚖️ Granel (${escapeHtml(p.unitOfMeasure || 'm')})</span>`;
-    } else if (pType === 'epp') {
-      typeBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">🦺 EPP (${p.variants ? p.variants.length : 0} var)</span>`;
-    } else {
-      typeBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">📦 Simple</span>`;
-    }
+      let typeBadge = '';
+      if (pType === 'bulk') {
+        typeBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">⚖️ Granel (${escapeHtml(p.unitOfMeasure || 'm')})</span>`;
+      } else if (pType === 'epp') {
+        typeBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">🦺 EPP (${p.variants ? p.variants.length : 0} var)</span>`;
+      } else {
+        typeBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">📦 Simple</span>`;
+      }
 
-    return `
-      <tr class="hover:bg-slate-50/70 dark:hover:bg-white/[0.02] transition">
-        <td class="px-4 py-3">
-          <div class="flex items-center space-x-3">
-            <!-- Miniatura Clickable para abrir Visor Lightbox Moderno -->
-            <div onclick="openProductLightbox(${p.id}, 0)" class="w-11 h-11 rounded-xl overflow-hidden cursor-pointer border border-slate-200 dark:border-white/10 hover:ring-2 hover:ring-blue-500 hover:scale-105 transition flex-shrink-0 flex items-center justify-center bg-slate-100 dark:bg-white/5 relative group" title="Clic para ampliar en Visor de Fotos">
-              ${thumb 
-                ? `<img src="${thumb}" alt="${escapeHtml(p.name)}" class="w-full h-full object-cover">
-                   <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs">🔍</div>` 
-                : `<span class="text-base">📦</span>`}
+      return `
+        <tr class="hover:bg-slate-50/70 dark:hover:bg-white/[0.02] transition">
+          <td class="px-4 py-3">
+            <div class="flex items-center space-x-3">
+              <!-- Miniatura Clickable para abrir Visor Lightbox Moderno -->
+              <div onclick="openProductLightbox(${p.id}, 0)" class="w-11 h-11 rounded-xl overflow-hidden cursor-pointer border border-slate-200 dark:border-white/10 hover:ring-2 hover:ring-blue-500 hover:scale-105 transition flex-shrink-0 flex items-center justify-center bg-slate-100 dark:bg-white/5 relative group" title="Clic para ampliar en Visor de Fotos">
+                ${thumb 
+                  ? `<img src="${thumb}" alt="${escapeHtml(p.name)}" class="w-full h-full object-cover">
+                     <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs">🔍</div>` 
+                  : `<span class="text-base">📦</span>`}
+              </div>
+              <div>
+                <span onclick="openProductDetailModal(${p.id})" class="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer block">${escapeHtml(p.name)}</span>
+                <span class="text-[10px] text-slate-400">${escapeHtml(p.location || 'Almacén Central')}</span>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            ${typeBadge}
+            ${p.alternativeNames && p.alternativeNames.length ? `<span class="text-[10px] text-slate-400 font-mono block mt-0.5">${escapeHtml(p.alternativeNames.slice(0,2).join(', '))}</span>` : ''}
+          </td>
+          <td class="px-4 py-3 font-medium text-purple-600 dark:text-purple-400">
+            ${escapeHtml(p.categoryName || 'General')}
+          </td>
+          <td class="px-4 py-3 font-mono font-bold text-slate-700 dark:text-slate-300">
+            ${escapeHtml(p.sku)}
+          </td>
+          <td class="px-4 py-3 font-mono font-bold text-slate-900 dark:text-white">
+            ${getSystemCurrencySymbol()} ${cost.toFixed(2)}
+          </td>
+          <td class="px-4 py-3 font-mono font-bold text-slate-800 dark:text-slate-200">
+            ${p.stock}
+          </td>
+          <td class="px-4 py-3">
+            ${statusBadge}
+          </td>
+          <td class="px-4 py-3 text-right whitespace-nowrap">
+            <div class="flex items-center justify-end space-x-1">
+              <button type="button" onclick="openProductLightbox(${p.id}, 0)" class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-white/5 transition" title="Ver Fotos">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </button>
+              <button type="button" onclick="openAdjustStockModal(${p.id})" class="px-2 py-1 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-semibold hover:bg-blue-500/20 transition">⚡ Kardex</button>
+              <button type="button" onclick="openEditProductModal(${p.id})" class="p-1.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition" title="Editar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+              <button type="button" onclick="deleteProductConfirm(${p.id}, '${escapeHtml(p.name).replace(/'/g, "\\'")}')" class="p-1.5 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition" title="Mover a Papelera">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // 2. Render de Tarjetas Táctiles Inteligentes para Celulares (< md)
+  if (mobileContainer) {
+    mobileContainer.innerHTML = products.map(p => {
+      const pType = p.type || p.productType || 'simple';
+      const cost = Number(p.baseCost !== undefined ? p.baseCost : (p.cost || 0));
+      const images = p.images && p.images.length > 0 ? p.images : [];
+      const thumb = images[0] || '';
+
+      const isCritical = p.stock <= (p.stockCritical || 2);
+      const isLow = p.stock <= (p.stockMin || 5);
+      let statusBadge = '';
+      if (p.stock === 0) {
+        statusBadge = '<span class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-rose-500/20 text-rose-600 dark:text-rose-400">Agotado</span>';
+      } else if (isCritical) {
+        statusBadge = '<span class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>Crítico</span>';
+      } else if (isLow) {
+        statusBadge = '<span class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400">Bajo</span>';
+      } else {
+        statusBadge = '<span class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Óptimo</span>';
+      }
+
+      let typeBadge = '';
+      if (pType === 'bulk') {
+        typeBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">⚖️ Granel</span>`;
+      } else if (pType === 'epp') {
+        typeBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">🦺 EPP</span>`;
+      } else {
+        typeBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">📦 Simple</span>`;
+      }
+
+      return `
+        <div class="pro-card p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs space-y-3">
+          <!-- Encabezado del Producto: Miniatura, Título, SKU y Estado -->
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center space-x-3 min-w-0">
+              <div onclick="openProductLightbox(${p.id}, 0)" class="w-12 h-12 rounded-xl overflow-hidden cursor-pointer border border-slate-200 dark:border-white/10 flex-shrink-0 flex items-center justify-center bg-slate-100 dark:bg-white/5 relative group" title="Ampliar foto">
+                ${thumb 
+                  ? `<img src="${thumb}" alt="${escapeHtml(p.name)}" class="w-full h-full object-cover">` 
+                  : `<span class="text-xl">📦</span>`}
+              </div>
+              <div class="min-w-0">
+                <h4 onclick="openProductDetailModal(${p.id})" class="font-bold text-slate-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer truncate">${escapeHtml(p.name)}</h4>
+                <div class="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
+                  <span>SKU: ${escapeHtml(p.sku)}</span>
+                  <span>•</span>
+                  <span class="text-purple-600 dark:text-purple-400 font-sans font-semibold">${escapeHtml(p.categoryName || 'General')}</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex-shrink-0">
+              ${statusBadge}
+            </div>
+          </div>
+
+          <!-- Datos Rápidos: Stock, Costo y Tipo -->
+          <div class="grid grid-cols-3 gap-2 p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-center text-xs">
+            <div>
+              <span class="text-[9.5px] uppercase font-bold text-slate-400 block tracking-wider">Stock</span>
+              <span class="font-mono font-bold text-sm ${p.stock === 0 ? 'text-rose-500' : 'text-slate-900 dark:text-white'} mt-0.5 block">${p.stock}</span>
             </div>
             <div>
-              <span onclick="openProductDetailModal(${p.id})" class="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer block">${escapeHtml(p.name)}</span>
-              <span class="text-[10px] text-slate-400">${escapeHtml(p.location || 'Almacén Central')}</span>
+              <span class="text-[9.5px] uppercase font-bold text-slate-400 block tracking-wider">Costo</span>
+              <span class="font-mono font-bold text-xs text-slate-800 dark:text-slate-200 mt-0.5 block">${getSystemCurrencySymbol()} ${cost.toFixed(2)}</span>
+            </div>
+            <div>
+              <span class="text-[9.5px] uppercase font-bold text-slate-400 block tracking-wider">Tipo</span>
+              <div class="mt-0.5">${typeBadge}</div>
             </div>
           </div>
-        </td>
-        <td class="px-4 py-3">
-          ${typeBadge}
-          ${p.alternativeNames && p.alternativeNames.length ? `<span class="text-[10px] text-slate-400 font-mono block mt-0.5">${escapeHtml(p.alternativeNames.slice(0,2).join(', '))}</span>` : ''}
-        </td>
-        <td class="px-4 py-3 font-medium text-purple-600 dark:text-purple-400">
-          ${escapeHtml(p.categoryName || 'General')}
-        </td>
-        <td class="px-4 py-3 font-mono font-bold text-slate-700 dark:text-slate-300">
-          ${escapeHtml(p.sku)}
-        </td>
-        <td class="px-4 py-3 font-mono font-bold text-slate-900 dark:text-white">
-          ${getSystemCurrencySymbol()} ${cost.toFixed(2)}
-        </td>
-        <td class="px-4 py-3 font-mono font-bold text-slate-800 dark:text-slate-200">
-          ${p.stock}
-        </td>
-        <td class="px-4 py-3">
-          ${statusBadge}
-        </td>
-        <td class="px-4 py-3 text-right whitespace-nowrap">
-          <div class="flex items-center justify-end space-x-1">
-            <button type="button" onclick="openProductLightbox(${p.id}, 0)" class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-white/5 transition" title="Ver Fotos">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+
+          <!-- Botones de Acción Móviles -->
+          <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-slate-100 dark:border-white/5">
+            <button type="button" onclick="openAdjustStockModal(${p.id})" class="flex-1 py-1.5 px-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center justify-center space-x-1 transition border border-blue-500/20">
+              <span>⚡ Kardex</span>
             </button>
-            <button type="button" onclick="openAdjustStockModal(${p.id})" class="px-2 py-1 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-semibold hover:bg-blue-500/20 transition">⚡ Kardex</button>
-            <button type="button" onclick="openEditProductModal(${p.id})" class="p-1.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition" title="Editar">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            <button type="button" onclick="openProductLightbox(${p.id}, 0)" class="py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center justify-center space-x-1 transition border border-slate-200 dark:border-white/10" title="Ver fotos">
+              <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span>Fotos</span>
             </button>
-            <button type="button" onclick="deleteProductConfirm(${p.id}, '${escapeHtml(p.name).replace(/'/g, "\\'")}')" class="p-1.5 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition" title="Mover a Papelera">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            <button type="button" onclick="openEditProductModal(${p.id})" class="py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center justify-center space-x-1 transition border border-slate-200 dark:border-white/10" title="Editar">
+              <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              <span>Editar</span>
+            </button>
+            <button type="button" onclick="deleteProductConfirm(${p.id}, '${escapeHtml(p.name).replace(/'/g, "\\'")}')" class="py-1.5 px-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center justify-center transition border border-rose-200 dark:border-rose-500/20" title="Eliminar">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>
           </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
+        </div>
+      `;
+    }).join('');
+  }
 }
 
 // 3. VISOR DE IMÁGENES MODERNO (LIGHTBOX FULLSCREEN)
@@ -25528,7 +25907,7 @@ function renderMochilaTechList(filterQuery = '') {
     const isSelected = currentMochilaTechId === u.id;
 
     return `
-      <div onclick="selectMochilaTechnician(${u.id})" class="p-3 rounded-2xl border transition cursor-pointer flex items-center justify-between ${isSelected ? 'border-purple-500 bg-purple-500/10 shadow-xs' : 'border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:border-slate-300 dark:hover:border-white/10'}">
+      <div onclick="selectMochilaTechnician(${u.id}, true)" class="p-3 rounded-2xl border transition cursor-pointer flex items-center justify-between ${isSelected ? 'border-purple-500 bg-purple-500/10 shadow-xs' : 'border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:border-slate-300 dark:hover:border-white/10'}">
         <div class="flex items-center space-x-3 min-w-0">
           <img src="${avatar}" class="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-white/10 flex-shrink-0">
           <div class="truncate">
@@ -25544,7 +25923,7 @@ function renderMochilaTechList(filterQuery = '') {
   }).join('');
 
   if (!currentMochilaTechId && users.length > 0) {
-    selectMochilaTechnician(users[0].id);
+    selectMochilaTechnician(users[0].id, false);
   }
 }
 
@@ -25552,7 +25931,7 @@ function filterMochilaTechnicians(val) {
   renderMochilaTechList(val);
 }
 
-function selectMochilaTechnician(techId) {
+function selectMochilaTechnician(techId, userInitiated = false) {
   currentMochilaTechId = techId;
   renderMochilaTechList(document.getElementById('mochila-tech-search')?.value || '');
 
@@ -25567,10 +25946,16 @@ function selectMochilaTechnician(techId) {
   const totalItems = assigned.reduce((acc, a) => acc + (a.quantity || 1), 0);
 
   pane.innerHTML = `
+    <!-- Botón Móvil: Volver a la Lista de Técnicos -->
+    <button type="button" onclick="document.getElementById('mochila-tech-list')?.scrollIntoView({ behavior: 'smooth' })" class="lg:hidden w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-semibold text-xs border border-slate-200 dark:border-white/10 flex items-center justify-center space-x-1.5 transition mb-3 shadow-2xs">
+      <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      <span>← Volver a Lista de Técnicos</span>
+    </button>
+
     <!-- Cabecera del Técnico -->
-    <div class="pro-card p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <div class="pro-card p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
       <div class="flex items-center space-x-3.5">
-        <img src="${avatar}" class="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-white/10 flex-shrink-0 shadow-2xs">
+        <img src="${avatar}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border border-slate-200 dark:border-white/10 flex-shrink-0 shadow-2xs">
         <div>
           <div class="flex items-center space-x-2">
             <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono bg-purple-500/10 text-purple-600 dark:text-purple-400">${escapeHtml(tech.roleName || 'Técnico de Campo')}</span>
@@ -25581,14 +25966,14 @@ function selectMochilaTechnician(techId) {
         </div>
       </div>
 
-      <div class="flex items-center flex-wrap gap-2">
-        <button type="button" onclick="openEmployeeMaterialsTimelineModal(${tech.id}, '${escapeHtml(tech.name)}', '${avatar}')" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition border border-slate-300 dark:border-white/10">
+      <div class="flex items-center flex-wrap gap-2 w-full sm:w-auto">
+        <button type="button" onclick="openEmployeeMaterialsTimelineModal(${tech.id}, '${escapeHtml(tech.name)}', '${avatar}')" class="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center justify-center space-x-1.5 transition border border-slate-300 dark:border-white/10">
           <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
           <span>Línea de Tiempo</span>
         </button>
-        <button type="button" onclick="openAssignmentManagerModal(${tech.id})" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition">
+        <button type="button" onclick="openAssignmentManagerModal(${tech.id})" class="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold flex items-center justify-center space-x-1.5 shadow-sm transition whitespace-nowrap">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-          <span>+ Asignar a este técnico</span>
+          <span>+ Asignar Material</span>
         </button>
       </div>
     </div>
@@ -25643,6 +26028,10 @@ function selectMochilaTechnician(techId) {
       `}
     </div>
   `;
+
+  if (userInitiated && window.innerWidth < 1024) {
+    pane.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 async function quickReturnMochilaMaterial(assignmentId) {
