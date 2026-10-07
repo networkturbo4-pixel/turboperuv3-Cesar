@@ -1,4 +1,4 @@
-[
+﻿[
   {
     "id": 501,
     "code": "ACT-VEH-001",
@@ -29,7 +29,7 @@
         "technician": "Taller Autorizado Mitsui",
         "date": "2026-08-10",
         "photos": [
-          "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=600&q=80"
+          "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=600&q=80"
         ],
         "videos": [],
         "createdAt": "2026-08-10T15:00:00Z"

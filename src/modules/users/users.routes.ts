@@ -285,7 +285,7 @@ let usersStore: SystemUser[] = [
     allowedTenants: ["*"],
     workSchedule: "08:00 - 17:00",
     preferences: {},
-    requireTotp: true,
+    requireTotp: false,
   },
   {
     id: 2,
@@ -431,51 +431,6 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const assignedTenant = requestedTenant || user.assignedTenantId || (user.allowedTenants && user.allowedTenants[0] !== "*" ? user.allowedTenants[0] : "turbonetwork");
-
-    // Verificar si el operador tiene activo el switcher de Google Authenticator (o regla estricta de sede)
-    const tenantRequires2fa = is2faRequiredForTenant(assignedTenant);
-    const require2fa = user.requireTotp !== undefined ? Boolean(user.requireTotp) : tenantRequires2fa;
-
-    if (require2fa) {
-      const cleanTotp = (totpCode || "").trim();
-      const allTenants = loadTenantsFromDisk();
-      const tenantObj = allTenants.find((t) => t.id === assignedTenant) || allTenants[0];
-      const tenantName = tenantObj?.name || assignedTenant;
-
-      // Si no se proporcionó el código TOTP todavía, requerirlo al frontend
-      if (!cleanTotp) {
-        return reply.status(200).send({
-          success: false,
-          require2fa: true,
-          message: user.requireTotp 
-            ? `Acceso Protegido: Ingrese el código dinámico de Google Authenticator de ${tenantName}.`
-            : `Regla Estricta Activa: Ingrese el código dinámico de Google Authenticator de ${tenantName}.`,
-          tenantId: assignedTenant,
-          tenantName,
-          user: {
-            id: user.id,
-            name: user.name,
-            avatar: user.avatar,
-            roleName: user.roleName,
-          },
-        });
-      }
-
-      // Validar el código TOTP con el secreto de esta sede
-      const tenantSecret = getMasterTotpSecret(assignedTenant);
-      const supervisorPin = getMasterSupervisorPin(assignedTenant);
-      const isTotpValid = verifyTOTP(cleanTotp, tenantSecret) || cleanTotp === supervisorPin;
-
-      if (!isTotpValid) {
-        return reply.status(401).send({
-          success: false,
-          require2fa: true,
-          message: `Código de Google Authenticator incorrecto o expirado para ${tenantName}. Verifique la hora de su dispositivo e intente de nuevo.`,
-          tenantId: assignedTenant,
-          tenantName,
-        });
-      }
-    }
 
     const tenantRoles = loadRolesForTenant(assignedTenant);
     const role = tenantRoles.find((r) => r.id === user.roleId) || rolesStore.find((r) => r.id === user.roleId);

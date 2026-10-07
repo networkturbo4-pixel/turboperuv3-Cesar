@@ -1,4 +1,4 @@
-import fs from "fs";
+﻿import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { getTenantFilePath } from "../tenants/tenants.service";
@@ -129,7 +129,7 @@ const DEFAULT_PRODUCTS: Omit<InventoryProduct, "tenantId" | "createdAt" | "updat
       },
     ],
     images: [
-      "https://images.unsplash.com/photo-1578873375972-00b84c8a8e1b?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80",
     ],
     description: "Casco certificado ANSI Z89.1 Clase E para trabajos en postes y líneas eléctricas.",
     location: "Armario de Seguridad EPP-01",
@@ -192,7 +192,7 @@ const DEFAULT_ASSETS: Omit<FixedAsset, "tenantId" | "createdAt" | "updatedAt">[]
         cost: 280.0,
         technician: "Taller Autorizado Mitsui",
         date: "2026-08-10",
-        photos: ["https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=600&q=80"],
+        photos: ["https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=600&q=80"],
         videos: [],
         createdAt: "2026-08-10T15:00:00Z",
       },
@@ -1429,3 +1429,5 @@ export function getInventoryMetrics(tenantId: string): InventoryMetrics {
     assetsCount: assets.length,
   };
 }
+
+

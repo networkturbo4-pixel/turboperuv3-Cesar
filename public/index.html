@@ -4978,23 +4978,7 @@
                       <input type="text" id="nu-pin" required maxlength="8" pattern="\d{8}" placeholder="Ej. 49201948" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs font-mono tracking-widest focus:outline-none focus:border-blue-500">
                     </div>
 
-                    <!-- SWITCHER ACCESO CON CÓDIGO GOOGLE AUTHENTICATOR -->
-                    <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center justify-between">
-                      <div class="space-y-0.5 pr-2">
-                        <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                          <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                          <span>Google Authenticator (2FA)</span>
-                        </label>
-                        <p class="text-[10px] text-slate-500 dark:text-slate-400">¿Entra con código o sin código?</p>
-                      </div>
-                      <div class="flex items-center space-x-2 flex-shrink-0">
-                        <span id="nu-totp-label" class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Sin Código</span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" id="nu-require-totp" class="sr-only peer" onchange="updateFormTotpLabel('nu-totp-label', this.checked)">
-                          <div class="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                      </div>
-                    </div>
+                    <input type="hidden" id="nu-require-totp" value="false">
 
                     <div id="create-user-status" class="text-xs min-h-[16px]"></div>
 
@@ -5690,13 +5674,13 @@
                   </div>
                   <div>
                     <div class="flex items-center space-x-2">
-                      <h4 class="text-base font-bold text-slate-900 dark:text-white">Google Authenticator por Negocio (2FA Multi-Tenant)</h4>
+                      <h4 class="text-base font-bold text-slate-900 dark:text-white">Google Authenticator (Desbloqueo de Tardanzas)</h4>
                       <span id="totp-tenant-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
                         Sede: TurboNetwork
                       </span>
                     </div>
                     <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
-                      Cada sede o negocio cuenta con su propio código QR y llave Base32 independiente compatible con la aplicación Google Authenticator (Android / iOS).
+                      Cada sede cuenta con su código QR y llave Base32 para que el supervisor o administrador pueda desbloquear a los colaboradores que registren tardanzas en el módulo de Asistencias.
                     </p>
                   </div>
                 </div>
@@ -5712,28 +5696,21 @@
                 </div>
               </div>
 
-              <!-- REGLA ESTRICTA 2FA PARA INICIO DE SESIÓN -->
-              <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 dark:border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+              <!-- INFORMACIÓN DE SEGURIDAD: USO EXCLUSIVO PARA TARDANZAS -->
+              <div class="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/30 dark:border-purple-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
                 <div class="flex items-start space-x-3">
-                  <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                   </div>
                   <div>
                     <div class="flex items-center gap-2">
-                      <h5 class="text-sm font-bold text-slate-900 dark:text-white">Regla Estricta: Exigir Google Authenticator Obligatorio para Entrar</h5>
-                      <span id="totp-strict-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300">Desactivada</span>
+                      <h5 class="text-sm font-bold text-slate-900 dark:text-white">Uso Exclusivo: Desbloqueo de Asistencias & Tardanzas</h5>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">Acceso Directo con PIN</span>
                     </div>
                     <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                      Al activar esta regla, <strong>todo operador o usuario que ingrese a esta sede</strong> deberá introducir obligatoriamente el código de 6 dígitos de Google Authenticator después de su PIN para acceder al sistema.
+                      El inicio de sesión de todos los usuarios es directo con su PIN de 8 dígitos. Esta llave TOTP y código QR son utilizados por supervisores para validar y desbloquear a colaboradores que presenten tardanzas en el registro de asistencia.
                     </p>
                   </div>
-                </div>
-
-                <div class="flex items-center gap-3 self-end sm:self-center">
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="totp-strict-toggle" onchange="toggleStrictTotpRequirement(this.checked)" class="sr-only peer">
-                    <div class="w-11 h-6 bg-slate-300 dark:bg-white/15 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-                  </label>
                 </div>
               </div>
 
@@ -8178,23 +8155,7 @@
           <p class="text-[10px] text-slate-500 mt-1">Este PIN numérico de 8 dígitos será utilizado en la pantalla de bienvenida.</p>
         </div>
 
-        <!-- SWITCHER ACCESO CON CÓDIGO GOOGLE AUTHENTICATOR -->
-        <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center justify-between">
-          <div class="space-y-0.5 pr-2">
-            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-              <span>Google Authenticator (2FA)</span>
-            </label>
-            <p class="text-[10px] text-slate-500 dark:text-slate-400">¿Entra con código o sin código?</p>
-          </div>
-          <div class="flex items-center space-x-2 flex-shrink-0">
-            <span id="nmodal-totp-label" class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Sin Código</span>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="nmodal-require-totp" class="sr-only peer" onchange="updateFormTotpLabel('nmodal-totp-label', this.checked)">
-              <div class="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-            </label>
-          </div>
-        </div>
+        <input type="hidden" id="nmodal-require-totp" value="false">
 
         <div id="nmodal-modal-error" class="text-xs text-rose-400 font-mono min-h-[18px]"></div>
       </form>
@@ -8338,23 +8299,7 @@
           <p class="text-[10px] text-slate-500 mt-1">Si no deseas cambiar el PIN del operador, deja este campo en blanco.</p>
         </div>
 
-        <!-- SWITCHER ACCESO CON CÓDIGO GOOGLE AUTHENTICATOR -->
-        <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center justify-between">
-          <div class="space-y-0.5 pr-2">
-            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-              <span>Google Authenticator (2FA)</span>
-            </label>
-            <p class="text-[10px] text-slate-500 dark:text-slate-400">¿Entra con código o sin código?</p>
-          </div>
-          <div class="flex items-center space-x-2 flex-shrink-0">
-            <span id="ue-totp-label" class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Sin Código</span>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="ue-require-totp" class="sr-only peer" onchange="updateFormTotpLabel('ue-totp-label', this.checked)">
-              <div class="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-            </label>
-          </div>
-        </div>
+        <input type="hidden" id="ue-require-totp" value="false">
 
         <div id="ue-modal-error" class="text-xs text-rose-400 font-mono min-h-[18px]"></div>
       </form>
@@ -15324,6 +15269,7 @@
     let pendingLoginTenantId = "";
 
     window.addEventListener('keydown', (e) => {
+      if (!e || typeof e.key !== 'string') return;
       const loginScreen = document.getElementById('pin-login-screen');
       const totpStep = document.getElementById('login-2fa-step');
       if (totpStep && !totpStep.classList.contains('hidden')) {
@@ -15383,25 +15329,12 @@
         });
         const data = await res.json();
 
-        if (data.require2fa) {
-          // El negocio o el operador tiene activo el requerimiento de Google Authenticator
-          pendingLoginPin = currentPin;
-          pendingLoginTenantId = data.tenantId || '';
-          try {
-            localStorage.setItem('turbonetwork_pending_2fa', JSON.stringify({
-              pin: currentPin,
-              tenantId: data.tenantId || '',
-              tenantName: data.tenantName || '',
-              user: data.user || null,
-              message: data.message || ''
-            }));
-            history.pushState({ step: 'totp_2fa' }, '', window.location.href);
-          } catch (e) {}
-          showLogin2faStep(data);
-          return;
-        }
-
         if (data.success) {
+          try {
+            localStorage.removeItem('turbonetwork_pending_2fa');
+          } catch (e) {}
+          completeLoginSuccess(data);
+        } else {
           try {
             localStorage.removeItem('turbonetwork_pending_2fa');
           } catch (e) {}
@@ -17573,24 +17506,11 @@ Estamos atentos para brindarle asistencia inmediata.
               </div>
             </div>
 
-            <!-- SWITCHER GOOGLE AUTHENTICATOR (CON CÓDIGO / SIN CÓDIGO) -->
-            <button type="button" onclick="handleQuickToggleUserTotp(${u.id}, ${!u.requireTotp})" 
-              class="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all flex items-center space-x-1.5 border shadow-xs cursor-pointer select-none active:scale-95 ${u.requireTotp ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25' : 'bg-slate-500/10 text-slate-400 border-slate-500/20 hover:bg-white/10 hover:text-slate-200'}" 
-              title="Clic para alternar: ${u.requireTotp ? 'Requiere Google Authenticator (Con Código)' : 'Acceso directo con PIN (Sin Código)'}">
-              ${u.requireTotp ? `
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                </svg>
-                <span>Con Código</span>
-              ` : `
-                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
-                <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
-                </svg>
-                <span>Sin Código</span>
-              `}
-            </button>
+            <!-- Acceso Directo con PIN -->
+            <span class="px-2 py-1 rounded-lg text-[10px] font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20 hidden md:inline-flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              PIN Directo
+            </span>
 
             <div class="flex items-center space-x-1.5 pl-1 border-l border-white/5">
               <button type="button" onclick="openEditUserModal(${u.id})" title="Editar operador" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition flex items-center space-x-1">
@@ -19736,7 +19656,8 @@ Estamos atentos para brindarle asistencia inmediata.
 
       // Atajo de teclado para alternar colapso de sidebar (Ctrl+B o Cmd+B)
       document.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+        if (!e || typeof e.key !== 'string') return;
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName)) {
           e.preventDefault();
           toggleSidebarCollapse();
         }
@@ -19750,27 +19671,9 @@ Estamos atentos para brindarle asistencia inmediata.
         await loadTenants();
       } catch (e) {}
 
-      // 1.9. PERSISTENCIA DE 2FA: Si hay una verificación de Google Authenticator pendiente, restaurarla de inmediato
-      const pending2faRaw = localStorage.getItem('turbonetwork_pending_2fa');
-      if (pending2faRaw) {
-        try {
-          const pending2fa = JSON.parse(pending2faRaw);
-          if (pending2fa && pending2fa.pin) {
-            pendingLoginPin = pending2fa.pin;
-            pendingLoginTenantId = pending2fa.tenantId || '';
-            document.documentElement.classList.remove('has-session');
-            const pinScreen = document.getElementById('pin-login-screen');
-            if (pinScreen) pinScreen.classList.remove('hidden');
-            showLogin2faStep(pending2fa);
-            try {
-              history.pushState({ step: 'totp_2fa' }, '', window.location.href);
-            } catch (err) {}
-            return; // Bloquear restauración de sesión hasta que valide el código TOTP
-          }
-        } catch (e) {
-          localStorage.removeItem('turbonetwork_pending_2fa');
-        }
-      }
+      try {
+        localStorage.removeItem('turbonetwork_pending_2fa');
+      } catch (e) {}
 
       // 2. Restaurar sesión activa de operador si existe en localStorage
       const sessionStr = localStorage.getItem('turbonetwork_session');
@@ -22361,7 +22264,7 @@ function renderInventoryTable(products) {
               <!-- Miniatura Clickable para abrir Visor Lightbox Moderno -->
               <div onclick="openProductLightbox(${p.id}, 0)" class="w-11 h-11 rounded-xl overflow-hidden cursor-pointer border border-slate-200 dark:border-white/10 hover:ring-2 hover:ring-blue-500 hover:scale-105 transition flex-shrink-0 flex items-center justify-center bg-slate-100 dark:bg-white/5 relative group" title="Clic para ampliar en Visor de Fotos">
                 ${thumb 
-                  ? `<img src="${thumb}" alt="${escapeHtml(p.name)}" class="w-full h-full object-cover">
+                  ? `<img src="${thumb}" alt="${escapeHtml(p.name)}" class="w-full h-full object-cover" onerror="this.onerror=null;this.parentElement.innerHTML='<span class=\\'text-base\\'>📦</span>';">
                      <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs">🔍</div>` 
                   : `<span class="text-base">📦</span>`}
               </div>
@@ -22446,7 +22349,7 @@ function renderInventoryTable(products) {
             <div class="flex items-center space-x-3 min-w-0">
               <div onclick="openProductLightbox(${p.id}, 0)" class="w-12 h-12 rounded-xl overflow-hidden cursor-pointer border border-slate-200 dark:border-white/10 flex-shrink-0 flex items-center justify-center bg-slate-100 dark:bg-white/5 relative group" title="Ampliar foto">
                 ${thumb 
-                  ? `<img src="${thumb}" alt="${escapeHtml(p.name)}" class="w-full h-full object-cover">` 
+                  ? `<img src="${thumb}" alt="${escapeHtml(p.name)}" class="w-full h-full object-cover" onerror="this.onerror=null;this.parentElement.innerHTML='<span class=\\'text-xl\\'>📦</span>';">` 
                   : `<span class="text-xl">📦</span>`}
               </div>
               <div class="min-w-0">
@@ -25752,6 +25655,7 @@ let scannerKeyBuffer = '';
 let lastKeyTimestamp = 0;
 
 window.addEventListener('keydown', (e) => {
+  if (!e || typeof e.key !== 'string') return;
   const now = Date.now();
   const timeDiff = now - lastKeyTimestamp;
   lastKeyTimestamp = now;
@@ -25776,7 +25680,7 @@ window.addEventListener('keydown', (e) => {
       }
     }
     scannerKeyBuffer = '';
-  } else if (e.key.length === 1) {
+  } else if (e.key && e.key.length === 1) {
     if (!isRapidTyping && scannerKeyBuffer.length > 0) {
       scannerKeyBuffer = '';
     }

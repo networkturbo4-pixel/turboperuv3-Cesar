@@ -212,15 +212,14 @@ export function getMasterSupervisorPin(tenantId?: string): string {
 }
 
 export function is2faRequiredForTenant(tenantId?: string): boolean {
-  const conf = loadConnectionsConfig(tenantId);
-  return Boolean(conf.security?.require2faOnLogin);
+  return false;
 }
 
 export function setTenant2faRequirement(tenantId: string, required: boolean): boolean {
   const conf = loadConnectionsConfig(tenantId);
-  conf.security.require2faOnLogin = required;
+  conf.security.require2faOnLogin = false;
   saveConnectionsConfig({ security: conf.security }, tenantId);
-  return required;
+  return false;
 }
 
 export function regenerateTenantTotpSecret(tenantId: string): string {

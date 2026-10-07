@@ -496,10 +496,8 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
 
     return reply.send({
       success: true,
-      require2faOnLogin: required,
-      message: required
-        ? `Regla Estricta ACTIVA para ${tenantName}: Todo usuario deberá ingresar el código Google Authenticator de este negocio para iniciar sesión.`
-        : `Regla Estricta DESACTIVADA para ${tenantName}.`,
+      require2faOnLogin: false,
+      message: `El inicio de sesión opera directamente mediante PIN. Google Authenticator está asignado exclusivamente al Desbloqueo de Tardanzas de ${tenantName}.`,
     });
   });
 

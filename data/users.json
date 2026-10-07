@@ -20,7 +20,7 @@
       "darkBgColor": "#18181b"
     },
     "assignedTenantId": null,
-    "requireTotp": true,
+    "requireTotp": false,
     "scheduleStartDate": "",
     "scheduleEndDate": "",
     "hireDate": "",
