@@ -19,8 +19,12 @@
       "themeMode": "light",
       "darkBgColor": "#18181b"
     },
-    "assignedTenantId": "turbonetwork",
-    "requireTotp": true
+    "assignedTenantId": null,
+    "requireTotp": true,
+    "scheduleStartDate": "",
+    "scheduleEndDate": "",
+    "hireDate": "",
+    "birthDate": "2026-10-21"
   },
   {
     "id": 1790781290504,

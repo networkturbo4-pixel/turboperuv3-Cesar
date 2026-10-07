@@ -108,6 +108,8 @@ export interface SystemUser {
   assignedTenantId?: string;
   allowedTenants?: string[];
   workSchedule?: string;
+  expectedCheckInTime?: string;
+  expectedCheckOutTime?: string;
   scheduleStartDate?: string;
   scheduleEndDate?: string;
   hireDate?: string;
@@ -369,6 +371,8 @@ const createUserSchema = z.object({
   pin: z.string().length(8).regex(/^\d{8}$/),
   roleId: z.number().int().positive(),
   workSchedule: z.string().nullable().optional(),
+  expectedCheckInTime: z.string().nullable().optional(),
+  expectedCheckOutTime: z.string().nullable().optional(),
   scheduleStartDate: z.string().nullable().optional(),
   scheduleEndDate: z.string().nullable().optional(),
   hireDate: z.string().nullable().optional(),
@@ -386,6 +390,8 @@ const updateUserSchema = z.object({
   roleId: z.number().int().positive().optional(),
   isActive: z.boolean().optional(),
   workSchedule: z.string().nullable().optional(),
+  expectedCheckInTime: z.string().nullable().optional(),
+  expectedCheckOutTime: z.string().nullable().optional(),
   scheduleStartDate: z.string().nullable().optional(),
   scheduleEndDate: z.string().nullable().optional(),
   hireDate: z.string().nullable().optional(),
@@ -492,6 +498,8 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
           assignedTenantId: assignedTenant,
           allowedTenants: (user.allowedTenants || (user.isSuperAdmin ? ["*"] : [assignedTenant])).filter(Boolean),
           workSchedule: user.workSchedule || "08:00 - 17:00",
+          expectedCheckInTime: user.expectedCheckInTime || (user.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00",
+          expectedCheckOutTime: user.expectedCheckOutTime || (user.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00",
           scheduleStartDate: user.scheduleStartDate || "",
           scheduleEndDate: user.scheduleEndDate || "",
           hireDate: user.hireDate || "",
@@ -692,6 +700,8 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       assignedTenantId: parse.data.assignedTenantId || (parse.data.allowedTenants && parse.data.allowedTenants[0]) || "turbonetwork",
       allowedTenants: parse.data.allowedTenants || (parse.data.assignedTenantId ? [parse.data.assignedTenantId] : ["turbonetwork"]),
       workSchedule: parse.data.workSchedule || "08:00 - 17:00",
+      expectedCheckInTime: parse.data.expectedCheckInTime || (parse.data.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00",
+      expectedCheckOutTime: parse.data.expectedCheckOutTime || (parse.data.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00",
       scheduleStartDate: parse.data.scheduleStartDate || "",
       scheduleEndDate: parse.data.scheduleEndDate || "",
       hireDate: parse.data.hireDate || "",
@@ -741,6 +751,16 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
     if (data.isActive !== undefined) user.isActive = data.isActive;
     if (data.workSchedule !== undefined) user.workSchedule = data.workSchedule;
+    if (data.expectedCheckInTime !== undefined) user.expectedCheckInTime = data.expectedCheckInTime;
+    else if (data.workSchedule) {
+      const m = data.workSchedule.match(/(\d{1,2}:\d{2})/);
+      if (m) user.expectedCheckInTime = m[1];
+    }
+    if (data.expectedCheckOutTime !== undefined) user.expectedCheckOutTime = data.expectedCheckOutTime;
+    else if (data.workSchedule) {
+      const m2 = data.workSchedule.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/);
+      if (m2) user.expectedCheckOutTime = m2[1];
+    }
     if (data.scheduleStartDate !== undefined) user.scheduleStartDate = data.scheduleStartDate;
     if (data.scheduleEndDate !== undefined) user.scheduleEndDate = data.scheduleEndDate;
     if (data.hireDate !== undefined) user.hireDate = data.hireDate;
