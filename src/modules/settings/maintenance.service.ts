@@ -665,17 +665,31 @@ export async function executeSystemUpdate(options: {
     log("📦 [3/7] Validando permisos Git y preparando árbol de trabajo...");
     try {
       await execAsync('git config --global --add safe.directory "*"', { cwd: ROOT_DIR });
-      // Descartar cambios en archivos rastreados de data/ en el índice de Git para evitar conflictos de merge,
-      // ya que tenemos el 100% de los datos vivos de producción asegurados en .live_preserve_snapshot
-      await execAsync("git checkout HEAD -- data/", { cwd: ROOT_DIR });
+      // Descartar cambios locales en archivos compilados o assets (ej: public/assets/tailwind.min.css, public/index.html)
+      // para evitar bloqueos por merges, ya que los datos operacionales de producción están 100% resguardados en .live_preserve_snapshot
+      try {
+        await execAsync("git checkout HEAD -- public/assets/ public/index.html src/", { cwd: ROOT_DIR });
+      } catch (e) {}
+      try {
+        await execAsync("git checkout HEAD -- data/", { cwd: ROOT_DIR });
+      } catch (e) {}
       log("✅ Permisos Git validados e índice de trabajo preparado.");
     } catch (e) {
       log("ℹ️ Directorio Git preparado.");
     }
 
-    // PASO 4: Git Pull desde GitHub
+    // PASO 4: Git Pull desde GitHub con Auto-Recuperación Resiliente
     log(`⬇️ [4/7] Descargando últimas actualizaciones desde GitHub (git pull origin ${branch})...`);
-    const { stdout: pullOut } = await execAsync(`git pull origin ${branch}`, { cwd: ROOT_DIR, timeout: 60000 });
+    let pullOut = "";
+    try {
+      const res = await execAsync(`git pull origin ${branch}`, { cwd: ROOT_DIR, timeout: 60000 });
+      pullOut = res.stdout;
+    } catch (pullErr: any) {
+      log(`⚠️ git pull detectó modificaciones locales en assets compilados (${pullErr.message}). Aplicando auto-recuperación limpia con origin/${branch}...`);
+      await execAsync(`git fetch origin ${branch}`, { cwd: ROOT_DIR, timeout: 60000 });
+      const resetRes = await execAsync(`git reset --hard origin/${branch}`, { cwd: ROOT_DIR, timeout: 30000 });
+      pullOut = resetRes.stdout || `Sincronización forzada a origin/${branch} completada con éxito.`;
+    }
     log(`📥 Resultado Git Pull:\n${pullOut.trim()}`);
 
     try {
