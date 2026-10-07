@@ -536,12 +536,50 @@ export function renderPublicCredentialHtml(emp: Employee, baseUrl: string): stri
     </tr>
   `;
 
+  // Resolver el negocio del colaborador para Open Graph y branding oficial
+  const allTenants = loadTenantsFromDisk();
+  let empTenant = allTenants.find((t) => t.id === "turbonetwork") || allTenants[0];
+  try {
+    const uFile = path.join(DATA_DIR, "users.json");
+    if (fs.existsSync(uFile)) {
+      const uStore = JSON.parse(fs.readFileSync(uFile, "utf-8"));
+      const u = uStore.find((user: any) => user.id === emp.id || user.email === emp.email);
+      if (u && u.assignedTenantId) {
+        const found = allTenants.find((t) => t.id === u.assignedTenantId || t.slug === u.assignedTenantId);
+        if (found) empTenant = found;
+      }
+    }
+  } catch {}
+
+  const companyName = empTenant ? empTenant.name : "TurboNetwork ISP Core";
+  const companyLogo = `${baseUrl}/api/og/image/${encodeURIComponent(empTenant ? empTenant.slug : "turbonetwork")}.png`;
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ficha Técnica A4 - ${emp.name} | TurboNetwork RRHH</title>
+  <title>Credencial Oficial: ${emp.name} • ${emp.position} | ${companyName}</title>
+
+  <!-- Open Graph Dinámico por Negocio (WhatsApp & Redes) -->
+  <meta property="og:type" content="profile">
+  <meta property="og:site_name" content="${companyName}">
+  <meta property="og:title" content="Credencial Oficial: ${emp.name} • ${emp.position}">
+  <meta property="og:description" content="Identificación oficial de personal de ${companyName}. Estado: ACTIVO • Carnet técnico con verificación QR oficial.">
+  <meta property="og:url" content="${publicUrl}">
+  <meta property="og:image" content="${companyLogo}">
+  <meta property="og:image:secure_url" content="${companyLogo}">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="1200">
+  <meta property="og:locale" content="es_PE">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Credencial Oficial: ${emp.name} • ${emp.position}">
+  <meta name="twitter:description" content="Identificación oficial de personal de ${companyName}.">
+  <meta name="twitter:image" content="${companyLogo}">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">

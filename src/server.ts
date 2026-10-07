@@ -23,6 +23,8 @@ import { inventoryRoutes } from "./modules/inventory/inventory.routes";
 import { messagesRoutes } from "./modules/messages/messages.routes";
 import { mapsRoutes } from "./modules/maps/maps.routes";
 import { databaseRoutes } from "./modules/database/database.routes";
+import { ogRoutes } from "./modules/og/og.routes";
+import { resolveTenantFromRequest, injectOpenGraphHtml } from "./modules/og/og.service";
 import { initializeTenantsSystem } from "./modules/tenants/tenants.service";
 
 export async function buildApp() {
@@ -84,12 +86,47 @@ export async function buildApp() {
     return reply.type("text/html; charset=utf-8").send(html);
   });
 
-  // Servir frontend estático si existe la carpeta public
+  // Servir frontend estático y renderizado dinámico de Open Graph por Negocio
   const publicPath = path.resolve(process.cwd(), "public");
   if (fs.existsSync(publicPath)) {
+    // Función centralizada para inyectar Open Graph según el negocio solicitado
+    const serveDynamicHtml = (req: any, reply: any, tenantSlug?: string) => {
+      const indexPath = path.join(publicPath, "index.html");
+      if (!fs.existsSync(indexPath)) {
+        return reply.status(404).send("index.html not found");
+      }
+      const rawHtml = fs.readFileSync(indexPath, "utf-8");
+      const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
+      const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
+      const baseUrl = `${proto}://${host}`;
+      const currentUrl = `${baseUrl}${req.url}`;
+
+      const tenant = resolveTenantFromRequest(req, tenantSlug);
+
+      const processedHtml = injectOpenGraphHtml(rawHtml, tenant, currentUrl, baseUrl);
+      return reply.type("text/html; charset=utf-8").send(processedHtml);
+    };
+
+    // 1. Ruta Raíz (ej: https://tudominio.com o https://tudominio.com/?tenant=celeris)
+    fastify.get("/", async (req, reply) => {
+      return serveDynamicHtml(req, reply);
+    });
+
+    fastify.get("/index.html", async (req, reply) => {
+      return serveDynamicHtml(req, reply);
+    });
+
+    // 2. Ruta Amigable de Negocio Directa (ej: https://tudominio.com/t/celeris o /t/loanetwork)
+    fastify.get("/t/:tenantSlug", async (req, reply) => {
+      const { tenantSlug } = req.params as { tenantSlug: string };
+      return serveDynamicHtml(req, reply, tenantSlug);
+    });
+
+    // 3. Servir assets estáticos (CSS, JS, iconos, imágenes)
     await fastify.register(fastifyStatic, {
       root: publicPath,
       prefix: "/",
+      index: false, // Desactivar index automático para que fastify.get("/") inyecte Open Graph
     });
   }
 
@@ -104,6 +141,7 @@ export async function buildApp() {
   await fastify.register(settingsRoutes, { prefix: "/api" });
   await fastify.register(rrhhRoutes, { prefix: "/api" });
   await fastify.register(tenantsRoutes, { prefix: "/api" });
+  await fastify.register(ogRoutes, { prefix: "/api" });
   await fastify.register(maintenanceRoutes, { prefix: "/api" });
   await fastify.register(connectionsRoutes, { prefix: "/api" });
   await fastify.register(inventoryRoutes, { prefix: "/api" });

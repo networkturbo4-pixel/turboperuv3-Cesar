@@ -11900,7 +11900,14 @@
     // ========================================================
     // GESTOR MULTI-EMPRESA / WORKSPACE SWITCHER
     // ========================================================
-    let activeTenantId = localStorage.getItem('turbonetwork_active_tenant') || 'turbonetwork';
+    const _urlParams = new URLSearchParams(window.location.search);
+    const _initialTenantFromParam = (typeof window !== 'undefined' && window.__INITIAL_TENANT__) 
+      || _urlParams.get('tenant') 
+      || _urlParams.get('t');
+    let activeTenantId = _initialTenantFromParam || localStorage.getItem('turbonetwork_active_tenant') || 'turbonetwork';
+    if (_initialTenantFromParam) {
+      localStorage.setItem('turbonetwork_active_tenant', activeTenantId);
+    }
     let tenantsList = [];
     let isTenantModalEditing = false;
     let allSystemUsers = [];
