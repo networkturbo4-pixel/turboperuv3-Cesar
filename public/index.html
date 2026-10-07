@@ -2123,98 +2123,6 @@
         max-width: calc(100vw - 3rem) !important;
       }
     }
-
-    /* ======================================================== */
-    /* EFECTO FESTIVO BRILLANTE Y SERPENTINAS DE CUMPLEAÑOS     */
-    /* ======================================================== */
-    @keyframes birthdayWidgetGlow {
-      0% {
-        box-shadow: 0 0 18px -2px rgba(236, 72, 153, 0.45), 0 0 28px -4px rgba(168, 85, 247, 0.25);
-        border-color: rgba(236, 72, 153, 0.65);
-      }
-      33% {
-        box-shadow: 0 0 22px -2px rgba(245, 158, 11, 0.5), 0 0 32px -4px rgba(236, 72, 153, 0.3);
-        border-color: rgba(245, 158, 11, 0.7);
-      }
-      66% {
-        box-shadow: 0 0 22px -2px rgba(168, 85, 247, 0.45), 0 0 32px -4px rgba(6, 182, 212, 0.3);
-        border-color: rgba(168, 85, 247, 0.7);
-      }
-      100% {
-        box-shadow: 0 0 18px -2px rgba(236, 72, 153, 0.45), 0 0 28px -4px rgba(168, 85, 247, 0.25);
-        border-color: rgba(236, 72, 153, 0.65);
-      }
-    }
-
-    @keyframes birthdayGradientShift {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 200% 50%; }
-    }
-
-    @keyframes birthdayStreamerSway1 {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      50% { transform: translateY(-7px) rotate(3deg); }
-    }
-
-    @keyframes birthdayStreamerSway2 {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      50% { transform: translateY(-5px) rotate(-3.5deg); }
-    }
-
-    @keyframes birthdaySparkleTwinkle {
-      0%, 100% { opacity: 0.3; transform: scale(0.85); }
-      50% { opacity: 1; transform: scale(1.25); }
-    }
-
-    .is-birthday-widget {
-      position: relative !important;
-      animation: birthdayWidgetGlow 4s ease-in-out infinite alternate !important;
-      background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(168, 85, 247, 0.04) 50%, rgba(245, 158, 11, 0.05) 100%) !important;
-    }
-
-    .dark .is-birthday-widget {
-      background: linear-gradient(135deg, rgba(236, 72, 153, 0.10) 0%, rgba(168, 85, 247, 0.08) 50%, rgba(245, 158, 11, 0.08) 100%) !important;
-    }
-
-    .is-birthday-widget::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #ec4899, #f59e0b, #a855f7, #06b6d4, #ec4899);
-      background-size: 200% 100%;
-      animation: birthdayGradientShift 3.5s linear infinite;
-      border-top-left-radius: inherit;
-      border-top-right-radius: inherit;
-      pointer-events: none;
-      z-index: 15;
-    }
-
-    .birthday-streamer-left {
-      transform-origin: top left;
-      animation: birthdayStreamerSway1 4.5s ease-in-out infinite alternate;
-    }
-
-    .birthday-streamer-left-2 {
-      transform-origin: top left;
-      animation: birthdayStreamerSway2 3.8s ease-in-out infinite alternate;
-    }
-
-    .birthday-streamer-right {
-      transform-origin: top right;
-      animation: birthdayStreamerSway2 4.2s ease-in-out infinite alternate;
-    }
-
-    .birthday-streamer-right-2 {
-      transform-origin: top right;
-      animation: birthdayStreamerSway1 3.5s ease-in-out infinite alternate;
-    }
-
-    .birthday-sparkle {
-      animation: birthdaySparkleTwinkle 2.5s ease-in-out infinite alternate;
-    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white antialiased">
@@ -2949,187 +2857,139 @@
       </header>
 
       <!-- MAIN WORKSPACE FLUIDO (30"-35" Y PANTALLAS GRANDES) -->
-      <main class="flex-1 w-full max-w-[2400px] mx-auto px-6 lg:px-10 2xl:px-14 py-6">
+      <main class="flex-1 w-full max-w-[2400px] mx-auto px-3 sm:px-6 lg:px-10 2xl:px-14 pt-3 sm:pt-6 pb-28 lg:pb-8">
 
         <!-- ======================================================== -->
         <!-- TAB 1: DASHBOARD GENERAL                                 -->
         <!-- ======================================================== -->
-        <section id="tab-dashboard" class="space-y-6">
+        <section id="tab-dashboard" class="space-y-4 sm:space-y-6">
           
-                    <!-- WIDGET MODERNO: MI JORNADA LABORAL DE HOY -->
-          <div id="dash-attendance-widget" class="pro-card p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm transition relative overflow-hidden">
+          <!-- WIDGET MODERNO: MI JORNADA LABORAL DE HOY -->
+          <div id="dash-attendance-widget" class="pro-card p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm transition">
             
-            <!-- CAPA FESTIVA DECORATIVA: SERPENTINAS Y CONFETI FLOTANTE (CUMPLEAÑOS) -->
-            <div id="dw-birthday-streamers" class="pointer-events-none absolute inset-0 overflow-hidden select-none hidden z-0 opacity-80 dark:opacity-70 transition-opacity duration-500">
-              <!-- Serpentinas Esquina Superior Izquierda -->
-              <svg class="absolute top-0 left-0 w-28 sm:w-36 h-full pointer-events-none overflow-visible" viewBox="0 0 100 260" fill="none">
-                <defs>
-                  <linearGradient id="dw-streamer-l1" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stop-color="#ec4899"/>
-                    <stop offset="50%" stop-color="#f59e0b"/>
-                    <stop offset="100%" stop-color="#a855f7"/>
-                  </linearGradient>
-                  <linearGradient id="dw-streamer-l2" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stop-color="#06b6d4"/>
-                    <stop offset="100%" stop-color="#3b82f6"/>
-                  </linearGradient>
-                </defs>
-                <path class="birthday-streamer-left" d="M10,0 C32,25 5,52 35,82 C62,112 15,142 42,175 C68,208 22,238 48,260" stroke="url(#dw-streamer-l1)" stroke-width="3.5" stroke-linecap="round"/>
-                <path class="birthday-streamer-left-2" d="M38,0 C16,32 46,68 22,106 C-3,144 32,184 14,228" stroke="url(#dw-streamer-l2)" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 3"/>
-                <circle cx="55" cy="40" r="3" fill="#f59e0b" class="birthday-sparkle"/>
-                <circle cx="20" cy="130" r="2.5" fill="#ec4899" class="birthday-sparkle"/>
-                <rect x="45" y="160" width="5" height="5" rx="1" fill="#10b981" transform="rotate(35 47 162)" class="birthday-sparkle"/>
-                <circle cx="60" cy="220" r="3" fill="#8b5cf6" class="birthday-sparkle"/>
-              </svg>
-
-              <!-- Serpentinas Esquina Superior Derecha -->
-              <svg class="absolute top-0 right-0 w-28 sm:w-36 h-full pointer-events-none overflow-visible" viewBox="0 0 100 260" fill="none">
-                <defs>
-                  <linearGradient id="dw-streamer-r1" x1="1" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#f59e0b"/>
-                    <stop offset="50%" stop-color="#ec4899"/>
-                    <stop offset="100%" stop-color="#06b6d4"/>
-                  </linearGradient>
-                  <linearGradient id="dw-streamer-r2" x1="1" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#a855f7"/>
-                    <stop offset="100%" stop-color="#ec4899"/>
-                  </linearGradient>
-                </defs>
-                <path class="birthday-streamer-right" d="M90,0 C68,25 95,52 65,82 C38,112 85,142 58,175 C32,208 78,238 52,260" stroke="url(#dw-streamer-r1)" stroke-width="3.5" stroke-linecap="round"/>
-                <path class="birthday-streamer-right-2" d="M62,0 C84,32 54,68 78,106 C103,144 68,184 86,228" stroke="url(#dw-streamer-r2)" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 3"/>
-                <circle cx="45" cy="40" r="3" fill="#ec4899" class="birthday-sparkle"/>
-                <rect x="75" y="125" width="5" height="5" rx="1" fill="#f59e0b" transform="rotate(-25 77 127)" class="birthday-sparkle"/>
-                <circle cx="40" cy="180" r="2.5" fill="#06b6d4" class="birthday-sparkle"/>
-                <circle cx="70" cy="225" r="3" fill="#10b981" class="birthday-sparkle"/>
-              </svg>
-
-              <!-- Destellos y confeti central sutil -->
-              <div class="absolute inset-0 pointer-events-none overflow-hidden">
-                <span class="absolute top-2 left-1/4 text-xs select-none opacity-60 birthday-sparkle">✨</span>
-                <span class="absolute top-3 right-1/4 text-xs select-none opacity-60 birthday-sparkle">🎉</span>
-                <span class="absolute bottom-2 left-1/3 text-xs select-none opacity-50 birthday-sparkle">⭐</span>
-                <span class="absolute bottom-3 right-1/3 text-xs select-none opacity-50 birthday-sparkle">✨</span>
-              </div>
-            </div>
-
-            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/5 relative z-10">
-              <div class="flex items-center space-x-3.5">
-                <div class="relative flex-shrink-0">
-                  <img id="dw-user-avatar" class="w-12 h-12 rounded-xl object-cover border border-slate-300 dark:border-white/10 shadow-sm" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar">
+            <!-- Fila Superior: Perfil + Tiempo en Turno / Registro -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-slate-200 dark:border-white/5">
+              
+              <!-- Info Colaborador -->
+              <div class="flex items-start gap-3 min-w-0">
+                <div class="relative flex-shrink-0 mt-0.5">
+                  <img id="dw-user-avatar" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border border-slate-300 dark:border-white/10 shadow-xs" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar">
                   <span id="dw-birthday-avatar-badge" class="hidden absolute -top-2 -right-1 text-base select-none filter drop-shadow">🎈</span>
-                  <span id="dw-status-dot" class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[#0f172a] bg-slate-400"></span>
+                  <span id="dw-status-dot" class="absolute -bottom-1 -right-1 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-2 border-white dark:border-[#0f172a] bg-slate-400"></span>
                 </div>
-                <div>
-                  <div class="flex items-center space-x-2 flex-wrap gap-y-1">
-                    <h3 id="dw-user-name" class="font-bold text-sm text-slate-900 dark:text-slate-100">Mi Jornada Laboral</h3>
-                    <span id="dw-birthday-tag" class="hidden px-2 py-0.5 rounded-md text-[10px] font-bold bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/30 animate-pulse">🎂 Cumpleañero del Mes</span>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <h3 id="dw-user-name" class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">Mi Jornada Laboral</h3>
                     <span id="dw-badge-status" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/5">Sin registro</span>
-                    <span id="dw-tenant-badge" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">TurboNetwork</span>
+                    <span id="dw-birthday-tag" class="hidden px-2 py-0.5 rounded-md text-[10px] font-bold bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/25">🎂 Cumpleañero del Mes</span>
                   </div>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
-                    <span id="dw-user-role" class="font-medium">Operador</span>
-                    <span>•</span>
-                    <span class="inline-flex items-center text-[11px] font-mono text-slate-600 dark:text-slate-400">
-                      <svg class="w-3.5 h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <div class="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
+                    <span id="dw-user-role" class="font-medium text-slate-700 dark:text-slate-300">Operador</span>
+                    <span class="text-slate-300 dark:text-slate-600">•</span>
+                    <span class="inline-flex items-center text-[10px] sm:text-[11px] font-mono text-slate-600 dark:text-slate-400">
+                      <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                       <span id="dw-user-schedule">08:00 - 17:00</span>
                     </span>
-                    <span id="dw-birthday-greeting-inline" class="hidden inline-flex items-center gap-1 text-[11px] font-semibold text-pink-600 dark:text-pink-400 bg-pink-500/10 dark:bg-pink-500/15 border border-pink-400/30 px-2 py-0.5 rounded-full shadow-xs">
-                      <span>🎂</span>
-                      <span>¡Feliz Mes de Cumpleaños! 🎈</span>
+                    <span id="dw-tenant-badge" class="px-1.5 sm:px-2 py-0.5 rounded-md text-[9.5px] sm:text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">TurboNetwork</span>
+                  </div>
+                  <div id="dw-birthday-greeting-box" class="hidden mt-1.5">
+                    <span id="dw-birthday-greeting-inline" class="inline-flex items-center gap-1 text-[10.5px] sm:text-[11px] font-medium text-pink-600 dark:text-pink-400 bg-pink-500/10 dark:bg-pink-500/15 border border-pink-400/25 px-2.5 py-0.5 rounded-full">
+                      🎂 ¡Feliz Mes de Cumpleaños! 🎈
                     </span>
-                  </p>
+                  </div>
                 </div>
               </div>
 
-              <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
-                <div class="text-right">
-                  <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold block">Tiempo en Turno</span>
-                  <span id="dw-timer-display" class="font-mono text-base font-bold text-slate-800 dark:text-slate-200">00:00:00</span>
+              <!-- Tiempo en Turno y Botón de Marcación -->
+              <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-white/5">
+                <div class="text-left sm:text-right">
+                  <span class="text-[9.5px] sm:text-[10px] uppercase tracking-wider text-slate-400 font-semibold block">Tiempo en Turno</span>
+                  <span id="dw-timer-display" class="font-mono text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">00:00:00</span>
                 </div>
-                <button type="button" onclick="openAttendanceCheckinModal(currentUser)" id="dw-btn-register-now" class="px-3.5 py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap">
+                <button type="button" onclick="openAttendanceCheckinModal(currentUser)" id="dw-btn-register-now" class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
                   <span>Marcar Asistencia</span>
                 </button>
               </div>
             </div>
 
-            <!-- 4 Hitos de la Jornada: Entrada, Inicio Refrigerio, Fin Refrigerio, Salida -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4 relative z-10">
+            <!-- 4 Hitos de la Jornada: 2 columnas en móvil, 4 en desktop -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 pt-3 sm:pt-4">
               <!-- Hito 1: Entrada -->
-              <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
-                    1. Entrada
+              <div class="p-2.5 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-1.5 gap-1">
+                  <span class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1 truncate">
+                    <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                    <span class="truncate">1. Entrada</span>
                   </span>
-                  <span id="dw-step1-badge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400">Pendiente</span>
+                  <span id="dw-step1-badge" class="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400 flex-shrink-0">Pendiente</span>
                 </div>
                 <div class="mt-1">
-                  <div id="dw-step1-time" class="text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
-                  <div id="dw-step1-sub" class="text-[10px] text-slate-400 mt-0.5">Biometría selfie + GPS</div>
+                  <div id="dw-step1-time" class="text-sm sm:text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
+                  <div id="dw-step1-sub" class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">Biometría selfie + GPS</div>
                 </div>
               </div>
 
               <!-- Hito 2: Inicio Refrigerio -->
-              <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    2. Inicio Refrigerio
+              <div class="p-2.5 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-1.5 gap-1">
+                  <span class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1 truncate">
+                    <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="truncate">2. Inicio Ref.</span>
                   </span>
-                  <span id="dw-step2-badge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400">Esperando</span>
+                  <span id="dw-step2-badge" class="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400 flex-shrink-0">Esperando</span>
                 </div>
-                <div class="mt-1 flex items-center justify-between">
-                  <div>
-                    <div id="dw-step2-time" class="text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
-                    <div class="text-[10px] text-slate-400 mt-0.5">Pausa de almuerzo</div>
+                <div class="mt-1 flex items-center justify-between gap-1">
+                  <div class="min-w-0">
+                    <div id="dw-step2-time" class="text-sm sm:text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
+                    <div class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">Pausa de almuerzo</div>
                   </div>
-                  <button type="button" onclick="handleWidgetLunchStart()" id="dw-btn-lunch-start" class="hidden px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold border border-amber-500/20 transition">
+                  <button type="button" onclick="handleWidgetLunchStart()" id="dw-btn-lunch-start" class="hidden px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[11px] font-semibold border border-amber-500/20 transition whitespace-nowrap">
                     Iniciar
                   </button>
                 </div>
               </div>
 
               <!-- Hito 3: Fin Refrigerio -->
-              <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    3. Fin Refrigerio
+              <div class="p-2.5 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-1.5 gap-1">
+                  <span class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1 truncate">
+                    <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="truncate">3. Fin Ref.</span>
                   </span>
-                  <span id="dw-step3-badge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400">Esperando</span>
+                  <span id="dw-step3-badge" class="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400 flex-shrink-0">Esperando</span>
                 </div>
-                <div class="mt-1 flex items-center justify-between">
-                  <div>
-                    <div id="dw-step3-time" class="text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
-                    <div class="text-[10px] text-slate-400 mt-0.5">Retorno a labores</div>
+                <div class="mt-1 flex items-center justify-between gap-1">
+                  <div class="min-w-0">
+                    <div id="dw-step3-time" class="text-sm sm:text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
+                    <div class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">Retorno a labores</div>
                   </div>
-                  <button type="button" onclick="handleWidgetLunchEnd()" id="dw-btn-lunch-end" class="hidden px-2.5 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold border border-blue-500/20 transition">
+                  <button type="button" onclick="handleWidgetLunchEnd()" id="dw-btn-lunch-end" class="hidden px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-[11px] font-semibold border border-blue-500/20 transition whitespace-nowrap">
                     Finalizar
                   </button>
                 </div>
               </div>
 
               <!-- Hito 4: Salida -->
-              <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-purple-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                    4. Salida
+              <div class="p-2.5 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-1.5 gap-1">
+                  <span class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1 truncate">
+                    <svg class="w-3.5 h-3.5 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    <span class="truncate">4. Salida</span>
                   </span>
-                  <span id="dw-step4-badge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400">Esperando</span>
+                  <span id="dw-step4-badge" class="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400 flex-shrink-0">Esperando</span>
                 </div>
-                <div class="mt-1 flex items-center justify-between">
-                  <div>
-                    <div id="dw-step4-time" class="text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
-                    <div class="text-[10px] text-slate-400 mt-0.5">Fin de jornada</div>
+                <div class="mt-1 flex items-center justify-between gap-1 flex-wrap">
+                  <div class="min-w-0">
+                    <div id="dw-step4-time" class="text-sm sm:text-base font-bold font-mono text-slate-800 dark:text-slate-200">--:--:--</div>
+                    <div class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">Fin de jornada</div>
                   </div>
-                  <button type="button" onclick="handleWidgetCheckOut()" id="dw-btn-checkout" class="hidden px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-semibold border border-purple-500/20 transition">
+                  <button type="button" onclick="handleWidgetCheckOut()" id="dw-btn-checkout" class="hidden px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[11px] font-semibold border border-purple-500/20 transition whitespace-nowrap">
                     Marcar Salida
                   </button>
-                  <button type="button" onclick="openOvertimeAuthModal(currentTodayAttendance ? currentTodayAttendance.checkOut : '')" id="dw-btn-overtime" class="hidden px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold border border-amber-500/30 transition flex items-center space-x-1 shadow-sm">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>Horas Extras (TOTP)</span>
+                  <button type="button" onclick="openOvertimeAuthModal(currentTodayAttendance ? currentTodayAttendance.checkOut : '')" id="dw-btn-overtime" class="hidden px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[11px] font-semibold border border-amber-500/30 transition flex items-center space-x-1 shadow-xs">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Extras</span>
                   </button>
                 </div>
               </div>
@@ -20214,36 +20074,32 @@ Estamos atentos para brindarle asistencia inmediata.
       document.getElementById('dw-user-avatar').src = currentUser.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=User';
       document.getElementById('dw-user-schedule').textContent = currentUser.workSchedule || '08:00 - 17:00';
 
-      // 1. Decoración de Cumpleaños (Mes de Cumpleaños): Widget brillante y serpentinas festivas
+      // 1. Reconocimiento de Cumpleaños (Mes de Cumpleaños)
       const userBirthDate = (currentUser && currentUser.birthDate) || 
         (typeof currentEmployees !== 'undefined' && currentEmployees.find(e => e.email === currentUser.email || e.id === currentUser.id)?.birthDate) || '';
       const bInfo = checkUserBirthday(userBirthDate);
-      const bStreamers = document.getElementById('dw-birthday-streamers');
       const bTag = document.getElementById('dw-birthday-tag');
       const bAvatarBadge = document.getElementById('dw-birthday-avatar-badge');
+      const bGreetingBox = document.getElementById('dw-birthday-greeting-box');
       const bInlineGreeting = document.getElementById('dw-birthday-greeting-inline');
       const firstName = (currentUser.name || 'Compañero').split(' ')[0];
 
       if (bInfo.isMonth) {
-        widget.classList.add('is-birthday-widget');
-        if (bStreamers) bStreamers.classList.remove('hidden');
         if (bTag) {
           bTag.classList.remove('hidden');
           bTag.textContent = bInfo.isToday ? '🎉 ¡Hoy es tu Cumpleaños!' : '🎂 Cumpleañero del Mes';
         }
         if (bAvatarBadge) bAvatarBadge.classList.remove('hidden');
+        if (bGreetingBox) bGreetingBox.classList.remove('hidden');
         if (bInlineGreeting) {
-          bInlineGreeting.classList.remove('hidden');
           bInlineGreeting.innerHTML = bInfo.isToday
-            ? `<span class="animate-bounce inline-block">🎉</span> <span>¡HOY ES TU CUMPLEAÑOS, ${escapeHtml(firstName.toUpperCase())}! 🎂</span>`
-            : `<span class="animate-pulse inline-block">🎂</span> <span>¡Feliz Mes de Cumpleaños, ${escapeHtml(firstName)}! 🎈</span>`;
+            ? `<span>🎉</span> <span>¡Hoy es tu Cumpleaños, ${escapeHtml(firstName)}! 🎂 Te deseamos un día extraordinario.</span>`
+            : `<span>🎂</span> <span>¡Feliz Mes de Cumpleaños, ${escapeHtml(firstName)}! 🎈</span>`;
         }
       } else {
-        widget.classList.remove('is-birthday-widget');
-        if (bStreamers) bStreamers.classList.add('hidden');
         if (bTag) bTag.classList.add('hidden');
         if (bAvatarBadge) bAvatarBadge.classList.add('hidden');
-        if (bInlineGreeting) bInlineGreeting.classList.add('hidden');
+        if (bGreetingBox) bGreetingBox.classList.add('hidden');
       }
 
       // Multi-tenant badge en widget
