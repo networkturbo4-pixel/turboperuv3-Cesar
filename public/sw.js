@@ -1,5 +1,5 @@
 // TurboNetwork PWA - High Performance Service Worker
-const CACHE_NAME = 'turbonetwork-pwa-v2';
+const CACHE_NAME = 'turbonetwork-pwa-v3';
 
 const STATIC_SHELL = [
   '/',

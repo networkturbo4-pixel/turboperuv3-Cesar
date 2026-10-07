@@ -56,6 +56,15 @@
         }
       } catch (e) {}
     };
+
+    window.handleQrError = function(imgEl) {
+      if (!imgEl || imgEl.dataset.fallbackTried) return;
+      imgEl.dataset.fallbackTried = "true";
+      const raw = imgEl.dataset.rawOtpUrl;
+      if (raw) {
+        imgEl.src = `https://quickchart.io/qr?size=220&text=${encodeURIComponent(raw)}`;
+      }
+    };
   </script>
   
   <script>
@@ -5523,7 +5532,7 @@
                 <!-- QR del Supervisor con fallback -->
                 <div class="flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-center shadow-2xs">
                   <div class="p-2.5 bg-white rounded-2xl shadow-md border border-slate-200/80 dark:border-white/20">
-                    <img id="master-totp-qr-img" class="w-36 h-36 object-contain rounded-lg" src="" alt="Master QR" onerror="handleQrError(this)">
+                    <img id="master-totp-qr-img" class="w-36 h-36 object-contain rounded-lg" alt="Master QR" onerror="if(typeof handleQrError==='function')handleQrError(this)">
                   </div>
                   <span class="text-[11px] text-slate-600 dark:text-slate-400 font-semibold mt-2.5">Escanear con Google Authenticator</span>
                   <span id="totp-qr-tenant-sub" class="text-[10px] font-mono font-bold text-purple-600 dark:text-purple-400 mt-0.5">TurboNetwork</span>
@@ -11461,6 +11470,7 @@
     let currentDevices = [];
     let currentRoles = [];
     let currentUsers = [];
+    let usersList = [];
 
         // ========================================================
     // MOTOR GLOBAL DE MONEDAS Y FORMATO MONETARIO
@@ -19541,9 +19551,11 @@ Estamos atentos para brindarle asistencia inmediata.
       const currentVal = select.value;
       
       const userMap = new Map();
-      (currentEmployees || []).forEach(e => userMap.set(e.id, e.name));
-      (usersList || []).forEach(u => userMap.set(u.id, u.name));
-      (currentAttendance || []).forEach(a => {
+      const employees = (typeof currentEmployees !== 'undefined' && Array.isArray(currentEmployees)) ? currentEmployees : [];
+      const users = (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers)) ? currentUsers : [];
+      employees.forEach(e => userMap.set(e.id, e.name));
+      users.forEach(u => userMap.set(u.id, u.name));
+      (typeof currentAttendance !== 'undefined' && Array.isArray(currentAttendance) ? currentAttendance : []).forEach(a => {
         if (a.employeeId && a.employeeName && !userMap.has(a.employeeId)) {
           userMap.set(a.employeeId, a.employeeName);
         }
