@@ -845,6 +845,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       company: "TurboNetwork ISP Core",
       verifiedBadge: true,
       issuedAt: new Date().toISOString(),
+      publicToken: emp.publicToken,
       publicUrl: `/credencial/${emp.publicToken}`,
     };
 

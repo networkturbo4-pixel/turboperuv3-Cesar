@@ -1640,13 +1640,13 @@
       #printable-employee-card {
         background: #ffffff !important;
         color: #0f172a !important;
-        border: 2px solid #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
         box-shadow: none !important;
-        width: 85.6mm !important;
-        max-width: 85.6mm !important;
+        width: 100% !important;
+        max-width: 100% !important;
         margin: 0 auto !important;
-        padding: 16px !important;
-        border-radius: 12px !important;
+        padding: 24px !important;
+        border-radius: 8px !important;
         page-break-inside: avoid !important;
       }
       #printable-employee-card h3,
@@ -2102,6 +2102,26 @@
       opacity: 1;
       width: 100%;
       pointer-events: auto;
+    }
+
+    /* Ajustes específicos de encaje y ergonomía móvil para mapas */
+    @media (max-width: 639px) {
+      #maps-editor-view {
+        height: calc(100dvh - 120px) !important;
+        height: calc(100svh - 120px) !important;
+        max-height: calc(100dvh - 120px) !important;
+      }
+      .mapboxgl-ctrl-bottom-right {
+        margin-bottom: 8px !important;
+        margin-right: 8px !important;
+      }
+      .mapboxgl-ctrl-bottom-left {
+        margin-bottom: 8px !important;
+        margin-left: 8px !important;
+      }
+      #maps-search-wrapper.is-expanded {
+        max-width: calc(100vw - 3rem) !important;
+      }
     }
   </style>
 </head>
@@ -3153,8 +3173,8 @@
 
           </div>
 
-          <!-- VISTA 2: VISOR & EDITOR DEL MAPA INTERACTIVO (PANTALLA CASI COMPLETA + SIDEBAR COLAPSADO) -->
-          <div id="maps-editor-view" class="hidden relative -mx-4 sm:mx-0 w-[calc(100%+2rem)] sm:w-full -mt-4 sm:mt-0 rounded-none sm:rounded-2xl overflow-hidden border-x-0 sm:border border-slate-200 dark:border-white/10 shadow-2xl bg-slate-100 dark:bg-slate-900 h-[calc(100dvh-75px)] sm:h-[88vh] md:h-[92vh]">
+          <!-- VISTA 2: VISOR & EDITOR DEL MAPA INTERACTIVO (ENCAGE PERFECTO MÓVIL Y ESCRITORIO) -->
+          <div id="maps-editor-view" class="hidden relative -mx-6 -my-6 sm:mx-0 sm:my-0 w-[calc(100%+3rem)] sm:w-full rounded-none sm:rounded-2xl overflow-hidden border-x-0 sm:border border-slate-200 dark:border-white/10 shadow-2xl bg-slate-100 dark:bg-slate-900 h-[calc(100dvh-120px)] sm:h-[88vh] md:h-[92vh]">
             
             <!-- CONTENEDOR MAPBOX GL JS -->
             <div id="mapbox-container" class="w-full h-full"></div>
@@ -3166,66 +3186,25 @@
             </div>
 
             <!-- INTERFAZ NO INVASIVA: BARRA SUPERIOR UNIFICADA CON HERRAMIENTAS Y BUSCADOR EXPANDIBLE -->
-            <div class="absolute top-3 inset-x-3 z-30 pointer-events-none flex flex-wrap items-center justify-between gap-2">
+            <div class="absolute top-2 sm:top-3 inset-x-2 sm:inset-x-3 z-30 pointer-events-none flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2">
               
               <!-- 1. GRUPO IZQUIERDO: Salir a Cards & Info de Sede / Modo -->
-              <div class="pointer-events-auto flex items-center space-x-1.5 sm:space-x-2 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-lg text-slate-800 dark:text-white">
-                <button type="button" onclick="mapsModule.exitMapMode()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white transition flex items-center space-x-1.5 text-xs font-semibold" title="Volver al Resumen de Mis Mapas">
+              <div class="order-1 pointer-events-auto flex items-center space-x-1 sm:space-x-2 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-lg text-slate-800 dark:text-white min-w-0 max-w-[calc(100%-115px)] sm:max-w-none">
+                <button type="button" onclick="mapsModule.exitMapMode()" class="px-2 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white transition flex items-center space-x-1 text-xs font-semibold flex-shrink-0" title="Volver al Resumen de Mis Mapas">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                  <span>← Mis Mapas</span>
+                  <span class="hidden sm:inline">← Mis Mapas</span>
+                  <span class="sm:hidden text-[11px]">Mapas</span>
                 </button>
-                <div class="h-4 w-px bg-slate-200 dark:bg-white/20"></div>
-                <div class="px-1.5 flex items-center space-x-2">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span id="maps-current-project-title" class="text-xs font-bold tracking-tight text-slate-900 dark:text-white">Mapa Zona Carabayllo</span>
-                  <span id="maps-permission-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">Modo Edición</span>
+                <div class="h-4 w-px bg-slate-200 dark:bg-white/20 flex-shrink-0"></div>
+                <div class="px-1 flex items-center space-x-1.5 min-w-0">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                  <span id="maps-current-project-title" class="text-xs font-bold tracking-tight text-slate-900 dark:text-white truncate max-w-[95px] xs:max-w-[140px] sm:max-w-none">Mapa Zona Carabayllo</span>
+                  <span id="maps-permission-badge" class="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">Modo Edición</span>
                 </div>
               </div>
 
-              <!-- 2. GRUPO CENTRAL: BARRA DE HERRAMIENTAS PRINCIPAL (ARRIBA) -->
-              <div class="pointer-events-auto flex items-center bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-2xl text-slate-600 dark:text-slate-400 space-x-1">
-                <!-- 1. Explorar -->
-                <button type="button" id="maps-tool-select" onclick="mapsModule.setTool('select')" class="px-2.5 py-1.5 rounded-xl bg-blue-600 text-white shadow-md transition flex items-center space-x-1 text-xs font-semibold" title="Explorar / Seleccionar">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
-                  <span class="hidden md:inline">Explorar</span>
-                </button>
-
-                <!-- 2. Crear Punto -->
-                <button type="button" id="maps-tool-point" onclick="mapsModule.setTool('point')" class="maps-create-action px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Crear Punto / Nodo">
-                  <svg class="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                  <span class="hidden md:inline">Punto</span>
-                </button>
-
-                <!-- 3. Trazar Línea -->
-                <button type="button" id="maps-tool-line" onclick="mapsModule.setTool('line')" class="maps-create-action px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Trazar Cable / Conector">
-                  <svg class="w-4 h-4 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                  <span class="hidden md:inline">Línea</span>
-                </button>
-
-                <!-- 4. Trazar Área -->
-                <button type="button" id="maps-tool-area" onclick="mapsModule.setTool('area')" class="maps-create-action px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Trazar Área de Cobertura">
-                  <svg class="w-4 h-4 text-purple-500 dark:text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon></svg>
-                  <span class="hidden md:inline">Área</span>
-                </button>
-
-                <!-- 5. Regla de Medición -->
-                <button type="button" id="maps-tool-ruler" onclick="mapsModule.setTool('ruler')" class="px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Medir Distancias con Regla">
-                  <svg class="w-4 h-4 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                  <span class="hidden md:inline">Regla</span>
-                </button>
-
-                <div class="h-4 w-px bg-slate-200 dark:bg-white/10 hidden sm:block"></div>
-
-                <!-- 6. Biblioteca / Explorador de Elementos -->
-                <button type="button" id="maps-tool-library" onclick="mapsModule.toggleLibraryDrawer()" class="px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1.5 text-xs font-semibold" title="Biblioteca y Buscador Ágil de Elementos GIS">
-                  <svg class="w-4 h-4 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                  <span class="hidden md:inline">Biblioteca</span>
-                  <span id="maps-library-badge-count" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30">0</span>
-                </button>
-              </div>
-
-              <!-- 3. GRUPO DERECHO: LUPA CON ANIMACIÓN EXPANDIBLE + GPS + CAPAS -->
-              <div class="pointer-events-auto flex items-center space-x-1.5">
+              <!-- 3. GRUPO DERECHO: LUPA CON ANIMACIÓN EXPANDIBLE + GPS + CAPAS (En móvil se mantiene en fila 1 junto al título) -->
+              <div class="order-2 sm:order-3 pointer-events-auto flex items-center space-x-1 flex-shrink-0">
                 
                 <!-- Buscador Expandible con Botón de Lupa y Animación Suave -->
                 <div id="maps-search-wrapper" class="flex items-center bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-xl overflow-hidden h-9">
@@ -3244,7 +3223,7 @@
                 </div>
 
                 <!-- Botones Accesorios: GPS y Capas -->
-                <div class="flex items-center space-x-1 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-1 rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-xl text-slate-700 dark:text-white">
+                <div class="flex items-center space-x-0.5 sm:space-x-1 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-1 rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-xl text-slate-700 dark:text-white">
                   <button type="button" onclick="mapsModule.centerOnUserLocation()" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition" title="Mi ubicación GPS">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2m0 16v2m10-10h-2M4 12H2m16.243-7.243l-1.414 1.414M7.172 16.828l-1.414 1.414M16.828 16.828l1.414 1.414M6.757 7.172l1.414-1.414M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
                   </button>
@@ -3253,6 +3232,48 @@
                   </button>
                 </div>
 
+              </div>
+
+              <!-- 2. GRUPO CENTRAL: BARRA DE HERRAMIENTAS PRINCIPAL (En móvil se centra en fila 2 como un pill flotante elegante) -->
+              <div class="order-3 sm:order-2 pointer-events-auto flex items-center justify-center bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-2xl text-slate-600 dark:text-slate-400 space-x-1 max-w-[calc(100vw-1rem)] overflow-x-auto no-scrollbar mx-auto sm:mx-0">
+                <!-- 1. Explorar -->
+                <button type="button" id="maps-tool-select" onclick="mapsModule.setTool('select')" class="px-2 sm:px-2.5 py-1.5 rounded-xl bg-blue-600 text-white shadow-md transition flex items-center space-x-1 text-xs font-semibold" title="Explorar / Seleccionar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                  <span class="hidden md:inline">Explorar</span>
+                </button>
+
+                <!-- 2. Crear Punto -->
+                <button type="button" id="maps-tool-point" onclick="mapsModule.setTool('point')" class="maps-create-action px-2 sm:px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Crear Punto / Nodo">
+                  <svg class="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <span class="hidden md:inline">Punto</span>
+                </button>
+
+                <!-- 3. Trazar Línea -->
+                <button type="button" id="maps-tool-line" onclick="mapsModule.setTool('line')" class="maps-create-action px-2 sm:px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Trazar Cable / Conector">
+                  <svg class="w-4 h-4 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <span class="hidden md:inline">Línea</span>
+                </button>
+
+                <!-- 4. Trazar Área -->
+                <button type="button" id="maps-tool-area" onclick="mapsModule.setTool('area')" class="maps-create-action px-2 sm:px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Trazar Área de Cobertura">
+                  <svg class="w-4 h-4 text-purple-500 dark:text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon></svg>
+                  <span class="hidden md:inline">Área</span>
+                </button>
+
+                <!-- 5. Regla de Medición -->
+                <button type="button" id="maps-tool-ruler" onclick="mapsModule.setTool('ruler')" class="px-2 sm:px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1 text-xs font-semibold" title="Medir Distancias con Regla">
+                  <svg class="w-4 h-4 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                  <span class="hidden md:inline">Regla</span>
+                </button>
+
+                <div class="h-4 w-px bg-slate-200 dark:bg-white/10 hidden sm:block"></div>
+
+                <!-- 6. Biblioteca / Explorador de Elementos -->
+                <button type="button" id="maps-tool-library" onclick="mapsModule.toggleLibraryDrawer()" class="px-2 sm:px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition flex items-center space-x-1.5 text-xs font-semibold" title="Biblioteca y Buscador Ágil de Elementos GIS">
+                  <svg class="w-4 h-4 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                  <span class="hidden md:inline">Biblioteca</span>
+                  <span id="maps-library-badge-count" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30">0</span>
+                </button>
               </div>
 
             </div>
@@ -8983,6 +9004,11 @@
   <div id="employee-public-card-modal" class="fixed inset-0 z-[290] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-3 sm:px-6 py-4 sm:py-6 overflow-y-auto">
     <div class="pro-card max-w-4xl w-full p-4 sm:p-7 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative my-auto max-h-[94vh] overflow-y-auto space-y-5">
       
+      <!-- Botón de Cierre Superior (Especial Móvil) -->
+      <button type="button" onclick="closePublicEmployeeCard()" class="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition shadow-xs" title="Cerrar Ficha">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
       <!-- Hoja de Ficha Técnica / Expediente A4 Imprimible -->
       <div id="printable-employee-card" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm space-y-6">
         
@@ -19086,9 +19112,46 @@ Estamos atentos para brindarle asistencia inmediata.
     }
 
     // 5. Vista de Ficha Técnica & Expediente de Personal A4
-    async function openPublicEmployeeCard(id) {
-      const emp = currentEmployees.find(e => e.id === id);
-      if (!emp) return;
+    async function openPublicEmployeeCard(idOrToken) {
+      if (!currentEmployees || currentEmployees.length === 0) {
+        try {
+          const res = await fetch(`/api/rrhh/employees?tenantId=${encodeURIComponent(activeTenantId || '')}`);
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data)) {
+            currentEmployees = data.data;
+          }
+        } catch (e) {
+          console.warn("Aviso al precargar colaboradores:", e);
+        }
+      }
+
+      let emp = (currentEmployees || []).find(e => 
+        e.id === idOrToken || 
+        String(e.id) === String(idOrToken) || 
+        e.publicToken === idOrToken ||
+        (e.dni && String(e.dni) === String(idOrToken))
+      );
+
+      // Si no está en memoria pero se pasó un token o ID, consultar endpoint público de credencial
+      if (!emp && idOrToken) {
+        try {
+          const res = await fetch(`/api/rrhh/employees/${encodeURIComponent(idOrToken)}/public`);
+          const data = await res.json();
+          if (data.success && data.data) {
+            emp = data.data;
+            if (!currentEmployees.some(e => e.id === emp.id)) {
+              currentEmployees.push(emp);
+            }
+          }
+        } catch (e) {
+          console.warn("Aviso al consultar credencial por API:", e);
+        }
+      }
+
+      if (!emp) {
+        showToast('No se encontró el expediente del colaborador.', 'error');
+        return;
+      }
 
       const modal = document.getElementById('employee-public-card-modal');
       const avatarSrc = emp.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(emp.name));
@@ -19103,7 +19166,8 @@ Estamos atentos para brindarle asistencia inmediata.
       const currency = emp.currency || getSystemCurrencySymbol() || "S/";
       document.getElementById('a4-card-salary').textContent = `${currency} ${salaryNum.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`;
       document.getElementById('a4-card-hiredate').textContent = emp.hireDate;
-      document.getElementById('a4-card-token').textContent = emp.publicToken;
+      const pToken = emp.publicToken || (emp.publicUrl ? emp.publicUrl.split('/').pop() : '') || ('emp-' + emp.id);
+      document.getElementById('a4-card-token').textContent = pToken;
       document.getElementById('a4-card-empid-badge').textContent = `ID EMP: #${emp.id}`;
       document.getElementById('a4-card-sig-name').textContent = emp.name;
       document.getElementById('a4-card-sig-dni').textContent = `DNI: ${emp.dni}`;
@@ -19116,7 +19180,7 @@ Estamos atentos para brindarle asistencia inmediata.
           : 'mt-2 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800';
       }
 
-      const publicUrl = `${window.location.origin}/credencial/${emp.publicToken}`;
+      const publicUrl = `${window.location.origin}/credencial/${pToken}`;
       document.getElementById('public-card-url-input').value = publicUrl;
       const qrEl = document.getElementById('a4-card-qr');
       if (qrEl) {
@@ -23507,10 +23571,10 @@ async function openCameraScannerModal(options = {}) {
     if (inpEl) inpEl.placeholder = 'O escribe el ID, DNI o Nombre...';
     if (statusEl) statusEl.textContent = 'Iniciando cámara para escanear carnet...';
   } else {
-    if (titleEl) titleEl.textContent = 'Escáner Óptico de Código de Barras';
-    if (descEl) descEl.textContent = 'Apunta el visor al código de barras o SKU del producto';
-    if (inpEl) inpEl.placeholder = 'O escribe el SKU / Código...';
-    if (statusEl) statusEl.textContent = 'Iniciando sensor de cámara...';
+    if (titleEl) titleEl.textContent = 'Escanear Código QR / Barras';
+    if (descEl) descEl.textContent = 'Apunta el visor a la ficha de colaborador, carnet o SKU de producto';
+    if (inpEl) inpEl.placeholder = 'O escribe el Código, Token, DNI o SKU...';
+    if (statusEl) statusEl.textContent = 'Iniciando sensor de cámara óptico...';
   }
 
   if (inpEl) inpEl.value = '';
@@ -23655,7 +23719,7 @@ function startBarcodeDetectionLoop() {
   }, 200);
 }
 
-function applyScannedCode(code) {
+async function applyScannedCode(code) {
   const cleaned = (code || '').trim();
   if (!cleaned) return;
 
@@ -23664,15 +23728,69 @@ function applyScannedCode(code) {
 
   if (currentScannerContext === 'assignment_tech') {
     handleTechCodeScanned(cleaned);
-  } else if (cameraScanCustomCallback && typeof cameraScanCustomCallback === 'function') {
-    cameraScanCustomCallback(cleaned);
-  } else {
-    switchInventorySubTab('traceability');
-    const inp = document.getElementById('traceability-search-input');
-    if (inp) inp.value = cleaned;
-    showToast(`¡Código detectado: ${cleaned}!`, 'success');
-    handleLookupTraceability(cleaned);
+    return;
   }
+  if (cameraScanCustomCallback && typeof cameraScanCustomCallback === 'function') {
+    cameraScanCustomCallback(cleaned);
+    return;
+  }
+
+  // 1. Detectar si el código escaneado corresponde a la ficha / credencial de un trabajador (QR de personal)
+  // Formatos soportados:
+  // - URL completa: https://.../credencial/:token o /api/rrhh/credential/:token
+  // - Tokens directos: colab-*, emp-*, usr-*
+  // - JSON: {"publicToken": "...", "employeeId": ...}
+  let candidateToken = null;
+  let candidateId = null;
+
+  if (cleaned.includes('/credencial/') || cleaned.includes('/credential/')) {
+    try {
+      const url = new URL(cleaned, window.location.origin);
+      const parts = url.pathname.split('/').filter(Boolean);
+      candidateToken = parts[parts.length - 1];
+    } catch(e) {
+      const m = cleaned.match(/credencial[s]?\/([a-zA-Z0-9_\-]+)/);
+      if (m) candidateToken = m[1];
+    }
+  } else if (cleaned.startsWith('colab-') || cleaned.startsWith('emp-') || cleaned.startsWith('usr-')) {
+    candidateToken = cleaned;
+  } else if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
+    try {
+      const parsed = JSON.parse(cleaned);
+      if (parsed.publicToken) candidateToken = parsed.publicToken;
+      if (parsed.employeeId || parsed.id) candidateId = parsed.employeeId || parsed.id;
+    } catch(e) {}
+  }
+
+  if (candidateToken || candidateId) {
+    showToast('Abriendo expediente y ficha técnica del colaborador...', 'info');
+    await openPublicEmployeeCard(candidateToken || candidateId);
+    return;
+  }
+
+  // Comprobar si coincide directamente con ID, DNI o Token de un colaborador
+  if (!currentEmployees || currentEmployees.length === 0) {
+    try {
+      const res = await fetch(`/api/rrhh/employees?tenantId=${encodeURIComponent(activeTenantId || '')}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) currentEmployees = data.data;
+    } catch(e) {}
+  }
+  const matchedEmp = (currentEmployees || []).find(e => 
+    String(e.id) === cleaned || (e.dni && String(e.dni) === cleaned) || e.publicToken === cleaned
+  );
+  if (matchedEmp) {
+    showToast(`Ficha de Personal: ${matchedEmp.name}`, 'success');
+    await openPublicEmployeeCard(matchedEmp.id);
+    return;
+  }
+
+  // 2. Si no es ficha de colaborador, procesar en inventario / trazabilidad
+  switchInventorySubTab('traceability');
+  const inp = document.getElementById('traceability-search-input');
+  if (inp) inp.value = cleaned;
+  showToast(`¡Código detectado: ${cleaned}!`, 'success');
+  handleLookupTraceability(cleaned);
 }
 
 // Procesar carnet / QR detectado para el colaborador
