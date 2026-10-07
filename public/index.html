@@ -694,25 +694,77 @@
     }
 
     #mobile-bottom-nav {
-      background: var(--header-dark);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid var(--border-dark);
-      padding-bottom: calc(0.4rem + var(--sab));
+      background: rgba(9, 13, 22, 0.92);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: calc(0.45rem + var(--sab));
+      box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.4);
       transition: background 0.25s ease, border-color 0.25s ease;
     }
     html:not(.dark) #mobile-bottom-nav {
-      background: var(--header-light) !important;
-      border-top: 1px solid var(--border-light) !important;
+      background: rgba(255, 255, 255, 0.94) !important;
+      border-top: 1px solid rgba(226, 232, 240, 0.9) !important;
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    .mob-nav-btn {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .mob-nav-btn:active {
+      transform: scale(0.92);
+    }
+    .mob-nav-btn.active-mob-tab {
+      color: var(--brand-primary) !important;
+    }
+    .mob-nav-btn.active-mob-tab svg {
+      transform: translateY(-2px);
+      stroke-width: 2.2;
+      filter: drop-shadow(0 2px 8px rgba(var(--brand-primary-rgb), 0.45));
+    }
+    .mob-nav-btn.active-mob-tab span {
+      font-weight: 700 !important;
+      color: var(--brand-primary) !important;
+    }
+    .mob-nav-btn.active-mob-tab::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 3px;
+      border-radius: 9999px;
+      background: var(--brand-primary);
+      box-shadow: 0 0 8px var(--brand-primary);
+      animation: tabDotPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes tabDotPop {
+      0% { transform: translateX(-50%) scale(0); opacity: 0; }
+      100% { transform: translateX(-50%) scale(1); opacity: 1; }
     }
 
     /* Botón FAB Central Flotante y Quick Actions Sheet */
     #mob-fab-quick-btn {
-      box-shadow: 0 8px 20px -3px rgba(var(--brand-primary-rgb), 0.55);
+      box-shadow: 0 8px 22px -2px rgba(16, 185, 129, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
       touch-action: manipulation;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, background 0.25s ease;
     }
     #mob-fab-quick-btn:active {
       transform: scale(0.92);
+    }
+    #mob-fab-quick-btn.rotate-45 {
+      transform: rotate(45deg);
+      box-shadow: 0 8px 22px -2px rgba(239, 68, 68, 0.55);
+      background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    }
+
+    /* Ocultar botón de instalar cuando se ejecuta dentro de PWA nativa / standalone */
+    @media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+      #drawer-pwa-install-container {
+        display: none !important;
+      }
     }
 
     /* ======================================================== */
@@ -762,11 +814,24 @@
         padding-bottom: calc(1.5rem + var(--sab)) !important;
       }
 
+      /* Modal de Asistencia Biométrico Adaptado para Pantallas Móviles */
+      #attendance-checkin-modal > .pro-card {
+        max-height: 94dvh !important;
+        height: auto !important;
+        padding: 0 !important;
+        padding-bottom: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+      }
+      #attendance-checkin-modal > .pro-card::before {
+        display: none !important;
+      }
+
       [id$="-modal"] > .pro-card::before,
       [id^="modal-"] > .pro-card::before,
       #customer-create-modal > .pro-card::before,
       #service-create-modal > .pro-card::before,
-      #attendance-checkin-modal > .pro-card::before,
       #employee-modal > .pro-card::before,
       #inventory-product-modal > .pro-card::before,
       #user-create-modal > .pro-card::before,
@@ -2831,35 +2896,41 @@
     <div id="content-container" class="flex-1 flex flex-col pl-0 lg:pl-64 pb-20 lg:pb-0 transition-all duration-200 min-w-0">
       
       <!-- TOP RESPONSIVE HEADER (SOLO MÓVIL Y TABLET - OCULTO EN PC/ESCRITORIO PARA MAXIMIZAR ESPACIO) -->
-      <header class="lg:hidden sticky top-0 z-40 pro-header h-14 flex items-center justify-between px-2.5 sm:px-6 overflow-visible">
-        <div class="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
-          <!-- Botón Menú Hamburguesa Móvil -->
-          <button type="button" onclick="openMobileConfigDrawer()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 transition flex items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs" title="Abrir Menú de Navegación">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <header class="lg:hidden sticky top-0 z-40 pro-header flex items-center justify-between px-3 sm:px-5 overflow-visible backdrop-blur-xl bg-white/90 dark:bg-[#090d16]/90 border-b border-slate-200/80 dark:border-white/10 shadow-xs" style="padding-top: max(0px, env(safe-area-inset-top)); height: calc(3.75rem + max(0px, env(safe-area-inset-top)));">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2">
+          <!-- Botón Menú Hamburguesa Móvil (Touch Ergonómico 40px) -->
+          <button type="button" onclick="openMobileConfigDrawer()" class="w-10 h-10 rounded-xl bg-slate-100/90 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 transition-all flex items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs active:scale-95" title="Abrir Menú de Navegación">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24">
               <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="12" x2="17" y2="12"></line>
               <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
           </button>
 
-          <!-- Botón Workspace Switcher para Móvil (Responsive) -->
-          <div class="lg:hidden relative flex items-center min-w-0">
-            <button id="mobile-workspace-btn" type="button" onclick="openMobileWorkspaceModal(event)" class="h-9 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition cursor-pointer text-left group min-w-0 max-w-[110px] min-[360px]:max-w-[135px] min-[390px]:max-w-[165px] sm:max-w-[220px] shadow-2xs">
-              <div id="mobile-header-logo-box" class="w-6 h-6 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 bg-blue-600 shadow-sm transition">
-                <svg id="mobile-header-default-icon" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <!-- Botón Workspace Switcher para Móvil (Espacioso, sin compresión) -->
+          <div class="relative flex items-center min-w-0 flex-1 max-w-[210px] min-[360px]:max-w-[245px] min-[400px]:max-w-[290px] sm:max-w-[340px]">
+            <button id="mobile-workspace-btn" type="button" onclick="openMobileWorkspaceModal(event)" class="w-full h-10 flex items-center gap-2 px-2.5 rounded-xl bg-slate-100/90 hover:bg-slate-200/80 dark:bg-white/[0.06] dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 transition-all cursor-pointer text-left group min-w-0 shadow-2xs active:scale-98">
+              <div id="mobile-header-logo-box" class="w-7 h-7 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-600 to-indigo-600 shadow-xs transition group-hover:scale-105">
+                <svg id="mobile-header-default-icon" class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                 </svg>
                 <img id="mobile-header-custom-img" class="w-full h-full object-contain p-0.5 hidden" alt="Logo">
               </div>
-              <span id="mobile-brand-system-name" class="font-bold text-xs text-slate-800 dark:text-white truncate min-w-0">
-                TurboNetwork
-              </span>
-              <svg id="mobile-workspace-chevron" class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white transition-transform duration-200 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <div class="flex flex-col min-w-0 leading-tight flex-1">
+                <span id="mobile-brand-system-name" class="font-bold text-xs sm:text-[13px] text-slate-800 dark:text-white truncate min-w-0">
+                  TurboNetwork
+                </span>
+                <span class="text-[9.5px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span class="truncate">Sede Activa</span>
+                </span>
+              </div>
+              <svg id="mobile-workspace-chevron" class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white transition-transform duration-200 flex-shrink-0 ml-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
-            <!-- Dropdown Móvil de Empresas -->
+            <!-- Dropdown Móvil de Empresas (Legacy fallback) -->
             <div id="mobile-workspace-dropdown" class="hidden absolute top-full left-0 mt-2 w-80 max-w-[calc(100vw-2rem)] z-50 p-2.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-white/10 shadow-2xl space-y-2 text-xs">
               <div class="flex items-center justify-between px-2 pt-1 pb-1.5 border-b border-slate-200/60 dark:border-white/5">
                 <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cambiar de Empresa</span>
@@ -2889,34 +2960,29 @@
           </div>
         </div>
 
-        <!-- Right Quick Status, Theme Switcher & Mobile Menu Trigger -->
-        <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+        <!-- Right Quick Actions: Búsqueda y Avatar (Touch Cómodo 40px) -->
+        <div class="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
           <div class="hidden sm:flex items-center space-x-2 px-2.5 py-1 rounded-full dynamic-primary-subtle border text-[11px] font-mono">
             <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg animate-pulse"></span>
-            <span>4.8 Gbps AGG</span>
-          </div>
-
-          <div class="hidden sm:flex items-center space-x-2 px-2.5 py-1 rounded-full dynamic-accent-subtle border text-[11px] font-mono">
-            <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg"></span>
             <span>CORE ONLINE</span>
           </div>
 
-          <!-- Botón Command Palette (Mobile & Quick Trigger) -->
-          <button onclick="openCommandPalette()" type="button" title="Comandos & Búsqueda (Ctrl+K)" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition border border-slate-200 dark:border-white/5 flex items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <!-- Botón Command Palette / Buscador (Touch Cómodo 40px, Icono Nítido y Proporcionado 16px) -->
+          <button onclick="openCommandPalette()" type="button" title="Comandos & Búsqueda (Ctrl+K)" class="w-10 h-10 rounded-xl bg-slate-100/90 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition border border-slate-200/80 dark:border-white/10 flex items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs active:scale-95">
+            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </button>
 
-          <!-- Table Density Toggle (Cómodo / Compacto) para Escritorio -->
-          <button onclick="toggleTableDensity(event)" id="density-toggle-btn" title="Alternar Densidad de Filas: Cómodo / Compacto" class="hidden sm:flex w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition border border-slate-200 dark:border-white/5 items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs">
-            <svg id="density-icon-comfortable" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <!-- Table Density Toggle para Escritorio / Tablets -->
+          <button onclick="toggleTableDensity(event)" id="density-toggle-btn" title="Alternar Densidad de Filas: Cómodo / Compacto" class="hidden md:flex w-10 h-10 rounded-xl bg-slate-100/90 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition border border-slate-200/80 dark:border-white/10 items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs active:scale-95">
+            <svg id="density-icon-comfortable" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
-            <svg id="density-icon-compact" class="w-4 h-4 hidden text-blue-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <svg id="density-icon-compact" class="w-4 h-4 hidden text-blue-500" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
               <line x1="3" y1="4" x2="21" y2="4"></line>
               <line x1="3" y1="8" x2="21" y2="8"></line>
               <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -2925,9 +2991,9 @@
             </svg>
           </button>
 
-          <!-- Theme Toggle -->
-          <button onclick="toggleThemeMode(event)" id="theme-toggle-btn" title="Modo Claro / Oscuro" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition border border-slate-200 dark:border-white/5 flex items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs">
-            <svg id="theme-icon-sun" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <!-- Theme Toggle (Visible en pantallas >= sm, en móviles está en el drawer) -->
+          <button onclick="toggleThemeMode(event)" id="theme-toggle-btn" title="Modo Claro / Oscuro" class="hidden sm:flex w-10 h-10 rounded-xl bg-slate-100/90 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition border border-slate-200/80 dark:border-white/10 items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs active:scale-95">
+            <svg id="theme-icon-sun" class="w-4 h-4 hidden dark:block" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="5"></circle>
               <line x1="12" y1="12" x2="12" y2="3"></line>
               <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -2938,18 +3004,19 @@
               <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
             </svg>
-            <svg id="theme-icon-moon" class="w-4 h-4 block dark:hidden text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg id="theme-icon-moon" class="w-4 h-4 block dark:hidden text-slate-700" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>
           </button>
 
-          <!-- Botón Menú Superior Móvil para Ajustes y Más Configuraciones -->
-          <button type="button" onclick="openMobileConfigDrawer()" class="h-9 w-9 sm:w-auto sm:px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10 transition flex items-center justify-center space-x-1.5 flex-shrink-0 cursor-pointer shadow-2xs" title="Ajustes y Más Opciones">
-            <svg class="w-4 h-4 dynamic-primary-text flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <!-- Botón Menú Superior Móvil con Avatar / Perfil & Ajustes (Touch Cómodo 40px) -->
+          <button type="button" onclick="openMobileConfigDrawer()" class="w-10 h-10 rounded-xl bg-slate-100/90 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 transition flex items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs active:scale-95 group relative overflow-hidden" title="Ajustes & Perfil del Operador">
+            <img id="mobile-header-user-avatar" class="w-8 h-8 rounded-lg object-cover hidden" alt="Avatar">
+            <svg id="mobile-header-user-fallback-icon" class="w-4 h-4 dynamic-primary-text flex-shrink-0" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="3"></circle>
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
             </svg>
-            <span class="text-xs font-semibold hidden sm:inline">Ajustes</span>
+            <span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#090d16]"></span>
           </button>
         </div>
       </header>
@@ -6992,54 +7059,54 @@
   <!-- ======================================================== -->
   <!-- BARRA DE NAVEGACIÓN INFERIOR MÓVIL (4 + 1 CENTRAL FAB)   -->
   <!-- ======================================================== -->
-  <nav id="mobile-bottom-nav" class="fixed bottom-0 left-0 right-0 z-40 lg:hidden pro-header border-t border-slate-200/80 dark:border-white/10 backdrop-blur-2xl px-2 pt-1 pb-[calc(0.4rem+env(safe-area-inset-bottom,0px))] flex items-center justify-around shadow-2xl">
+  <nav id="mobile-bottom-nav" class="fixed bottom-0 left-0 right-0 z-40 lg:hidden border-t border-slate-200/80 dark:border-white/10 backdrop-blur-2xl bg-white/90 dark:bg-[#0b101c]/90 px-2 pt-1 pb-[calc(0.45rem+env(safe-area-inset-bottom,0px))] flex items-center justify-around shadow-[0_-8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.45)]">
     <!-- 1. Inicio -->
-    <button type="button" onclick="switchTab('dashboard'); haptic('light');" id="mob-nav-dashboard" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl text-slate-400 hover:text-white transition">
-      <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+    <button type="button" onclick="switchTab('dashboard'); haptic('light');" id="mob-nav-dashboard" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer select-none">
+      <svg class="w-5 h-5 mb-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
         <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
         <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
         <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
         <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
       </svg>
-      <span class="text-[10px] font-medium leading-none">Inicio</span>
+      <span class="text-[10px] font-semibold leading-none">Inicio</span>
     </button>
 
     <!-- 2. Clientes -->
-    <button type="button" onclick="switchTab('customers'); haptic('light');" id="mob-nav-customers" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl text-slate-400 hover:text-white transition">
-      <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+    <button type="button" onclick="switchTab('customers'); haptic('light');" id="mob-nav-customers" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer select-none">
+      <svg class="w-5 h-5 mb-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <path stroke-linecap="round" stroke-linejoin="round" d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
       </svg>
-      <span class="text-[10px] font-medium leading-none">Clientes</span>
+      <span class="text-[10px] font-semibold leading-none">Clientes</span>
     </button>
 
     <!-- 3. CENTRAL FAB: BOTÓN ACCIÓN RÁPIDA -->
-    <div class="flex-1 flex justify-center -mt-6 relative z-50">
-      <button type="button" id="mob-fab-quick-btn" onclick="toggleQuickActionsSheet()" title="Acciones Rápidas" class="w-12 h-12 rounded-2xl dynamic-primary-bg text-white flex items-center justify-center shadow-lg shadow-blue-600/40 ring-4 ring-white dark:ring-[#090a0f] hover:scale-105 active:scale-95 transition-all duration-200">
-        <svg id="mob-fab-icon" class="w-6 h-6 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+    <div class="flex-1 flex flex-col items-center justify-center -mt-6 relative z-50">
+      <button type="button" id="mob-fab-quick-btn" onclick="toggleQuickActionsSheet()" title="Acciones Rápidas" class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 text-white flex items-center justify-center shadow-lg shadow-emerald-500/40 ring-4 ring-white dark:ring-[#0b101c] hover:scale-105 active:scale-90 transition-all duration-200 cursor-pointer">
+        <svg id="mob-fab-icon" class="w-6 h-6 transition-transform duration-300 drop-shadow-sm" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         </svg>
       </button>
     </div>
 
     <!-- 4. Cobros -->
-    <button type="button" onclick="switchTab('billing'); haptic('light');" id="mob-nav-billing" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl text-slate-400 hover:text-white transition">
-      <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+    <button type="button" onclick="switchTab('billing'); haptic('light');" id="mob-nav-billing" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer select-none">
+      <svg class="w-5 h-5 mb-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
         <rect x="2" y="5" width="20" height="14" rx="2"></rect>
         <line x1="2" y1="10" x2="22" y2="10"></line>
       </svg>
-      <span class="text-[10px] font-medium leading-none">Cobros</span>
+      <span class="text-[10px] font-semibold leading-none">Cobros</span>
     </button>
 
     <!-- 5. Menú / Más -->
-    <button type="button" onclick="openMobileConfigDrawer(); haptic('light');" id="mob-nav-more" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl text-slate-400 hover:text-white transition">
-      <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+    <button type="button" onclick="openMobileConfigDrawer(); haptic('light');" id="mob-nav-more" class="mob-nav-btn flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer select-none">
+      <svg class="w-5 h-5 mb-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
         <line x1="4" y1="7" x2="20" y2="7"></line>
         <line x1="4" y1="12" x2="20" y2="12"></line>
         <line x1="4" y1="17" x2="20" y2="17"></line>
       </svg>
-      <span class="text-[10px] font-medium leading-none">Menú</span>
+      <span class="text-[10px] font-semibold leading-none">Menú</span>
     </button>
   </nav>
 
@@ -7136,22 +7203,22 @@
   
   <div id="mobile-drawer-panel" class="fixed top-0 right-0 bottom-0 w-84 max-w-[88vw] z-50 pro-sidebar flex flex-col h-full max-h-screen overflow-hidden transform translate-x-full transition-transform duration-300 ease-out shadow-2xl lg:hidden">
     
-    <!-- Header Fijo del Drawer -->
-    <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/10 flex-shrink-0 bg-slate-50/50 dark:bg-white/[0.02]">
-      <div class="flex items-center space-x-2.5">
-        <div class="w-8 h-8 rounded-xl dynamic-primary-bg flex items-center justify-center text-white shadow-xs">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <!-- Header Fijo del Drawer con Safe Area Inset -->
+    <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/10 flex-shrink-0 bg-slate-50/70 dark:bg-white/[0.02]" style="padding-top: max(1rem, env(safe-area-inset-top));">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl dynamic-primary-bg flex items-center justify-center text-white shadow-xs flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24">
             <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="12" x2="16" y2="12"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </div>
-        <div>
-          <span class="font-bold text-sm text-slate-900 dark:text-white block leading-tight">Menú del Sistema</span>
-          <span class="text-[10px] text-slate-500 font-mono">Navegación Móvil</span>
+        <div class="min-w-0">
+          <span class="font-bold text-sm text-slate-900 dark:text-white block leading-tight">Menú Principal</span>
+          <span class="text-[10.5px] text-slate-500 dark:text-slate-400 font-mono">Navegación Móvil</span>
         </div>
       </div>
-      <button type="button" onclick="closeMobileConfigDrawer()" class="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 transition" title="Cerrar Menú">
+      <button type="button" onclick="closeMobileConfigDrawer()" class="w-9 h-9 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 transition flex items-center justify-center cursor-pointer active:scale-95" title="Cerrar Menú">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -7162,216 +7229,269 @@
     <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 overscroll-contain" style="-webkit-overflow-scrolling: touch;">
       
       <!-- Tarjeta de Usuario Conectado -->
-      <div class="p-3 rounded-2xl bg-slate-100/90 dark:bg-white/[0.04] border border-slate-200/90 dark:border-white/10 flex items-center space-x-3 shadow-2xs">
-        <img id="drawer-user-avatar" class="w-10 h-10 rounded-full border border-slate-300 dark:border-white/15 object-cover flex-shrink-0" src="https://api.dicebear.com/7.x/bottts/svg?seed=Operator" alt="Avatar">
-        <div class="truncate flex-1">
-          <div id="drawer-user-name" class="text-xs font-bold text-slate-900 dark:text-white truncate">Operador</div>
-          <div id="drawer-user-role" class="text-[10px] dynamic-primary-text font-mono uppercase font-bold truncate">Rol</div>
+      <div class="p-3.5 rounded-2xl bg-slate-100/90 dark:bg-white/[0.04] border border-slate-200/90 dark:border-white/10 flex items-center space-x-3 shadow-2xs">
+        <div class="relative flex-shrink-0">
+          <img id="drawer-user-avatar" class="w-11 h-11 rounded-2xl border border-slate-300 dark:border-white/15 object-cover" src="https://api.dicebear.com/7.x/bottts/svg?seed=Operator" alt="Avatar">
+          <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#0d131f]"></span>
+        </div>
+        <div class="truncate flex-1 min-w-0">
+          <div id="drawer-user-name" class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">Operador</div>
+          <div id="drawer-user-role" class="text-[10px] dynamic-primary-text font-mono uppercase font-bold tracking-wider truncate mt-0.5">Rol</div>
         </div>
       </div>
 
-      <!-- Empresa / Sede Activa (Móvil) -->
-      <div class="p-3 rounded-2xl bg-blue-50/80 dark:bg-white/[0.04] border border-blue-200/90 dark:border-white/10 space-y-2.5">
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Sede / Negocio Activo</span>
-          <span class="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">En Línea</span>
-        </div>
-        <div class="flex items-center space-x-2.5 min-w-0">
-          <div id="drawer-tenant-logo-box" class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-xs overflow-hidden flex-shrink-0">
-            <span id="drawer-tenant-initial">TN</span>
-            <img id="drawer-tenant-img" class="w-full h-full object-contain p-0.5 hidden" alt="Logo">
-          </div>
-          <div class="truncate flex-1">
-            <span id="drawer-tenant-name" class="text-xs font-bold text-slate-900 dark:text-white block truncate">TurboNetwork</span>
-            <span id="drawer-tenant-tagline" class="text-[10px] text-slate-600 dark:text-slate-400 block truncate">ISP Enterprise Core</span>
-          </div>
-        </div>
-        <button type="button" onclick="closeMobileConfigDrawer(); openMobileWorkspaceModal();" class="w-full py-2 px-3 rounded-xl bg-white dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-blue-600 dark:text-blue-300 font-semibold text-xs border border-blue-200 dark:border-white/10 transition flex items-center justify-center space-x-1.5 shadow-2xs">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
-          <span>Cambiar de Empresa</span>
-        </button>
+      <!-- Contenedor Oculto para sincronización de Empresa (Compatibilidad JS sin ensuciar la UI) -->
+      <div class="hidden" aria-hidden="true">
+        <div id="drawer-tenant-logo-box"><span id="drawer-tenant-initial">TN</span><img id="drawer-tenant-img" alt="Logo"></div>
+        <span id="drawer-tenant-name">TurboNetwork</span>
+        <span id="drawer-tenant-tagline">ISP Enterprise Core</span>
       </div>
 
-      <!-- Botón Instalar Aplicación PWA (Móvil / Desktop) -->
+      <!-- Botón Instalar Aplicación PWA (Visible SOLO en Navegador, Oculto en modo PWA instalada) -->
       <div id="drawer-pwa-install-container">
-        <button type="button" onclick="installPwaApp()" id="btn-drawer-install-pwa" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold transition text-left shadow-md cursor-pointer group active:scale-98">
+        <button type="button" onclick="installPwaApp()" id="btn-drawer-install-pwa" class="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold transition text-left shadow-md cursor-pointer group active:scale-98">
           <div class="flex items-center space-x-2.5 min-w-0">
-            <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+            <div class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
               <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
               </svg>
             </div>
             <div class="truncate">
               <span class="text-xs block leading-tight font-bold">Instalar Aplicación</span>
-              <span class="text-[10px] text-blue-100 font-normal block leading-tight">Acceso directo en pantalla</span>
+              <span class="text-[10px] text-blue-100 font-normal block leading-tight mt-0.5">Acceso directo en pantalla de inicio</span>
             </div>
           </div>
           <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/25 text-white flex-shrink-0">PWA</span>
         </button>
       </div>
 
-      <!-- Command Palette Button -->
-      <button type="button" onclick="closeMobileConfigDrawer(); openCommandPalette();" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-700 dark:text-blue-400 font-semibold transition text-left border border-blue-500/20">
-        <div class="flex items-center space-x-2.5">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <span class="text-xs">Command Palette (Ctrl+K)</span>
-        </div>
-        <kbd class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">Buscar</kbd>
-      </button>
-
       <!-- 1. NAVEGACIÓN PRINCIPAL -->
       <div class="space-y-1">
-        <div class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 px-2 pt-1 pb-1 tracking-wider">Navegación Principal</div>
+        <div class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 px-2.5 pt-1 pb-1 tracking-wider">Navegación Principal</div>
         
-        <button type="button" onclick="switchTab('dashboard'); closeMobileConfigDrawer();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-            <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-            <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-            <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-          </svg>
-          <span class="text-xs font-medium">Dashboard General</span>
+        <!-- Dashboard -->
+        <button type="button" data-drawer-tab="dashboard" onclick="switchTab('dashboard'); closeMobileConfigDrawer();" class="drawer-nav-item w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+              </svg>
+            </div>
+            <span class="text-xs font-semibold">Dashboard General</span>
+          </div>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
 
-        <button type="button" onclick="switchTab('customers'); closeMobileConfigDrawer();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-          </svg>
-          <span class="text-xs font-medium">Clientes & Contratos</span>
+        <!-- Clientes -->
+        <button type="button" data-drawer-tab="customers" onclick="switchTab('customers'); closeMobileConfigDrawer();" class="drawer-nav-item w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+              </svg>
+            </div>
+            <span class="text-xs font-semibold">Clientes & Contratos</span>
+          </div>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
 
-        <button type="button" onclick="switchTab('billing'); closeMobileConfigDrawer();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <svg class="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-            <line x1="2" y1="10" x2="22" y2="10"></line>
-          </svg>
-          <span class="text-xs font-medium">Facturación & Cobranzas</span>
+        <!-- Facturación -->
+        <button type="button" data-drawer-tab="billing" onclick="switchTab('billing'); closeMobileConfigDrawer();" class="drawer-nav-item w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+              </svg>
+            </div>
+            <span class="text-xs font-semibold">Facturación & Cobranzas</span>
+          </div>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
       </div>
 
       <!-- 2. OPERACIONES DE CAMPO -->
-      <div class="space-y-1 pt-2 border-t border-slate-200 dark:border-white/5">
-        <div class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 px-2 pt-1 pb-1 tracking-wider">Operaciones de Campo</div>
+      <div class="space-y-1 pt-2.5 border-t border-slate-200/80 dark:border-white/5">
+        <div class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 px-2.5 pt-1 pb-1 tracking-wider">Operaciones de Campo</div>
 
-        <button type="button" onclick="switchTab('messages'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <div class="flex items-center space-x-2.5">
-            <svg class="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-            <span class="text-xs font-medium">Mensajes & WhatsApp</span>
+        <!-- Chat / Mensajes -->
+        <button type="button" data-drawer-tab="messages" onclick="switchTab('messages'); closeMobileConfigDrawer();" class="drawer-nav-item w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            </div>
+            <span class="text-xs font-semibold">Mensajes & WhatsApp</span>
           </div>
-          <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold">Live</span>
+          <span class="px-2 py-0.5 rounded-md text-[9px] font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-500/20">Live</span>
         </button>
 
-        <button type="button" onclick="switchTab('rrhh'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <div class="flex items-center space-x-2.5">
-            <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="11" r="2.5"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3m-3 4h3m-12 5c0-1.66 1.34-3 3-3s3 1.34 3 3"></path></svg>
-            <span class="text-xs font-medium">RRHH & Asistencias</span>
+        <!-- RRHH -->
+        <button type="button" data-drawer-tab="rrhh" onclick="switchTab('rrhh'); closeMobileConfigDrawer();" class="drawer-nav-item w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="11" r="2.5"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3m-3 4h3m-12 5c0-1.66 1.34-3 3-3s3 1.34 3 3"></path></svg>
+            </div>
+            <span class="text-xs font-semibold">RRHH & Asistencias</span>
           </div>
-          <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold">GPS</span>
+          <span class="px-2 py-0.5 rounded-md text-[9px] font-mono bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold border border-amber-500/20">GPS</span>
         </button>
 
-        <button type="button" onclick="switchTab('inventory'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <div class="flex items-center space-x-2.5">
-            <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-            <span class="text-xs font-medium">Inventario & Stock</span>
+        <!-- Inventario -->
+        <button type="button" data-drawer-tab="inventory" onclick="switchTab('inventory'); closeMobileConfigDrawer();" class="drawer-nav-item w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            </div>
+            <span class="text-xs font-semibold">Inventario & Stock</span>
           </div>
-          <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold">Kardex</span>
+          <span class="px-2 py-0.5 rounded-md text-[9px] font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-500/20">Kardex</span>
         </button>
 
-        <button type="button" onclick="switchTab('mochila'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <div class="flex items-center space-x-2.5">
-            <svg class="w-4 h-4 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-            <span class="text-xs font-medium">Mochila Técnica</span>
+        <!-- Mochila -->
+        <button type="button" data-drawer-tab="mochila" onclick="switchTab('mochila'); closeMobileConfigDrawer();" class="drawer-nav-item w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            </div>
+            <span class="text-xs font-semibold">Mochila Técnica</span>
           </div>
-          <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-purple-500/10 text-purple-700 dark:text-purple-400 font-bold">EPP</span>
+          <span class="px-2 py-0.5 rounded-md text-[9px] font-mono bg-purple-500/10 text-purple-700 dark:text-purple-400 font-bold border border-purple-500/20">EPP</span>
         </button>
 
-        <button type="button" id="mob-nav-maps" onclick="switchTab('maps'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <div class="flex items-center space-x-2.5">
-            <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-            <span class="text-xs font-medium">Mapas & Cobertura FTTH</span>
+        <!-- Mapas -->
+        <button type="button" id="mob-nav-maps" data-drawer-tab="maps" onclick="switchTab('maps'); closeMobileConfigDrawer();" class="drawer-nav-item w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+            </div>
+            <span class="text-xs font-semibold">Mapas & Cobertura FTTH</span>
           </div>
-          <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-blue-500/10 text-blue-700 dark:text-blue-400 font-bold">Mapbox</span>
+          <span class="px-2 py-0.5 rounded-md text-[9px] font-mono bg-blue-500/10 text-blue-700 dark:text-blue-400 font-bold border border-blue-500/20">Mapbox</span>
         </button>
 
-        <button type="button" onclick="switchTab('plans'); closeMobileConfigDrawer();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-          <span class="text-xs font-medium">Servicios & Planes</span>
+        <!-- Planes -->
+        <button type="button" data-drawer-tab="plans" onclick="switchTab('plans'); closeMobileConfigDrawer();" class="drawer-nav-item w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            </div>
+            <span class="text-xs font-semibold">Servicios & Planes</span>
+          </div>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
       </div>
 
       <!-- 3. MÓDULOS DE CONFIGURACIÓN -->
-      <div class="space-y-1 pt-2 border-t border-slate-200 dark:border-white/5">
-        <div class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 px-2 pt-1 pb-1 tracking-wider">Módulos de Configuración</div>
+      <div class="space-y-1 pt-2.5 border-t border-slate-200/80 dark:border-white/5">
+        <div class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 px-2.5 pt-1 pb-1 tracking-wider">Configuración del Sistema</div>
 
-        <button type="button" onclick="switchTab('config'); switchConfigSubTab('branding'); closeMobileConfigDrawer();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-          </svg>
-          <span class="text-xs font-medium">Personalización & Marca</span>
+        <!-- Personalización & Marca -->
+        <button type="button" onclick="switchTab('config'); switchConfigSubTab('branding'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
+            </div>
+            <span class="text-xs font-semibold">Personalización & Marca</span>
+          </div>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
 
-        <button type="button" onclick="switchTab('config'); switchConfigSubTab('users'); closeMobileConfigDrawer();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          <span class="text-xs font-medium">Operadores & PINs</span>
+        <!-- Operadores & PINs -->
+        <button type="button" onclick="switchTab('config'); switchConfigSubTab('users'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <span class="text-xs font-semibold">Operadores & PINs</span>
+          </div>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
 
-        <button type="button" onclick="switchTab('config'); switchConfigSubTab('roles'); closeMobileConfigDrawer();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <svg class="w-4 h-4 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-          <span class="text-xs font-medium">Roles & Permisos RBAC</span>
+        <!-- Roles & Permisos -->
+        <button type="button" onclick="switchTab('config'); switchConfigSubTab('roles'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <span class="text-xs font-semibold">Roles & Permisos RBAC</span>
+          </div>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
 
-        <button type="button" onclick="switchTab('config'); switchConfigSubTab('updates'); closeMobileConfigDrawer();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span class="text-xs font-medium">Actualizaciones & Backups</span>
+        <!-- Actualizaciones -->
+        <button type="button" onclick="switchTab('config'); switchConfigSubTab('updates'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <span class="text-xs font-semibold">Actualizaciones & Backups</span>
+          </div>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
 
-        <button type="button" onclick="switchTab('config'); switchConfigSubTab('connections'); closeMobileConfigDrawer();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition text-left">
-          <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-          </svg>
-          <span class="text-xs font-medium">Conexiones & Pasarelas</span>
+        <!-- Conexiones -->
+        <button type="button" onclick="switchTab('config'); switchConfigSubTab('connections'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </div>
+            <span class="text-xs font-semibold">Conexiones & Pasarelas</span>
+          </div>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
       </div>
 
       <!-- 4. APARIENCIA / TEMA -->
-      <div class="pt-2 border-t border-slate-200 dark:border-white/5">
-        <button type="button" onclick="toggleThemeMode()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition">
-          <div class="flex items-center space-x-2.5">
-            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="5"></circle>
-              <line x1="12" y1="1" x2="12" y2="3"></line>
-              <line x1="12" y1="21" x2="12" y2="23"></line>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-              <line x1="1" y1="12" x2="3" y2="12"></line>
-              <line x1="21" y1="12" x2="23" y2="12"></line>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-            </svg>
+      <div class="pt-2.5 border-t border-slate-200/80 dark:border-white/5">
+        <button type="button" onclick="toggleThemeMode()" class="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-100/80 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-all active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            </div>
             <span class="text-xs font-semibold">Modo Claro / Oscuro</span>
           </div>
-          <span class="text-[10px] dynamic-primary-text font-mono font-bold">Cambiar</span>
+          <span class="px-2 py-0.5 rounded-md text-[10px] font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/20">Alternar</span>
         </button>
       </div>
 
     </div>
 
-    <!-- Footer Fijo del Drawer (Siempre Visible al fondo) -->
-    <div class="p-4 border-t border-slate-200 dark:border-white/10 flex-shrink-0 bg-slate-50/80 dark:bg-white/[0.02]">
-      <button type="button" onclick="logout()" class="w-full py-2.5 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 dark:text-rose-400 font-semibold text-xs border border-rose-500/20 transition flex items-center justify-center space-x-2 shadow-2xs">
+    <!-- Footer Fijo del Drawer (Siempre Visible al fondo con Safe Area) -->
+    <div class="p-4 border-t border-slate-200 dark:border-white/10 flex-shrink-0 bg-slate-50/80 dark:bg-white/[0.02]" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
+      <button type="button" onclick="logout()" class="w-full py-2.5 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 dark:text-rose-400 font-semibold text-xs border border-rose-500/20 transition flex items-center justify-center space-x-2 shadow-2xs active:scale-95 cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
         </svg>
         <span>Cerrar Sesión</span>
       </button>
+      <div class="text-center mt-2">
+        <span class="text-[9.5px] text-slate-400 dark:text-slate-500 font-mono">TurboNetwork Core • v3.0</span>
+      </div>
     </div>
 
   </div>
@@ -9033,53 +9153,63 @@
     <!-- ======================================================== -->
   <!-- MODAL 1: MARCACIÓN DE ASISTENCIA BIOMÉTRICA CON WEBCAM Y GPS-->
   <!-- ======================================================== -->
-  <div id="attendance-checkin-modal" class="fixed inset-0 z-[280] hidden flex items-center justify-center bg-black/85 backdrop-blur-md px-4 py-6">
-    <div class="pro-card max-w-lg w-full p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col justify-between overflow-hidden my-auto">
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between pb-3.5 border-b border-slate-200 dark:border-white/5">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold">
+  <div id="attendance-checkin-modal" onclick="handleAttendanceBackdropClick(event)" class="fixed inset-0 z-[280] hidden flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4">
+    <div class="pro-card max-w-lg w-full rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col max-h-[94dvh] sm:max-h-[90vh] overflow-hidden my-0 sm:my-auto">
+      
+      <!-- Tirador táctil visual para móvil -->
+      <div class="sm:hidden w-12 h-1 bg-slate-300 dark:bg-white/20 rounded-full mx-auto mt-2.5 mb-0.5 cursor-pointer flex-shrink-0" onclick="closeAttendanceCheckinModal()"></div>
+
+      <!-- Modal Header (Fijo superior con botón X de cierre) -->
+      <div class="flex items-center justify-between px-4 sm:px-6 pt-2 sm:pt-4 pb-3 border-b border-slate-200 dark:border-white/5 flex-shrink-0">
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold flex-shrink-0 shadow-2xs">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
           </div>
-          <div>
-            <h3 class="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100">Registro de Asistencia Biométrico</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Captura tu fotografía selfie y valida tu ubicación para iniciar jornada</p>
+          <div class="min-w-0">
+            <h3 class="text-sm sm:text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 truncate">Registro de Asistencia</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">Captura selfie y ubicación GPS</p>
           </div>
         </div>
+        <button type="button" onclick="closeAttendanceCheckinModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition flex items-center justify-center flex-shrink-0 cursor-pointer active:scale-95" title="Cerrar (Esc)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
 
-      <!-- Modal Body -->
-      <div class="py-3.5 space-y-4">
+      <!-- Modal Body (Cuerpo desplazable táctil fluido) -->
+      <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 py-3.5 space-y-3.5" style="-webkit-overflow-scrolling: touch;">
         <!-- Info del Operador & Horario -->
-        <div class="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between text-xs">
-          <div class="flex items-center space-x-2.5">
-            <img id="checkin-user-avatar" class="w-8 h-8 rounded-full border border-slate-200 dark:border-white/10 object-cover" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar">
-            <div>
-              <span id="checkin-user-name" class="font-bold text-slate-800 dark:text-slate-200 block">Operador</span>
-              <span class="text-[10px] text-slate-400 font-mono" id="checkin-user-schedule">Horario: 08:00 - 17:00</span>
+        <div class="p-2.5 sm:p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 flex items-center justify-between text-xs">
+          <div class="flex items-center space-x-2.5 min-w-0">
+            <img id="checkin-user-avatar" class="w-8 h-8 rounded-full border border-slate-200 dark:border-white/10 object-cover flex-shrink-0" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar">
+            <div class="min-w-0">
+              <span id="checkin-user-name" class="font-bold text-slate-800 dark:text-slate-200 block truncate">Operador</span>
+              <span class="text-[10px] text-slate-400 font-mono truncate block" id="checkin-user-schedule">Horario: 08:00 - 17:00</span>
             </div>
           </div>
-          <div class="text-right">
-            <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Hora Actual</span>
-            <span id="checkin-live-clock" class="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">00:00:00</span>
+          <div class="text-right flex-shrink-0 pl-2">
+            <span class="text-[9px] text-slate-400 uppercase tracking-wider block font-semibold">Hora Actual</span>
+            <div class="flex items-center gap-1.5 justify-end">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span id="checkin-live-clock" class="font-mono text-xs sm:text-sm font-bold text-blue-600 dark:text-blue-400">00:00:00</span>
+            </div>
           </div>
         </div>
 
         <!-- Selector Multi-Tenant: Empresa o Asistencia Compartida -->
-        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 space-y-2.5">
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-              Sede & Modalidad de Asistencia
+              Sede & Modalidad
             </span>
-            <span id="checkin-current-tenant-badge" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+            <span id="checkin-current-tenant-badge" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 truncate max-w-[150px]">
               TurboNetwork
             </span>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
             <!-- Opción 1: Por Empresa -->
-            <label id="checkin-mode-isolated-label" class="relative flex flex-col p-2.5 rounded-xl border-2 border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 cursor-pointer transition">
+            <label id="checkin-mode-isolated-label" class="relative flex flex-col p-2 sm:p-2.5 rounded-xl border-2 border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 cursor-pointer transition">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <input type="radio" name="attendance-tenant-mode" id="checkin-mode-isolated" value="isolated" checked onchange="handleAttendanceModeChange()" class="text-blue-600 focus:ring-blue-500">
@@ -9087,13 +9217,13 @@
                 </div>
                 <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400">Individual</span>
               </div>
-              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 pl-5 leading-tight">
-                Válido solo para <span id="checkin-isolated-company-name" class="font-bold text-slate-800 dark:text-slate-200">TurboNetwork</span>. Podrás marcar por separado en otras sedes.
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 pl-5 leading-tight">
+                Para <span id="checkin-isolated-company-name" class="font-bold text-slate-800 dark:text-slate-200">TurboNetwork</span>.
               </p>
             </label>
 
             <!-- Opción 2: Compartir Asistencia -->
-            <label id="checkin-mode-shared-label" class="relative flex flex-col p-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.01] cursor-pointer transition hover:border-slate-300 dark:hover:border-white/20">
+            <label id="checkin-mode-shared-label" class="relative flex flex-col p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.01] cursor-pointer transition hover:border-slate-300 dark:hover:border-white/20">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <input type="radio" name="attendance-tenant-mode" id="checkin-mode-shared" value="shared" onchange="handleAttendanceModeChange()" class="text-indigo-600 focus:ring-indigo-500">
@@ -9101,40 +9231,52 @@
                 </div>
                 <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">Multi-Sede</span>
               </div>
-              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 pl-5 leading-tight">
-                Sincroniza y valida tu jornada en simultáneo para todas tus empresas asignadas.
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 pl-5 leading-tight">
+                Valida para todas tus sedes asignadas.
               </p>
             </label>
           </div>
 
-          <!-- Selector de Empresa (visible si 'Por Empresa' y tiene acceso a más de 1 sede) -->
-          <div id="checkin-company-selector-wrap" class="pt-0.5 flex items-center justify-between">
-            <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Empresa asignada a marcar:</span>
+          <!-- Selector de Empresa -->
+          <div id="checkin-company-selector-wrap" class="pt-1 flex items-center justify-between">
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Empresa a marcar:</span>
             <select id="checkin-target-tenant" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500" onchange="handleAttendanceTargetCompanyChange()">
               <!-- Opciones dinámicas de empresas -->
             </select>
           </div>
         </div>
 
-        <!-- Visor de Cámara Webcam -->
-        <div class="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden border border-slate-700 flex items-center justify-center">
-          <video id="checkin-webcam-video" autoplay playsinline class="w-full h-full object-cover"></video>
+        <!-- Visor de Cámara Webcam Adaptado -->
+        <div class="relative w-full aspect-[4/3] sm:aspect-video max-h-[280px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-700/80 flex items-center justify-center shadow-lg group">
+          <video id="checkin-webcam-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
           <img id="checkin-photo-preview" class="w-full h-full object-cover hidden" alt="Selfie Capturada">
           <canvas id="checkin-canvas" class="hidden"></canvas>
 
           <!-- Overlay con visor de encuadre facial -->
-          <div id="checkin-face-frame" class="absolute inset-0 border-2 border-dashed border-white/30 pointer-events-none flex items-center justify-center">
-            <div class="w-40 h-48 border-2 border-blue-400/70 rounded-3xl"></div>
+          <div id="checkin-face-frame" class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-4">
+            <div class="w-36 h-44 sm:w-40 sm:h-48 border-2 border-dashed border-blue-400/80 rounded-3xl relative shadow-[0_0_15px_rgba(59,130,246,0.25)]">
+              <div class="absolute -top-1.5 -left-1.5 w-4 h-4 border-t-2 border-l-2 border-blue-400"></div>
+              <div class="absolute -top-1.5 -right-1.5 w-4 h-4 border-t-2 border-r-2 border-blue-400"></div>
+              <div class="absolute -bottom-1.5 -left-1.5 w-4 h-4 border-b-2 border-l-2 border-blue-400"></div>
+              <div class="absolute -bottom-1.5 -right-1.5 w-4 h-4 border-b-2 border-r-2 border-blue-400"></div>
+            </div>
+            <span class="mt-2 text-[10px] text-white/80 font-medium px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-xs">Encuadra tu rostro</span>
           </div>
 
-          <!-- Botón flotante para capturar -->
-          <div class="absolute bottom-3 inset-x-0 flex justify-center">
-            <button type="button" onclick="captureAttendanceSelfie()" id="btn-snap-photo" class="px-4 py-2 rounded-full bg-white/90 hover:bg-white text-slate-900 font-bold text-xs shadow-lg transition flex items-center space-x-1.5 backdrop-blur-md">
-              <svg class="w-4 h-4 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"/></svg>
+          <!-- Botón Superior Flotante: Voltear Cámara (Frontal / Trasera) -->
+          <button type="button" onclick="flipAttendanceCamera()" title="Cambiar Cámara (Frontal / Trasera)" class="absolute top-2.5 right-2.5 z-20 px-2.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-md flex items-center gap-1.5 transition border border-white/20 active:scale-90 text-[11px] font-semibold shadow-md cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>Voltear</span>
+          </button>
+
+          <!-- Botón flotante para capturar / repetir foto -->
+          <div class="absolute bottom-3 inset-x-0 flex justify-center z-20 px-4">
+            <button type="button" onclick="captureAttendanceSelfie()" id="btn-snap-photo" class="group px-5 py-2.5 rounded-full bg-white/95 hover:bg-white text-slate-900 font-bold text-xs shadow-2xl transition flex items-center space-x-2 backdrop-blur-md active:scale-95 cursor-pointer ring-2 ring-black/10">
+              <span class="w-3.5 h-3.5 rounded-full bg-rose-500 ring-2 ring-rose-300 group-hover:scale-110 transition"></span>
               <span>Tomar Foto Selfie</span>
             </button>
-            <button type="button" onclick="retakeAttendanceSelfie()" id="btn-retake-photo" class="hidden px-4 py-2 rounded-full bg-slate-800/90 hover:bg-slate-800 text-white font-bold text-xs shadow-lg transition flex items-center space-x-1.5 backdrop-blur-md border border-white/20">
-              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <button type="button" onclick="retakeAttendanceSelfie()" id="btn-retake-photo" class="hidden px-5 py-2 rounded-full bg-slate-900/90 hover:bg-slate-900 text-white font-bold text-xs shadow-2xl transition flex items-center space-x-2 backdrop-blur-md border border-white/25 active:scale-95 cursor-pointer">
+              <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
               <span>Repetir Foto</span>
             </button>
           </div>
@@ -9143,18 +9285,18 @@
         <!-- Indicador de Geolocalización -->
         <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 flex items-center justify-between text-xs">
           <div class="flex items-center space-x-2 min-w-0">
-            <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <svg class="w-4 h-4 text-emerald-500 flex-shrink-0 animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             <span id="checkin-gps-status" class="text-slate-600 dark:text-slate-300 truncate font-mono text-[11px]">Obteniendo coordenadas GPS...</span>
           </div>
           <span id="checkin-gps-badge" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 flex-shrink-0">GPS Activo</span>
         </div>
 
-        <div id="checkin-error-box" class="text-xs text-rose-500 font-medium min-h-[16px]"></div>
+        <div id="checkin-error-box" class="text-xs text-rose-500 font-medium min-h-[14px]"></div>
       </div>
 
-      <!-- Modal Footer -->
-      <div class="flex items-center justify-end space-x-3 pt-3.5 border-t border-slate-200 dark:border-white/5">
-        <button type="button" onclick="submitAttendanceCheckIn()" id="btn-submit-checkin" class="w-full py-2.5 rounded-xl btn-brand-primary text-xs font-bold transition flex items-center justify-center space-x-2 shadow-lg">
+      <!-- Modal Footer (Sticky en parte inferior con Safe Area Inset) -->
+      <div class="px-4 sm:px-6 py-3 sm:py-3.5 border-t border-slate-200 dark:border-white/5 flex-shrink-0 bg-slate-50/90 dark:bg-[#0c1220]/95 backdrop-blur-md pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+        <button type="button" onclick="submitAttendanceCheckIn()" id="btn-submit-checkin" class="w-full py-3 rounded-xl btn-brand-primary text-xs sm:text-sm font-bold transition flex items-center justify-center space-x-2 shadow-lg active:scale-98 cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
           <span id="btn-submit-checkin-text">Confirmar Registro de Asistencia</span>
         </button>
@@ -14092,6 +14234,20 @@
           moreBtn.classList.add('active-mob-tab');
         }
       }
+
+      // Menú Lateral Móvil (Drawer)
+      document.querySelectorAll('.drawer-nav-item').forEach(btn => {
+        btn.classList.remove('bg-slate-100', 'dark:bg-white/10', 'font-bold');
+        btn.style.backgroundColor = "";
+        btn.style.color = "";
+      });
+      const activeDrawerBtn = document.querySelector(`.drawer-nav-item[data-drawer-tab="${activeTabId}"]`);
+      if (activeDrawerBtn) {
+        const rgb = hexToRgb(appSettings.primaryColor);
+        activeDrawerBtn.style.backgroundColor = `rgba(${rgb}, 0.12)`;
+        activeDrawerBtn.style.color = appSettings.primaryColor;
+        activeDrawerBtn.classList.add('font-bold');
+      }
     }
 
     // ========================================================
@@ -14908,6 +15064,11 @@
           closeThermalTicketModal();
           return;
         }
+        const attModal = document.getElementById('attendance-checkin-modal');
+        if (attModal && !attModal.classList.contains('hidden')) {
+          closeAttendanceCheckinModal();
+          return;
+        }
         const modal = document.getElementById('global-command-palette-modal');
         if (modal && !modal.classList.contains('hidden')) {
           closeCommandPalette();
@@ -15017,7 +15178,34 @@
       }
     }
 
-    // Mobile Drawer Controls
+    // PWA Standalone Detection & Mobile Drawer Controls
+    function isPwaStandalone() {
+      try {
+        const isStandaloneMedia = window.matchMedia && (
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.matchMedia('(display-mode: fullscreen)').matches ||
+          window.matchMedia('(display-mode: minimal-ui)').matches
+        );
+        const isIosStandalone = window.navigator && window.navigator.standalone === true;
+        const isAndroidApp = Boolean(document.referrer && document.referrer.startsWith('android-app://'));
+        return Boolean(isStandaloneMedia || isIosStandalone || isAndroidApp);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function checkPwaInstallVisibility() {
+      const container = document.getElementById('drawer-pwa-install-container');
+      if (!container) return;
+      if (isPwaStandalone()) {
+        container.style.display = 'none';
+        container.classList.add('hidden');
+      } else {
+        container.style.display = '';
+        container.classList.remove('hidden');
+      }
+    }
+
     function openMobileConfigDrawer() {
       const overlay = document.getElementById('mobile-drawer-overlay');
       const panel = document.getElementById('mobile-drawer-panel');
@@ -15025,6 +15213,11 @@
         overlay.classList.remove('pointer-events-none', 'opacity-0');
         panel.classList.remove('translate-x-full');
       }
+      checkPwaInstallVisibility();
+      if (typeof updateActiveNavStyles === 'function') {
+        updateActiveNavStyles();
+      }
+      haptic('light');
     }
 
     function closeMobileConfigDrawer() {
@@ -15411,6 +15604,13 @@
 
       const mobAvatar = document.getElementById('drawer-user-avatar');
       if (mobAvatar) mobAvatar.src = user.avatar;
+      const mobHeaderAvatar = document.getElementById('mobile-header-user-avatar');
+      if (mobHeaderAvatar && user.avatar) {
+        mobHeaderAvatar.src = user.avatar;
+        mobHeaderAvatar.classList.remove('hidden');
+        const fb = document.getElementById('mobile-header-user-fallback-icon');
+        if (fb) fb.classList.add('hidden');
+      }
       const mobName = document.getElementById('drawer-user-name');
       if (mobName) mobName.textContent = user.name;
       const mobRole = document.getElementById('drawer-user-role');
@@ -18131,6 +18331,13 @@ Estamos atentos para brindarle asistencia inmediata.
 
       const drawerAvatar = document.getElementById('drawer-user-avatar');
       if (drawerAvatar) drawerAvatar.src = avatar;
+      const mobHeaderAvatar = document.getElementById('mobile-header-user-avatar');
+      if (mobHeaderAvatar && avatar) {
+        mobHeaderAvatar.src = avatar;
+        mobHeaderAvatar.classList.remove('hidden');
+        const fb = document.getElementById('mobile-header-user-fallback-icon');
+        if (fb) fb.classList.add('hidden');
+      }
       const drawerName = document.getElementById('drawer-user-name');
       if (drawerName) drawerName.textContent = currentUser.name;
       const drawerRole = document.getElementById('drawer-user-role');
@@ -19586,6 +19793,13 @@ Estamos atentos para brindarle asistencia inmediata.
 
             const drawerAvatar = document.getElementById('drawer-user-avatar');
             if (drawerAvatar) drawerAvatar.src = avatar;
+            const mobHeaderAvatar = document.getElementById('mobile-header-user-avatar');
+            if (mobHeaderAvatar && avatar) {
+              mobHeaderAvatar.src = avatar;
+              mobHeaderAvatar.classList.remove('hidden');
+              const fb = document.getElementById('mobile-header-user-fallback-icon');
+              if (fb) fb.classList.add('hidden');
+            }
             const drawerName = document.getElementById('drawer-user-name');
             if (drawerName) drawerName.textContent = currentUser.name;
             const drawerRole = document.getElementById('drawer-user-role');
@@ -20952,16 +21166,46 @@ Estamos atentos para brindarle asistencia inmediata.
       modal.classList.remove('hidden');
 
       // Iniciar cámara y geolocalización
+      currentAttendanceFacingMode = "user";
       startAttendanceWebcam();
       getAttendanceGeolocation();
     }
 
-    async function startAttendanceWebcam() {
+    let currentAttendanceFacingMode = "user";
+
+    function closeAttendanceCheckinModal() {
+      stopAttendanceWebcam();
+      const modal = document.getElementById('attendance-checkin-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function handleAttendanceBackdropClick(event) {
+      if (event && event.target && event.target.id === 'attendance-checkin-modal') {
+        closeAttendanceCheckinModal();
+      }
+    }
+
+    async function flipAttendanceCamera() {
+      currentAttendanceFacingMode = currentAttendanceFacingMode === "user" ? "environment" : "user";
+      haptic('light');
+      await startAttendanceWebcam(currentAttendanceFacingMode);
+    }
+
+    async function startAttendanceWebcam(facingMode) {
+      if (facingMode) currentAttendanceFacingMode = facingMode;
       const video = document.getElementById('checkin-webcam-video');
+      if (attendanceStream) {
+        attendanceStream.getTracks().forEach(t => t.stop());
+        attendanceStream = null;
+      }
       try {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           attendanceStream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }
+            video: {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              facingMode: currentAttendanceFacingMode
+            }
           });
           if (video) {
             video.srcObject = attendanceStream;
@@ -20971,7 +21215,8 @@ Estamos atentos para brindarle asistencia inmediata.
       } catch (err) {
         console.warn("Cámara no disponible o permiso denegado, usando fallback simulado:", err);
         // Fallback: Si no hay cámara, permitir capturar foto generada
-        document.getElementById('checkin-error-box').textContent = 'Aviso: Cámara no detectada o permiso denegado. Se utilizará fotografía de verificación biométrica estándar.';
+        const errBox = document.getElementById('checkin-error-box');
+        if (errBox) errBox.textContent = 'Aviso: Cámara no detectada o permiso denegado. Se utilizará fotografía de verificación biométrica estándar.';
       }
     }
 
@@ -29388,9 +29633,8 @@ async function sendCurrentLocation(isLive) {
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPwaPrompt = e;
-        const installContainer = document.getElementById('drawer-pwa-install-container');
-        if (installContainer) {
-          installContainer.classList.remove('hidden');
+        if (typeof checkPwaInstallVisibility === 'function') {
+          checkPwaInstallVisibility();
         }
       });
 
@@ -29400,17 +29644,27 @@ async function sendCurrentLocation(isLive) {
         const installContainer = document.getElementById('drawer-pwa-install-container');
         if (installContainer) {
           installContainer.classList.add('hidden');
+          installContainer.style.display = 'none';
         }
         showPwaToast('🎉 ¡TurboNetwork instalada con éxito en tu dispositivo!', 'success');
       });
 
       // 4. Disparador de instalación accesible globalmente
       window.installPwaApp = async function() {
+        if (typeof isPwaStandalone === 'function' && isPwaStandalone()) {
+          showPwaToast('La aplicación ya está ejecutándose en modo instalado (PWA).', 'info');
+          return;
+        }
         if (deferredPwaPrompt) {
           deferredPwaPrompt.prompt();
           const { outcome } = await deferredPwaPrompt.userChoice;
           if (outcome === 'accepted') {
             console.log('[PWA] Instalación aceptada por el usuario.');
+            const installContainer = document.getElementById('drawer-pwa-install-container');
+            if (installContainer) {
+              installContainer.classList.add('hidden');
+              installContainer.style.display = 'none';
+            }
           } else {
             console.log('[PWA] Instalación cancelada o pospuesta.');
           }
@@ -29420,10 +29674,27 @@ async function sendCurrentLocation(isLive) {
           if (isIos) {
             alert('Para instalar TurboNetwork en iPhone/iPad:\n1. Toca el botón Compartir (icono cuadrado con flecha hacia arriba)\n2. Selecciona "Agregar a la pantalla de inicio"');
           } else {
-            showPwaToast('La aplicación ya está instalada o tu navegador la gestiona desde su menú superior.', 'info');
+            showPwaToast('Para instalar TurboNetwork, abre el menú de tu navegador (⋮) y presiona "Instalar aplicación" o "Agregar a la pantalla principal".', 'info');
           }
         }
       };
+
+      // 5. Escucha de cambios de modo de pantalla y chequeo inicial
+      try {
+        const standaloneMq = window.matchMedia('(display-mode: standalone)');
+        if (standaloneMq && standaloneMq.addEventListener) {
+          standaloneMq.addEventListener('change', () => {
+            if (typeof checkPwaInstallVisibility === 'function') checkPwaInstallVisibility();
+          });
+        }
+      } catch (e) {}
+
+      if (typeof checkPwaInstallVisibility === 'function') {
+        checkPwaInstallVisibility();
+      }
+      window.addEventListener('DOMContentLoaded', () => {
+        if (typeof checkPwaInstallVisibility === 'function') checkPwaInstallVisibility();
+      });
 
       // 5. Notificación Visual no invasiva de Estado de Conexión (Online / Offline)
       function showPwaToast(msg, type) {
