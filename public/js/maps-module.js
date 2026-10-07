@@ -2867,6 +2867,7 @@
     const waTextEl = document.getElementById('maps-share-wa-text');
     const chatTextEl = document.getElementById('maps-share-chat-text');
     if (!modal) return;
+    closeModal('maps-photos-modal');
 
     let title = '';
     let subtitle = '';
@@ -3652,16 +3653,24 @@
   // Modal de Historial y Línea de Tiempo de Fotos
   function openPhotosModal(nodeId) {
     const node = (state.data.nodes || []).find(n => n.id === nodeId);
-    if (!node) return;
+    if (!node) {
+      showToast('Elemento no encontrado en el mapa.', 'warning');
+      return;
+    }
     state.activePhotoNodeId = nodeId;
 
     const modal = document.getElementById('maps-photos-modal');
     if (!modal) return;
 
+    closeModal('maps-share-modal');
+
     const titleEl = document.getElementById('maps-photos-modal-title');
     const subEl = document.getElementById('maps-photos-modal-subtitle');
-    if (titleEl) titleEl.textContent = `Fotos de Estado: ${node.name}`;
-    if (subEl) subEl.textContent = `Tipo: ${node.type.toUpperCase()} | Coordenadas: ${node.lat.toFixed(5)}, ${node.lng.toFixed(5)}`;
+    if (titleEl) titleEl.textContent = `Fotos de Estado: ${node.name || 'Nodo'}`;
+    const latVal = Number(node.lat || 0).toFixed(5);
+    const lngVal = Number(node.lng || 0).toFixed(5);
+    const typeVal = (node.type || 'NODO').toUpperCase();
+    if (subEl) subEl.textContent = `Tipo: ${typeVal} | Coordenadas: ${latVal}, ${lngVal}`;
 
     renderPhotosTimeline(node);
     modal.classList.remove('hidden');
