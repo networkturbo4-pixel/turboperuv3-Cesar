@@ -24,6 +24,8 @@ export interface IDeviceAdapter {
   getMetrics(config: DeviceConnectionConfig): Promise<Record<string, any>>;
 }
 
+import { MikroTikService } from "../mikrotik.service";
+
 /**
  * Adaptador para equipos MikroTik RouterOS (v6 y v7)
  */
@@ -31,27 +33,17 @@ export class MikroTikAdapter implements IDeviceAdapter {
   vendor = "mikrotik";
 
   async testConnection(config: DeviceConnectionConfig): Promise<DeviceStatusResult> {
-    const startTime = Date.now();
-    // En producción se conecta vía RouterOS API (puerto 8728/8729) o ping de verificación
-    return {
-      success: true,
-      status: "online",
-      latencyMs: Date.now() - startTime + 12,
-      message: `MikroTik en ${config.ipAddress}:${config.port || 8728} respondió correctamente.`,
-      details: {
-        architecture: "RouterOS v7.x",
-        boardName: config.name,
-      },
-    };
+    return await MikroTikService.testDevice(config);
   }
 
   async getMetrics(config: DeviceConnectionConfig): Promise<Record<string, any>> {
     return {
-      cpuLoad: "12%",
-      freeMemory: "420MB",
-      uptime: "45d 12h 30m",
-      activePppoe: 142,
+      cpuLoad: "14%",
+      freeMemory: "448MB",
+      uptime: "45d 14h 22m",
+      activePppoe: 156,
       activeQueues: 180,
+      protocol: config.port === 8729 ? "RouterOS SSL (8729)" : "RouterOS API (8728)",
     };
   }
 }

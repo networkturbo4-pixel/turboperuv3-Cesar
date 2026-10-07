@@ -18,32 +18,44 @@
   <link rel="icon" id="dynamic-favicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'%3E%3C/polygon%3E%3C/svg%3E">
   <link rel="apple-touch-icon" id="pwa-apple-icon" href="/icons/icon-192.png">
 
-  <!-- Fuentes profesionales -->
+  <!-- Fuentes profesionales optimizadas con font-display swap -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Preload de fondos para transición fluida sin parpadeos -->
-  <link rel="preload" as="image" href="/assets/login_bg/slide-1.jpg">
-  <link rel="preload" as="image" href="/assets/login_bg/slide-2.jpg">
-  <link rel="preload" as="image" href="/assets/login_bg/slide-3.png">
+  <!-- Preload condicional de fondos solo si no hay sesión iniciada (ahorra 2.5MB a usuarios autenticados) -->
+  <script>
+    if (!localStorage.getItem('turbonetwork_session')) {
+      ['/assets/login_bg/slide-1.jpg', '/assets/login_bg/slide-2.jpg', '/assets/login_bg/slide-3.png'].forEach(function(href) {
+        var l = document.createElement('link');
+        l.rel = 'preload';
+        l.as = 'image';
+        l.href = href;
+        document.head.appendChild(l);
+      });
+    }
+  </script>
   
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS Compilado Estático de Alto Rendimiento (0ms de tiempo de compilación en runtime) -->
+  <link rel="stylesheet" href="/assets/tailwind.min.css">
   <script src="/js/jsQR.min.js"></script>
   <link rel="stylesheet" href="/assets/mapbox-gl.css">
   <script src="/js/mapbox-gl.js"></script>
+
+  <!-- Motor Háptico Nativo Temprano (Feedback físico instantáneo en móvil) -->
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          screens: {
-            '3xl': '1920px',
-            '4xl': '2560px',
-          }
+    window.haptic = function(type) {
+      type = type || 'light';
+      try {
+        if ('vibrate' in navigator) {
+          if (type === 'light') navigator.vibrate(12);
+          else if (type === 'medium') navigator.vibrate(28);
+          else if (type === 'success') navigator.vibrate([15, 40, 25]);
+          else if (type === 'error') navigator.vibrate([40, 40, 40]);
+          else if (type === 'scan') navigator.vibrate([70, 35, 70]);
         }
-      }
-    }
+      } catch (e) {}
+    };
   </script>
   
   <script>
@@ -89,6 +101,9 @@
         document.documentElement.classList.remove('has-session');
       } else if (localStorage.getItem('turbonetwork_session')) {
         document.documentElement.classList.add('has-session');
+      }
+      if (localStorage.getItem('turbonetwork_density') === 'compact') {
+        document.documentElement.classList.add('density-compact');
       }
       var explicitTheme = localStorage.getItem('turbonetwork_theme');
       var savedBrand = localStorage.getItem('turbonetwork_branding');
@@ -1605,16 +1620,40 @@
       border: 1px solid rgba(255, 255, 255, 0.14) !important;
     }
 
-    /* Impresión Física de Credencial de Personal */
+    /* ========================================================
+       MODO COMPACTO DE ALTA DENSIDAD PARA PANTALLAS DE ESCRITORIO
+       ======================================================== */
+    html.density-compact table th,
+    html.density-compact table td {
+      padding-top: 0.35rem !important;
+      padding-bottom: 0.35rem !important;
+      padding-left: 0.65rem !important;
+      padding-right: 0.65rem !important;
+      font-size: 11px !important;
+    }
+    html.density-compact table tr {
+      height: 34px !important;
+    }
+    html.density-compact table td div.font-bold,
+    html.density-compact table td div.font-semibold {
+      line-height: 1.15 !important;
+    }
+
+    /* Impresión Física: Credencial de Personal & Tickets Térmicos POS */
     @media print {
       body * {
         visibility: hidden !important;
       }
-      #employee-public-card-modal,
-      #employee-public-card-modal * {
+      .no-print {
+        display: none !important;
+      }
+
+      /* Caso 1: Impresión de Credencial de Personal */
+      #employee-public-card-modal:not(.hidden),
+      #employee-public-card-modal:not(.hidden) * {
         visibility: visible !important;
       }
-      #employee-public-card-modal {
+      #employee-public-card-modal:not(.hidden) {
         position: fixed !important;
         left: 0 !important;
         top: 0 !important;
@@ -1627,15 +1666,49 @@
         align-items: center !important;
         justify-content: center !important;
       }
-      #employee-public-card-modal > div {
+      #employee-public-card-modal:not(.hidden) > div {
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
         margin: 0 auto !important;
       }
-      #employee-public-card-modal .mt-4 {
+      #employee-public-card-modal:not(.hidden) .mt-4 {
         display: none !important;
+      }
+
+      /* Caso 2: Impresión de Ticket Térmico POS (80mm / 58mm) */
+      #printable-thermal-ticket,
+      #printable-thermal-ticket * {
+        visibility: visible !important;
+      }
+      #printable-thermal-ticket {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 76mm !important;
+        max-width: 76mm !important;
+        margin: 0 !important;
+        padding: 2mm 3mm !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-family: 'Courier New', Courier, monospace !important;
+        font-size: 11px !important;
+        line-height: 1.25 !important;
+        border: none !important;
+        box-shadow: none !important;
+        display: block !important;
+      }
+      #printable-thermal-ticket.ticket-58mm {
+        width: 52mm !important;
+        max-width: 52mm !important;
+        font-size: 9px !important;
+        padding: 1mm 2mm !important;
+      }
+      @page {
+        size: auto;
+        margin: 0mm;
+      }
       }
       #printable-employee-card {
         background: #ffffff !important;
@@ -2827,6 +2900,22 @@
             </svg>
           </button>
 
+          <!-- Table Density Toggle (Cómodo / Compacto) para Escritorio -->
+          <button onclick="toggleTableDensity(event)" id="density-toggle-btn" title="Alternar Densidad de Filas: Cómodo / Compacto" class="hidden sm:flex w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition border border-slate-200 dark:border-white/5 items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs">
+            <svg id="density-icon-comfortable" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <svg id="density-icon-compact" class="w-4 h-4 hidden text-blue-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <line x1="3" y1="4" x2="21" y2="4"></line>
+              <line x1="3" y1="8" x2="21" y2="8"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="16" x2="21" y2="16"></line>
+              <line x1="3" y1="20" x2="21" y2="20"></line>
+            </svg>
+          </button>
+
           <!-- Theme Toggle -->
           <button onclick="toggleThemeMode(event)" id="theme-toggle-btn" title="Modo Claro / Oscuro" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition border border-slate-200 dark:border-white/5 flex items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs">
             <svg id="theme-icon-sun" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -3057,7 +3146,11 @@
 
 
           <div class="pro-card rounded-xl overflow-hidden">
-            <div class="overflow-x-auto">
+            <!-- Vista de Tarjetas Táctiles para Móvil (Pantallas < md) -->
+            <div id="customers-mobile-cards" class="md:hidden space-y-3 p-3"></div>
+
+            <!-- Vista de Tabla Tradicional para Escritorio (Pantallas >= md) -->
+            <div class="hidden md:block overflow-x-auto">
               <table class="w-full text-left text-xs">
                 <thead class="bg-white/5 dark:bg-white/5 bg-black/5 text-slate-400 uppercase font-semibold tracking-wider text-[10px] border-b border-white/5">
                   <tr>
@@ -3088,7 +3181,11 @@
           </div>
 
           <div class="pro-card rounded-xl overflow-hidden">
-            <div class="overflow-x-auto">
+            <!-- Vista de Tarjetas Móviles para Facturas (Pantallas < md) -->
+            <div id="invoices-mobile-cards" class="md:hidden space-y-3 p-3"></div>
+
+            <!-- Vista de Tabla para Escritorio (Pantallas >= md) -->
+            <div class="hidden md:block overflow-x-auto">
               <table class="w-full text-left text-xs">
                 <thead class="bg-white/5 dark:bg-white/5 bg-black/5 text-slate-400 uppercase font-semibold tracking-wider text-[10px] border-b border-white/5">
                   <tr>
@@ -3111,9 +3208,21 @@
         <!-- TAB 4: RED & OLTS MULTI-VENDOR                           -->
         <!-- ======================================================== -->
         <section id="tab-network" class="space-y-5 hidden">
-          <div>
-            <h2 class="text-lg font-semibold tracking-tight">Equipos de Red & Topología</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Control desacoplado para MikroTik (RouterOS v6/v7), OLTs Huawei, ZTE y VSOL</p>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-semibold tracking-tight">Equipos de Red & Topología</h2>
+              <p class="text-xs text-slate-400 mt-0.5">Control desacoplado para MikroTik (RouterOS v6/v7), OLTs Huawei, ZTE y VSOL</p>
+            </div>
+            <div class="flex items-center flex-wrap gap-2">
+              <button type="button" onclick="syncAllMikroTikCuts()" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>Sincronizar Cortes MikroTik</span>
+              </button>
+              <button type="button" onclick="openDatabaseModal()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                <span>Base de Datos & PostgreSQL</span>
+              </button>
+            </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 3xl:grid-cols-3 gap-5" id="network-devices-container"></div>
         </section>
@@ -9047,6 +9156,132 @@
   </div>
 
   <!-- ======================================================== -->
+  <!-- MODAL: RECIBO TÉRMICO POS (80mm / 58mm)                  -->
+  <!-- ======================================================== -->
+  <div id="thermal-ticket-modal" class="fixed inset-0 z-[340] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-3 py-4 overflow-y-auto">
+    <div class="pro-card max-w-sm w-full p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative my-auto flex flex-col max-h-[92vh] overflow-hidden">
+      <!-- Encabezado de la ventana modal -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10 flex-shrink-0 no-print">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-slate-900 dark:text-white">Ticket Térmico POS</h3>
+            <p class="text-[10px] text-slate-400 font-mono">Comprobante de Pago en Caja</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <!-- Selector de Ancho Térmico 80mm vs 58mm -->
+          <div class="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-0.5 border border-slate-200 dark:border-white/10 text-[10px] font-mono">
+            <button type="button" onclick="setTicketWidth('80mm')" id="btn-ticket-80mm" class="px-2 py-0.5 rounded font-bold bg-white dark:bg-white/15 text-slate-900 dark:text-white shadow-2xs">80mm</button>
+            <button type="button" onclick="setTicketWidth('58mm')" id="btn-ticket-58mm" class="px-2 py-0.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white">58mm</button>
+          </div>
+          <button type="button" onclick="closeThermalTicketModal()" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Vista previa del Papel de Ticket Térmico -->
+      <div class="py-3 flex-1 overflow-y-auto flex justify-center bg-slate-100/60 dark:bg-black/30 rounded-xl my-2 p-2">
+        <div id="printable-thermal-ticket" class="w-full max-w-[280px] bg-white text-black p-3.5 rounded shadow-sm border border-slate-300 font-mono text-[11px] leading-tight select-text">
+          <!-- Generado dinámicamente por openThermalTicketModal() -->
+        </div>
+      </div>
+
+      <!-- Barra de Botones de Acción -->
+      <div class="pt-2.5 border-t border-slate-200 dark:border-white/10 flex items-center gap-2 flex-shrink-0 no-print">
+        <button type="button" onclick="closeThermalTicketModal()" class="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 transition text-center">
+          Cerrar
+        </button>
+        <button type="button" onclick="triggerPrintTicket()" class="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md active:scale-95">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          <span>Imprimir (Ctrl+P)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: MOTOR DE BASE DE DATOS & POSTGRESQL (FASE 4)       -->
+  <!-- ======================================================== -->
+  <div id="database-status-modal" class="fixed inset-0 z-[340] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-3 py-4 overflow-y-auto">
+    <div class="pro-card max-w-xl w-full p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative my-auto flex flex-col max-h-[92vh] overflow-hidden space-y-4">
+      <!-- Encabezado -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Motor de Base de Datos & PostgreSQL</h3>
+            <p class="text-[11px] text-slate-400">Arquitectura Híbrida Resiliente (PostgreSQL + JSON)</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeDatabaseModal()" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Estado y Disyuntor -->
+      <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Estado de Conexión:</span>
+          <span id="db-status-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-600">Consultando...</span>
+        </div>
+        <div class="flex items-center justify-between text-xs text-slate-500">
+          <span>Latencia de Motor:</span>
+          <span id="db-latency-badge" class="font-mono font-bold text-slate-700 dark:text-slate-300">-- ms</span>
+        </div>
+        <p id="db-parity-text" class="text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/60 dark:border-white/5">
+          Cargando métricas de paridad...
+        </p>
+      </div>
+
+      <!-- Tabla de Paridad de Datos -->
+      <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-slate-100 dark:bg-white/5 text-slate-500 uppercase text-[10px] font-bold">
+            <tr>
+              <th class="py-2 px-3">Módulo</th>
+              <th class="py-2 px-3 text-center">En JSON</th>
+              <th class="py-2 px-3 text-center">En PostgreSQL</th>
+              <th class="py-2 px-3 text-right">Paridad</th>
+            </tr>
+          </thead>
+          <tbody id="db-counts-tbody" class="divide-y divide-slate-200 dark:divide-white/5">
+            <tr>
+              <td colspan="4" class="py-4 text-center text-slate-400">Cargando datos...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Terminal / Logs de Migración -->
+      <pre id="db-migration-logs" class="hidden p-3 rounded-xl bg-black/80 font-mono text-[11px] text-emerald-400 overflow-y-auto max-h-32 whitespace-pre-wrap"></pre>
+
+      <!-- Botones de Acción -->
+      <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-3">
+        <button type="button" onclick="refreshDatabaseStatus()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-semibold text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span>Refrescar</span>
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeDatabaseModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer">
+            Cerrar
+          </button>
+          <button type="button" id="btn-run-db-migrate" onclick="runDatabaseMigration()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span>Migrar a PostgreSQL</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
   <!-- MODAL 4: FICHA TÉCNICA Y EXPEDIENTE DE PERSONAL (A4)      -->
   <!-- ======================================================== -->
   <div id="employee-public-card-modal" class="fixed inset-0 z-[290] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-3 sm:px-6 py-4 sm:py-6 overflow-y-auto">
@@ -12852,6 +13087,226 @@
       });
     }
 
+    // ========================================================
+    // SELECTOR DE DENSIDAD DE TABLAS (MODO CÓMODO / COMPACTO)
+    // ========================================================
+    window.toggleTableDensity = function(event) {
+      if (event && event.stopPropagation) event.stopPropagation();
+      const isCompact = document.documentElement.classList.contains('density-compact');
+      const nextMode = isCompact ? 'comfortable' : 'compact';
+      applyTableDensity(nextMode);
+      localStorage.setItem('turbonetwork_density', nextMode);
+      if (typeof haptic === 'function') haptic('light');
+      showToast(nextMode === 'compact' ? 'Modo Compacto activado (mayor densidad de filas)' : 'Modo Cómodo activado');
+    };
+
+    function applyTableDensity(mode) {
+      const isCompact = mode === 'compact';
+      if (isCompact) {
+        document.documentElement.classList.add('density-compact');
+      } else {
+        document.documentElement.classList.remove('density-compact');
+      }
+      const iconComf = document.getElementById('density-icon-comfortable');
+      const iconComp = document.getElementById('density-icon-compact');
+      const btn = document.getElementById('density-toggle-btn');
+      if (iconComf && iconComp) {
+        if (isCompact) {
+          iconComf.classList.add('hidden');
+          iconComp.classList.remove('hidden');
+          if (btn) {
+            btn.classList.add('border-blue-500/50', 'bg-blue-500/10', 'text-blue-500');
+            btn.title = "Modo Compacto Activo (Clic para cambiar a Cómodo)";
+          }
+        } else {
+          iconComf.classList.remove('hidden');
+          iconComp.classList.add('hidden');
+          if (btn) {
+            btn.classList.remove('border-blue-500/50', 'bg-blue-500/10', 'text-blue-500');
+            btn.title = "Modo Cómodo Activo (Clic para cambiar a Compacto)";
+          }
+        }
+      }
+    }
+    try {
+      applyTableDensity(localStorage.getItem('turbonetwork_density') || 'comfortable');
+    } catch (e) {}
+
+    // ========================================================
+    // MOTOR DE RECIBOS TÉRMICOS POS (80mm / 58mm)
+    // ========================================================
+    let currentTicketInvoice = null;
+    let currentTicketWidth = '80mm';
+
+    window.setTicketWidth = function(width) {
+      currentTicketWidth = width;
+      const btn80 = document.getElementById('btn-ticket-80mm');
+      const btn58 = document.getElementById('btn-ticket-58mm');
+      const ticketEl = document.getElementById('printable-thermal-ticket');
+      if (width === '58mm') {
+        if (btn80) {
+          btn80.classList.remove('bg-white', 'dark:bg-white/15', 'text-slate-900', 'dark:text-white', 'shadow-2xs', 'font-bold');
+          btn80.classList.add('text-slate-500');
+        }
+        if (btn58) {
+          btn58.classList.add('bg-white', 'dark:bg-white/15', 'text-slate-900', 'dark:text-white', 'shadow-2xs', 'font-bold');
+          btn58.classList.remove('text-slate-500');
+        }
+        if (ticketEl) {
+          ticketEl.classList.add('ticket-58mm');
+          ticketEl.style.maxWidth = '210px';
+          ticketEl.style.fontSize = '9.5px';
+        }
+        document.body.classList.add('ticket-width-58mm');
+      } else {
+        if (btn58) {
+          btn58.classList.remove('bg-white', 'dark:bg-white/15', 'text-slate-900', 'dark:text-white', 'shadow-2xs', 'font-bold');
+          btn58.classList.add('text-slate-500');
+        }
+        if (btn80) {
+          btn80.classList.add('bg-white', 'dark:bg-white/15', 'text-slate-900', 'dark:text-white', 'shadow-2xs', 'font-bold');
+          btn80.classList.remove('text-slate-500');
+        }
+        if (ticketEl) {
+          ticketEl.classList.remove('ticket-58mm');
+          ticketEl.style.maxWidth = '280px';
+          ticketEl.style.fontSize = '11px';
+        }
+        document.body.classList.remove('ticket-width-58mm');
+      }
+    };
+
+    window.openThermalTicketModal = function(invoiceOrId) {
+      let inv = invoiceOrId;
+      if (typeof invoiceOrId === 'number' || typeof invoiceOrId === 'string') {
+        inv = (currentInvoices || []).find(i => String(i.id) === String(invoiceOrId));
+      }
+      if (!inv) {
+        showToast('Factura o recibo no encontrado', 'error');
+        return;
+      }
+      currentTicketInvoice = inv;
+
+      const ticketContainer = document.getElementById('printable-thermal-ticket');
+      if (!ticketContainer) return;
+
+      const companyName = (appSettings && appSettings.systemName) || 'TurboNetwork Fibra';
+      const tagline = (appSettings && appSettings.tagline) || 'Servicios de Internet & Telecomunicaciones';
+      const currency = typeof getSystemCurrencySymbol === 'function' ? getSystemCurrencySymbol() : '$';
+      const cashier = (currentUser && currentUser.name) || 'Caja Central';
+      const now = new Date();
+      const dateStr = now.toLocaleDateString();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const dueDateStr = inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '--';
+      const totalFormatted = Number(inv.total || 0).toFixed(2);
+      const isPaid = inv.status === 'paid';
+
+      ticketContainer.innerHTML = `
+        <div style="text-align: center; margin-bottom: 8px;">
+          <div style="font-size: 13px; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase;">${companyName}</div>
+          <div style="font-size: 9px; opacity: 0.8; margin-top: 1px;">${tagline}</div>
+          <div style="font-size: 9px; margin-top: 2px;">RUC / NIT: 20601928341</div>
+          <div style="font-size: 9px;">Soporte Técnico: +51 987 654 321</div>
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+        <div style="font-size: 10px; margin-bottom: 4px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>RECIBO Nº:</span>
+            <strong>${inv.invoiceNumber || 'REC-' + inv.id}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>EMISIÓN:</span>
+            <span>${dateStr} ${timeStr}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>OPERADOR:</span>
+            <span style="text-transform: uppercase;">${cashier}</span>
+          </div>
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+        <div style="font-size: 10px; margin-bottom: 4px;">
+          <div><strong>ABONADO:</strong> ${inv.customerName || 'Cliente #' + inv.customerId}</div>
+          ${inv.customerCode ? `<div><strong>CÓDIGO:</strong> ${inv.customerCode}</div>` : ''}
+          <div style="display: flex; justify-content: space-between;">
+            <span>PERIODO:</span>
+            <strong>${inv.period}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>VENCIMIENTO:</span>
+            <span>${dueDateStr}</span>
+          </div>
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+        <div style="font-size: 10px;">
+          <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 3px;">
+            <span>DESCRIPCIÓN</span>
+            <span>TOTAL</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Abono Servicio Internet FTTH</span>
+            <span>${currency} ${totalFormatted}</span>
+          </div>
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+        <div style="font-size: 11px; margin-bottom: 6px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 800;">
+            <span>TOTAL PAGADO:</span>
+            <span>${currency} ${totalFormatted}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 2px;">
+            <span>MÉTODO DE PAGO:</span>
+            <span style="text-transform: uppercase;">${inv.paymentMethod || 'EFECTIVO (POS)'}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-top: 2px;">
+            <span>ESTADO:</span>
+            <span style="letter-spacing: 0.5px;">${isPaid ? '✓ CANCELADO / PAGADO' : 'PENDIENTE DE PAGO'}</span>
+          </div>
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+        <div style="text-align: center; margin: 8px 0;">
+          <div style="font-family: 'Courier New', Courier, monospace; letter-spacing: 2px; font-size: 16px; font-weight: 900; line-height: 1;">
+            ||| | |||| || ||| |||| | ||||| | ||
+          </div>
+          <div style="font-size: 8.5px; margin-top: 2px; letter-spacing: 1px;">*${inv.invoiceNumber || 'REC-' + inv.id}*</div>
+        </div>
+
+        <div style="text-align: center; font-size: 9px; margin-top: 6px;">
+          <div>¡Gracias por su puntualidad!</div>
+          <div style="font-size: 8px; opacity: 0.7; margin-top: 1px;">Conserve este ticket como constancia oficial.</div>
+          <div style="font-size: 7.5px; opacity: 0.6; margin-top: 2px;">TurboNetwork Core Engine POS System</div>
+        </div>
+      `;
+
+      const modal = document.getElementById('thermal-ticket-modal');
+      if (modal) modal.classList.remove('hidden');
+      if (typeof haptic === 'function') haptic('light');
+    };
+
+    window.closeThermalTicketModal = function() {
+      const modal = document.getElementById('thermal-ticket-modal');
+      if (modal) modal.classList.add('hidden');
+      document.body.classList.remove('printing-thermal-ticket');
+    };
+
+    window.triggerPrintTicket = function() {
+      document.body.classList.add('printing-thermal-ticket');
+      if (typeof haptic === 'function') haptic('medium');
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove('printing-thermal-ticket');
+      }, 1000);
+    };
+
     function previewFontFamily(font) {
       appSettings.fontFamily = font;
       const body = document.body;
@@ -14128,7 +14583,19 @@
         } else {
           openCommandPalette();
         }
+      } else if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === 'p') {
+        const ticketModal = document.getElementById('thermal-ticket-modal');
+        if (ticketModal && !ticketModal.classList.contains('hidden')) {
+          e.preventDefault();
+          triggerPrintTicket();
+          return;
+        }
       } else if (e.key === 'Escape') {
+        const ticketModal = document.getElementById('thermal-ticket-modal');
+        if (ticketModal && !ticketModal.classList.contains('hidden')) {
+          closeThermalTicketModal();
+          return;
+        }
         const modal = document.getElementById('global-command-palette-modal');
         if (modal && !modal.classList.contains('hidden')) {
           closeCommandPalette();
@@ -14937,91 +15404,171 @@
 
     function renderCustomers(list) {
       const tbody = document.getElementById('customers-table-body');
-      if (!tbody) return;
+      const mobileContainer = document.getElementById('customers-mobile-cards');
       if (!list || list.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8" class="px-5 py-8 text-center text-slate-400 font-medium">
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="9" class="px-5 py-8 text-center text-slate-400 font-medium">
+                No se encontraron clientes registrados con los criterios especificados.
+              </td>
+            </tr>
+          `;
+        }
+        if (mobileContainer) {
+          mobileContainer.innerHTML = `
+            <div class="p-6 text-center text-slate-400 font-medium bg-slate-50 dark:bg-white/[0.02] rounded-xl border border-slate-200 dark:border-white/5">
               No se encontraron clientes registrados con los criterios especificados.
-            </td>
-          </tr>
-        `;
+            </div>
+          `;
+        }
         return;
       }
 
-      tbody.innerHTML = list.map(c => {
-        const isSuspended = c.status === 'suspended';
-        const isPending = c.status === 'pending_installation';
-        const statusBadge = isSuspended
-          ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
-              <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Suspendido
-             </span>`
-          : isPending
-          ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Pendiente
-             </span>`
-          : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium dynamic-accent-subtle border">
-              <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg"></span> Activo
-             </span>`;
+      // 1. Render de Tabla para Pantallas Grandes (Escritorio / Tablets apaisadas)
+      if (tbody) {
+        tbody.innerHTML = list.map(c => {
+          const isSuspended = c.status === 'suspended';
+          const isPending = c.status === 'pending_installation';
+          const statusBadge = isSuspended
+            ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Suspendido
+               </span>`
+            : isPending
+            ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Pendiente
+               </span>`
+            : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium dynamic-accent-subtle border">
+                <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg"></span> Activo
+               </span>`;
 
-        const srvName = c.serviceName || c.planName || 'Servicio Estándar';
-        const srvSpeed = c.serviceSpeed ? `<div class="text-[10px] text-slate-400 font-mono mt-0.5">${c.serviceSpeed}</div>` : '';
-        const startDateFormatted = c.startDate || (c.createdAt ? c.createdAt.slice(0, 10) : '--');
+          const srvName = c.serviceName || c.planName || 'Servicio Estándar';
+          const srvSpeed = c.serviceSpeed ? `<div class="text-[10px] text-slate-400 font-mono mt-0.5">${c.serviceSpeed}</div>` : '';
+          const startDateFormatted = c.startDate || (c.createdAt ? c.createdAt.slice(0, 10) : '--');
 
-        return `
-          <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition font-sans">
-            <td class="px-3 py-3.5 text-center">
-              <input type="checkbox" class="customer-row-chk rounded border-slate-300 dark:border-white/20 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer" data-id="${c.id}" ${selectedCustomerIds.has(c.id) ? 'checked' : ''} onchange="toggleCustomerSelect(${c.id}, this.checked)">
-            </td>
-            <td class="px-5 py-3.5">
-              <div class="font-bold text-slate-900 dark:text-slate-100">${c.fullName}</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">${c.customerCode || 'CLI-TEMP'}</div>
-            </td>
-            <td class="px-5 py-3.5 font-mono">
-              <div class="font-medium text-slate-800 dark:text-slate-200">${c.identification}</div>
-              <div class="text-[10px] text-slate-500">${c.phone || ''}</div>
-            </td>
-            <td class="px-5 py-3.5">
-              <div class="font-semibold text-slate-800 dark:text-slate-200">${srvName}</div>
-              ${srvSpeed}
-            </td>
-            <td class="px-5 py-3.5 font-mono text-[11px] text-slate-700 dark:text-slate-300">
-              <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 inline-flex items-center space-x-1.5">
-                <svg class="w-3 h-3 text-slate-500 dark:text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                <span>${startDateFormatted}</span>
-              </span>
-            </td>
-            <td class="px-5 py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">${c.assignedIp || 'Dinámica'}</td>
-            <td class="px-5 py-3.5">
-              ${statusBadge}
-            </td>
-            <td class="px-5 py-3.5 text-right font-mono font-bold ${c.balance !== '0.00' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}">
-              $${c.balance || '0.00'}
-            </td>
-            <td class="px-5 py-3.5 text-center whitespace-nowrap">
-              <button 
-                type="button" 
-                onclick="toggleCustomerStatus(${c.id}, '${c.status}')" 
-                title="${isSuspended ? 'Reactivar servicio' : 'Suspender servicio'}"
-                class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${isSuspended ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20'}">
-                ${isSuspended ? 'Reactivar' : 'Suspender'}
-              </button>
-              <button 
-                type="button" 
-                onclick="deleteCustomer(${c.id}, '${(c.fullName || '').replace(/'/g, "\\'")}')" 
-                title="Eliminar cliente"
-                class="ml-1 p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition inline-flex items-center">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
+          return `
+            <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition font-sans">
+              <td class="px-3 py-3.5 text-center">
+                <input type="checkbox" class="customer-row-chk rounded border-slate-300 dark:border-white/20 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer" data-id="${c.id}" ${selectedCustomerIds.has(c.id) ? 'checked' : ''} onchange="toggleCustomerSelect(${c.id}, this.checked)">
+              </td>
+              <td class="px-5 py-3.5">
+                <div class="font-bold text-slate-900 dark:text-slate-100">${c.fullName}</div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">${c.customerCode || 'CLI-TEMP'}</div>
+              </td>
+              <td class="px-5 py-3.5 font-mono">
+                <div class="font-medium text-slate-800 dark:text-slate-200">${c.identification}</div>
+                <div class="text-[10px] text-slate-500">${c.phone || ''}</div>
+              </td>
+              <td class="px-5 py-3.5">
+                <div class="font-semibold text-slate-800 dark:text-slate-200">${srvName}</div>
+                ${srvSpeed}
+              </td>
+              <td class="px-5 py-3.5 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 inline-flex items-center space-x-1.5">
+                  <svg class="w-3 h-3 text-slate-500 dark:text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <span>${startDateFormatted}</span>
+                </span>
+              </td>
+              <td class="px-5 py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">${c.assignedIp || 'Dinámica'}</td>
+              <td class="px-5 py-3.5">
+                ${statusBadge}
+              </td>
+              <td class="px-5 py-3.5 text-right font-mono font-bold ${c.balance !== '0.00' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}">
+                $${c.balance || '0.00'}
+              </td>
+              <td class="px-5 py-3.5 text-center whitespace-nowrap">
+                <button 
+                  type="button" 
+                  onclick="toggleCustomerStatus(${c.id}, '${c.status}')" 
+                  title="${isSuspended ? 'Reactivar servicio' : 'Suspender servicio'}"
+                  class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${isSuspended ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20'}">
+                  ${isSuspended ? 'Reactivar' : 'Suspender'}
+                </button>
+                <button 
+                  type="button" 
+                  onclick="deleteCustomer(${c.id}, '${(c.fullName || '').replace(/'/g, "\\'")}')" 
+                  title="Eliminar cliente"
+                  class="ml-1 p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition inline-flex items-center">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 2. Render de Tarjetas Táctiles Inteligentes para Celulares (< md)
+      if (mobileContainer) {
+        mobileContainer.innerHTML = list.map(c => {
+          const isSuspended = c.status === 'suspended';
+          const isPending = c.status === 'pending_installation';
+          const srvName = c.serviceName || c.planName || 'Servicio Estándar';
+          const srvSpeed = c.serviceSpeed || '';
+          const phoneClean = (c.phone || '').replace(/[^0-9]/g, '');
+          const waLink = phoneClean ? `https://wa.me/${phoneClean}` : null;
+          const statusBadge = isSuspended
+            ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-500 border border-rose-500/30"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Suspendido</span>`
+            : isPending
+            ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pendiente</span>`
+            : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Activo</span>`;
+
+          return `
+            <div class="pro-card p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm space-y-2.5">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-sm text-slate-900 dark:text-white truncate">${c.fullName}</span>
+                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-500">${c.customerCode || 'CLI'}</span>
+                  </div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
+                    <span>DNI: ${c.identification}</span>
+                    <span>•</span>
+                    <span class="font-mono text-blue-600 dark:text-blue-400">${c.assignedIp || 'Dinámica'}</span>
+                  </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <div class="font-mono font-bold text-sm ${c.balance !== '0.00' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}">
+                    $${c.balance || '0.00'}
+                  </div>
+                  <div class="mt-1">${statusBadge}</div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] bg-slate-50 dark:bg-white/[0.03] p-2 rounded-xl border border-slate-100 dark:border-white/5">
+                <div class="truncate text-slate-700 dark:text-slate-300 font-medium">
+                  📡 ${srvName} ${srvSpeed ? `(${srvSpeed})` : ''}
+                </div>
+                <div class="text-slate-500 dark:text-slate-400 font-mono text-[10px]">
+                  ${c.startDate ? c.startDate.slice(0, 10) : ''}
+                </div>
+              </div>
+
+              <!-- Fila de Acciones Táctiles Directas -->
+              <div class="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-white/5">
+                ${waLink ? `
+                  <a href="${waLink}" target="_blank" onclick="if(typeof haptic==='function') haptic('light')" class="flex-1 py-1.5 px-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 font-semibold text-xs flex items-center justify-center gap-1.5 transition">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                    <span>WhatsApp</span>
+                  </a>
+                ` : ''}
+
+                <button type="button" onclick="toggleCustomerStatus(${c.id}, '${c.status}'); if(typeof haptic==='function') haptic('medium');" class="flex-1 py-1.5 px-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition ${isSuspended ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25'}">
+                  ${isSuspended ? 'Reactivar' : 'Suspender'}
+                </button>
+
+                <button type="button" onclick="deleteCustomer(${c.id}, '${(c.fullName || '').replace(/'/g, "\\'")}'); if(typeof haptic==='function') haptic('error');" class="p-1.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
     }
 
     async function toggleCustomerStatus(id, currentStatus) {
@@ -15686,40 +16233,121 @@ Estamos atentos para brindarle asistencia inmediata.
 
     function renderInvoices(list) {
       const tbody = document.getElementById('invoices-table-body');
-      if (!tbody) return;
-      tbody.innerHTML = list.map(inv => `
-        <tr class="hover:bg-white/[0.02] dark:hover:bg-white/[0.02] hover:bg-black/[0.02] transition">
-          <td class="px-5 py-3.5 font-mono font-medium text-slate-300">${inv.invoiceNumber}</td>
-          <td class="px-5 py-3.5">
-            <div class="font-medium">${inv.customerName || 'Cliente #' + inv.customerId}</div>
-            <div class="text-[10px] text-slate-400 font-mono">${inv.customerCode || ''}</div>
-          </td>
-          <td class="px-5 py-3.5 font-mono text-slate-400">${inv.period}</td>
-          <td class="px-5 py-3.5 text-slate-400 font-mono">${new Date(inv.dueDate).toLocaleDateString()}</td>
-          <td class="px-5 py-3.5 font-mono font-semibold">${getSystemCurrencySymbol()} ${Number(inv.total).toFixed(2)}</td>
-          <td class="px-5 py-3.5">
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-              inv.status === 'paid' 
-                ? 'dynamic-accent-subtle border' 
-                : inv.status === 'overdue' 
-                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' 
-                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-            }">
-              <span class="w-1.5 h-1.5 rounded-full ${
-                inv.status === 'paid' ? 'bg-emerald-400' : inv.status === 'overdue' ? 'bg-rose-400' : 'bg-amber-400'
-              }"></span>
-              ${inv.status.toUpperCase()}
-            </span>
-          </td>
-          <td class="px-5 py-3.5 text-right">
-            ${inv.status !== 'paid' ? `
-              <button onclick="payInvoice(${inv.id})" class="px-2.5 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-[10px] font-medium transition">
-                Cobrar
+      const mobileContainer = document.getElementById('invoices-mobile-cards');
+      if (!list || list.length === 0) {
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" class="px-5 py-8 text-center text-slate-400 font-medium">
+                No hay facturas registradas.
+              </td>
+            </tr>
+          `;
+        }
+        if (mobileContainer) {
+          mobileContainer.innerHTML = `
+            <div class="p-6 text-center text-slate-400 font-medium bg-slate-50 dark:bg-white/[0.02] rounded-xl border border-slate-200 dark:border-white/5">
+              No hay facturas registradas.
+            </div>
+          `;
+        }
+        return;
+      }
+
+      // 1. Render de Tabla para Escritorio (>= md)
+      if (tbody) {
+        tbody.innerHTML = list.map(inv => `
+          <tr class="hover:bg-white/[0.02] dark:hover:bg-white/[0.02] hover:bg-black/[0.02] transition">
+            <td class="px-5 py-3.5 font-mono font-medium text-slate-700 dark:text-slate-300">${inv.invoiceNumber}</td>
+            <td class="px-5 py-3.5">
+              <div class="font-medium text-slate-900 dark:text-white">${inv.customerName || 'Cliente #' + inv.customerId}</div>
+              <div class="text-[10px] text-slate-400 font-mono">${inv.customerCode || ''}</div>
+            </td>
+            <td class="px-5 py-3.5 font-mono text-slate-500 dark:text-slate-400">${inv.period}</td>
+            <td class="px-5 py-3.5 text-slate-500 dark:text-slate-400 font-mono">${new Date(inv.dueDate).toLocaleDateString()}</td>
+            <td class="px-5 py-3.5 font-mono font-semibold text-slate-900 dark:text-white">${getSystemCurrencySymbol()} ${Number(inv.total).toFixed(2)}</td>
+            <td class="px-5 py-3.5">
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                inv.status === 'paid' 
+                  ? 'dynamic-accent-subtle border' 
+                  : inv.status === 'overdue' 
+                    ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' 
+                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+              }">
+                <span class="w-1.5 h-1.5 rounded-full ${
+                  inv.status === 'paid' ? 'bg-emerald-400' : inv.status === 'overdue' ? 'bg-rose-400' : 'bg-amber-400'
+                }"></span>
+                ${inv.status.toUpperCase()}
+              </span>
+            </td>
+            <td class="px-5 py-3.5 text-right whitespace-nowrap">
+              <button type="button" onclick="openThermalTicketModal(${inv.id})" title="Imprimir Ticket Térmico POS (80mm/58mm)" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition inline-flex items-center mr-1">
+                <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
               </button>
-            ` : ''}
-          </td>
-        </tr>
-      `).join('');
+              ${inv.status !== 'paid' ? `
+                <button type="button" onclick="payInvoice(${inv.id}); if(typeof haptic==='function') haptic('medium');" class="px-2.5 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold transition">
+                  Cobrar
+                </button>
+              ` : ''}
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // 2. Render de Tarjetas Táctiles para Celulares (< md)
+      if (mobileContainer) {
+        mobileContainer.innerHTML = list.map(inv => {
+          const isPaid = inv.status === 'paid';
+          const isOverdue = inv.status === 'overdue';
+          const statusBadge = isPaid
+            ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> PAGADO</span>`
+            : isOverdue
+            ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-500 border border-rose-500/30"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> VENCIDO</span>`
+            : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> PENDIENTE</span>`;
+
+          return `
+            <div class="pro-card p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-mono font-bold text-xs text-blue-600 dark:text-blue-400">${inv.invoiceNumber}</span>
+                    <span class="text-[10px] font-mono text-slate-400">(${inv.period})</span>
+                  </div>
+                  <div class="font-bold text-sm text-slate-900 dark:text-white mt-0.5">
+                    ${inv.customerName || 'Cliente #' + inv.customerId}
+                  </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <div class="font-mono font-bold text-base text-slate-900 dark:text-white">
+                    ${getSystemCurrencySymbol()} ${Number(inv.total).toFixed(2)}
+                  </div>
+                  <div class="mt-1">${statusBadge}</div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-100 dark:border-white/5 text-slate-500 dark:text-slate-400">
+                <span class="font-mono text-[10px]">Vence: ${new Date(inv.dueDate).toLocaleDateString()}</span>
+                <div class="flex items-center gap-1.5">
+                  <button type="button" onclick="openThermalTicketModal(${inv.id})" title="Ver Ticket Térmico" class="py-1 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1 transition">
+                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Ticket</span>
+                  </button>
+                  ${!isPaid ? `
+                    <button type="button" onclick="payInvoice(${inv.id}); if(typeof haptic==='function') haptic('medium');" class="py-1 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 font-bold text-xs flex items-center gap-1 transition">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                      <span>Cobrar</span>
+                    </button>
+                  ` : `
+                    <span class="text-[10px] font-semibold text-emerald-500 flex items-center gap-1">
+                      ✓ Cobrado
+                    </span>
+                  `}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
     }
 
     async function payInvoice(id) {
@@ -15732,13 +16360,19 @@ Estamos atentos para brindarle asistencia inmediata.
         });
         const data = await res.json();
         if (data.success) {
+          if (typeof haptic === 'function') haptic('success');
           showToast("Pago registrado con éxito");
           await loadInvoices();
           await loadCustomers();
+          setTimeout(() => {
+            openThermalTicketModal(id);
+          }, 350);
         } else {
+          if (typeof haptic === 'function') haptic('error');
           showToast(data.message || "Error al registrar pago", true);
         }
       } catch (err) {
+        if (typeof haptic === 'function') haptic('error');
         showToast("Error de red", true);
       }
     }
@@ -15788,10 +16422,17 @@ Estamos atentos para brindarle asistencia inmediata.
             </div>
           </div>
 
-          <div class="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between">
-            <button onclick="testDevice(${dev.id})" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-medium transition text-slate-700 dark:text-slate-300">
-              Probar Conexión
-            </button>
+          <div class="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="testDevice(${dev.id})" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-medium transition text-slate-700 dark:text-slate-300 cursor-pointer">
+                Probar Conexión
+              </button>
+              ${dev.vendor === 'mikrotik' ? `
+                <button type="button" onclick="syncCutsForDevice(${dev.id})" class="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-semibold transition cursor-pointer flex items-center gap-1" title="Sincronizar lista de cortes en este router MikroTik">
+                  <span>⚡ Sincronizar</span>
+                </button>
+              ` : ''}
+            </div>
             <span id="device-test-${dev.id}" class="text-xs font-mono"></span>
           </div>
         </div>
@@ -15816,6 +16457,178 @@ Estamos atentos para brindarle asistencia inmediata.
         resultSpan.textContent = "Error de red";
       }
     }
+
+    // ========================================================
+    // FASE 4: MIKROTIK ROUTEROS API & BASE DE DATOS POSTGRESQL
+    // ========================================================
+    window.syncAllMikroTikCuts = async function() {
+      if (typeof haptic === 'function') haptic('medium');
+      showToast('Sincronizando cortes y morosos en MikroTik...', 'info');
+      try {
+        const res = await fetch('/api/network/sync-cuts', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          if (typeof haptic === 'function') haptic('success');
+          showToast(`¡Cortes sincronizados! ${data.suspendedCount} clientes en corte en ${data.devicesSynced?.length || 1} router(s) MikroTik.`);
+        } else {
+          showToast(data.message || 'Aviso al sincronizar MikroTik', 'error');
+        }
+      } catch (err) {
+        showToast('Error de comunicación con el servicio de red', 'error');
+      }
+    };
+
+    window.syncCutsForDevice = async function(deviceId) {
+      if (typeof haptic === 'function') haptic('medium');
+      showToast(`Sincronizando cortes en router #${deviceId}...`, 'info');
+      try {
+        const res = await fetch('/api/network/sync-cuts', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          if (typeof haptic === 'function') haptic('success');
+          showToast(`¡Router MikroTik sincronizado! (${data.suspendedCount} en corte, ${data.activeCount} activos).`);
+        } else {
+          showToast(data.message || 'Aviso al sincronizar router', 'error');
+        }
+      } catch (e) {
+        showToast('Error de comunicación con el router', 'error');
+      }
+    };
+
+    window.openDatabaseModal = async function() {
+      if (typeof haptic === 'function') haptic('light');
+      const modal = document.getElementById('database-status-modal');
+      if (modal) modal.classList.remove('hidden');
+      await refreshDatabaseStatus();
+    };
+
+    window.closeDatabaseModal = function() {
+      const modal = document.getElementById('database-status-modal');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.refreshDatabaseStatus = async function() {
+      const badge = document.getElementById('db-status-badge');
+      const latency = document.getElementById('db-latency-badge');
+      const parityText = document.getElementById('db-parity-text');
+      const countsTbody = document.getElementById('db-counts-tbody');
+      
+      if (badge) badge.textContent = 'Consultando PostgreSQL...';
+      try {
+        const res = await fetch('/api/database/status');
+        const data = await res.json();
+        if (data.success && data.data) {
+          const s = data.data;
+          if (badge) {
+            if (s.isConnected) {
+              badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30';
+              badge.textContent = `● PostgreSQL En Línea (${s.postgres.version || 'v15+'})`;
+            } else {
+              badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30';
+              badge.textContent = '● Modo Resiliente JSON (PostgreSQL Fallback)';
+            }
+          }
+          if (latency) {
+            latency.textContent = s.isConnected ? `${s.postgres.latencyMs} ms` : 'Local 0 ms';
+          }
+          if (parityText) {
+            parityText.textContent = s.migrationParity.details;
+          }
+          if (countsTbody) {
+            countsTbody.innerHTML = `
+              <tr class="border-b border-white/5">
+                <td class="py-2 px-3 text-slate-700 dark:text-slate-300 font-medium">Clientes</td>
+                <td class="py-2 px-3 font-mono text-center text-slate-600 dark:text-slate-400">${s.jsonStorage.customersCount}</td>
+                <td class="py-2 px-3 font-mono text-center font-bold ${s.postgres.counts.customers >= s.jsonStorage.customersCount && s.postgres.counts.customers > 0 ? 'text-emerald-500' : 'text-amber-500'}">${s.postgres.counts.customers}</td>
+                <td class="py-2 px-3 text-right">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.postgres.counts.customers >= s.jsonStorage.customersCount && s.postgres.counts.customers > 0 ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}">
+                    ${s.postgres.counts.customers >= s.jsonStorage.customersCount && s.postgres.counts.customers > 0 ? 'Homologado' : 'Pendiente'}
+                  </span>
+                </td>
+              </tr>
+              <tr class="border-b border-white/5">
+                <td class="py-2 px-3 text-slate-700 dark:text-slate-300 font-medium">Facturas / Recibos</td>
+                <td class="py-2 px-3 font-mono text-center text-slate-600 dark:text-slate-400">${s.jsonStorage.invoicesCount}</td>
+                <td class="py-2 px-3 font-mono text-center font-bold ${s.postgres.counts.invoices >= s.jsonStorage.invoicesCount && s.postgres.counts.invoices > 0 ? 'text-emerald-500' : 'text-amber-500'}">${s.postgres.counts.invoices}</td>
+                <td class="py-2 px-3 text-right">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.postgres.counts.invoices >= s.jsonStorage.invoicesCount && s.postgres.counts.invoices > 0 ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}">
+                    ${s.postgres.counts.invoices >= s.jsonStorage.invoicesCount && s.postgres.counts.invoices > 0 ? 'Homologado' : 'Pendiente'}
+                  </span>
+                </td>
+              </tr>
+              <tr class="border-b border-white/5">
+                <td class="py-2 px-3 text-slate-700 dark:text-slate-300 font-medium">Equipos de Red</td>
+                <td class="py-2 px-3 font-mono text-center text-slate-600 dark:text-slate-400">${s.jsonStorage.devicesCount}</td>
+                <td class="py-2 px-3 font-mono text-center font-bold ${s.postgres.counts.devices >= s.jsonStorage.devicesCount && s.postgres.counts.devices > 0 ? 'text-emerald-500' : 'text-amber-500'}">${s.postgres.counts.devices}</td>
+                <td class="py-2 px-3 text-right">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.postgres.counts.devices >= s.jsonStorage.devicesCount && s.postgres.counts.devices > 0 ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}">
+                    ${s.postgres.counts.devices >= s.jsonStorage.devicesCount && s.postgres.counts.devices > 0 ? 'Homologado' : 'Pendiente'}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 text-slate-700 dark:text-slate-300 font-medium">Usuarios / Operadores</td>
+                <td class="py-2 px-3 font-mono text-center text-slate-600 dark:text-slate-400">${s.jsonStorage.usersCount}</td>
+                <td class="py-2 px-3 font-mono text-center font-bold ${s.postgres.counts.users >= s.jsonStorage.usersCount && s.postgres.counts.users > 0 ? 'text-emerald-500' : 'text-amber-500'}">${s.postgres.counts.users}</td>
+                <td class="py-2 px-3 text-right">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.postgres.counts.users >= s.jsonStorage.usersCount && s.postgres.counts.users > 0 ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}">
+                    ${s.postgres.counts.users >= s.jsonStorage.usersCount && s.postgres.counts.users > 0 ? 'Homologado' : 'Pendiente'}
+                  </span>
+                </td>
+              </tr>
+            `;
+          }
+        }
+      } catch (e) {
+        if (badge) badge.textContent = 'Modo Resiliente JSON';
+      }
+    };
+
+    window.runDatabaseMigration = async function() {
+      const btn = document.getElementById('btn-run-db-migrate');
+      const logBox = document.getElementById('db-migration-logs');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+          <span>Migrando a PostgreSQL...</span>
+        `;
+      }
+      if (logBox) {
+        logBox.classList.remove('hidden');
+        logBox.textContent = "Iniciando migración transaccional de archivos JSON a PostgreSQL...";
+      }
+      try {
+        const res = await fetch('/api/database/migrate', { method: 'POST' });
+        const data = await res.json();
+        if (data.success && data.data) {
+          if (typeof haptic === 'function') haptic('success');
+          showToast('¡Migración a PostgreSQL completada con éxito!');
+          if (logBox) {
+            logBox.textContent = `✅ ${data.data.message}\n` +
+              `• Clientes migrados: ${data.data.migrated.customers}\n` +
+              `• Facturas migradas: ${data.data.migrated.invoices}\n` +
+              `• Equipos de Red migrados: ${data.data.migrated.devices}\n` +
+              `• Usuarios migrados: ${data.data.migrated.users}\n` +
+              `• Duración: ${(data.data.durationMs / 1000).toFixed(2)}s`;
+          }
+          await refreshDatabaseStatus();
+        } else {
+          showToast(data.data?.message || 'Aviso durante la migración', 'error');
+          if (logBox) logBox.textContent = `❌ ${data.data?.message || 'Error de conexión'}\n${(data.data?.errors || []).join('\n')}`;
+        }
+      } catch (err) {
+        showToast('Error al ejecutar la migración', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span>Migrar Todo a PostgreSQL</span>
+          `;
+        }
+      }
+    };
 
     async function loadPlans() {
       try {
@@ -18378,6 +19191,13 @@ Estamos atentos para brindarle asistencia inmediata.
       } catch (e) {
         applySidebarState(false);
       }
+
+      // Restaurar densidad visual de tablas (Cómodo vs Compacto)
+      try {
+        if (typeof applyTableDensity === 'function') {
+          applyTableDensity(localStorage.getItem('turbonetwork_density') || 'comfortable');
+        }
+      } catch (e) {}
 
       // Atajo de teclado para alternar colapso de sidebar (Ctrl+B o Cmd+B)
       document.addEventListener('keydown', (e) => {
@@ -23136,9 +23956,10 @@ function editAssetFromDetail() {
 let currentTraceabilityData = null;
 let activeTraceabilitySubTab = 'timeline'; // 'timeline' | 'purchases' | 'installations' | 'assignments'
 
-// Audio feedback de beep
+// Audio & Haptic feedback de beep para escaneo exitoso
 function playScannerBeep() {
   try {
+    if (typeof haptic === 'function') haptic('scan');
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
@@ -23783,6 +24604,18 @@ async function startCameraScanner() {
 
     video.srcObject = cameraScannerStream;
     await video.play();
+
+    // Intentar activar auto-enfoque continuo en dispositivos móviles
+    try {
+      const track = cameraScannerStream.getVideoTracks()[0];
+      if (track && track.getCapabilities) {
+        const capabilities = track.getCapabilities();
+        if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+          await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+        }
+      }
+    } catch(focusErr) {}
+
     if (statusEl) {
       statusEl.textContent = currentScannerContext === 'assignment_tech'
         ? 'Enfoca el código QR o carnet del colaborador'
@@ -23807,12 +24640,19 @@ function stopCameraScanner() {
     clearInterval(cameraScannerTimer);
     cameraScannerTimer = null;
   }
+  cameraTorchActive = false;
+  const torchBtn = document.getElementById('btn-camera-torch');
+  if (torchBtn) {
+    torchBtn.classList.remove('bg-amber-500', 'text-white', 'shadow-md');
+    torchBtn.classList.add('bg-slate-100', 'dark:bg-white/5', 'text-slate-700', 'dark:text-slate-200');
+  }
   const modal = document.getElementById('inventory-camera-scanner-modal');
   if (modal) modal.classList.add('hidden');
 }
 
 function switchCameraFacingMode() {
   cameraFacingMode = cameraFacingMode === 'environment' ? 'user' : 'environment';
+  if (typeof haptic === 'function') haptic('light');
   startCameraScanner();
 }
 
@@ -23826,6 +24666,17 @@ async function toggleCameraTorch() {
     await track.applyConstraints({
       advanced: [{ torch: cameraTorchActive }]
     });
+    if (typeof haptic === 'function') haptic('medium');
+    const torchBtn = document.getElementById('btn-camera-torch');
+    if (torchBtn) {
+      if (cameraTorchActive) {
+        torchBtn.classList.remove('bg-slate-100', 'dark:bg-white/5', 'text-slate-700', 'dark:text-slate-200');
+        torchBtn.classList.add('bg-amber-500', 'text-white', 'shadow-md');
+      } else {
+        torchBtn.classList.remove('bg-amber-500', 'text-white', 'shadow-md');
+        torchBtn.classList.add('bg-slate-100', 'dark:bg-white/5', 'text-slate-700', 'dark:text-slate-200');
+      }
+    }
   } catch (e) {
     showToast('Linterna no soportada en este dispositivo', 'info');
   }

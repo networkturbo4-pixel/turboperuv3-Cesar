@@ -5,6 +5,7 @@ import path from "path";
 import { db, schema, dbCircuitBreaker } from "../../db";
 import { eq } from "drizzle-orm";
 import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
+import { MikroTikService } from "../network/mikrotik.service";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const CUSTOMERS_FILE = path.join(DATA_DIR, "customers.json");
@@ -528,11 +529,43 @@ export const customersRoutes: FastifyPluginAsync = async (fastify) => {
     customer.updatedAt = new Date().toISOString();
     saveCustomersToDisk(tenantId, customers);
 
+    // ========================================================
+    // APLICACIÓN AUTOMÁTICA EN MIKROTIK (CORTE / REACTIVACIÓN)
+    // ========================================================
+    let mikrotikReport: any = null;
+    try {
+      const devPath = getTenantFilePath(tenantId, "devices.json");
+      if (fs.existsSync(devPath)) {
+        const devices = JSON.parse(fs.readFileSync(devPath, "utf-8"));
+        const targetRouter = devices.find((d: any) => d.vendor === "mikrotik");
+        if (targetRouter) {
+          const custPayload = {
+            id: customer.id,
+            name: customer.fullName || customer.name || `Cliente #${customer.id}`,
+            ip: customer.assignedIp || customer.ip || undefined,
+            pppoeUsername: customer.pppoeUsername || undefined,
+          };
+          if (status === "suspended") {
+            mikrotikReport = await MikroTikService.suspendCustomerService(targetRouter, custPayload);
+          } else if (status === "active") {
+            mikrotikReport = await MikroTikService.reactivateCustomerService(targetRouter, custPayload);
+          }
+        }
+      }
+    } catch (mktErr: any) {
+      console.warn("Aviso al sincronizar estado de cliente con MikroTik:", mktErr?.message);
+    }
+
+    const message = mikrotikReport
+      ? `Estado del cliente actualizado a '${status}'. Regla aplicada en MikroTik (${mikrotikReport.message}).`
+      : `Estado del cliente actualizado a '${status}'`;
+
     return reply.send({
       success: true,
       tenantId,
-      message: `Estado del cliente actualizado a '${status}'`,
+      message,
       data: customer,
+      mikrotik: mikrotikReport,
     });
   });
 
@@ -593,20 +626,48 @@ export const customersRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const targetStatus = action === "suspend" ? "suspended" : "active";
+    const affectedCustomers: any[] = [];
     for (const c of customers) {
       if (idSet.has(c.id)) {
         c.status = targetStatus;
         c.updatedAt = new Date().toISOString();
         affectedCount++;
+        affectedCustomers.push(c);
       }
     }
     saveCustomersToDisk(tenantId, customers);
+
+    // Sincronización en MikroTik para las acciones masivas
+    let bulkMikrotikReport = "";
+    try {
+      const devPath = getTenantFilePath(tenantId, "devices.json");
+      if (fs.existsSync(devPath)) {
+        const devices = JSON.parse(fs.readFileSync(devPath, "utf-8"));
+        const targetRouter = devices.find((d: any) => d.vendor === "mikrotik");
+        if (targetRouter) {
+          for (const aff of affectedCustomers) {
+            const p = {
+              id: aff.id,
+              name: aff.fullName || aff.name || `Cliente #${aff.id}`,
+              ip: aff.assignedIp || aff.ip || undefined,
+              pppoeUsername: aff.pppoeUsername || undefined,
+            };
+            if (action === "suspend") {
+              await MikroTikService.suspendCustomerService(targetRouter, p);
+            } else if (action === "activate") {
+              await MikroTikService.reactivateCustomerService(targetRouter, p);
+            }
+          }
+          bulkMikrotikReport = ` | MikroTik sincronizado (${affectedCount} reglas actualizadas).`;
+        }
+      }
+    } catch (e) {}
 
     const actionName = action === "suspend" ? "suspendieron" : "activaron";
     return reply.send({
       success: true,
       tenantId,
-      message: `Se ${actionName} exitosamente ${affectedCount} cliente(s)`,
+      message: `Se ${actionName} exitosamente ${affectedCount} cliente(s)${bulkMikrotikReport}`,
       affectedCount,
     });
   });

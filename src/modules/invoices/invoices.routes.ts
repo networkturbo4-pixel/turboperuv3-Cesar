@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import fs from "fs";
 import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
+import { MikroTikService } from "../network/mikrotik.service";
 
 const registerPaymentSchema = z.object({
   paymentMethod: z.enum(["cash", "bank_transfer", "pos", "efectivo", "transferencia", "tarjeta", "other"]).default("cash"),
@@ -32,6 +33,29 @@ function saveTenantInvoices(tenantId: string, invoices: any[]): void {
   } catch (err) {
     console.error(`Error al persistir facturas de ${tenantId}:`, err);
   }
+}
+
+function loadTenantCustomers(tenantId: string): any[] {
+  try {
+    const p = getTenantFilePath(tenantId, "customers.json");
+    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf-8"));
+  } catch (e) {}
+  return [];
+}
+
+function saveTenantCustomers(tenantId: string, list: any[]): void {
+  try {
+    const p = getTenantFilePath(tenantId, "customers.json");
+    fs.writeFileSync(p, JSON.stringify(list, null, 2), "utf-8");
+  } catch (e) {}
+}
+
+function loadTenantDevices(tenantId: string): any[] {
+  try {
+    const p = getTenantFilePath(tenantId, "devices.json");
+    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf-8"));
+  } catch (e) {}
+  return [];
 }
 
 export const invoicesRoutes: FastifyPluginAsync = async (fastify) => {
@@ -112,10 +136,55 @@ export const invoicesRoutes: FastifyPluginAsync = async (fastify) => {
 
     saveTenantInvoices(tenantId, invoices);
 
+    // ========================================================
+    // AUTO-REACTIVACIÓN INTELIGENTE EN MIKROTIK AL LIQUIDAR DEUDA
+    // ========================================================
+    let mikrotikReactivationReport: any = null;
+    try {
+      const customerId = inv.customerId;
+      const customers = loadTenantCustomers(tenantId);
+      const customer = customers.find((c: any) => c.id === customerId);
+
+      // Verificar si al cliente le quedan otras facturas vencidas o pendientes
+      const hasOtherDebts = invoices.some(
+        (i: any) => i.customerId === customerId && i.id !== invoiceId && (i.status === "pending" || i.status === "overdue")
+      );
+
+      if (customer && !hasOtherDebts) {
+        // Restaurar estado del cliente a activo
+        const wasSuspended = customer.status === "suspended";
+        customer.status = "active";
+        customer.balance = "0.00";
+        customer.updatedAt = new Date().toISOString();
+        saveTenantCustomers(tenantId, customers);
+
+        // Buscar equipo MikroTik asignado o primer router MikroTik de la empresa
+        const devices = loadTenantDevices(tenantId);
+        const targetRouter = devices.find((d: any) => d.vendor === "mikrotik");
+
+        if (targetRouter) {
+          const custPayload = {
+            id: customer.id,
+            name: customer.fullName || customer.name || `Cliente #${customer.id}`,
+            ip: customer.assignedIp || customer.ip || undefined,
+            pppoeUsername: customer.pppoeUsername || undefined,
+          };
+          mikrotikReactivationReport = await MikroTikService.reactivateCustomerService(targetRouter, custPayload);
+        }
+      }
+    } catch (mktErr: any) {
+      console.warn("Aviso al intentar auto-reactivación MikroTik:", mktErr?.message);
+    }
+
+    const message = mikrotikReactivationReport
+      ? `Pago registrado exitosamente. Servicio MikroTik '${mikrotikReactivationReport.details.device}' reactivado automáticamente (tráfico restablecido).`
+      : "Pago registrado exitosamente. Recibo liquidado.";
+
     return reply.send({
       success: true,
-      message: "Pago registrado exitosamente. Recibo liquidado.",
+      message,
       data: inv,
+      mikrotik: mikrotikReactivationReport,
     });
   });
 };

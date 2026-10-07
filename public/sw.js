@@ -1,10 +1,11 @@
 // TurboNetwork PWA - High Performance Service Worker
-const CACHE_NAME = 'turbonetwork-pwa-v1';
+const CACHE_NAME = 'turbonetwork-pwa-v2';
 
 const STATIC_SHELL = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/assets/tailwind.min.css',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-maskable.png',

@@ -22,6 +22,7 @@ import { tenantsRoutes } from "./modules/tenants/tenants.routes";
 import { inventoryRoutes } from "./modules/inventory/inventory.routes";
 import { messagesRoutes } from "./modules/messages/messages.routes";
 import { mapsRoutes } from "./modules/maps/maps.routes";
+import { databaseRoutes } from "./modules/database/database.routes";
 import { initializeTenantsSystem } from "./modules/tenants/tenants.service";
 
 export async function buildApp() {
@@ -108,6 +109,7 @@ export async function buildApp() {
   await fastify.register(inventoryRoutes, { prefix: "/api" });
   await fastify.register(messagesRoutes, { prefix: "/api" });
   await fastify.register(mapsRoutes, { prefix: "/api" });
+  await fastify.register(databaseRoutes, { prefix: "/api" });
 
 
   // Mensaje base de bienvenida para la API

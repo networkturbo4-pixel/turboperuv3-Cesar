@@ -3,6 +3,7 @@ import { z } from "zod";
 import fs from "fs";
 import path from "path";
 import { DeviceAdapterFactory, DeviceConnectionConfig } from "./adapters/device.adapter";
+import { MikroTikService } from "./mikrotik.service";
 import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
 
 const createDeviceSchema = z.object({
@@ -226,6 +227,137 @@ export const networkRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.status(201).send({ success: true, tenantId, data: newDevice });
   };
 
+  // 1. Corte manual / prueba de suspensión en MikroTik
+  const suspendCustomerHandler = async (request: any, reply: any) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const deviceId = parseInt(id, 10);
+    const devices = loadDevicesFromDisk(tenantId);
+    const device = devices.find((d) => d.id === deviceId);
+
+    if (!device) {
+      return reply.status(404).send({ success: false, message: "Equipo no encontrado" });
+    }
+
+    const body = request.body || {};
+    const customer = {
+      id: body.customerId || 1,
+      name: body.name || "Cliente Prueba",
+      ip: body.ip || "192.168.88.50",
+      pppoeUsername: body.pppoeUsername || undefined,
+    };
+
+    const result = await MikroTikService.suspendCustomerService(device, customer);
+    return reply.send({ success: true, tenantId, data: result });
+  };
+
+  // 2. Reactivación manual / prueba en MikroTik
+  const reactivateCustomerHandler = async (request: any, reply: any) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const deviceId = parseInt(id, 10);
+    const devices = loadDevicesFromDisk(tenantId);
+    const device = devices.find((d) => d.id === deviceId);
+
+    if (!device) {
+      return reply.status(404).send({ success: false, message: "Equipo no encontrado" });
+    }
+
+    const body = request.body || {};
+    const customer = {
+      id: body.customerId || 1,
+      name: body.name || "Cliente Prueba",
+      ip: body.ip || "192.168.88.50",
+      pppoeUsername: body.pppoeUsername || undefined,
+    };
+
+    const result = await MikroTikService.reactivateCustomerService(device, customer);
+    return reply.send({ success: true, tenantId, data: result });
+  };
+
+  // 3. Ejecución directa de comandos en RouterOS API (/system/resource/print, etc.)
+  const runCommandHandler = async (request: any, reply: any) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const deviceId = parseInt(id, 10);
+    const devices = loadDevicesFromDisk(tenantId);
+    const device = devices.find((d) => d.id === deviceId);
+
+    if (!device) {
+      return reply.status(404).send({ success: false, message: "Equipo no encontrado" });
+    }
+
+    const { words } = (request.body || {}) as { words?: string[] };
+    if (!words || !Array.isArray(words) || words.length === 0) {
+      return reply.status(400).send({ success: false, message: "Debe proveer un array de 'words', ej: ['/system/resource/print']" });
+    }
+
+    const result = await MikroTikService.executeCommands(device, [words], 3000);
+    return reply.send({
+      success: result.success,
+      tenantId,
+      device: { id: device.id, name: device.name, ipAddress: device.ipAddress },
+      result,
+    });
+  };
+
+  // 4. Sincronización masiva de cortes y reactivaciones en todos los MikroTik del negocio
+  const syncCutsHandler = async (request: any, reply: any) => {
+    const tenantId = resolveTenantId(request);
+    const devices = loadDevicesFromDisk(tenantId);
+    const mikrotiks = devices.filter((d) => d.vendor === "mikrotik");
+
+    if (mikrotiks.length === 0) {
+      return reply.status(400).send({ success: false, message: "No hay routers MikroTik configurados para esta empresa." });
+    }
+
+    // Leer clientes del tenant
+    let customersList: any[] = [];
+    try {
+      const custFile = getTenantFilePath(tenantId, "customers.json");
+      if (fs.existsSync(custFile)) {
+        customersList = JSON.parse(fs.readFileSync(custFile, "utf-8"));
+      }
+    } catch (e) {}
+
+    const suspendedList: Array<{ id: number; name: string; ip?: string; pppoeUsername?: string }> = [];
+    const activeList: Array<{ id: number; name: string; ip?: string; pppoeUsername?: string }> = [];
+
+    for (const c of customersList) {
+      const item = {
+        id: c.id,
+        name: c.fullName || c.name || `Cliente #${c.id}`,
+        ip: c.assignedIp || c.ip || undefined,
+        pppoeUsername: c.pppoeUsername || undefined,
+      };
+      if (c.status === "suspended") {
+        suspendedList.push(item);
+      } else if (c.status === "active") {
+        activeList.push(item);
+      }
+    }
+
+    const syncReports: any[] = [];
+    for (const mkt of mikrotiks) {
+      const report = await MikroTikService.batchSync(mkt, suspendedList, activeList);
+      syncReports.push({
+        deviceId: mkt.id,
+        deviceName: mkt.name,
+        ipAddress: mkt.ipAddress,
+        ...report,
+      });
+    }
+
+    return reply.send({
+      success: true,
+      tenantId,
+      message: `Sincronización masiva de cortes ejecutada en ${mikrotiks.length} routers MikroTik.`,
+      suspendedCount: suspendedList.length,
+      activeCount: activeList.length,
+      devicesSynced: syncReports,
+    });
+  };
+
   // Rutas bajo /network/devices y alias bajo /devices para compatibilidad total
   fastify.get("/network/devices", listHandler);
   fastify.get("/devices", listHandler);
@@ -234,6 +366,18 @@ export const networkRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post("/network/devices/:id/test", testHandler);
   fastify.post("/devices/:id/test-connection", testHandler);
   fastify.post("/devices/:id/test", testHandler);
+
+  fastify.post("/network/devices/:id/suspend-customer", suspendCustomerHandler);
+  fastify.post("/devices/:id/suspend-customer", suspendCustomerHandler);
+
+  fastify.post("/network/devices/:id/reactivate-customer", reactivateCustomerHandler);
+  fastify.post("/devices/:id/reactivate-customer", reactivateCustomerHandler);
+
+  fastify.post("/network/devices/:id/command", runCommandHandler);
+  fastify.post("/devices/:id/command", runCommandHandler);
+
+  fastify.post("/network/sync-cuts", syncCutsHandler);
+  fastify.post("/network/sync", syncCutsHandler);
 
   fastify.post("/network/devices", createHandler);
   fastify.post("/devices", createHandler);
