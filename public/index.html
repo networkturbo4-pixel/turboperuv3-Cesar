@@ -15335,11 +15335,6 @@
           } catch (e) {}
           completeLoginSuccess(data);
         } else {
-          try {
-            localStorage.removeItem('turbonetwork_pending_2fa');
-          } catch (e) {}
-          completeLoginSuccess(data);
-        } else {
           feedback.textContent = data.message || "PIN no reconocido";
           feedback.className = "text-xs min-h-[20px] text-rose-400 font-medium mb-3 font-mono";
           shakeKeypad();
