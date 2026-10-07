@@ -2123,6 +2123,98 @@
         max-width: calc(100vw - 3rem) !important;
       }
     }
+
+    /* ======================================================== */
+    /* EFECTO FESTIVO BRILLANTE Y SERPENTINAS DE CUMPLEAÑOS     */
+    /* ======================================================== */
+    @keyframes birthdayWidgetGlow {
+      0% {
+        box-shadow: 0 0 18px -2px rgba(236, 72, 153, 0.45), 0 0 28px -4px rgba(168, 85, 247, 0.25);
+        border-color: rgba(236, 72, 153, 0.65);
+      }
+      33% {
+        box-shadow: 0 0 22px -2px rgba(245, 158, 11, 0.5), 0 0 32px -4px rgba(236, 72, 153, 0.3);
+        border-color: rgba(245, 158, 11, 0.7);
+      }
+      66% {
+        box-shadow: 0 0 22px -2px rgba(168, 85, 247, 0.45), 0 0 32px -4px rgba(6, 182, 212, 0.3);
+        border-color: rgba(168, 85, 247, 0.7);
+      }
+      100% {
+        box-shadow: 0 0 18px -2px rgba(236, 72, 153, 0.45), 0 0 28px -4px rgba(168, 85, 247, 0.25);
+        border-color: rgba(236, 72, 153, 0.65);
+      }
+    }
+
+    @keyframes birthdayGradientShift {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    @keyframes birthdayStreamerSway1 {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-7px) rotate(3deg); }
+    }
+
+    @keyframes birthdayStreamerSway2 {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-5px) rotate(-3.5deg); }
+    }
+
+    @keyframes birthdaySparkleTwinkle {
+      0%, 100% { opacity: 0.3; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.25); }
+    }
+
+    .is-birthday-widget {
+      position: relative !important;
+      animation: birthdayWidgetGlow 4s ease-in-out infinite alternate !important;
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(168, 85, 247, 0.04) 50%, rgba(245, 158, 11, 0.05) 100%) !important;
+    }
+
+    .dark .is-birthday-widget {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.10) 0%, rgba(168, 85, 247, 0.08) 50%, rgba(245, 158, 11, 0.08) 100%) !important;
+    }
+
+    .is-birthday-widget::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ec4899, #f59e0b, #a855f7, #06b6d4, #ec4899);
+      background-size: 200% 100%;
+      animation: birthdayGradientShift 3.5s linear infinite;
+      border-top-left-radius: inherit;
+      border-top-right-radius: inherit;
+      pointer-events: none;
+      z-index: 15;
+    }
+
+    .birthday-streamer-left {
+      transform-origin: top left;
+      animation: birthdayStreamerSway1 4.5s ease-in-out infinite alternate;
+    }
+
+    .birthday-streamer-left-2 {
+      transform-origin: top left;
+      animation: birthdayStreamerSway2 3.8s ease-in-out infinite alternate;
+    }
+
+    .birthday-streamer-right {
+      transform-origin: top right;
+      animation: birthdayStreamerSway2 4.2s ease-in-out infinite alternate;
+    }
+
+    .birthday-streamer-right-2 {
+      transform-origin: top right;
+      animation: birthdayStreamerSway1 3.5s ease-in-out infinite alternate;
+    }
+
+    .birthday-sparkle {
+      animation: birthdaySparkleTwinkle 2.5s ease-in-out infinite alternate;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white antialiased">
@@ -2865,28 +2957,62 @@
         <section id="tab-dashboard" class="space-y-6">
           
                     <!-- WIDGET MODERNO: MI JORNADA LABORAL DE HOY -->
-          <div id="dash-attendance-widget" class="pro-card p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm transition">
+          <div id="dash-attendance-widget" class="pro-card p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm transition relative overflow-hidden">
             
-            <!-- BANNER FESTIVO DE CUMPLEAÑOS (SE ACTIVA EN EL MES DE CUMPLEAÑOS DEL COLABORADOR) -->
-            <div id="dw-birthday-banner" class="hidden mb-4 p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-pink-500/15 via-purple-500/15 to-amber-500/15 border border-pink-400/40 dark:border-pink-500/30 flex items-center justify-between gap-3 text-slate-800 dark:text-slate-100 relative overflow-hidden shadow-xs">
-              <div class="flex items-center space-x-3 z-10">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white flex items-center justify-center text-xl flex-shrink-0 shadow-md shadow-pink-500/20">
-                  🎂
-                </div>
-                <div>
-                  <div class="flex items-center space-x-2 flex-wrap gap-1">
-                    <h4 id="dw-birthday-title" class="text-xs sm:text-sm font-bold text-pink-700 dark:text-pink-300">¡Feliz Mes de Cumpleaños!</h4>
-                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-700 dark:text-pink-300 border border-pink-400/30">🎉 Festejo Oficial</span>
-                  </div>
-                  <p id="dw-birthday-greeting" class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">En este mes tan especial, te felicitamos y agradecemos tu esfuerzo y compromiso en TurboNetwork.</p>
-                </div>
-              </div>
-              <div class="hidden sm:flex items-center space-x-1.5 text-2xl select-none pointer-events-none opacity-80 pr-2">
-                🎈 🎁 ✨
+            <!-- CAPA FESTIVA DECORATIVA: SERPENTINAS Y CONFETI FLOTANTE (CUMPLEAÑOS) -->
+            <div id="dw-birthday-streamers" class="pointer-events-none absolute inset-0 overflow-hidden select-none hidden z-0 opacity-80 dark:opacity-70 transition-opacity duration-500">
+              <!-- Serpentinas Esquina Superior Izquierda -->
+              <svg class="absolute top-0 left-0 w-28 sm:w-36 h-full pointer-events-none overflow-visible" viewBox="0 0 100 260" fill="none">
+                <defs>
+                  <linearGradient id="dw-streamer-l1" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#ec4899"/>
+                    <stop offset="50%" stop-color="#f59e0b"/>
+                    <stop offset="100%" stop-color="#a855f7"/>
+                  </linearGradient>
+                  <linearGradient id="dw-streamer-l2" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#06b6d4"/>
+                    <stop offset="100%" stop-color="#3b82f6"/>
+                  </linearGradient>
+                </defs>
+                <path class="birthday-streamer-left" d="M10,0 C32,25 5,52 35,82 C62,112 15,142 42,175 C68,208 22,238 48,260" stroke="url(#dw-streamer-l1)" stroke-width="3.5" stroke-linecap="round"/>
+                <path class="birthday-streamer-left-2" d="M38,0 C16,32 46,68 22,106 C-3,144 32,184 14,228" stroke="url(#dw-streamer-l2)" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 3"/>
+                <circle cx="55" cy="40" r="3" fill="#f59e0b" class="birthday-sparkle"/>
+                <circle cx="20" cy="130" r="2.5" fill="#ec4899" class="birthday-sparkle"/>
+                <rect x="45" y="160" width="5" height="5" rx="1" fill="#10b981" transform="rotate(35 47 162)" class="birthday-sparkle"/>
+                <circle cx="60" cy="220" r="3" fill="#8b5cf6" class="birthday-sparkle"/>
+              </svg>
+
+              <!-- Serpentinas Esquina Superior Derecha -->
+              <svg class="absolute top-0 right-0 w-28 sm:w-36 h-full pointer-events-none overflow-visible" viewBox="0 0 100 260" fill="none">
+                <defs>
+                  <linearGradient id="dw-streamer-r1" x1="1" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#f59e0b"/>
+                    <stop offset="50%" stop-color="#ec4899"/>
+                    <stop offset="100%" stop-color="#06b6d4"/>
+                  </linearGradient>
+                  <linearGradient id="dw-streamer-r2" x1="1" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#a855f7"/>
+                    <stop offset="100%" stop-color="#ec4899"/>
+                  </linearGradient>
+                </defs>
+                <path class="birthday-streamer-right" d="M90,0 C68,25 95,52 65,82 C38,112 85,142 58,175 C32,208 78,238 52,260" stroke="url(#dw-streamer-r1)" stroke-width="3.5" stroke-linecap="round"/>
+                <path class="birthday-streamer-right-2" d="M62,0 C84,32 54,68 78,106 C103,144 68,184 86,228" stroke="url(#dw-streamer-r2)" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 3"/>
+                <circle cx="45" cy="40" r="3" fill="#ec4899" class="birthday-sparkle"/>
+                <rect x="75" y="125" width="5" height="5" rx="1" fill="#f59e0b" transform="rotate(-25 77 127)" class="birthday-sparkle"/>
+                <circle cx="40" cy="180" r="2.5" fill="#06b6d4" class="birthday-sparkle"/>
+                <circle cx="70" cy="225" r="3" fill="#10b981" class="birthday-sparkle"/>
+              </svg>
+
+              <!-- Destellos y confeti central sutil -->
+              <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                <span class="absolute top-2 left-1/4 text-xs select-none opacity-60 birthday-sparkle">✨</span>
+                <span class="absolute top-3 right-1/4 text-xs select-none opacity-60 birthday-sparkle">🎉</span>
+                <span class="absolute bottom-2 left-1/3 text-xs select-none opacity-50 birthday-sparkle">⭐</span>
+                <span class="absolute bottom-3 right-1/3 text-xs select-none opacity-50 birthday-sparkle">✨</span>
               </div>
             </div>
 
-            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/5">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/5 relative z-10">
               <div class="flex items-center space-x-3.5">
                 <div class="relative flex-shrink-0">
                   <img id="dw-user-avatar" class="w-12 h-12 rounded-xl object-cover border border-slate-300 dark:border-white/10 shadow-sm" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar">
@@ -2900,12 +3026,16 @@
                     <span id="dw-badge-status" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/5">Sin registro</span>
                     <span id="dw-tenant-badge" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">TurboNetwork</span>
                   </div>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
                     <span id="dw-user-role" class="font-medium">Operador</span>
                     <span>•</span>
                     <span class="inline-flex items-center text-[11px] font-mono text-slate-600 dark:text-slate-400">
                       <svg class="w-3.5 h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                       <span id="dw-user-schedule">08:00 - 17:00</span>
+                    </span>
+                    <span id="dw-birthday-greeting-inline" class="hidden inline-flex items-center gap-1 text-[11px] font-semibold text-pink-600 dark:text-pink-400 bg-pink-500/10 dark:bg-pink-500/15 border border-pink-400/30 px-2 py-0.5 rounded-full shadow-xs">
+                      <span>🎂</span>
+                      <span>¡Feliz Mes de Cumpleaños! 🎈</span>
                     </span>
                   </p>
                 </div>
@@ -2924,7 +3054,7 @@
             </div>
 
             <!-- 4 Hitos de la Jornada: Entrada, Inicio Refrigerio, Fin Refrigerio, Salida -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4 relative z-10">
               <!-- Hito 1: Entrada -->
               <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col justify-between">
                 <div class="flex items-center justify-between mb-2">
@@ -20084,39 +20214,36 @@ Estamos atentos para brindarle asistencia inmediata.
       document.getElementById('dw-user-avatar').src = currentUser.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=User';
       document.getElementById('dw-user-schedule').textContent = currentUser.workSchedule || '08:00 - 17:00';
 
-      // 1. Decoración de Cumpleaños (Mes de Cumpleaños)
+      // 1. Decoración de Cumpleaños (Mes de Cumpleaños): Widget brillante y serpentinas festivas
       const userBirthDate = (currentUser && currentUser.birthDate) || 
         (typeof currentEmployees !== 'undefined' && currentEmployees.find(e => e.email === currentUser.email || e.id === currentUser.id)?.birthDate) || '';
       const bInfo = checkUserBirthday(userBirthDate);
-      const bBanner = document.getElementById('dw-birthday-banner');
+      const bStreamers = document.getElementById('dw-birthday-streamers');
       const bTag = document.getElementById('dw-birthday-tag');
       const bAvatarBadge = document.getElementById('dw-birthday-avatar-badge');
-      const bTitle = document.getElementById('dw-birthday-title');
-      const bGreeting = document.getElementById('dw-birthday-greeting');
+      const bInlineGreeting = document.getElementById('dw-birthday-greeting-inline');
       const firstName = (currentUser.name || 'Compañero').split(' ')[0];
 
       if (bInfo.isMonth) {
-        widget.classList.add('border-pink-300', 'dark:border-pink-500/30', 'bg-gradient-to-br', 'from-pink-500/[0.04]', 'via-purple-500/[0.03]', 'to-amber-500/[0.04]', 'ring-1', 'ring-pink-400/20', 'shadow-md', 'shadow-pink-500/5');
-        if (bBanner) {
-          bBanner.classList.remove('hidden');
-          if (bInfo.isToday) {
-            bTitle.textContent = `🎉 ¡HOY ES TU CUMPLEAÑOS, ${firstName.toUpperCase()}! 🎂`;
-            bGreeting.textContent = `¡Muchas felicidades de parte de todo el equipo de TurboNetwork! Que pases un día maravilloso lleno de éxitos, salud y bendiciones.`;
-          } else {
-            bTitle.textContent = `🎂 ¡Feliz Mes de Cumpleaños, ${firstName}! 🎈`;
-            bGreeting.textContent = `En este mes tan especial celebramos tu dedicación y valioso aporte a nuestro equipo. ¡Te deseamos un grandioso mes laboral y personal!`;
-          }
-        }
+        widget.classList.add('is-birthday-widget');
+        if (bStreamers) bStreamers.classList.remove('hidden');
         if (bTag) {
           bTag.classList.remove('hidden');
           bTag.textContent = bInfo.isToday ? '🎉 ¡Hoy es tu Cumpleaños!' : '🎂 Cumpleañero del Mes';
         }
         if (bAvatarBadge) bAvatarBadge.classList.remove('hidden');
+        if (bInlineGreeting) {
+          bInlineGreeting.classList.remove('hidden');
+          bInlineGreeting.innerHTML = bInfo.isToday
+            ? `<span class="animate-bounce inline-block">🎉</span> <span>¡HOY ES TU CUMPLEAÑOS, ${escapeHtml(firstName.toUpperCase())}! 🎂</span>`
+            : `<span class="animate-pulse inline-block">🎂</span> <span>¡Feliz Mes de Cumpleaños, ${escapeHtml(firstName)}! 🎈</span>`;
+        }
       } else {
-        widget.classList.remove('border-pink-300', 'dark:border-pink-500/30', 'bg-gradient-to-br', 'from-pink-500/[0.04]', 'via-purple-500/[0.03]', 'to-amber-500/[0.04]', 'ring-1', 'ring-pink-400/20', 'shadow-md', 'shadow-pink-500/5');
-        if (bBanner) bBanner.classList.add('hidden');
+        widget.classList.remove('is-birthday-widget');
+        if (bStreamers) bStreamers.classList.add('hidden');
         if (bTag) bTag.classList.add('hidden');
         if (bAvatarBadge) bAvatarBadge.classList.add('hidden');
+        if (bInlineGreeting) bInlineGreeting.classList.add('hidden');
       }
 
       // Multi-tenant badge en widget
