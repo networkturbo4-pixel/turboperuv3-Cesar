@@ -4368,24 +4368,81 @@
                         </div>
                       </div>
 
-                      <div class="grid grid-cols-2 gap-2.5 pt-1">
-                        <div>
-                          <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Fondo Modo Oscuro</label>
-                          <select id="cfg-bg-dark" onchange="updateBgDark(this.value)" class="w-full border border-white/10 rounded-lg px-2 py-2 text-xs">
-                            <option value="#090a0f">Obsidiana (#090a0f)</option>
-                            <option value="#000000">Negro Puro (#000000)</option>
-                            <option value="#0f172a">Slate Profundo (#0f172a)</option>
-                            <option value="#18181b">Zinc Oscuro (#18181b)</option>
-                          </select>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <!-- FONDO MODO OSCURO -->
+                        <div class="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
+                          <div class="flex items-center justify-between">
+                            <label class="text-[10px] font-semibold text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
+                              <span class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500/50"></span>
+                              <span>Fondo Modo Oscuro</span>
+                            </label>
+                            <span class="text-[10px] text-slate-400 font-mono" id="cfg-bg-dark-preview-label">#090a0f</span>
+                          </div>
+                          <div class="flex items-center space-x-2">
+                            <input type="color" id="cfg-bg-dark" value="#090a0f" oninput="updateBgDark(this.value)" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border border-white/20 p-0.5">
+                            <input type="text" id="cfg-bg-dark-text" value="#090a0f" maxlength="7" placeholder="#090a0f" oninput="updateBgDark(this.value)" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white placeholder-slate-500 uppercase tracking-wider">
+                          </div>
+                          <!-- Presets de Fondo Oscuro -->
+                          <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
+                            <button type="button" onclick="updateBgDark('#090a0f')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition flex items-center space-x-1" title="Obsidiana">
+                              <span class="w-1.5 h-1.5 rounded-full bg-[#090a0f] border border-white/30"></span>
+                              <span>Obsidiana</span>
+                            </button>
+                            <button type="button" onclick="updateBgDark('#000000')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition flex items-center space-x-1" title="OLED Negro Puro">
+                              <span class="w-1.5 h-1.5 rounded-full bg-[#000000] border border-white/30"></span>
+                              <span>OLED</span>
+                            </button>
+                            <button type="button" onclick="updateBgDark('#0f172a')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition flex items-center space-x-1" title="Slate Profundo">
+                              <span class="w-1.5 h-1.5 rounded-full bg-[#0f172a] border border-white/30"></span>
+                              <span>Slate</span>
+                            </button>
+                            <button type="button" onclick="updateBgDark('#18181b')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition flex items-center space-x-1" title="Zinc Oscuro">
+                              <span class="w-1.5 h-1.5 rounded-full bg-[#18181b] border border-white/30"></span>
+                              <span>Zinc</span>
+                            </button>
+                            <button type="button" onclick="updateBgDark('#0b0f19')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition flex items-center space-x-1" title="Medianoche Azul">
+                              <span class="w-1.5 h-1.5 rounded-full bg-[#0b0f19] border border-white/30"></span>
+                              <span>Noche</span>
+                            </button>
+                          </div>
                         </div>
-                        <div>
-                          <label class="block text-[10px] font-medium text-slate-400 uppercase mb-1">Fondo Modo Claro</label>
-                          <select id="cfg-bg-light" onchange="updateBgLight(this.value)" class="w-full border border-white/10 rounded-lg px-2 py-2 text-xs">
-                            <option value="#f8fafc">Slate Claro (#f8fafc)</option>
-                            <option value="#ffffff">Blanco Puro (#ffffff)</option>
-                            <option value="#f1f5f9">Gris Neutro (#f1f5f9)</option>
-                            <option value="#fafafa">Zinc Claro (#fafafa)</option>
-                          </select>
+
+                        <!-- FONDO MODO CLARO -->
+                        <div class="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
+                          <div class="flex items-center justify-between">
+                            <label class="text-[10px] font-semibold text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
+                              <span class="w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400/50"></span>
+                              <span>Fondo Modo Claro</span>
+                            </label>
+                            <span class="text-[10px] text-slate-400 font-mono" id="cfg-bg-light-preview-label">#f8fafc</span>
+                          </div>
+                          <div class="flex items-center space-x-2">
+                            <input type="color" id="cfg-bg-light" value="#f8fafc" oninput="updateBgLight(this.value)" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border border-white/20 p-0.5">
+                            <input type="text" id="cfg-bg-light-text" value="#f8fafc" maxlength="7" placeholder="#f8fafc" oninput="updateBgLight(this.value)" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white placeholder-slate-500 uppercase tracking-wider">
+                          </div>
+                          <!-- Presets de Fondo Claro -->
+                          <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
+                            <button type="button" onclick="updateBgLight('#f8fafc')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition flex items-center space-x-1" title="Slate Claro">
+                              <span class="w-1.5 h-1.5 rounded-full bg-[#f8fafc] border border-black/20"></span>
+                              <span>Slate</span>
+                            </button>
+                            <button type="button" onclick="updateBgLight('#ffffff')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition flex items-center space-x-1" title="Blanco Puro">
+                              <span class="w-1.5 h-1.5 rounded-full bg-[#ffffff] border border-black/20"></span>
+                              <span>Blanco</span>
+                            </button>
+                            <button type="button" onclick="updateBgLight('#f1f5f9')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition flex items-center space-x-1" title="Gris Neutro">
+                              <span class="w-1.5 h-1.5 rounded-full bg-[#f1f5f9] border border-black/20"></span>
+                              <span>Neutro</span>
+                            </button>
+                            <button type="button" onclick="updateBgLight('#fafafa')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition flex items-center space-x-1" title="Zinc Claro">
+                              <span class="w-1.5 h-1.5 rounded-full bg-[#fafafa] border border-black/20"></span>
+                              <span>Zinc</span>
+                            </button>
+                            <button type="button" onclick="updateBgLight('#f3f4f6')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition flex items-center space-x-1" title="Gris Suave">
+                              <span class="w-1.5 h-1.5 rounded-full bg-[#f3f4f6] border border-black/20"></span>
+                              <span>Suave</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -4650,24 +4707,47 @@
                     <p class="text-xs text-slate-400 mt-0.5">Define los tonos de fondo para cada tema</p>
 
                     <div class="space-y-4 mt-4">
-                      <div>
-                        <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Fondo para Modo Oscuro</label>
-                        <select id="usr-bg-dark" onchange="updateUserBgDark(this.value)" class="w-full border border-white/10 rounded-lg px-2.5 py-2 text-xs">
-                          <option value="#090a0f">Obsidiana Profundo (#090a0f)</option>
-                          <option value="#000000">Negro Puro OLED (#000000)</option>
-                          <option value="#0f172a">Slate Nocturno (#0f172a)</option>
-                          <option value="#18181b">Zinc Oscuro (#18181b)</option>
-                        </select>
+                      <!-- FONDO OSCURO PERSONAL -->
+                      <div class="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
+                        <div class="flex items-center justify-between">
+                          <label class="text-[10px] font-semibold text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500/50"></span>
+                            <span>Fondo Modo Oscuro</span>
+                          </label>
+                          <span class="text-[10px] text-slate-400 font-mono" id="usr-bg-dark-preview-label">#090a0f</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <input type="color" id="usr-bg-dark" value="#090a0f" oninput="updateUserBgDark(this.value)" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border border-white/20 p-0.5">
+                          <input type="text" id="usr-bg-dark-text" value="#090a0f" maxlength="7" placeholder="#090a0f" oninput="updateUserBgDark(this.value)" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white placeholder-slate-500 uppercase tracking-wider">
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
+                          <button type="button" onclick="updateUserBgDark('#090a0f')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition">Obsidiana</button>
+                          <button type="button" onclick="updateUserBgDark('#000000')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition">OLED</button>
+                          <button type="button" onclick="updateUserBgDark('#0f172a')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition">Slate</button>
+                          <button type="button" onclick="updateUserBgDark('#18181b')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition">Zinc</button>
+                          <button type="button" onclick="updateUserBgDark('#0b0f19')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition">Noche</button>
+                        </div>
                       </div>
 
-                      <div>
-                        <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Fondo para Modo Claro</label>
-                        <select id="usr-bg-light" onchange="updateUserBgLight(this.value)" class="w-full border border-white/10 rounded-lg px-2.5 py-2 text-xs">
-                          <option value="#f8fafc">Slate Suave (#f8fafc)</option>
-                          <option value="#ffffff">Blanco Puro (#ffffff)</option>
-                          <option value="#f1f5f9">Gris Neutro (#f1f5f9)</option>
-                          <option value="#fafafa">Zinc Claro (#fafafa)</option>
-                        </select>
+                      <!-- FONDO CLARO PERSONAL -->
+                      <div class="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
+                        <div class="flex items-center justify-between">
+                          <label class="text-[10px] font-semibold text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400/50"></span>
+                            <span>Fondo Modo Claro</span>
+                          </label>
+                          <span class="text-[10px] text-slate-400 font-mono" id="usr-bg-light-preview-label">#f8fafc</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <input type="color" id="usr-bg-light" value="#f8fafc" oninput="updateUserBgLight(this.value)" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border border-white/20 p-0.5">
+                          <input type="text" id="usr-bg-light-text" value="#f8fafc" maxlength="7" placeholder="#f8fafc" oninput="updateUserBgLight(this.value)" class="flex-1 bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white placeholder-slate-500 uppercase tracking-wider">
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
+                          <button type="button" onclick="updateUserBgLight('#f8fafc')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition">Slate</button>
+                          <button type="button" onclick="updateUserBgLight('#ffffff')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition">Blanco</button>
+                          <button type="button" onclick="updateUserBgLight('#f1f5f9')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition">Neutro</button>
+                          <button type="button" onclick="updateUserBgLight('#fafafa')" class="px-2 py-0.5 rounded text-[10px] font-medium bg-black/40 hover:bg-black/60 border border-white/10 text-slate-300 transition">Zinc</button>
+                        </div>
                       </div>
 
                       <div>
@@ -12532,6 +12612,24 @@
       return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
     }
 
+    function hexToRgbValues(hex, fallback = [9, 10, 15]) {
+      if (!hex || typeof hex !== 'string') return fallback;
+      let c = hex.replace('#', '').trim();
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      if (c.length !== 6) return fallback;
+      const num = parseInt(c, 16);
+      if (isNaN(num)) return fallback;
+      return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+    }
+
+    function clampColor(v) {
+      return Math.max(0, Math.min(255, Math.round(v)));
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + [clampColor(r), clampColor(g), clampColor(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+    }
+
     function escapeHtml(text) {
       if (!text) return "";
       return String(text)
@@ -12546,7 +12644,7 @@
     // PALETAS CROMÁTICAS ARMONIZADAS PARA SUPERFICIES Y BORDES
     // ========================================================
     function getDarkPalette(hex) {
-      const h = (hex || '#090a0f').toLowerCase();
+      const h = (hex || '#090a0f').toLowerCase().trim();
       if (h === '#000000') {
         return {
           bg: '#000000',
@@ -12577,19 +12675,49 @@
           border: 'rgba(255, 255, 255, 0.10)'
         };
       }
-      // Predeterminado: #090a0f (Obsidiana Profundo)
+      if (h === '#090a0f') {
+        return {
+          bg: '#090a0f',
+          surface: '#0e121b',
+          surfaceSubtle: '#141925',
+          sidebar: 'rgba(14, 18, 27, 0.95)',
+          header: 'rgba(9, 10, 15, 0.88)',
+          border: 'rgba(255, 255, 255, 0.08)'
+        };
+      }
+      if (h === '#0b0f19') {
+        return {
+          bg: '#0b0f19',
+          surface: '#111827',
+          surfaceSubtle: '#1f2937',
+          sidebar: 'rgba(17, 24, 39, 0.95)',
+          header: 'rgba(11, 15, 25, 0.90)',
+          border: 'rgba(255, 255, 255, 0.09)'
+        };
+      }
+
+      // CÁLCULO DINÁMICO ARMONIZADO PARA CUALQUIER COLOR OSCURO PERSONALIZADO
+      const [r, g, b] = hexToRgbValues(h, [9, 10, 15]);
+      const surfR = clampColor(r + 10 + (255 - r) * 0.04);
+      const surfG = clampColor(g + 10 + (255 - g) * 0.04);
+      const surfB = clampColor(b + 12 + (255 - b) * 0.05);
+
+      const subR = clampColor(r + 20 + (255 - r) * 0.08);
+      const subG = clampColor(g + 20 + (255 - r) * 0.08);
+      const subB = clampColor(b + 24 + (255 - b) * 0.10);
+
       return {
-        bg: '#090a0f',
-        surface: '#0e121b',
-        surfaceSubtle: '#141925',
-        sidebar: 'rgba(14, 18, 27, 0.95)',
-        header: 'rgba(9, 10, 15, 0.88)',
-        border: 'rgba(255, 255, 255, 0.08)'
+        bg: h,
+        surface: rgbToHex(surfR, surfG, surfB),
+        surfaceSubtle: rgbToHex(subR, subG, subB),
+        sidebar: `rgba(${surfR}, ${surfG}, ${surfB}, 0.96)`,
+        header: `rgba(${r}, ${g}, ${b}, 0.90)`,
+        border: 'rgba(255, 255, 255, 0.09)'
       };
     }
 
     function getLightPalette(hex) {
-      const h = (hex || '#f8fafc').toLowerCase();
+      const h = (hex || '#f8fafc').toLowerCase().trim();
       if (h === '#ffffff') {
         return {
           bg: '#ffffff',
@@ -12623,13 +12751,41 @@
           cardShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)'
         };
       }
-      // Predeterminado: #f8fafc (Slate Suave)
+      if (h === '#f8fafc') {
+        return {
+          bg: '#f8fafc',
+          surface: '#ffffff',
+          surfaceSubtle: '#f1f5f9',
+          sidebar: 'rgba(255, 255, 255, 0.96)',
+          header: 'rgba(248, 250, 252, 0.92)',
+          border: 'rgba(0, 0, 0, 0.08)',
+          cardShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)'
+        };
+      }
+      if (h === '#f3f4f6') {
+        return {
+          bg: '#f3f4f6',
+          surface: '#ffffff',
+          surfaceSubtle: '#e5e7eb',
+          sidebar: 'rgba(255, 255, 255, 0.96)',
+          header: 'rgba(243, 244, 246, 0.92)',
+          border: 'rgba(0, 0, 0, 0.08)',
+          cardShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)'
+        };
+      }
+
+      // CÁLCULO DINÁMICO ARMONIZADO PARA CUALQUIER COLOR CLARO PERSONALIZADO
+      const [r, g, b] = hexToRgbValues(h, [248, 250, 252]);
+      const subR = clampColor(r * 0.95);
+      const subG = clampColor(g * 0.95);
+      const subB = clampColor(b * 0.95);
+
       return {
-        bg: '#f8fafc',
+        bg: h,
         surface: '#ffffff',
-        surfaceSubtle: '#f1f5f9',
+        surfaceSubtle: rgbToHex(subR, subG, subB),
         sidebar: 'rgba(255, 255, 255, 0.96)',
-        header: 'rgba(248, 250, 252, 0.92)',
+        header: `rgba(${r}, ${g}, ${b}, 0.92)`,
         border: 'rgba(0, 0, 0, 0.08)',
         cardShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)'
       };
@@ -12942,9 +13098,18 @@
         const accTxt = document.getElementById('cfg-accent-color-text');
         if (accTxt) accTxt.value = settings.accentColor || "#059669";
         const darkInp = document.getElementById('cfg-bg-dark');
-        if (darkInp) darkInp.value = settings.darkBgColor || '#090a0f';
+        if (darkInp && (settings.darkBgColor || '').length === 7) darkInp.value = settings.darkBgColor || '#090a0f';
+        const darkTxt = document.getElementById('cfg-bg-dark-text');
+        if (darkTxt) darkTxt.value = settings.darkBgColor || '#090a0f';
+        const darkLbl = document.getElementById('cfg-bg-dark-preview-label');
+        if (darkLbl) darkLbl.textContent = settings.darkBgColor || '#090a0f';
+
         const lightInp = document.getElementById('cfg-bg-light');
-        if (lightInp) lightInp.value = settings.lightBgColor || '#f8fafc';
+        if (lightInp && (settings.lightBgColor || '').length === 7) lightInp.value = settings.lightBgColor || '#f8fafc';
+        const lightTxt = document.getElementById('cfg-bg-light-text');
+        if (lightTxt) lightTxt.value = settings.lightBgColor || '#f8fafc';
+        const lightLbl = document.getElementById('cfg-bg-light-preview-label');
+        if (lightLbl) lightLbl.textContent = settings.lightBgColor || '#f8fafc';
         const fontInp = document.getElementById('cfg-font-family');
         if (fontInp) fontInp.value = settings.fontFamily || 'inter';
         const scaleInp = document.getElementById('cfg-font-scale');
@@ -13079,27 +13244,49 @@
     }
 
     function updateBgDark(val) {
-      appSettings.darkBgColor = val;
+      if (!val) return;
+      let hex = val.trim();
+      if (hex.length === 6 && !hex.startsWith('#')) hex = '#' + hex;
+      appSettings.darkBgColor = hex;
       if (currentUser && currentUser.preferences && currentUser.preferences.darkBgColor) {
-        currentUser.preferences.darkBgColor = val;
+        currentUser.preferences.darkBgColor = hex;
         const usrInp = document.getElementById('usr-bg-dark');
-        if (usrInp) usrInp.value = val;
+        if (usrInp && hex.length === 7) usrInp.value = hex;
+        const usrTxt = document.getElementById('usr-bg-dark-text');
+        if (usrTxt && usrTxt.value !== hex) usrTxt.value = hex;
+        const usrLbl = document.getElementById('usr-bg-dark-preview-label');
+        if (usrLbl) usrLbl.textContent = hex;
       }
       applyBranding(appSettings);
       const inp = document.getElementById('cfg-bg-dark');
-      if (inp) inp.value = val;
+      if (inp && hex.length === 7) inp.value = hex;
+      const inpTxt = document.getElementById('cfg-bg-dark-text');
+      if (inpTxt && inpTxt.value !== hex) inpTxt.value = hex;
+      const lbl = document.getElementById('cfg-bg-dark-preview-label');
+      if (lbl) lbl.textContent = hex;
     }
 
     function updateBgLight(val) {
-      appSettings.lightBgColor = val;
+      if (!val) return;
+      let hex = val.trim();
+      if (hex.length === 6 && !hex.startsWith('#')) hex = '#' + hex;
+      appSettings.lightBgColor = hex;
       if (currentUser && currentUser.preferences && currentUser.preferences.lightBgColor) {
-        currentUser.preferences.lightBgColor = val;
+        currentUser.preferences.lightBgColor = hex;
         const usrInp = document.getElementById('usr-bg-light');
-        if (usrInp) usrInp.value = val;
+        if (usrInp && hex.length === 7) usrInp.value = hex;
+        const usrTxt = document.getElementById('usr-bg-light-text');
+        if (usrTxt && usrTxt.value !== hex) usrTxt.value = hex;
+        const usrLbl = document.getElementById('usr-bg-light-preview-label');
+        if (usrLbl) usrLbl.textContent = hex;
       }
       applyBranding(appSettings);
       const inp = document.getElementById('cfg-bg-light');
-      if (inp) inp.value = val;
+      if (inp && hex.length === 7) inp.value = hex;
+      const inpTxt = document.getElementById('cfg-bg-light-text');
+      if (inpTxt && inpTxt.value !== hex) inpTxt.value = hex;
+      const lbl = document.getElementById('cfg-bg-light-preview-label');
+      if (lbl) lbl.textContent = hex;
     }
 
     function toggleThemeMode(event) {
@@ -13654,9 +13841,18 @@
       const accTxt = document.getElementById('usr-accent-color-text');
       if (accTxt) accTxt.value = accColor;
       const bgDarkInp = document.getElementById('usr-bg-dark');
-      if (bgDarkInp) bgDarkInp.value = bgDark;
+      if (bgDarkInp && (bgDark || '').length === 7) bgDarkInp.value = bgDark;
+      const bgDarkTxt = document.getElementById('usr-bg-dark-text');
+      if (bgDarkTxt) bgDarkTxt.value = bgDark;
+      const bgDarkLbl = document.getElementById('usr-bg-dark-preview-label');
+      if (bgDarkLbl) bgDarkLbl.textContent = bgDark;
+
       const bgLightInp = document.getElementById('usr-bg-light');
-      if (bgLightInp) bgLightInp.value = bgLight;
+      if (bgLightInp && (bgLight || '').length === 7) bgLightInp.value = bgLight;
+      const bgLightTxt = document.getElementById('usr-bg-light-text');
+      if (bgLightTxt) bgLightTxt.value = bgLight;
+      const bgLightLbl = document.getElementById('usr-bg-light-preview-label');
+      if (bgLightLbl) bgLightLbl.textContent = bgLight;
       const themeInp = document.getElementById('usr-theme-mode');
       if (themeInp) themeInp.value = themeMode;
       const toastStyleInp = document.getElementById('usr-toast-style');
@@ -13699,20 +13895,32 @@
 
     function updateUserBgDark(val) {
       if (!currentUser) return;
+      let hex = (val || '').trim();
+      if (hex.length === 6 && !hex.startsWith('#')) hex = '#' + hex;
       if (!currentUser.preferences) currentUser.preferences = {};
-      currentUser.preferences.darkBgColor = val;
+      currentUser.preferences.darkBgColor = hex;
       applyBranding(appSettings);
       const bgDarkInp = document.getElementById('usr-bg-dark');
-      if (bgDarkInp) bgDarkInp.value = val;
+      if (bgDarkInp && hex.length === 7) bgDarkInp.value = hex;
+      const bgDarkTxt = document.getElementById('usr-bg-dark-text');
+      if (bgDarkTxt && bgDarkTxt.value !== hex) bgDarkTxt.value = hex;
+      const lbl = document.getElementById('usr-bg-dark-preview-label');
+      if (lbl) lbl.textContent = hex;
     }
 
     function updateUserBgLight(val) {
       if (!currentUser) return;
+      let hex = (val || '').trim();
+      if (hex.length === 6 && !hex.startsWith('#')) hex = '#' + hex;
       if (!currentUser.preferences) currentUser.preferences = {};
-      currentUser.preferences.lightBgColor = val;
+      currentUser.preferences.lightBgColor = hex;
       applyBranding(appSettings);
       const bgLightInp = document.getElementById('usr-bg-light');
-      if (bgLightInp) bgLightInp.value = val;
+      if (bgLightInp && hex.length === 7) bgLightInp.value = hex;
+      const bgLightTxt = document.getElementById('usr-bg-light-text');
+      if (bgLightTxt && bgLightTxt.value !== hex) bgLightTxt.value = hex;
+      const lbl = document.getElementById('usr-bg-light-preview-label');
+      if (lbl) lbl.textContent = hex;
     }
 
     function updateUserThemeMode(val) {
