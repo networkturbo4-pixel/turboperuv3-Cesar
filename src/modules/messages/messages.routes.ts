@@ -8,7 +8,9 @@ import { WhatsAppService } from "./whatsapp.service";
 export interface MessageItem {
   id: string;
   sender: "client" | "agent" | "system";
+  senderId?: number | string;
   senderName: string;
+  senderAvatar?: string;
   text: string;
   timestamp: string;
   timeFormatted: string;
@@ -49,6 +51,8 @@ export interface CommunityGroup {
   description?: string;
   type: "announcements" | "support" | "billing" | "general";
   isReadOnly: boolean;
+  permission?: "everyone" | "admin_only";
+  avatarUrl?: string;
   icon?: string;
   unreadCount?: number;
   lastMessage?: string;
@@ -85,6 +89,8 @@ export interface Conversation {
   status: "online" | "offline" | "busy" | "away";
   tags: string[]; // e.g. ["clientes", "corte"], ["personal"], ["clientes", "pendiente"]
   isArchived?: boolean;
+  isPinned?: boolean;
+  pinnedAt?: string;
   pinnedMessageId?: string;
   planOrRole?: string;
   serviceStatus?: "active" | "suspended" | "pending";
@@ -93,6 +99,7 @@ export interface Conversation {
   lastMessage: string;
   lastMessageTime: string;
   lastMessageDate: string;
+  lastMessageAt?: string;
   messages: MessageItem[];
   createdAt: string;
   updatedAt: string;
@@ -101,6 +108,59 @@ export interface Conversation {
   ratingLabel?: string;
   address?: string;
   backpackItems?: string[];
+}
+
+export function getFormattedTime(date: Date = new Date()): string {
+  const tz = process.env.TIMEZONE || process.env.TZ || "America/Lima";
+  try {
+    return date.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", timeZone: tz });
+  } catch {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+}
+
+export function enrichConversationAvatars(tenantId: string, conversations: Conversation[]): Conversation[] {
+  let users: any[] = [];
+  try {
+    const usersPath = path.resolve(process.cwd(), "data", "users.json");
+    if (fs.existsSync(usersPath)) {
+      users = JSON.parse(fs.readFileSync(usersPath, "utf-8"));
+    }
+  } catch {}
+
+  let customers: any[] = [];
+  try {
+    const custPath = getTenantFilePath(tenantId, "customers.json");
+    if (fs.existsSync(custPath)) {
+      customers = JSON.parse(fs.readFileSync(custPath, "utf-8"));
+    }
+  } catch {}
+
+  return conversations.map(c => {
+    // 1. Staff / Cuadrilla user
+    if (c.type === "personal" || (c.tags && c.tags.includes("personal")) || c.contactId) {
+      const matchedUser = users.find(u =>
+        (c.contactId && String(u.id) === String(c.contactId)) ||
+        (u.email && c.phone && (u.email === c.phone || c.email === u.email)) ||
+        (u.name && c.name && u.name.trim().toLowerCase() === c.name.trim().toLowerCase())
+      );
+      if (matchedUser && matchedUser.avatar) {
+        return { ...c, avatar: matchedUser.avatar };
+      }
+    }
+    // 2. Cliente
+    if (c.type === "cliente" || (c.tags && c.tags.includes("clientes"))) {
+      const matchedCust = customers.find(cust =>
+        (c.contactId && String(cust.id) === String(c.contactId)) ||
+        (cust.phone && c.phone && (cust.phone === c.phone || cust.phone.endsWith(c.phone) || c.phone.endsWith(cust.phone))) ||
+        (cust.fullName && c.name && cust.fullName.trim().toLowerCase() === c.name.trim().toLowerCase())
+      );
+      if (matchedCust && (matchedCust.avatar || matchedCust.photo)) {
+        return { ...c, avatar: matchedCust.avatar || matchedCust.photo };
+      }
+    }
+    return c;
+  });
 }
 
 export interface MessageFilter {
@@ -502,7 +562,9 @@ const updateQuickReplySchema = z.object({
 const sendMessageSchema = z.object({
   text: z.string().optional().default(""),
   sender: z.enum(["agent", "client", "system"]).optional().default("agent"),
+  senderId: z.union([z.string(), z.number()]).optional(),
   senderName: z.string().optional(),
+  senderAvatar: z.string().optional(),
   replyTo: z.object({
     id: z.string(),
     senderName: z.string(),
@@ -827,6 +889,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     const query = request.query as { category?: string; q?: string; includeArchived?: string } | undefined;
     let list = loadConversationsFromDisk(tenantId);
 
+    // Enriquecer avatares con fotos de perfil actualizadas del sistema (usuarios y clientes)
+    list = enrichConversationAvatars(tenantId, list);
+
     // Filtro por archivados o categoría
     const isArchivedFilter = query?.category === "archived";
     if (isArchivedFilter) {
@@ -854,6 +919,15 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       );
     }
 
+    // Ordenar: primero los fijados (isPinned: true) por pinnedAt o actividad, luego los demás por última actividad (updatedAt / lastMessageAt)
+    list.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
     // Devolver lista ligera sin los mensajes internos completos para máxima velocidad en móviles
     const lightList = list.map(c => ({
       ...c,
@@ -871,10 +945,14 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     const query = (request.query as { limit?: string; before?: string; all?: string }) || {};
 
     const list = loadConversationsFromDisk(tenantId);
-    const conv = list.find(c => c.id === id);
+    let conv = list.find(c => c.id === id);
     if (!conv) {
       return reply.status(404).send({ success: false, message: "Conversación no encontrada" });
     }
+
+    // Enriquecer avatar si el usuario o cliente actualizó su foto de perfil
+    const enrichedList = enrichConversationAvatars(tenantId, [conv]);
+    conv = enrichedList[0] || conv;
 
     // Marcar como leída
     conv.unreadCount = 0;
@@ -932,7 +1010,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const now = new Date();
-    const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeFormatted = getFormattedTime(now);
 
     const attachment = parse.data.attachment;
     let fallbackText = parse.data.text || "";
@@ -950,7 +1028,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     const newMsg: MessageItem = {
       id: "m-" + Date.now(),
       sender,
+      senderId: parse.data.senderId,
       senderName,
+      senderAvatar: parse.data.senderAvatar,
       text: fallbackText,
       timestamp: now.toISOString(),
       timeFormatted,
@@ -966,7 +1046,17 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     conv.lastMessage = fallbackText;
     conv.lastMessageTime = timeFormatted;
     conv.lastMessageDate = now.toISOString().split("T")[0];
+    conv.lastMessageAt = now.toISOString();
     conv.updatedAt = now.toISOString();
+
+    // Mover la conversación al inicio respetando chats fijados
+    list.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
 
     saveConversationsToDisk(tenantId, list);
 
@@ -1023,7 +1113,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post("/messages/conversations/:id/incoming", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const { id } = request.params as { id: string };
-    const body = (request.body || {}) as { text?: string; senderName?: string; attachment?: any };
+    const body = (request.body || {}) as { text?: string; senderName?: string; senderId?: string | number; senderAvatar?: string; attachment?: any };
 
     const list = loadConversationsFromDisk(tenantId);
     const conv = list.find(c => c.id === id);
@@ -1032,14 +1122,16 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const now = new Date();
-    const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeFormatted = getFormattedTime(now);
     const text = body.text || "Hola, quisiera consultar sobre el estado de mi conexión y velocidad.";
     const senderName = body.senderName || conv.name || "Cliente";
 
     const newMsg: MessageItem = {
       id: "m-" + Date.now(),
       sender: "client",
+      senderId: body.senderId,
       senderName,
+      senderAvatar: body.senderAvatar,
       text,
       timestamp: now.toISOString(),
       timeFormatted,
@@ -1052,7 +1144,16 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     conv.lastMessage = text;
     conv.lastMessageTime = timeFormatted;
     conv.lastMessageDate = now.toISOString().split("T")[0];
+    conv.lastMessageAt = now.toISOString();
     conv.updatedAt = now.toISOString();
+
+    list.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
 
     saveConversationsToDisk(tenantId, list);
 
@@ -1067,6 +1168,64 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     });
 
     return reply.status(201).send({ success: true, message: "Mensaje entrante simulado", data: newMsg });
+  });
+
+  // 7.03 Fijar / Desfijar Conversación (hasta 25 chats fijados)
+  fastify.post("/messages/conversations/:id/pin", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const body = (request.body as { pinned?: boolean }) || {};
+
+    const list = loadConversationsFromDisk(tenantId);
+    const conv = list.find(c => c.id === id);
+    if (!conv) {
+      return reply.status(404).send({ success: false, message: "Conversación no encontrada" });
+    }
+
+    const targetPinned = typeof body.pinned === "boolean" ? body.pinned : !conv.isPinned;
+
+    if (targetPinned) {
+      const currentPinnedCount = list.filter(c => c.isPinned && c.id !== id).length;
+      if (currentPinnedCount >= 25) {
+        return reply.status(400).send({
+          success: false,
+          message: "Límite alcanzado: solo puedes fijar hasta 25 chats principales",
+          pinnedCount: currentPinnedCount
+        });
+      }
+      conv.isPinned = true;
+      conv.pinnedAt = new Date().toISOString();
+    } else {
+      conv.isPinned = false;
+      delete conv.pinnedAt;
+    }
+
+    conv.updatedAt = new Date().toISOString();
+
+    list.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+    saveConversationsToDisk(tenantId, list);
+
+    broadcastMessageEvent({
+      type: "conversation_pinned",
+      tenantId,
+      conversationId: id,
+      isPinned: conv.isPinned,
+      pinnedAt: conv.pinnedAt
+    });
+
+    return reply.send({
+      success: true,
+      message: conv.isPinned ? "Chat fijado al inicio (máximo 25)" : "Chat desfijado",
+      isPinned: conv.isPinned,
+      data: conv
+    });
   });
 
   // 7.1. Reaccionar a un mensaje
@@ -1664,6 +1823,14 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       linkedNaps?: string[];
       linkedZones?: string[];
       memberCount?: number;
+      groups?: Array<{
+        name: string;
+        avatarUrl?: string;
+        description?: string;
+        isReadOnly?: boolean;
+        permission?: "everyone" | "admin_only";
+        type?: "announcements" | "support" | "billing" | "general";
+      }>;
     }) || {};
 
     if (!body.name || !body.name.trim()) {
@@ -1673,22 +1840,42 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     const communities = loadCommunitiesFromDisk(tenantId);
     const commId = "comm-" + Date.now();
     const now = new Date();
-    const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeFormatted = getFormattedTime(now);
 
-    const newCommunity: Community = {
-      id: commId,
-      tenantId,
-      name: body.name.trim(),
-      description: body.description?.trim() || "Comunidad de telecomunicaciones TurboNetwork",
-      avatarUrl: body.avatarUrl || `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80`,
-      coverImage: body.coverImage || `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80`,
-      type: body.type || "zone",
-      linkedNaps: body.linkedNaps || [],
-      linkedZones: body.linkedZones || [],
-      memberCount: body.memberCount || 1,
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-      groups: [
+    let initialGroups: CommunityGroup[] = [];
+    if (Array.isArray(body.groups) && body.groups.length > 0) {
+      initialGroups = body.groups.map((g, idx) => {
+        const grpType = g.type || (idx === 0 ? "announcements" : "general");
+        const isReadOnly = g.permission === "admin_only" ? true : (grpType === "announcements" ? true : (g.isReadOnly ?? false));
+        return {
+          id: `grp-${commId}-${idx + 1}`,
+          communityId: commId,
+          name: g.name.trim(),
+          description: g.description?.trim() || "",
+          type: grpType,
+          isReadOnly,
+          permission: isReadOnly ? "admin_only" : (g.permission || "everyone"),
+          avatarUrl: g.avatarUrl || "",
+          unreadCount: 0,
+          lastMessage: `Canal ${g.name.trim()} activado`,
+          lastMessageTime: timeFormatted,
+          messages: [
+            {
+              id: "gm-" + Date.now() + "-" + idx,
+              sender: "system",
+              senderName: "Sistema TurboNetwork",
+              text: `Canal ${g.name.trim()} activado en la comunidad ${body.name.trim()}.`,
+              timestamp: now.toISOString(),
+              timeFormatted,
+              status: "read",
+            }
+          ],
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        };
+      });
+    } else {
+      initialGroups = [
         {
           id: `grp-${commId}-1`,
           communityId: commId,
@@ -1696,6 +1883,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
           description: "Canal de difusión exclusiva del ISP para avisos y mantenimiento.",
           type: "announcements",
           isReadOnly: true,
+          permission: "admin_only",
+          avatarUrl: "",
           unreadCount: 0,
           lastMessage: "Canal de avisos inaugurado",
           lastMessageTime: timeFormatted,
@@ -1720,6 +1909,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
           description: "Canal bidireccional para reportes y ayuda de servicio.",
           type: "support",
           isReadOnly: false,
+          permission: "everyone",
+          avatarUrl: "",
           unreadCount: 0,
           lastMessage: "Canal de soporte disponible",
           lastMessageTime: timeFormatted,
@@ -1734,6 +1925,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
           description: "Espacio de conversación para los miembros del sector.",
           type: "general",
           isReadOnly: false,
+          permission: "everyone",
+          avatarUrl: "",
           unreadCount: 0,
           lastMessage: "Bienvenidos a la comunidad",
           lastMessageTime: timeFormatted,
@@ -1741,7 +1934,23 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
         }
-      ]
+      ];
+    }
+
+    const newCommunity: Community = {
+      id: commId,
+      tenantId,
+      name: body.name.trim(),
+      description: body.description?.trim() || "Comunidad de telecomunicaciones TurboNetwork",
+      avatarUrl: body.avatarUrl || `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80`,
+      coverImage: body.coverImage || `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80`,
+      type: body.type || "zone",
+      linkedNaps: body.linkedNaps || [],
+      linkedZones: body.linkedZones || [],
+      memberCount: body.memberCount || 1,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      groups: initialGroups
     };
 
     communities.unshift(newCommunity);
@@ -1799,6 +2008,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     const body = (request.body as {
       name: string;
       description?: string;
+      avatarUrl?: string;
+      icon?: string;
+      permission?: "everyone" | "admin_only";
       type?: "announcements" | "support" | "billing" | "general";
       isReadOnly?: boolean;
     }) || {};
@@ -1815,7 +2027,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
 
     const now = new Date();
     const type = body.type || "general";
-    const isReadOnly = type === "announcements" ? true : (body.isReadOnly ?? false);
+    const isReadOnly = body.permission === "admin_only" ? true : (type === "announcements" ? true : (body.isReadOnly ?? false));
 
     const newGroup: CommunityGroup = {
       id: `grp-${id}-${Date.now().toString().slice(-4)}`,
@@ -1824,9 +2036,12 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       description: body.description?.trim() || "",
       type,
       isReadOnly,
+      permission: isReadOnly ? "admin_only" : (body.permission || "everyone"),
+      avatarUrl: body.avatarUrl || "",
+      icon: body.icon || "",
       unreadCount: 0,
       lastMessage: "Canal creado",
-      lastMessageTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      lastMessageTime: getFormattedTime(now),
       messages: [],
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
@@ -1836,7 +2051,66 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     comm.updatedAt = now.toISOString();
     saveCommunitiesToDisk(tenantId, communities);
 
+    broadcastMessageEvent({
+      type: "community_group_created",
+      tenantId,
+      communityId: id,
+      group: newGroup
+    });
+
     return reply.status(201).send({ success: true, message: "Canal creado exitosamente", data: newGroup });
+  });
+
+  // 12.55 Editar/Actualizar canal/grupo de una comunidad
+  fastify.put("/messages/communities/:id/groups/:groupId", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, groupId } = request.params as { id: string; groupId: string };
+    const body = (request.body as {
+      name?: string;
+      description?: string;
+      avatarUrl?: string;
+      icon?: string;
+      type?: "announcements" | "support" | "billing" | "general";
+      isReadOnly?: boolean;
+      permission?: "everyone" | "admin_only";
+    }) || {};
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) {
+      return reply.status(404).send({ success: false, message: "Comunidad no encontrada" });
+    }
+
+    const group = comm.groups.find(g => g.id === groupId);
+    if (!group) {
+      return reply.status(404).send({ success: false, message: "Canal no encontrado" });
+    }
+
+    if (body.name !== undefined) group.name = body.name.trim();
+    if (body.description !== undefined) group.description = body.description.trim();
+    if (body.avatarUrl !== undefined) group.avatarUrl = body.avatarUrl;
+    if (body.icon !== undefined) group.icon = body.icon;
+    if (body.type !== undefined) group.type = body.type;
+    if (body.permission !== undefined) {
+      group.permission = body.permission;
+      group.isReadOnly = body.permission === "admin_only";
+    } else if (body.isReadOnly !== undefined) {
+      group.isReadOnly = body.isReadOnly;
+      group.permission = body.isReadOnly ? "admin_only" : "everyone";
+    }
+
+    group.updatedAt = new Date().toISOString();
+    comm.updatedAt = new Date().toISOString();
+    saveCommunitiesToDisk(tenantId, communities);
+
+    broadcastMessageEvent({
+      type: "community_group_updated",
+      tenantId,
+      communityId: id,
+      group
+    });
+
+    return reply.send({ success: true, message: "Canal actualizado con éxito", data: group });
   });
 
   // 12.6 Eliminar canal/grupo de una comunidad
@@ -1859,7 +2133,14 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     comm.updatedAt = new Date().toISOString();
     saveCommunitiesToDisk(tenantId, communities);
 
-    return reply.send({ success: true, message: "Canal eliminado", data: deleted });
+    broadcastMessageEvent({
+      type: "community_group_deleted",
+      tenantId,
+      communityId: id,
+      groupId
+    });
+
+    return reply.send({ success: true, message: "Canal eliminado con éxito", data: deleted });
   });
 
   // 12.7 Obtener historial paginado de un canal/grupo
@@ -1944,7 +2225,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const now = new Date();
-    const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeFormatted = getFormattedTime(now);
 
     const attachment = parse.data.attachment;
     let fallbackText = parse.data.text || "";
@@ -1956,10 +2237,15 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       else fallbackText = attachment.name || 'Archivo adjunto';
     }
 
+    const sender = parse.data.sender || "agent";
+    const senderName = parse.data.senderName || (group.type === "announcements" ? "NOC TurboNetwork Oficial" : "Operador TurboNetwork");
+
     const newMsg: MessageItem = {
       id: "gm-" + Date.now(),
-      sender: "agent",
-      senderName: group.type === "announcements" ? "NOC TurboNetwork Oficial" : "Operador TurboNetwork",
+      sender,
+      senderId: parse.data.senderId,
+      senderName,
+      senderAvatar: parse.data.senderAvatar,
       text: fallbackText,
       timestamp: now.toISOString(),
       timeFormatted,

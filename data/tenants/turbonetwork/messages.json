@@ -15,8 +15,8 @@
     "planOrRole": "Superadministrador",
     "serviceStatus": "active",
     "unreadCount": 0,
-    "lastMessage": "Prueba de mensaje automático del sistema TurboNetwork.",
-    "lastMessageTime": "03:45 p. m.",
+    "lastMessage": "alsdkalñsdkasdkasd",
+    "lastMessageTime": "06:12 p. m.",
     "lastMessageDate": "2026-10-09",
     "messages": [
       {
@@ -195,12 +195,31 @@
         "timestamp": "2026-10-09T20:45:30.036Z",
         "timeFormatted": "03:45 p. m.",
         "status": "read"
+      },
+      {
+        "id": "m-1791587530024",
+        "sender": "agent",
+        "senderName": "Operador TurboNetwork",
+        "text": "jfjfjdkdkd",
+        "timestamp": "2026-10-09T23:12:10.023Z",
+        "timeFormatted": "06:12 p. m.",
+        "status": "read"
+      },
+      {
+        "id": "m-1791587532990",
+        "sender": "agent",
+        "senderName": "Operador TurboNetwork",
+        "text": "alsdkalñsdkasdkasd",
+        "timestamp": "2026-10-09T23:12:12.990Z",
+        "timeFormatted": "06:12 p. m.",
+        "status": "read"
       }
     ],
     "createdAt": "2026-10-09T19:45:38.981Z",
-    "updatedAt": "2026-10-09T20:45:30.036Z",
+    "updatedAt": "2026-10-09T23:12:12.990Z",
     "contractStartDate": "",
-    "address": ""
+    "address": "",
+    "lastMessageAt": "2026-10-09T23:12:12.990Z"
   },
   {
     "id": "conv-1791561395916",

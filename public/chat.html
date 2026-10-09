@@ -380,6 +380,10 @@
 
                   <!-- Acciones del Chat Header -->
                   <div class="flex items-center space-x-1 sm:space-x-1.5 flex-shrink-0">
+                    <button type="button" id="btn-community-group-settings" onclick="openActiveGroupSettingsModal()" title="Gestionar canal o grupo" class="hidden p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 transition flex items-center space-x-1.5 text-xs font-semibold">
+                      <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                      <span class="hidden sm:inline">Ajustes Canal</span>
+                    </button>
                     <button type="button" onclick="openActiveContactDrawer()" title="Ver expediente y detalles" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 transition flex items-center space-x-1.5 text-xs font-semibold">
                       <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       <span class="hidden sm:inline">Detalles</span>
@@ -852,6 +856,10 @@
     <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-white/5 mb-1 truncate" id="ctx-chat-name">
       Opciones de Chat
     </div>
+    <button type="button" onclick="ctxActionTogglePinChat()" id="ctx-btn-pin" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 transition">
+      <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" /></svg>
+      <span id="ctx-pin-label">Fijar Chat (Máx 25)</span>
+    </button>
     <button type="button" onclick="ctxActionChangeTag()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 transition">
       <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
       <span>Editar Etiqueta</span>
@@ -882,6 +890,12 @@
         </button>
       </div>
       <div class="space-y-1.5">
+        <button type="button" onclick="sheetActionTogglePinChat()" id="sheet-btn-pin" class="w-full p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-200 transition">
+          <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" /></svg>
+          </div>
+          <span id="sheet-pin-label">Fijar Conversación</span>
+        </button>
         <button type="button" onclick="sheetActionChangeTag()" class="w-full p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-200 transition">
           <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center flex-shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
@@ -1058,10 +1072,10 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL: CREAR NUEVA COMUNIDAD                              -->
+  <!-- MODAL: CREAR NUEVA COMUNIDAD (AMPLIADO CON FOTO Y GRUPOS) -->
   <!-- ======================================================== -->
   <div id="new-community-modal" class="fixed inset-0 z-[270] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6">
-    <div class="pro-card max-w-lg w-full p-5 sm:p-6 rounded-3xl border border-white/10 shadow-2xl relative flex flex-col justify-between overflow-hidden my-auto max-h-[90vh]">
+    <div class="pro-card max-w-2xl w-full p-5 sm:p-6 rounded-3xl border border-white/10 shadow-2xl relative flex flex-col justify-between overflow-hidden my-auto max-h-[92vh]">
       <!-- Header -->
       <div class="flex items-center justify-between pb-3.5 border-b border-white/10 flex-shrink-0">
         <div class="flex items-center space-x-3">
@@ -1070,7 +1084,7 @@
           </div>
           <div>
             <h3 class="text-base font-bold text-white tracking-tight">Nueva Comunidad de Telecomunicaciones</h3>
-            <p class="text-xs text-slate-400 mt-0.5">Agrupa clientes por condominio, edificio o sector de red</p>
+            <p class="text-xs text-slate-400 mt-0.5">Agrupa clientes por condominio, edificio o sector de red con canales propios</p>
           </div>
         </div>
         <button type="button" onclick="closeNewCommunityModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition">
@@ -1079,18 +1093,38 @@
       </div>
 
       <!-- Form Body -->
-      <form id="new-community-form" onsubmit="handleCreateCommunity(event)" class="space-y-4 py-4 overflow-y-auto min-h-0 flex-1 scrollbar-none pr-0.5">
-        <div>
-          <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre de la Comunidad *</label>
-          <input type="text" id="ncomm-name" required placeholder="Ej. Condominio Las Torres / Sector Huáscar" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+      <form id="new-community-form" onsubmit="handleCreateCommunity(event)" class="space-y-4 py-4 overflow-y-auto min-h-0 flex-1 scrollbar-none pr-1">
+        <!-- Foto / Imagen de la Comunidad y Nombre -->
+        <div class="flex flex-col sm:flex-row items-center gap-4 p-3.5 rounded-2xl bg-white/[0.02] border border-white/10">
+          <div class="relative flex-shrink-0 group">
+            <img id="ncomm-avatar-preview" src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-md" alt="Foto Comunidad">
+            <button type="button" onclick="document.getElementById('ncomm-avatar-file').click()" class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-2xl flex flex-col items-center justify-center text-[10px] font-bold text-white transition cursor-pointer">
+              <svg class="w-5 h-5 mb-0.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
+              <span>Cambiar</span>
+            </button>
+            <input type="file" id="ncomm-avatar-file" accept="image/*" class="hidden" onchange="handleCommunityAvatarFileSelect(this)">
+          </div>
+          <div class="flex-1 w-full space-y-2">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre de la Comunidad *</label>
+              <input type="text" id="ncomm-name" required placeholder="Ej. Condominio Las Torres / Sector Huáscar" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-[10px] text-slate-400">Presets rápidos:</span>
+              <button type="button" onclick="setCommunityAvatarPreset('building')" class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 border border-white/10">🏢 Edificio</button>
+              <button type="button" onclick="setCommunityAvatarPreset('condo')" class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 border border-white/10">🏡 Condominio</button>
+              <button type="button" onclick="setCommunityAvatarPreset('fiber')" class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 border border-white/10">📡 Red FTTH</button>
+              <button type="button" onclick="setCommunityAvatarPreset('sector')" class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 border border-white/10">🏙️ Sector</button>
+            </div>
+          </div>
         </div>
 
         <div>
-          <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Descripción / Sector</label>
-          <textarea id="ncomm-desc" rows="2" placeholder="Detalle de ubicación o clientes que forman parte..." class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"></textarea>
+          <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Descripción / Sector Geográfico</label>
+          <textarea id="ncomm-desc" rows="2" placeholder="Detalle de ubicación, cajas NAP o clientes que forman parte..." class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"></textarea>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Tipo de Comunidad</label>
             <select id="ncomm-type" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
@@ -1105,21 +1139,41 @@
           </div>
         </div>
 
-        <div class="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300">
-          ✨ Se crearán automáticamente los canales base: <b>📢 Avisos Oficiales (Solo Lectura)</b>, <b>🛠️ Soporte Técnico</b> y <b>💬 Comunidad General</b>.
+        <!-- ======================================================== -->
+        <!-- APARTADO PARA CREAR GRUPOS Y CONFIGURAR PERMISOS          -->
+        <!-- ======================================================== -->
+        <div class="pt-2 border-t border-white/10">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>Canales y Grupos de la Comunidad</span>
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" id="ncomm-groups-count">3 grupos</span>
+              </h4>
+              <p class="text-[11px] text-slate-400">Cada grupo tiene su foto, nombre y permiso de escritura:</p>
+            </div>
+            <button type="button" onclick="addNewCommunityGroupRow()" class="px-2.5 py-1 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+              <span>Agregar Grupo</span>
+            </button>
+          </div>
+
+          <!-- Contenedor dinámico de filas de grupos -->
+          <div id="ncomm-groups-builder-container" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+            <!-- Renderizado dinámico vía JS -->
+          </div>
         </div>
 
         <!-- Footer -->
         <div class="flex items-center justify-end space-x-2 pt-3 border-t border-white/10">
           <button type="button" onclick="closeNewCommunityModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300">Cancelar</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-sm transition">Crear Comunidad</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-sm transition">Crear Comunidad y Grupos</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL: CREAR NUEVO CANAL/GRUPO EN COMUNIDAD               -->
+  <!-- MODAL: CREAR NUEVO CANAL/GRUPO DENTRO DE COMUNIDAD EXISTENTE -->
   <!-- ======================================================== -->
   <div id="new-channel-modal" class="fixed inset-0 z-[275] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6">
     <div class="pro-card max-w-md w-full p-5 sm:p-6 rounded-3xl border border-white/10 shadow-2xl relative flex flex-col justify-between overflow-hidden my-auto">
@@ -1129,7 +1183,7 @@
             <span class="text-base font-bold">#</span>
           </div>
           <div>
-            <h3 class="text-base font-bold text-white tracking-tight">Crear Nuevo Canal</h3>
+            <h3 class="text-base font-bold text-white tracking-tight">Crear Nuevo Grupo / Canal</h3>
             <p id="new-channel-comm-name" class="text-xs text-slate-400 mt-0.5">En Comunidad</p>
           </div>
         </div>
@@ -1140,19 +1194,28 @@
 
       <form id="new-channel-form" onsubmit="handleCreateChannel(event)" class="space-y-4 py-4">
         <input type="hidden" id="nchan-community-id" value="">
-        <div>
-          <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre del Canal *</label>
-          <input type="text" id="nchan-name" required placeholder="Ej. 📢-alertas-urgentes, 💳-cobranzas" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+        <div class="flex items-center gap-3">
+          <div class="relative flex-shrink-0 group">
+            <img id="nchan-avatar-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=Canal" class="w-12 h-12 rounded-xl object-cover border border-white/15 shadow-sm" alt="Foto">
+            <button type="button" onclick="document.getElementById('nchan-avatar-file').click()" class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-xl flex items-center justify-center text-[9px] font-bold text-white transition cursor-pointer">
+              Cambiar
+            </button>
+            <input type="file" id="nchan-avatar-file" accept="image/*" class="hidden" onchange="handleGroupAvatarFileSelect(this, 'nchan')">
+          </div>
+          <div class="flex-1">
+            <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre del Grupo / Canal *</label>
+            <input type="text" id="nchan-name" required placeholder="Ej. 📢-alertas, 🛠️-soporte, 💳-cobranzas" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+          </div>
         </div>
+
         <div>
-          <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Tipo de Canal</label>
-          <select id="nchan-type" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-            <option value="announcements">📢 Avisos Oficiales (Solo Administradores)</option>
-            <option value="support">🛠️ Soporte Técnico / Incidencias</option>
-            <option value="billing">💳 Pagos y Facturación</option>
-            <option value="general" selected>💬 Conversación General</option>
+          <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Permisos de Envío de Mensajes</label>
+          <select id="nchan-permission" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+            <option value="admin_only">🔒 Solo Administradores / Solo Lectura (Difusión oficial)</option>
+            <option value="everyone" selected>💬 Todos los miembros pueden enviar mensajes</option>
           </select>
         </div>
+
         <div>
           <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Descripción / Propósito</label>
           <input type="text" id="nchan-desc" placeholder="Breve descripción visible para los miembros" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
@@ -1160,10 +1223,76 @@
 
         <div class="flex items-center justify-end space-x-2 pt-3 border-t border-white/10">
           <button type="button" onclick="closeNewChannelModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300">Cancelar</button>
-          <button type="submit" class="px-5 py-2 rounded-xl btn-brand-primary text-xs font-bold text-white shadow-sm transition">Crear Canal</button>
+          <button type="submit" class="px-5 py-2 rounded-xl btn-brand-primary text-xs font-bold text-white shadow-sm transition">Crear Grupo</button>
         </div>
       </form>
     </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: EDITAR / CONFIGURAR GRUPO O CANAL EXISTENTE        -->
+  <!-- ======================================================== -->
+  <div id="edit-channel-modal" class="fixed inset-0 z-[280] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6">
+    <div class="pro-card max-w-md w-full p-5 sm:p-6 rounded-3xl border border-white/10 shadow-2xl relative flex flex-col justify-between overflow-hidden my-auto">
+      <div class="flex items-center justify-between pb-3.5 border-b border-white/10 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white tracking-tight">Ajustes del Grupo / Canal</h3>
+            <p id="edit-channel-subtitle" class="text-xs text-slate-400 mt-0.5">Modifica nombre, foto y permisos</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeEditChannelModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="edit-channel-form" onsubmit="handleUpdateChannel(event)" class="space-y-4 py-4">
+        <input type="hidden" id="echan-community-id" value="">
+        <input type="hidden" id="echan-group-id" value="">
+
+        <div class="flex items-center gap-3">
+          <div class="relative flex-shrink-0 group">
+            <img id="echan-avatar-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=Canal" class="w-12 h-12 rounded-xl object-cover border border-white/15 shadow-sm" alt="Foto">
+            <button type="button" onclick="document.getElementById('echan-avatar-file').click()" class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-xl flex items-center justify-center text-[9px] font-bold text-white transition cursor-pointer">
+              Cambiar
+            </button>
+            <input type="file" id="echan-avatar-file" accept="image/*" class="hidden" onchange="handleGroupAvatarFileSelect(this, 'echan')">
+          </div>
+          <div class="flex-1">
+            <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre del Grupo / Canal *</label>
+            <input type="text" id="echan-name" required placeholder="Nombre del grupo" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Permisos de Envío</label>
+          <select id="echan-permission" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+            <option value="admin_only">🔒 Solo Administradores / Solo Lectura</option>
+            <option value="everyone">💬 Todos los miembros pueden enviar mensajes</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Descripción</label>
+          <input type="text" id="echan-desc" placeholder="Descripción del grupo" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div class="pt-3 border-t border-white/10 flex items-center justify-between">
+          <button type="button" onclick="handleDeleteCurrentGroup()" class="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold flex items-center gap-1.5 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            <span>Eliminar Grupo</span>
+          </button>
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="closeEditChannelModal()" class="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300">Cancelar</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-sm transition">Guardar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
   </div>
 
   <!-- ======================================================== -->
@@ -2040,11 +2169,14 @@ let activeCommunityId = null;
 let activeGroupId = null;
 let communitySearchQuery = '';
 
-// Formateador de fechas y horas
-function formatMessageTime(isoString) {
-  if (!isoString) return '';
-  const d = new Date(isoString);
-  if (isNaN(d.getTime())) return '';
+// Formateador de fechas y horas adaptado a zona horaria local del navegador
+function formatMessageTime(val) {
+  if (!val) return '';
+  if (typeof val === 'string' && /^\d{1,2}:\d{2}(\s*(am|pm|AM|PM))?$/i.test(val.trim())) {
+    return val.trim();
+  }
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return String(val);
   const now = new Date();
   const isToday = d.toDateString() === now.toDateString();
   const hours = d.getHours().toString().padStart(2, '0');
@@ -2053,6 +2185,48 @@ function formatMessageTime(isoString) {
   const day = d.getDate().toString().padStart(2, '0');
   const month = (d.getMonth() + 1).toString().padStart(2, '0');
   return `${day}/${month} ${hours}:${minutes}`;
+}
+
+// Función para determinar si un mensaje fue enviado por el usuario actualmente logueado
+function checkIfMessageIsMe(m) {
+  if (!m) return false;
+  if (currentUser) {
+    if (m.senderId && (m.senderId === currentUser.id || m.senderId === currentUser.username)) return true;
+    if (m.senderName && currentUser.name && m.senderName.trim().toLowerCase() === currentUser.name.trim().toLowerCase()) return true;
+    if (m.senderName && currentUser.username && m.senderName.trim().toLowerCase() === currentUser.username.trim().toLowerCase()) return true;
+  }
+  if (activeChannelMode === 'community') {
+    if (currentUser && m.senderId && m.senderId !== currentUser.id) return false;
+    return false;
+  }
+  const conv = (currentConversations || []).find(c => c.id === activeConversationId);
+  const isStaffChat = conv && conv.tags && (conv.tags.includes('personal') || conv.tags.includes('cuadrilla'));
+  if (isStaffChat) {
+    if (currentUser) {
+      if (m.senderId && m.senderId === currentUser.id) return true;
+      if (m.senderName && currentUser.name && m.senderName.trim().toLowerCase() === currentUser.name.trim().toLowerCase()) return true;
+      if (m.senderId && m.senderId !== currentUser.id) return false;
+    }
+  }
+  if (m.sender === 'client') return false;
+  if (m.sender === 'agent' && !isStaffChat) return true;
+  return false;
+}
+
+// Función para ordenar conversaciones (Primero fijadas hasta 25, luego por último mensaje)
+function sortConversationsList(list) {
+  if (!Array.isArray(list)) return [];
+  return [...list].sort((a, b) => {
+    const aPin = a.isPinned ? 1 : 0;
+    const bPin = b.isPinned ? 1 : 0;
+    if (aPin !== bPin) return bPin - aPin;
+    if (a.isPinned && b.isPinned && a.pinnedAt && b.pinnedAt) {
+      return new Date(b.pinnedAt).getTime() - new Date(a.pinnedAt).getTime();
+    }
+    const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+    const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+    return timeB - timeA;
+  });
 }
 
 function getFilterTagBadge(tag) {
@@ -2172,15 +2346,20 @@ function playMessageNotificationSound() {
   }
 }
 
-function showSystemNotification(title, body, onClick) {
+function showSystemNotification(title, body, iconUrl, onClick) {
+  if (typeof iconUrl === 'function') {
+    onClick = iconUrl;
+    iconUrl = null;
+  }
   if (!('Notification' in window)) return;
+  const avatarIcon = iconUrl || '/icons/icon-192.png';
   if (Notification.permission === 'granted') {
     try {
       const n = new Notification(title, {
         body,
-        icon: '/icons/icon-192.png',
+        icon: avatarIcon,
         badge: '/icons/icon-192.png',
-        silent: true
+        silent: false
       });
       n.onclick = () => {
         window.focus();
@@ -2336,20 +2515,21 @@ function handleIncomingRealtimeMessage(data) {
   if (!conversationId || !message) return;
 
   const isCurrentChatOpen = activeChannelMode === 'direct' && activeConversationId === conversationId;
-  const isFromClient = message.sender === 'client';
+  const isFromMe = checkIfMessageIsMe(message);
 
   // PREVENCIÓN DE TORMENTAS DE NOTIFICACIONES:
-  // Solo sonar y notificar si el mensaje es fresco (recibido dentro de los últimos 25 segundos)
+  // Solo sonar y notificar si el mensaje no es del usuario actual y es fresco (últimos 5 min o nuevo)
   const msgTime = new Date(message.timestamp).getTime();
-  const isFresh = !isNaN(msgTime) && (Date.now() - msgTime < 25000);
+  const isFresh = !isNaN(msgTime) ? (Date.now() - msgTime < 300000) : true;
 
-  // 1. Sonido y notificación si viene de un cliente o usuario y es en tiempo real
-  if (isFromClient && isFresh) {
+  // 1. Sonido y notificación si viene de otra persona y es en tiempo real
+  if (!isFromMe && isFresh) {
     playMessageNotificationSound();
     if (!isCurrentChatOpen || document.hidden) {
       showSystemNotification(
-        `Mensaje de ${message.senderName || 'Cliente'}`,
-        message.text || 'Nuevo mensaje recibido',
+        message.senderName || 'Nuevo Mensaje',
+        message.text || (message.attachment ? (message.attachment.type === 'image' ? '📷 Foto adjunta' : '📎 Archivo adjunto') : 'Nuevo mensaje recibido'),
+        message.senderAvatar || null,
         () => {
           if (typeof switchTab === 'function') switchTab('messages');
           selectConversation(conversationId);
@@ -2364,7 +2544,7 @@ function handleIncomingRealtimeMessage(data) {
       const container = document.getElementById('chat-messages-container');
       const isScrolledNearBottom = container ? (container.scrollHeight - container.scrollTop - container.clientHeight < 120) : true;
 
-      if (!isScrolledNearBottom && isFromClient) {
+      if (!isScrolledNearBottom && !isFromMe) {
         showFloatingNewMessagePill();
       }
 
@@ -2383,20 +2563,20 @@ function handleIncomingRealtimeMessage(data) {
   // 3. Actualizar conversación en memoria y lista lateral
   let conv = (currentConversations || []).find(c => c.id === conversationId);
   if (conv) {
-    conv.lastMessage = message.text;
-    conv.lastMessageTime = message.timeFormatted || formatMessageTime(message.timestamp);
-    conv.lastMessageAt = message.timestamp;
-    if (!isCurrentChatOpen && isFromClient) {
+    conv.lastMessage = message.text || (message.attachment ? (message.attachment.type === 'image' ? '📷 Foto' : '📎 Archivo') : '');
+    conv.lastMessageTime = formatMessageTime(message.timestamp) || message.timeFormatted;
+    conv.lastMessageAt = message.timestamp || new Date().toISOString();
+    if (!isCurrentChatOpen && !isFromMe) {
       conv.unreadCount = (conv.unreadCount || 0) + 1;
     }
-    // Reordenar al tope
-    currentConversations = [conv, ...currentConversations.filter(c => c.id !== conversationId)];
+    // Reordenar respetando fijados y fecha más reciente
+    currentConversations = sortConversationsList(currentConversations);
     renderConversationsList(currentConversations);
     updateGlobalUnreadBadges();
   } else {
     fetch('/api/messages/conversations').then(r => r.json()).then(res => {
       if (res.success && Array.isArray(res.data)) {
-        currentConversations = res.data;
+        currentConversations = sortConversationsList(res.data);
         renderConversationsList(currentConversations);
         updateGlobalUnreadBadges();
       }
@@ -2409,7 +2589,8 @@ function handleIncomingCommunityMessage(data) {
   if (!communityId || !groupId || !message) return;
 
   const isCurrentGroupOpen = activeChannelMode === 'community' && activeCommunityId === communityId && activeGroupId === groupId;
-  
+  const isFromMe = checkIfMessageIsMe(message);
+
   if (isCurrentGroupOpen) {
     if (!currentChatMessages.some(m => m.id === message.id)) {
       currentChatMessages.push(message);
@@ -2423,10 +2604,21 @@ function handleIncomingCommunityMessage(data) {
     const grp = comm.groups.find(g => g.id === groupId);
     if (grp) {
       grp.lastMessage = message.text;
-      grp.lastMessageTime = message.timeFormatted || formatMessageTime(message.timestamp);
-      if (!isCurrentGroupOpen && message.sender !== 'agent') {
+      grp.lastMessageTime = formatMessageTime(message.timestamp) || message.timeFormatted;
+      if (!isCurrentGroupOpen && !isFromMe) {
         grp.unreadCount = (grp.unreadCount || 0) + 1;
         playMessageNotificationSound();
+        if (document.hidden) {
+          showSystemNotification(
+            `${message.senderName || 'Miembro'} en ${grp.name}`,
+            message.text || 'Nuevo mensaje',
+            message.senderAvatar || grp.avatarUrl || null,
+            () => {
+              window.focus();
+              selectCommunityChannel(communityId, groupId);
+            }
+          );
+        }
       }
       renderCommunitiesList(currentCommunities);
     }
@@ -2624,7 +2816,9 @@ function renderConversationsList(conversations) {
   const listEl = document.getElementById('messages-conversations-list');
   if (!listEl) return;
 
-  if (!conversations || conversations.length === 0) {
+  const sortedList = sortConversationsList(conversations);
+
+  if (!sortedList || sortedList.length === 0) {
     listEl.innerHTML = `
       <div class="py-14 px-4 text-center text-slate-400">
         <svg class="w-8 h-8 mx-auto mb-2 text-slate-500 opacity-60" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
@@ -2635,7 +2829,7 @@ function renderConversationsList(conversations) {
     return;
   }
 
-  listEl.innerHTML = conversations.map(c => {
+  listEl.innerHTML = sortedList.map(c => {
     const isSelected = activeConversationId === c.id;
     const allTags = (Array.isArray(c.tags) && c.tags.length > 0)
       ? c.tags
@@ -2644,9 +2838,23 @@ function renderConversationsList(conversations) {
       const tagInfo = getFilterTagBadge(t);
       return `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap ${tagInfo.colorClass}" ${tagInfo.style ? `style="${tagInfo.style}"` : ''}>${escapeHtml(tagInfo.name)}</span>`;
     }).join('');
-    const timeFormatted = c.lastMessageTime || formatMessageTime(c.lastMessageAt || c.updatedAt);
+    const timeFormatted = formatMessageTime(c.lastMessageAt || c.updatedAt) || c.lastMessageTime || '';
     const contactName = c.name || c.contactName || 'Contacto';
-    const avatarUrl = c.avatar || c.contactAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || c.id)}`;
+    
+    // Sincronización en vivo de foto de perfil con usuarios del sistema (data/users.json)
+    let dynamicAvatar = c.avatar || c.contactAvatar;
+    if (Array.isArray(currentUsers) && currentUsers.length > 0) {
+      const matchedUser = currentUsers.find(u => 
+        (c.userId && (u.id === c.userId || u.username === c.userId)) ||
+        (c.id && (u.id === c.id || u.username === c.id)) ||
+        (u.name && contactName && u.name.trim().toLowerCase() === contactName.trim().toLowerCase())
+      );
+      if (matchedUser && (matchedUser.avatarUrl || matchedUser.avatar)) {
+        dynamicAvatar = matchedUser.avatarUrl || matchedUser.avatar;
+        c.avatar = dynamicAvatar;
+      }
+    }
+    const avatarUrl = dynamicAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || c.id)}`;
     
     // Status dot color & Unread highlight
     const hasUnread = (c.unreadCount || 0) > 0;
@@ -2665,6 +2873,8 @@ function renderConversationsList(conversations) {
           ? 'bg-blue-100/90 dark:bg-blue-950/70 border-2 border-blue-600 dark:border-blue-400 text-slate-900 dark:text-white shadow-md ring-2 ring-blue-500/30'
           : 'bg-white dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white shadow-2xs');
 
+    const pinIconHtml = c.isPinned ? `<span title="Chat Fijado" class="text-blue-500 dark:text-blue-400 text-xs flex-shrink-0 ml-1">📌</span>` : '';
+
     return `
       <div onclick="selectConversation('${c.id}')" oncontextmenu="handleConversationContextMenu(event, '${c.id}')" ontouchstart="handleCardTouchStart('${c.id}', event)" ontouchmove="handleCardTouchMove()" ontouchend="handleCardTouchEnd()" class="msg-conv-item p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-center space-x-3 ${cardClasses}">
         <div class="relative flex-shrink-0">
@@ -2674,7 +2884,7 @@ function renderConversationsList(conversations) {
 
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between mb-0.5">
-            <h4 class="text-xs sm:text-sm truncate ${titleColor}">${escapeHtml(contactName)}</h4>
+            <h4 class="text-xs sm:text-sm truncate ${titleColor} flex items-center gap-1"><span>${escapeHtml(contactName)}</span>${pinIconHtml}</h4>
             <span class="text-[10px] font-mono whitespace-nowrap ml-1.5 flex-shrink-0 ${timeColor}">${timeFormatted}</span>
           </div>
 
@@ -2751,15 +2961,38 @@ async function selectConversation(convId) {
     }
   }
 
+  // Ocultar botón de ajustes de grupo cuando estamos en chat directo
+  const btnSettings = document.getElementById('btn-community-group-settings');
+  if (btnSettings) btnSettings.classList.add('hidden');
+  const inputEl = document.getElementById('chat-input-text');
+  const sendBtn = document.getElementById('chat-btn-send-message');
+  if (inputEl) {
+    inputEl.placeholder = 'Escribe un mensaje...';
+    inputEl.disabled = false;
+  }
+  if (sendBtn) sendBtn.disabled = false;
+
   // Carga optimista inmediata (0ms de latencia) a partir de los datos en memoria
   const convLocal = currentConversations.find(c => c.id === convId);
   if (convLocal) {
     convLocal.unreadCount = 0;
     const contactName = convLocal.name || convLocal.contactName || 'Contacto';
     const contactDetail = convLocal.planOrRole || convLocal.contactDetail || ((convLocal.type === 'personal' || convLocal.contactType === 'personal') ? 'Cuadrilla Técnica' : 'Cliente Conectado');
+    
+    let headerAvatar = convLocal.avatar || convLocal.contactAvatar;
+    if (Array.isArray(currentUsers) && currentUsers.length > 0) {
+      const matchedUser = currentUsers.find(u => 
+        (convLocal.userId && (u.id === convLocal.userId || u.username === convLocal.userId)) ||
+        (convLocal.id && (u.id === convLocal.id || u.username === convLocal.id)) ||
+        (u.name && contactName && u.name.trim().toLowerCase() === contactName.trim().toLowerCase())
+      );
+      if (matchedUser && (matchedUser.avatarUrl || matchedUser.avatar)) {
+        headerAvatar = matchedUser.avatarUrl || matchedUser.avatar;
+      }
+    }
     const avatarEl = document.getElementById('chat-header-avatar');
     if (avatarEl) {
-      avatarEl.src = convLocal.avatar || convLocal.contactAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || convLocal.id)}`;
+      avatarEl.src = headerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || convLocal.id)}`;
     }
     const nameEl = document.getElementById('chat-header-name');
     if (nameEl) nameEl.textContent = contactName;
@@ -3076,9 +3309,20 @@ function renderChatMessages(messages) {
   }
 
   container.innerHTML = visibleMessages.map(m => {
-    const isAgent = m.sender === 'agent';
+    const isMe = checkIfMessageIsMe(m);
+    const isAgent = isMe;
     const isSelected = selectedChatMessageIds.has(m.id);
-    const timeFormatted = m.timeFormatted || formatMessageTime(m.timestamp);
+    const timeFormatted = m.timestamp ? formatMessageTime(m.timestamp) : (m.timeFormatted || '');
+
+    const conv = (currentConversations || []).find(c => c.id === activeConversationId);
+    const isGroupOrStaffChat = activeChannelMode === 'community' || (conv && conv.tags && (conv.tags.includes('personal') || conv.tags.includes('cuadrilla')));
+    const showSenderHeader = !isMe && isGroupOrStaffChat && (m.senderName || m.senderAvatar);
+    const senderHeaderHtml = showSenderHeader ? `
+      <div class="flex items-center gap-1.5 pb-1 mb-1 border-b border-black/5 dark:border-white/10 text-left">
+        ${m.senderAvatar ? `<img src="${m.senderAvatar}" class="w-4 h-4 rounded-full object-cover border border-blue-400/30">` : ''}
+        <span class="text-[11px] font-bold text-blue-600 dark:text-blue-400 truncate">${escapeHtml(m.senderName || 'Contacto')}</span>
+      </div>
+    ` : '';
 
     // 0. Mensaje Eliminado para Todos
     if (m.isDeletedForEveryone) {
@@ -3151,6 +3395,7 @@ function renderChatMessages(messages) {
     if (m.attachment && m.attachment.type === 'audio') {
       innerContentHtml = `
         <div class="space-y-1">
+          ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
           ${renderAudioBubbleHtml(m.attachment.url, m.attachment.duration, timeFormatted, isAgent, m.isPinned, m.isStarred)}
@@ -3167,6 +3412,7 @@ function renderChatMessages(messages) {
 
       innerContentHtml = `
         <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-1.5 shadow-sm text-xs space-y-1 group">
+          ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
           <div class="relative overflow-hidden rounded-xl bg-slate-950/20 cursor-pointer" onclick="openChatImageViewer('${m.attachment.url}')">
@@ -3201,6 +3447,7 @@ function renderChatMessages(messages) {
 
       innerContentHtml = `
         <div class="max-w-[88%] sm:max-w-md ${bgClass} rounded-2xl p-1.5 shadow-sm text-xs space-y-1.5 group">
+          ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
           
@@ -3277,6 +3524,7 @@ function renderChatMessages(messages) {
 
       innerContentHtml = `
         <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2">
+          ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
           <div class="relative w-full h-32 rounded-xl overflow-hidden bg-slate-900 border border-white/15 flex items-center justify-center">
@@ -3334,6 +3582,7 @@ function renderChatMessages(messages) {
 
       innerContentHtml = `
         <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group">
+          ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
           <div class="flex items-center space-x-3 p-2.5 rounded-xl ${isAgent ? 'bg-black/20 border border-white/15' : 'bg-slate-100/90 dark:bg-black/30 border border-slate-200 dark:border-white/10'} hover:bg-black/25 transition">
@@ -3364,6 +3613,7 @@ function renderChatMessages(messages) {
 
       innerContentHtml = `
         <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group">
+          ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
           <div class="flex items-center space-x-3 p-2.5 rounded-xl ${isAgent ? 'bg-black/20 border border-white/15' : 'bg-slate-100/90 dark:bg-black/30 border border-slate-200 dark:border-white/10'}">
@@ -3391,6 +3641,7 @@ function renderChatMessages(messages) {
 
       innerContentHtml = `
         <div class="max-w-[85%] sm:max-w-md ${bgClass} text-xs sm:text-[13px] space-y-1">
+          ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
           <p class="leading-relaxed whitespace-pre-wrap select-text msg-text">${escapeHtml(cleanText || m.text)}</p>
@@ -4959,7 +5210,8 @@ async function handleSendChatMessage(e) {
     if (cur) {
       cur.lastMessage = finalMsgText;
       cur.lastMessageAt = new Date().toISOString();
-      currentConversations = [cur, ...currentConversations.filter(c => c.id !== activeConversationId)];
+      cur.lastMessageTime = formatMessageTime(new Date());
+      currentConversations = sortConversationsList(currentConversations);
       renderConversationsList(currentConversations);
     }
   } else if (activeChannelMode === 'community') {
@@ -4968,7 +5220,7 @@ async function handleSendChatMessage(e) {
       const grp = comm.groups.find(g => g.id === activeGroupId);
       if (grp) {
         grp.lastMessage = finalMsgText;
-        grp.lastMessageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        grp.lastMessageTime = formatMessageTime(new Date());
         renderCommunitiesList(currentCommunities);
       }
     }
@@ -4980,6 +5232,11 @@ async function handleSendChatMessage(e) {
       sender: 'agent',
       replyTo: replyPayload
     };
+    if (currentUser) {
+      postBody.senderId = currentUser.id || currentUser.username;
+      postBody.senderName = currentUser.name || currentUser.username;
+      postBody.senderAvatar = currentUser.avatarUrl || currentUser.avatar || '';
+    }
     if (attachment) {
       postBody.attachment = attachment;
     }
@@ -5332,16 +5589,37 @@ async function selectCommunityChannel(communityId, groupId) {
       const avatarEl = document.getElementById('chat-header-avatar');
       const detailEl = document.getElementById('chat-header-detail');
       const tagsContainer = document.getElementById('chat-header-tags-container');
+      const btnSettings = document.getElementById('btn-community-group-settings');
+      if (btnSettings) btnSettings.classList.remove('hidden');
 
       if (nameEl) nameEl.textContent = `${commData.communityName} • ${group.name}`;
-      if (avatarEl) avatarEl.src = commData.communityAvatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80';
+      if (avatarEl) avatarEl.src = group.avatarUrl || commData.communityAvatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80';
       if (detailEl) detailEl.textContent = `${commData.memberCount || 0} miembros en el sector`;
 
+      const isReadOnly = group.permission === 'admin_only' || group.isReadOnly;
       if (tagsContainer) {
         tagsContainer.innerHTML = `
           <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Comunidad</span>
-          <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold ${group.isReadOnly ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}">${group.isReadOnly ? 'Solo Lectura / Difusión' : 'Canal Interactivo'}</span>
+          <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold ${isReadOnly ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}">${isReadOnly ? 'Solo Lectura / Difusión' : 'Canal Interactivo'}</span>
         `;
+      }
+
+      // Permisos de envío de mensajes en canales según grupo y rol
+      const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'superadmin' || currentUser.isAdmin === true);
+      const inputEl = document.getElementById('chat-input-text');
+      const sendBtn = document.getElementById('chat-btn-send-message');
+      if (isReadOnly && !isAdmin) {
+        if (inputEl) {
+          inputEl.placeholder = '🔒 Solo los administradores pueden enviar mensajes en este canal';
+          inputEl.disabled = true;
+        }
+        if (sendBtn) sendBtn.disabled = true;
+      } else {
+        if (inputEl) {
+          inputEl.placeholder = 'Escribe un mensaje...';
+          inputEl.disabled = false;
+        }
+        if (sendBtn) sendBtn.disabled = false;
       }
 
       currentChatMessages = group.messages || [];
@@ -5354,9 +5632,84 @@ async function selectCommunityChannel(communityId, groupId) {
   }
 }
 
-// 4.4 Modales de Creación de Comunidades y Canales
+// 4.4 Gestión y Constructor de Comunidades y Canales
+let newCommunityGroupsList = [
+  { name: '📢 Avisos Oficiales', permission: 'admin_only', avatarUrl: 'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=120&auto=format&fit=crop&q=80', description: 'Canal de comunicados y avisos oficiales (Solo lectura)' },
+  { name: '🛠️ Soporte Técnico', permission: 'everyone', avatarUrl: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=120&auto=format&fit=crop&q=80', description: 'Reportes de fallas y consultas de soporte' },
+  { name: '💬 Conversación General', permission: 'everyone', avatarUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=120&auto=format&fit=crop&q=80', description: 'Canal abierto para los vecinos' }
+];
+
+function setCommunityAvatarPreset(preset) {
+  const preview = document.getElementById('ncomm-avatar-preview');
+  if (!preview) return;
+  const presets = {
+    building: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80',
+    condo: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=150&auto=format&fit=crop&q=80',
+    fiber: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=150&auto=format&fit=crop&q=80',
+    sector: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&auto=format&fit=crop&q=80'
+  };
+  if (presets[preset]) preview.src = presets[preset];
+}
+
+function handleCommunityAvatarFileSelect(input) {
+  const file = input && input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const preview = document.getElementById('ncomm-avatar-preview');
+    if (preview) preview.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderNewCommunityGroups() {
+  const container = document.getElementById('ncomm-groups-builder-container');
+  const countEl = document.getElementById('ncomm-groups-count');
+  if (countEl) countEl.textContent = `${newCommunityGroupsList.length} grupo(s)`;
+  if (!container) return;
+  container.innerHTML = newCommunityGroupsList.map((g, idx) => `
+    <div class="flex items-center gap-2 p-2 rounded-xl bg-white/[0.03] border border-white/10 group">
+      <div class="relative flex-shrink-0">
+        <img src="${g.avatarUrl || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + idx}" class="w-9 h-9 rounded-lg object-cover border border-white/20">
+      </div>
+      <div class="flex-1 min-w-0">
+        <input type="text" value="${escapeHtml(g.name)}" oninput="newCommunityGroupsList[${idx}].name = this.value" placeholder="Nombre del grupo" class="w-full bg-transparent border-b border-white/10 text-xs text-white focus:outline-none focus:border-emerald-500 py-0.5">
+        <div class="flex items-center gap-2 mt-1">
+          <select onchange="newCommunityGroupsList[${idx}].permission = this.value" class="bg-black/40 text-[10px] text-slate-300 border border-white/10 rounded px-1.5 py-0.5 focus:outline-none">
+            <option value="everyone" ${g.permission === 'everyone' ? 'selected' : ''}>💬 Todos escriben</option>
+            <option value="admin_only" ${g.permission === 'admin_only' ? 'selected' : ''}>🔒 Solo Admin (Solo Lectura)</option>
+          </select>
+        </div>
+      </div>
+      <button type="button" onclick="removeCommunityGroupRow(${idx})" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition" title="Quitar grupo">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+function addNewCommunityGroupRow() {
+  newCommunityGroupsList.push({
+    name: 'Nuevo Canal',
+    permission: 'everyone',
+    avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=Canal${Date.now() % 100}`,
+    description: ''
+  });
+  renderNewCommunityGroups();
+}
+
+function removeCommunityGroupRow(idx) {
+  if (newCommunityGroupsList.length <= 1) {
+    showToast('La comunidad debe tener al menos un grupo', 'warning');
+    return;
+  }
+  newCommunityGroupsList.splice(idx, 1);
+  renderNewCommunityGroups();
+}
+
 function openNewCommunityModal() {
   const modal = document.getElementById('new-community-modal');
+  renderNewCommunityGroups();
   if (modal) modal.classList.remove('hidden');
 }
 
@@ -5371,6 +5724,7 @@ async function handleCreateCommunity(e) {
   const descEl = document.getElementById('ncomm-desc');
   const typeEl = document.getElementById('ncomm-type');
   const napsEl = document.getElementById('ncomm-naps');
+  const avatarPreview = document.getElementById('ncomm-avatar-preview');
 
   const name = nameEl ? nameEl.value.trim() : '';
   if (!name) return;
@@ -5379,16 +5733,25 @@ async function handleCreateCommunity(e) {
   const type = typeEl ? typeEl.value : 'building';
   const napsRaw = napsEl ? napsEl.value.trim() : '';
   const linkedNaps = napsRaw ? napsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+  const avatarUrl = avatarPreview ? avatarPreview.src : '';
 
   try {
     const res = await fetch('/api/messages/communities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description: desc, type, linkedNaps, memberCount: 1 })
+      body: JSON.stringify({ 
+        name, 
+        description: desc, 
+        type, 
+        avatarUrl, 
+        linkedNaps, 
+        memberCount: 1,
+        groups: newCommunityGroupsList 
+      })
     });
     const data = await res.json();
     if (data.success && data.data) {
-      showToast('Comunidad creada exitosamente con canales base', 'success');
+      showToast('Comunidad creada exitosamente con sus grupos', 'success');
       closeNewCommunityModal();
       currentCommunities.unshift(data.data);
       renderCommunitiesList(currentCommunities);
@@ -5404,6 +5767,133 @@ async function handleCreateCommunity(e) {
   }
 }
 
+// Modal Editar / Configurar Canal o Grupo existente
+function openActiveGroupSettingsModal() {
+  if (activeChannelMode !== 'community' || !activeCommunityId || !activeGroupId) return;
+  const comm = currentCommunities.find(c => c.id === activeCommunityId);
+  if (!comm) return;
+  const grp = (comm.groups || []).find(g => g.id === activeGroupId);
+  if (!grp) return;
+
+  const modal = document.getElementById('edit-channel-modal');
+  if (!modal) return;
+
+  const hiddenCommId = document.getElementById('echan-community-id');
+  const hiddenGroupId = document.getElementById('echan-group-id');
+  const nameInput = document.getElementById('echan-name');
+  const permSelect = document.getElementById('echan-permission');
+  const descInput = document.getElementById('echan-desc');
+  const avatarPreview = document.getElementById('echan-avatar-preview');
+  const subtitleEl = document.getElementById('edit-channel-subtitle');
+
+  if (hiddenCommId) hiddenCommId.value = activeCommunityId;
+  if (hiddenGroupId) hiddenGroupId.value = activeGroupId;
+  if (nameInput) nameInput.value = grp.name || '';
+  if (permSelect) permSelect.value = grp.permission || (grp.isReadOnly ? 'admin_only' : 'everyone');
+  if (descInput) descInput.value = grp.description || '';
+  if (avatarPreview) avatarPreview.src = grp.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(grp.name || 'Grupo')}`;
+  if (subtitleEl) subtitleEl.textContent = `En la comunidad: ${comm.name}`;
+
+  modal.classList.remove('hidden');
+}
+
+function closeEditChannelModal() {
+  const modal = document.getElementById('edit-channel-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function handleGroupAvatarFileSelect(input, prefix) {
+  const file = input && input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const preview = document.getElementById(`${prefix}-avatar-preview`);
+    if (preview) preview.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleUpdateChannel(e) {
+  if (e) e.preventDefault();
+  const commId = document.getElementById('echan-community-id').value;
+  const groupId = document.getElementById('echan-group-id').value;
+  const name = document.getElementById('echan-name').value.trim();
+  const permission = document.getElementById('echan-permission').value;
+  const description = document.getElementById('echan-desc').value.trim();
+  const avatarUrl = document.getElementById('echan-avatar-preview').src;
+
+  if (!commId || !groupId || !name) return;
+
+  try {
+    const res = await fetch(`/api/messages/communities/${encodeURIComponent(commId)}/groups/${encodeURIComponent(groupId)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, permission, description, avatarUrl })
+    });
+    const data = await res.json();
+    if (data.success && data.data) {
+      showToast('Ajustes del grupo actualizados', 'success');
+      closeEditChannelModal();
+      const comm = currentCommunities.find(c => c.id === commId);
+      if (comm && comm.groups) {
+        const grp = comm.groups.find(g => g.id === groupId);
+        if (grp) {
+          grp.name = name;
+          grp.permission = permission;
+          grp.description = description;
+          grp.avatarUrl = avatarUrl;
+        }
+      }
+      const nameEl = document.getElementById('chat-header-name');
+      const avatarEl = document.getElementById('chat-header-avatar');
+      if (nameEl && comm) nameEl.textContent = `${comm.name} • ${name}`;
+      if (avatarEl && avatarUrl) avatarEl.src = avatarUrl;
+      renderCommunitiesList(currentCommunities);
+    } else {
+      showToast(data.message || 'Error al actualizar grupo', 'error');
+    }
+  } catch (err) {
+    showToast('Fallo al conectar con el servidor', 'error');
+  }
+}
+
+async function handleDeleteCurrentGroup() {
+  const commId = document.getElementById('echan-community-id').value || activeCommunityId;
+  const groupId = document.getElementById('echan-group-id').value || activeGroupId;
+  if (!commId || !groupId) return;
+
+  if (!confirm('¿Estás seguro de que deseas eliminar este grupo? Los mensajes no podrán recuperarse.')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/messages/communities/${encodeURIComponent(commId)}/groups/${encodeURIComponent(groupId)}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Grupo eliminado exitosamente', 'success');
+      closeEditChannelModal();
+      const comm = currentCommunities.find(c => c.id === commId);
+      if (comm && comm.groups) {
+        comm.groups = comm.groups.filter(g => g.id !== groupId);
+      }
+      renderCommunitiesList(currentCommunities);
+      activeGroupId = null;
+      activeCommunityId = null;
+      activeChannelMode = 'direct';
+      const emptyView = document.getElementById('messages-empty-state-view');
+      const chatContent = document.getElementById('active-chat-content');
+      if (emptyView) emptyView.classList.remove('hidden');
+      if (chatContent) chatContent.classList.add('hidden');
+    } else {
+      showToast(data.message || 'Error al eliminar grupo', 'error');
+    }
+  } catch (err) {
+    showToast('Fallo al conectar con el servidor', 'error');
+  }
+}
+
 function openNewChannelModal(communityId) {
   const modal = document.getElementById('new-channel-modal');
   const hiddenId = document.getElementById('nchan-community-id');
@@ -5412,6 +5902,10 @@ function openNewChannelModal(communityId) {
   const comm = currentCommunities.find(c => c.id === communityId);
   if (commNameEl && comm) commNameEl.textContent = `En: ${comm.name}`;
   if (hiddenId) hiddenId.value = communityId;
+  const nameEl = document.getElementById('nchan-name');
+  if (nameEl) nameEl.value = '';
+  const descEl = document.getElementById('nchan-desc');
+  if (descEl) descEl.value = '';
   if (modal) modal.classList.remove('hidden');
 }
 
@@ -5424,13 +5918,15 @@ async function handleCreateChannel(e) {
   if (e) e.preventDefault();
   const hiddenId = document.getElementById('nchan-community-id');
   const nameEl = document.getElementById('nchan-name');
-  const typeEl = document.getElementById('nchan-type');
+  const permEl = document.getElementById('nchan-permission');
   const descEl = document.getElementById('nchan-desc');
+  const avatarPreview = document.getElementById('nchan-avatar-preview');
 
   const commId = hiddenId ? hiddenId.value : '';
   const name = nameEl ? nameEl.value.trim() : '';
-  const type = typeEl ? typeEl.value : 'general';
+  const permission = permEl ? permEl.value : 'everyone';
   const desc = descEl ? descEl.value.trim() : '';
+  const avatarUrl = avatarPreview ? avatarPreview.src : '';
 
   if (!commId || !name) return;
 
@@ -5438,11 +5934,11 @@ async function handleCreateChannel(e) {
     const res = await fetch(`/api/messages/communities/${encodeURIComponent(commId)}/groups`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, type, description: desc })
+      body: JSON.stringify({ name, permission, description: desc, avatarUrl })
     });
     const data = await res.json();
     if (data.success && data.data) {
-      showToast('Canal añadido a la comunidad', 'success');
+      showToast('Grupo añadido a la comunidad', 'success');
       closeNewChannelModal();
       const comm = currentCommunities.find(c => c.id === commId);
       if (comm) {
@@ -6028,6 +6524,11 @@ function handleConversationContextMenu(e, convId) {
   const nameEl = document.getElementById('ctx-chat-name');
   if (nameEl) nameEl.textContent = conv ? (conv.name || conv.contactName) : 'Opciones de Chat';
 
+  const pinLabel = document.getElementById('ctx-pin-label');
+  if (pinLabel) {
+    pinLabel.textContent = (conv && conv.isPinned) ? 'Desfijar Chat 📌' : 'Fijar Chat 📌 (Máx 25)';
+  }
+
   const archiveLabel = document.getElementById('ctx-archive-label');
   if (archiveLabel) {
     archiveLabel.textContent = (conv && conv.isArchived) ? 'Desarchivar Chat' : 'Archivar Chat';
@@ -6097,6 +6598,11 @@ function openMobileActionsSheet(convId) {
   const detailEl = document.getElementById('mobile-sheet-detail');
   if (detailEl) detailEl.textContent = conv.phone || conv.contactPhone || '';
 
+  const sheetPinLabel = document.getElementById('sheet-pin-label');
+  if (sheetPinLabel) {
+    sheetPinLabel.textContent = (conv && conv.isPinned) ? 'Desfijar Conversación 📌' : 'Fijar Conversación 📌 (Máx 25)';
+  }
+
   const archiveLabel = document.getElementById('sheet-archive-label');
   if (archiveLabel) {
     archiveLabel.textContent = conv.isArchived ? 'Desarchivar Conversación' : 'Archivar Conversación';
@@ -6106,6 +6612,42 @@ function openMobileActionsSheet(convId) {
 function closeMobileActionsSheet() {
   const sheet = document.getElementById('mobile-chat-actions-sheet');
   if (sheet) sheet.classList.add('hidden');
+}
+
+async function togglePinChat(convId) {
+  const id = convId || selectedContextConvId || activeConversationId;
+  if (!id) return;
+  try {
+    const res = await fetch(`/api/messages/conversations/${encodeURIComponent(id)}/pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || (data.isPinned ? 'Chat fijado al inicio' : 'Chat desfijado'), 'success');
+      const conv = (currentConversations || []).find(c => c.id === id);
+      if (conv) {
+        conv.isPinned = data.isPinned;
+        conv.pinnedAt = data.pinnedAt;
+      }
+      currentConversations = sortConversationsList(currentConversations);
+      renderConversationsList(currentConversations);
+    } else {
+      showToast(data.message || 'Error al fijar chat', 'error');
+    }
+  } catch (err) {
+    showToast('Fallo de conexión al fijar chat', 'error');
+  }
+}
+
+function ctxActionTogglePinChat() {
+  closeContextMenu();
+  togglePinChat(selectedContextConvId);
+}
+
+function sheetActionTogglePinChat() {
+  closeMobileActionsSheet();
+  togglePinChat(selectedContextConvId);
 }
 
 function ctxActionChangeTag() {
@@ -6629,18 +7171,25 @@ async function sendRecordedAudio() {
   showUploadProgress('Enviando nota de voz...');
 
   try {
+    const audioBody = {
+      text: textMsg,
+      sender: 'agent',
+      attachment: {
+        type: 'audio',
+        url: dataUrl,
+        duration: durationStr
+      }
+    };
+    if (currentUser) {
+      audioBody.senderId = currentUser.id || currentUser.username;
+      audioBody.senderName = currentUser.name || currentUser.username;
+      audioBody.senderAvatar = currentUser.avatarUrl || currentUser.avatar || '';
+    }
+
     const res = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: textMsg,
-        sender: 'agent',
-        attachment: {
-          type: 'audio',
-          url: dataUrl,
-          duration: durationStr
-        }
-      })
+      body: JSON.stringify(audioBody)
     });
     const data = await res.json();
     if (data.success && data.data) {
@@ -6650,6 +7199,8 @@ async function sendRecordedAudio() {
         if (cur) {
           cur.lastMessage = textMsg;
           cur.lastMessageAt = new Date().toISOString();
+          cur.lastMessageTime = formatMessageTime(new Date());
+          currentConversations = sortConversationsList(currentConversations);
           renderConversationsList(currentConversations);
         }
       } else if (activeChannelMode === 'community') {
@@ -6658,7 +7209,7 @@ async function sendRecordedAudio() {
           const grp = comm.groups.find(g => g.id === activeGroupId);
           if (grp) {
             grp.lastMessage = textMsg;
-            grp.lastMessageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            grp.lastMessageTime = formatMessageTime(new Date());
             renderCommunitiesList(currentCommunities);
           }
         }
@@ -7973,6 +8524,11 @@ async function sendAnnotatedPhoto() {
         size: sizeFormatted
       }
     };
+    if (currentUser) {
+      postBody.senderId = currentUser.id || currentUser.username;
+      postBody.senderName = currentUser.name || currentUser.username;
+      postBody.senderAvatar = currentUser.avatarUrl || currentUser.avatar || '';
+    }
 
     let targetUrl = '';
     if (activeChannelMode === 'community' && activeCommunityId && activeGroupId) {
@@ -8001,6 +8557,8 @@ async function sendAnnotatedPhoto() {
         if (cur) {
           cur.lastMessage = captionText || 'Foto adjunta';
           cur.lastMessageAt = new Date().toISOString();
+          cur.lastMessageTime = formatMessageTime(new Date());
+          currentConversations = sortConversationsList(currentConversations);
           renderConversationsList(currentConversations);
         }
       } else if (activeChannelMode === 'community') {
@@ -8009,7 +8567,7 @@ async function sendAnnotatedPhoto() {
           const grp = comm.groups.find(g => g.id === activeGroupId);
           if (grp) {
             grp.lastMessage = captionText || 'Foto adjunta';
-            grp.lastMessageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            grp.lastMessageTime = formatMessageTime(new Date());
             renderCommunitiesList(currentCommunities);
           }
         }
@@ -8310,21 +8868,28 @@ async function sendCurrentLocation(isLive) {
         targetUrl = `/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`;
       }
 
+      const locBody = {
+        text,
+        sender: 'agent',
+        attachment: {
+          type: 'location',
+          lat,
+          lng,
+          address,
+          isLive: !!isLive,
+          expiresAt: isLive ? new Date(Date.now() + 3600 * 1000).toISOString() : undefined
+        }
+      };
+      if (currentUser) {
+        locBody.senderId = currentUser.id || currentUser.username;
+        locBody.senderName = currentUser.name || currentUser.username;
+        locBody.senderAvatar = currentUser.avatarUrl || currentUser.avatar || '';
+      }
+
       const res = await fetch(targetUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text,
-          sender: 'agent',
-          attachment: {
-            type: 'location',
-            lat,
-            lng,
-            address,
-            isLive: !!isLive,
-            expiresAt: isLive ? new Date(Date.now() + 3600 * 1000).toISOString() : undefined
-          }
-        })
+        body: JSON.stringify(locBody)
       });
       const data = await res.json();
       if (data.success && data.data) {
@@ -8335,6 +8900,8 @@ async function sendCurrentLocation(isLive) {
           if (cur) {
             cur.lastMessage = text;
             cur.lastMessageAt = new Date().toISOString();
+            cur.lastMessageTime = formatMessageTime(new Date());
+            currentConversations = sortConversationsList(currentConversations);
             renderConversationsList(currentConversations);
           }
         } else if (activeChannelMode === 'community') {
@@ -8343,7 +8910,7 @@ async function sendCurrentLocation(isLive) {
             const grp = comm.groups.find(g => g.id === activeGroupId);
             if (grp) {
               grp.lastMessage = text;
-              grp.lastMessageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              grp.lastMessageTime = formatMessageTime(new Date());
               renderCommunitiesList(currentCommunities);
             }
           }
@@ -8376,8 +8943,59 @@ async function sendCurrentLocation(isLive) {
   }
 }
 
+    // Sincronización en segundo plano de respaldo para producción (evita pérdidas si SSE se desconecta)
+    let lastSyncTimestamp = 0;
+    async function syncMessagesInProduction() {
+      try {
+        if (activeChannelMode === 'direct' && activeConversationId) {
+          const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages?limit=50`);
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data)) {
+            const existingIds = new Set((currentChatMessages || []).map(m => m.id));
+            let hasNew = false;
+            for (const m of data.data) {
+              if (!existingIds.has(m.id)) {
+                hasNew = true;
+                const isMe = checkIfMessageIsMe(m);
+                if (!isMe && (Date.now() - new Date(m.timestamp).getTime() < 300000)) {
+                  playMessageNotificationSound();
+                  if (document.hidden) {
+                    showSystemNotification(
+                      m.senderName || 'Nuevo Mensaje',
+                      m.text || 'Nuevo mensaje recibido',
+                      m.senderAvatar || null,
+                      () => { window.focus(); selectConversation(activeConversationId); }
+                    );
+                  }
+                }
+              }
+            }
+            if (hasNew) {
+              currentChatMessages = data.data;
+              renderChatMessages(currentChatMessages);
+              scrollChatToBottom();
+            }
+          }
+        }
+        if (Date.now() - lastSyncTimestamp > 12000) {
+          lastSyncTimestamp = Date.now();
+          const r = await fetch('/api/messages/conversations');
+          const d = await r.json();
+          if (d.success && Array.isArray(d.data)) {
+            currentConversations = sortConversationsList(d.data);
+            renderConversationsList(currentConversations);
+            updateGlobalUnreadBadges();
+          }
+        }
+      } catch (e) {}
+    }
+    setInterval(syncMessagesInProduction, 6000);
+
     // Inicialización al cargar la aplicación
     document.addEventListener('DOMContentLoaded', () => {
+      if ('Notification' in window && Notification.permission === 'default') {
+        try { Notification.requestPermission(); } catch (_) {}
+      }
       fetch('/api/auth/me').then(r => r.json()).then(d => { if (d.user) currentUser = d.user; }).catch(() => {});
       fetch('/api/users').then(r => r.json()).then(d => { if (d.users) currentUsers = d.users; }).catch(() => {});
       loadTurboChatBranding();

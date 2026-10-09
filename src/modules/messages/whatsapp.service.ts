@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { loadConnectionsConfig, EvolutionSettings, MetaSettings } from "../settings/connections.service";
 import { getTenantFilePath } from "../tenants/tenants.service";
-import { Conversation, MessageItem, broadcastMessageEvent } from "./messages.routes";
+import { Conversation, MessageItem, broadcastMessageEvent, getFormattedTime } from "./messages.routes";
 import { loadTenantCustomers } from "../customers/customers.routes";
 
 export function cleanPhoneNumber(rawPhone: string): string {
@@ -717,7 +717,7 @@ export class WhatsAppService {
     });
 
     const now = new Date();
-    const timeFormatted = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const timeFormatted = getFormattedTime(now);
     const msgId = "wa-" + Date.now() + "-" + Math.random().toString(36).substring(2, 5);
 
     const newMsg: MessageItem = {
@@ -738,6 +738,7 @@ export class WhatsAppService {
       conv.lastMessage = data.text;
       conv.lastMessageTime = timeFormatted;
       conv.lastMessageDate = now.toISOString().split("T")[0];
+      conv.lastMessageAt = now.toISOString();
       conv.updatedAt = now.toISOString();
 
       if (matchedCustomer) {
@@ -756,7 +757,7 @@ export class WhatsAppService {
         contactId: matchedCustomer?.id,
         name: convName,
         phone: "+" + cleanPhone,
-        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(convName)}`,
+        avatar: matchedCustomer?.avatar || matchedCustomer?.photo || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(convName)}`,
         status: "online",
         tags: matchedCustomer ? ["clientes", "whatsapp"] : ["clientes", "whatsapp", "prospecto"],
         isArchived: false,
@@ -767,13 +768,23 @@ export class WhatsAppService {
         lastMessage: data.text,
         lastMessageTime: timeFormatted,
         lastMessageDate: now.toISOString().split("T")[0],
+        lastMessageAt: now.toISOString(),
         messages: [newMsg],
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
         address: matchedCustomer?.address,
       };
-      conversations.unshift(conv);
+      conversations.push(conv);
     }
+
+    // Mover la conversación al inicio respetando chats fijados
+    conversations.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
 
     try {
       const dir = path.dirname(filePath);
