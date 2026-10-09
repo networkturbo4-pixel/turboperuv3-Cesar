@@ -1,5 +1,125 @@
 [
   {
+    "id": "comm-1791588202253",
+    "tenantId": "turbonetwork",
+    "name": "Prueba",
+    "description": "asfsdf",
+    "avatarUrl": "https://images.unsplash.com/photo-1577495508048-b635879837f1?w=150&auto=format&fit=crop&q=80",
+    "coverImage": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80",
+    "type": "zone",
+    "linkedNaps": [],
+    "linkedZones": [],
+    "memberCount": 1,
+    "createdAt": "2026-10-09T23:23:22.253Z",
+    "updatedAt": "2026-10-09T23:23:22.253Z",
+    "groups": [
+      {
+        "id": "grp-comm-1791588202253-1",
+        "communityId": "comm-1791588202253",
+        "name": "Anuncios y Avisos",
+        "description": "Canal de anuncios oficiales del condominio o torre",
+        "type": "announcements",
+        "isReadOnly": true,
+        "permission": "admin_only",
+        "avatarUrl": "https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?w=150&auto=format&fit=crop&q=80",
+        "unreadCount": 0,
+        "lastMessage": "Canal Anuncios y Avisos activado",
+        "lastMessageTime": "06:23 p. m.",
+        "messages": [
+          {
+            "id": "gm-1791588202253-0",
+            "sender": "system",
+            "senderName": "Sistema TurboNetwork",
+            "text": "Canal Anuncios y Avisos activado en la comunidad Prueba.",
+            "timestamp": "2026-10-09T23:23:22.253Z",
+            "timeFormatted": "06:23 p. m.",
+            "status": "read"
+          }
+        ],
+        "createdAt": "2026-10-09T23:23:22.253Z",
+        "updatedAt": "2026-10-09T23:23:22.253Z"
+      },
+      {
+        "id": "grp-comm-1791588202253-2",
+        "communityId": "comm-1791588202253",
+        "name": "Soporte y Consultas",
+        "description": "Consultas de servicio y atención",
+        "type": "general",
+        "isReadOnly": false,
+        "permission": "everyone",
+        "avatarUrl": "https://images.unsplash.com/photo-1534536281715-e28d76689b4d?w=150&auto=format&fit=crop&q=80",
+        "unreadCount": 0,
+        "lastMessage": "Canal Soporte y Consultas activado",
+        "lastMessageTime": "06:23 p. m.",
+        "messages": [
+          {
+            "id": "gm-1791588202253-1",
+            "sender": "system",
+            "senderName": "Sistema TurboNetwork",
+            "text": "Canal Soporte y Consultas activado en la comunidad Prueba.",
+            "timestamp": "2026-10-09T23:23:22.253Z",
+            "timeFormatted": "06:23 p. m.",
+            "status": "read"
+          }
+        ],
+        "createdAt": "2026-10-09T23:23:22.253Z",
+        "updatedAt": "2026-10-09T23:23:22.253Z"
+      },
+      {
+        "id": "grp-comm-1791588202253-3",
+        "communityId": "comm-1791588202253",
+        "name": "Comunidad General",
+        "description": "Espacio para conversar entre vecinos",
+        "type": "general",
+        "isReadOnly": false,
+        "permission": "everyone",
+        "avatarUrl": "https://images.unsplash.com/photo-1577495508048-b635879837f1?w=150&auto=format&fit=crop&q=80",
+        "unreadCount": 0,
+        "lastMessage": "Canal Comunidad General activado",
+        "lastMessageTime": "06:23 p. m.",
+        "messages": [
+          {
+            "id": "gm-1791588202253-2",
+            "sender": "system",
+            "senderName": "Sistema TurboNetwork",
+            "text": "Canal Comunidad General activado en la comunidad Prueba.",
+            "timestamp": "2026-10-09T23:23:22.253Z",
+            "timeFormatted": "06:23 p. m.",
+            "status": "read"
+          }
+        ],
+        "createdAt": "2026-10-09T23:23:22.253Z",
+        "updatedAt": "2026-10-09T23:23:22.253Z"
+      },
+      {
+        "id": "grp-comm-1791588202253-4",
+        "communityId": "comm-1791588202253",
+        "name": "Nuevo Canal",
+        "description": "",
+        "type": "general",
+        "isReadOnly": false,
+        "permission": "everyone",
+        "avatarUrl": "https://api.dicebear.com/7.x/bottts/svg?seed=Canal77",
+        "unreadCount": 0,
+        "lastMessage": "Canal Nuevo Canal activado",
+        "lastMessageTime": "06:23 p. m.",
+        "messages": [
+          {
+            "id": "gm-1791588202253-3",
+            "sender": "system",
+            "senderName": "Sistema TurboNetwork",
+            "text": "Canal Nuevo Canal activado en la comunidad Prueba.",
+            "timestamp": "2026-10-09T23:23:22.253Z",
+            "timeFormatted": "06:23 p. m.",
+            "status": "read"
+          }
+        ],
+        "createdAt": "2026-10-09T23:23:22.253Z",
+        "updatedAt": "2026-10-09T23:23:22.253Z"
+      }
+    ]
+  },
+  {
     "id": "comm-1",
     "tenantId": "turbonetwork",
     "name": "Condominio Los Jazmines (Sector Norte)",

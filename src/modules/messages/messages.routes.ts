@@ -1978,11 +1978,17 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     if (body.type) comm.type = body.type;
     if (Array.isArray(body.linkedNaps)) comm.linkedNaps = body.linkedNaps;
     if (Array.isArray(body.linkedZones)) comm.linkedZones = body.linkedZones;
-    if (typeof body.memberCount === "number") comm.memberCount = body.memberCount;
     comm.updatedAt = new Date().toISOString();
 
     saveCommunitiesToDisk(tenantId, communities);
-    return reply.send({ success: true, message: "Comunidad actualizada", data: comm });
+
+    broadcastMessageEvent({
+      type: "community_updated",
+      tenantId,
+      community: comm
+    });
+
+    return reply.send({ success: true, message: "Comunidad actualizada con éxito", data: comm });
   });
 
   // 12.4 Eliminar comunidad
@@ -1998,6 +2004,13 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
 
     const deleted = communities.splice(idx, 1)[0];
     saveCommunitiesToDisk(tenantId, communities);
+
+    broadcastMessageEvent({
+      type: "community_deleted",
+      tenantId,
+      communityId: id
+    });
+
     return reply.send({ success: true, message: "Comunidad eliminada con éxito", data: deleted });
   });
 
@@ -2255,6 +2268,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     };
 
     group.messages.push(newMsg);
+    if (sender === "client") {
+      group.unreadCount = (group.unreadCount || 0) + 1;
+    }
     group.lastMessage = fallbackText;
     group.lastMessageTime = timeFormatted;
     group.updatedAt = now.toISOString();
