@@ -8004,91 +8004,206 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL: EDITOR DE FOTOS & ANOTACIONES (FLECHAS, CUADROS...) -->
+  <!-- MODAL: ESTUDIO DE IMAGEN, ANOTACIONES Y MARCA DE AGUA    -->
   <!-- ======================================================== -->
-  <div id="photo-editor-modal" class="fixed inset-0 z-[390] hidden flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl p-2 sm:p-4">
-    <div class="w-full max-w-4xl h-full max-h-[96vh] bg-[#0c1017] border border-white/10 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+  <div id="photo-editor-modal" class="fixed inset-0 z-[390] hidden flex flex-col items-center justify-center bg-black/95 backdrop-blur-2xl p-1.5 sm:p-4 select-none">
+    <div class="w-full max-w-5xl h-full max-h-[96vh] bg-[#0c1017] border border-white/10 rounded-2xl sm:rounded-3xl flex flex-col overflow-hidden shadow-2xl">
       
-      <!-- Top Toolbar: Herramientas de Dibujo y Widgets -->
-      <div class="p-2 sm:p-3 border-b border-white/10 bg-[#121622] flex items-center justify-between flex-shrink-0 gap-2">
-        <div class="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto scrollbar-none py-0.5">
-          <button type="button" onclick="setEditorTool('select')" id="tool-btn-select" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1 transition" title="Mover / Reubicar Anotaciones (Arrastrar)">
-            <span>👆</span>
-            <span class="hidden sm:inline">Mover</span>
+      <!-- 1. Header Principal: Título, Cambiar Imagen, Acciones de Edición y Cerrar -->
+      <div class="px-3 py-2.5 sm:px-4 sm:py-3 border-b border-white/10 bg-[#121622] flex items-center justify-between flex-shrink-0 gap-2">
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/20">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/></svg>
+          </div>
+          <div class="truncate">
+            <h3 class="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+              <span>Editor de Imagen Profesional</span>
+              <span id="editor-image-name-badge" class="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-blue-500/15 text-blue-400 border border-blue-500/20 max-w-[140px] truncate">imagen.jpg</span>
+            </h3>
+            <p class="text-[10px] text-slate-400 truncate">Herramientas de marcado, cards certificadas y marca de agua</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-1 sm:space-x-1.5 flex-shrink-0">
+          <!-- Input oculto para cambiar de imagen -->
+          <input type="file" id="editor-replace-file-input" accept="image/*" class="hidden" onchange="handleEditorChangeImage(this)">
+          
+          <!-- Botón Cambiar Imagen -->
+          <button type="button" onclick="document.getElementById('editor-replace-file-input').click()" class="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1.5 border border-white/10 transition" title="Cambiar por otra imagen sin salir">
+            <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+            <span class="hidden md:inline">Cambiar Foto</span>
           </button>
-          <button type="button" onclick="setEditorTool('arrow')" id="tool-btn-arrow" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-semibold flex items-center space-x-1 shadow-xs transition" title="Flecha indicadora">
-            <span>➡️</span>
+
+          <!-- Botón Eliminar Elemento Seleccionado -->
+          <button type="button" id="btn-editor-delete-selected" onclick="deleteSelectedAnnotation()" class="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold flex items-center space-x-1 transition disabled:opacity-40 disabled:pointer-events-none" title="Eliminar elemento seleccionado (Supr / Backspace)">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+            <span class="hidden lg:inline">Eliminar</span>
+          </button>
+
+          <!-- Botón Deshacer -->
+          <button type="button" onclick="undoEditorAnnotation()" class="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold flex items-center space-x-1 border border-white/10 transition" title="Deshacer última anotación (Ctrl+Z)">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/></svg>
+            <span class="hidden md:inline">Deshacer</span>
+          </button>
+
+          <!-- Botón Limpiar Todo -->
+          <button type="button" onclick="clearEditorAnnotations()" class="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold flex items-center space-x-1 border border-white/10 transition" title="Limpiar todas las anotaciones">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            <span class="hidden md:inline">Limpiar</span>
+          </button>
+
+          <!-- Botón Cerrar -->
+          <button type="button" onclick="closePhotoEditor()" class="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition" title="Cerrar editor">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. Barra de Herramientas: Formas, Cards de Ubicación/Fecha y Switcher de Marca de Agua -->
+      <div class="px-2.5 py-2 sm:px-4 sm:py-2 border-b border-white/10 bg-[#0f131c] flex items-center justify-between flex-shrink-0 gap-2 overflow-x-auto scrollbar-none">
+        
+        <!-- Grupo 1: Formas y Puntero -->
+        <div class="flex items-center space-x-1 sm:space-x-1.5 flex-shrink-0">
+          <!-- Puntero / Mover -->
+          <button type="button" onclick="setEditorTool('select')" id="tool-btn-select" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-semibold flex items-center space-x-1.5 transition shadow-xs" title="Mover / Seleccionar anotaciones y cards">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 7.498 5.795-3.32.748z"/></svg>
+            <span class="hidden xs:inline">Mover</span>
+          </button>
+
+          <!-- Flecha -->
+          <button type="button" onclick="setEditorTool('arrow')" id="tool-btn-arrow" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1.5 transition" title="Flecha direccional">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
             <span class="hidden sm:inline">Flecha</span>
           </button>
-          <button type="button" onclick="setEditorTool('rect')" id="tool-btn-rect" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1 transition" title="Cuadro / Rectángulo">
-            <span>⬜</span>
-            <span class="hidden sm:inline">Cuadro</span>
-          </button>
-          <button type="button" onclick="setEditorTool('circle')" id="tool-btn-circle" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1 transition" title="Círculo / Redondo">
-            <span>⭕</span>
+
+          <!-- Círculo -->
+          <button type="button" onclick="setEditorTool('circle')" id="tool-btn-circle" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1.5 transition" title="Círculo o elipse">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>
             <span class="hidden sm:inline">Círculo</span>
           </button>
-          <button type="button" onclick="setEditorTool('text')" id="tool-btn-text" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1 transition" title="Texto personalizado">
-            <span>🔤</span>
+
+          <!-- Rectángulo -->
+          <button type="button" onclick="setEditorTool('rect')" id="tool-btn-rect" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1.5 transition" title="Rectángulo o marco">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            <span class="hidden sm:inline">Cuadro</span>
+          </button>
+
+          <!-- Triángulo -->
+          <button type="button" onclick="setEditorTool('triangle')" id="tool-btn-triangle" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1.5 transition" title="Triángulo indicador">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l9 17H3L12 3z"/></svg>
+            <span class="hidden sm:inline">Triángulo</span>
+          </button>
+
+          <!-- Estrella -->
+          <button type="button" onclick="setEditorTool('star')" id="tool-btn-star" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1.5 transition" title="Estrella destacada">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
+            <span class="hidden sm:inline">Estrella</span>
+          </button>
+
+          <!-- Texto -->
+          <button type="button" onclick="setEditorTool('text')" id="tool-btn-text" class="editor-tool-btn px-2.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1.5 transition" title="Añadir texto personalizado">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M12 6v14M9 20h6"/></svg>
             <span class="hidden sm:inline">Texto</span>
           </button>
-          <button type="button" onclick="stampDateWidget()" class="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 text-xs font-semibold flex items-center space-x-1 transition" title="Estampar Widget de Fecha y Hora">
-            <span>📅</span>
-            <span>Fecha</span>
-          </button>
-          <button type="button" onclick="stampLocationWidget()" class="px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-semibold flex items-center space-x-1 transition" title="Estampar Widget de Ubicación">
-            <span>📍</span>
-            <span>Ubicación</span>
-          </button>
         </div>
 
+        <div class="h-5 w-px bg-white/10 mx-1 hidden sm:block"></div>
+
+        <!-- Grupo 2: Cards Profesionales -->
         <div class="flex items-center space-x-1.5 flex-shrink-0">
-          <button type="button" onclick="undoEditorAnnotation()" class="p-1.5 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-medium flex items-center space-x-1 transition" title="Deshacer última anotación">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a5 5 0 015 5v2M3 10l6-6M3 10l6 6"/></svg>
-            <span class="hidden sm:inline">Deshacer</span>
+          <!-- Card de Ubicación -->
+          <button type="button" onclick="stampLocationWidget()" class="px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-semibold flex items-center space-x-1.5 transition shadow-xs" title="Estampar Card moderna de Ubicación y GPS">
+            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+            <span>Card Ubicación</span>
           </button>
-          <button type="button" onclick="clearEditorAnnotations()" class="p-1.5 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-medium flex items-center space-x-1 transition" title="Limpiar anotaciones">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            <span class="hidden sm:inline">Limpiar</span>
+
+          <!-- Card de Fecha y Hora -->
+          <button type="button" onclick="stampDateWidget()" class="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 text-xs font-semibold flex items-center space-x-1.5 transition shadow-xs" title="Estampar Card moderna con Fecha y Hora oficial">
+            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Card Fecha/Hora</span>
           </button>
-          <button type="button" onclick="closePhotoEditor()" class="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+        </div>
+
+        <div class="h-5 w-px bg-white/10 mx-1 hidden sm:block"></div>
+
+        <!-- Grupo 3: Switcher Marca de Agua Corporativa -->
+        <div class="flex items-center space-x-2 bg-white/5 border border-white/10 rounded-xl px-2.5 py-1 flex-shrink-0">
+          <label for="editor-watermark-switch" class="flex items-center space-x-2 cursor-pointer select-none">
+            <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+            <span class="text-xs font-semibold text-slate-300 whitespace-nowrap">Marca de Agua</span>
+            <div class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="editor-watermark-switch" onchange="toggleEditorWatermark(this.checked)" class="sr-only peer">
+              <div class="w-8 h-4.5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-blue-600"></div>
+            </div>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- 3. Canvas Workspace Central -->
+      <div id="photo-canvas-wrapper" class="flex-1 min-h-0 bg-[#070a10] flex items-center justify-center p-2 sm:p-3 overflow-hidden relative select-none touch-none">
+        <canvas id="photo-canvas" class="max-w-full max-h-full object-contain border border-white/10 shadow-2xl cursor-crosshair rounded-xl"></canvas>
+
+        <!-- Barra flotante de acciones rápidas para elemento seleccionado -->
+        <div id="editor-selected-floating-bar" class="hidden absolute top-4 left-1/2 transform -translate-x-1/2 bg-slate-900/90 backdrop-blur-md border border-blue-500/30 shadow-xl rounded-2xl px-3 py-1.5 flex items-center space-x-2 z-20">
+          <span class="text-[11px] font-semibold text-blue-300 flex items-center space-x-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 7.498 5.795-3.32.748z"/></svg>
+            <span>Elemento Activo</span>
+          </span>
+          <div class="h-4 w-px bg-white/15"></div>
+          <button type="button" onclick="changeSelectedAnnotationScale(-0.15)" class="p-1 px-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition" title="Reducir tamaño">- Reducir</button>
+          <button type="button" onclick="changeSelectedAnnotationScale(0.15)" class="p-1 px-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition" title="Aumentar tamaño">+ Aumentar</button>
+          <div class="h-4 w-px bg-white/15"></div>
+          <button type="button" onclick="deleteSelectedAnnotation()" class="p-1 px-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition" title="Eliminar elemento">✕ Quitar</button>
         </div>
       </div>
 
-      <!-- Canvas Workspace Central -->
-      <div id="photo-canvas-wrapper" class="flex-1 min-h-0 bg-black flex items-center justify-center p-2 overflow-hidden relative select-none touch-none">
-        <canvas id="photo-canvas" class="max-w-full max-h-full object-contain border border-white/5 shadow-2xl cursor-crosshair rounded-lg"></canvas>
-      </div>
-
-      <!-- Bottom Properties Bar: Colores, Grosor y Enviar -->
-      <div class="p-2.5 sm:p-3 border-t border-white/10 bg-[#121622] flex flex-wrap items-center justify-between gap-2.5 flex-shrink-0">
+      <!-- 4. Barra Inferior: Colores, Grosor/Escala, Comentario y Enviar al Chat -->
+      <div class="p-2.5 sm:p-3.5 border-t border-white/10 bg-[#121622] flex flex-wrap items-center justify-between gap-2.5 flex-shrink-0">
+        
         <!-- Paleta de Colores -->
-        <div class="flex items-center space-x-1.5">
-          <span class="text-[10px] text-slate-400 uppercase font-semibold mr-1">Color:</span>
-          <button type="button" onclick="setEditorColor('#ef4444')" class="color-dot w-6 h-6 rounded-full bg-red-500 ring-2 ring-white transition"></button>
-          <button type="button" onclick="setEditorColor('#10b981')" class="color-dot w-6 h-6 rounded-full bg-emerald-500 transition"></button>
-          <button type="button" onclick="setEditorColor('#3b82f6')" class="color-dot w-6 h-6 rounded-full bg-blue-500 transition"></button>
-          <button type="button" onclick="setEditorColor('#eab308')" class="color-dot w-6 h-6 rounded-full bg-yellow-400 transition"></button>
-          <button type="button" onclick="setEditorColor('#ffffff')" class="color-dot w-6 h-6 rounded-full bg-white border border-slate-300 transition"></button>
-          <button type="button" onclick="setEditorColor('#000000')" class="color-dot w-6 h-6 rounded-full bg-black border border-white/30 transition"></button>
-          <button type="button" onclick="setEditorColor('#a855f7')" class="color-dot w-6 h-6 rounded-full bg-purple-500 transition"></button>
+        <div class="flex items-center space-x-1.5 flex-shrink-0">
+          <span class="text-[10px] text-slate-400 uppercase font-bold mr-0.5">Color:</span>
+          <button type="button" onclick="setEditorColor('#ef4444')" class="color-dot w-6 h-6 rounded-full bg-red-500 ring-2 ring-white transition shadow-xs"></button>
+          <button type="button" onclick="setEditorColor('#10b981')" class="color-dot w-6 h-6 rounded-full bg-emerald-500 transition shadow-xs"></button>
+          <button type="button" onclick="setEditorColor('#3b82f6')" class="color-dot w-6 h-6 rounded-full bg-blue-500 transition shadow-xs"></button>
+          <button type="button" onclick="setEditorColor('#f59e0b')" class="color-dot w-6 h-6 rounded-full bg-amber-500 transition shadow-xs"></button>
+          <button type="button" onclick="setEditorColor('#f97316')" class="color-dot w-6 h-6 rounded-full bg-orange-500 transition shadow-xs"></button>
+          <button type="button" onclick="setEditorColor('#a855f7')" class="color-dot w-6 h-6 rounded-full bg-purple-500 transition shadow-xs"></button>
+          <button type="button" onclick="setEditorColor('#06b6d4')" class="color-dot w-6 h-6 rounded-full bg-cyan-400 transition shadow-xs"></button>
+          <button type="button" onclick="setEditorColor('#ffffff')" class="color-dot w-6 h-6 rounded-full bg-white border border-slate-300 transition shadow-xs"></button>
+          <button type="button" onclick="setEditorColor('#0f172a')" class="color-dot w-6 h-6 rounded-full bg-slate-900 border border-white/30 transition shadow-xs"></button>
         </div>
 
-        <!-- Grosor / Tamaño -->
-        <div class="flex items-center space-x-1">
-          <span class="text-[10px] text-slate-400 uppercase font-semibold mr-1">Trazo:</span>
-          <button type="button" onclick="setEditorSize(3)" id="size-btn-3" class="px-2 py-0.5 rounded-lg bg-white/5 text-slate-400 text-xs font-semibold">Fino</button>
-          <button type="button" onclick="setEditorSize(6)" id="size-btn-6" class="px-2 py-0.5 rounded-lg bg-blue-600 text-white text-xs font-semibold">Medio</button>
-          <button type="button" onclick="setEditorSize(11)" id="size-btn-11" class="px-2 py-0.5 rounded-lg bg-white/5 text-slate-400 text-xs font-semibold">Grueso</button>
+        <!-- Trazo / Grosor -->
+        <div class="flex items-center space-x-1 flex-shrink-0">
+          <span class="text-[10px] text-slate-400 uppercase font-bold mr-1">Grosor:</span>
+          <button type="button" onclick="setEditorSize(3)" id="size-btn-3" class="px-2 py-0.5 rounded-lg bg-white/5 text-slate-400 text-xs font-semibold hover:bg-white/10 transition">Fino</button>
+          <button type="button" onclick="setEditorSize(6)" id="size-btn-6" class="px-2 py-0.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-500 transition">Medio</button>
+          <button type="button" onclick="setEditorSize(10)" id="size-btn-10" class="px-2 py-0.5 rounded-lg bg-white/5 text-slate-400 text-xs font-semibold hover:bg-white/10 transition">Grueso</button>
+          <button type="button" onclick="setEditorSize(16)" id="size-btn-16" class="px-2 py-0.5 rounded-lg bg-white/5 text-slate-400 text-xs font-semibold hover:bg-white/10 transition">Extra</button>
         </div>
 
-        <!-- Botón Enviar Foto -->
-        <button type="button" onclick="sendAnnotatedPhoto()" class="px-5 py-2 rounded-xl btn-brand-primary text-xs font-bold flex items-center space-x-2 shadow-lg transition">
-          <span>Enviar Foto</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-        </button>
+        <!-- Campo Comentario Opcional -->
+        <div class="flex-1 min-w-[220px] max-w-sm">
+          <input type="text" id="chat-editor-caption" placeholder="Añadir comentario u observación al enviar..." class="w-full bg-slate-950/70 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition">
+        </div>
+
+        <!-- Acciones Finales: Descargar y Enviar al Chat -->
+        <div class="flex items-center space-x-2 flex-shrink-0">
+          <!-- Descargar Foto Anotada -->
+          <button type="button" onclick="downloadAnnotatedPhoto()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-xs font-semibold flex items-center space-x-1.5 transition" title="Descargar imagen anotada a tu computadora">
+            <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+            <span class="hidden sm:inline">Descargar</span>
+          </button>
+
+          <!-- Botón Enviar al Chat -->
+          <button type="button" onclick="sendAnnotatedPhoto()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center space-x-2 shadow-lg shadow-blue-600/30 transition transform active:scale-95">
+            <span>Enviar al Chat</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
