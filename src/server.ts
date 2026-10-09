@@ -33,7 +33,7 @@ export async function buildApp() {
   initializeTenantsSystem();
 
   const fastify = Fastify({
-    bodyLimit: 15 * 1024 * 1024, // 15 MB para subida de logos, favicons e iconos PWA
+    bodyLimit: 35 * 1024 * 1024, // 35 MB para subida de fotos, audios, videos y comprobantes
     logger: {
       level: env.NODE_ENV === "production" ? "info" : "debug",
     },

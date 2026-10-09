@@ -7052,12 +7052,6 @@
                     <svg id="icon-msg-sound-off" class="w-3.5 h-3.5 text-slate-400 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"/></svg>
                   </button>
 
-                  <!-- Botones Desktop: Probar Llegada, Filtros, Espacio -->
-                  <button type="button" onclick="simulateIncomingMessageTest()" class="hidden md:flex p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold items-center space-x-1 border border-emerald-500/20 transition" title="Probar notificación en tiempo real y sonido simulando llegada de mensaje">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
-                    <span class="hidden xl:inline">Probar Llegada</span>
-                  </button>
-
                   <button type="button" onclick="openManageFiltersModal()" class="hidden lg:flex p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-medium items-center space-x-1 border border-slate-200 dark:border-white/10 transition" title="Gestionar Filtros de Mensajes">
                     <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
                     <span class="hidden xl:inline">Filtros</span>
@@ -7077,10 +7071,6 @@
                       <button type="button" onclick="openStandaloneChatWindow(); toggleMobileMessagesMoreMenu();" class="w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2.5 hover:bg-slate-100 dark:hover:bg-white/5 text-blue-600 dark:text-blue-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
                         <span>Abrir App TurboChat</span>
-                      </button>
-                      <button type="button" onclick="simulateIncomingMessageTest(); toggleMobileMessagesMoreMenu();" class="w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2.5 hover:bg-slate-100 dark:hover:bg-white/5 text-emerald-600 dark:text-emerald-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
-                        <span>Probar Llegada Mensaje</span>
                       </button>
                       <button type="button" onclick="openMessageStorageModal(); toggleMobileMessagesMoreMenu();" class="w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2.5 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200">
                         <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
@@ -30456,6 +30446,8 @@ function closeMobileChatView(fromHistory = false) {
   const wasMobileOpen = document.body.classList.contains('mobile-chat-open');
   document.body.classList.remove('mobile-chat-open');
   activeConversationId = null;
+  activeCommunityId = null;
+  activeGroupId = null;
 
   const leftPanel = document.getElementById('messages-left-panel');
   const rightPanel = document.getElementById('messages-right-panel');
@@ -30521,45 +30513,113 @@ window.addEventListener('resize', () => {
 // 4. Enviar Mensaje y Manejo de Adjuntos con Optimización Inteligente
 let activePendingAttachment = null;
 
-// Compresión de fotos en cliente (HTML5 Canvas 1600px max, JPEG 0.82)
+// Función global segura para agregar mensajes sin duplicación por SSE ni peticiones simultáneas
+function appendMessageSafely(msg) {
+  if (!msg || !msg.id) return false;
+  const exists = (currentChatMessages || []).some(m => m.id === msg.id);
+  if (exists) return false;
+  currentChatMessages.push(msg);
+  renderChatMessages(currentChatMessages);
+  scrollChatToBottom();
+  return true;
+}
+
+// Indicador flotante de carga / progreso estilo WhatsApp
+function showUploadProgress(text = 'Optimizando imagen...') {
+  const ind = document.getElementById('chat-upload-indicator');
+  const txt = document.getElementById('chat-upload-indicator-text');
+  if (ind && txt) {
+    txt.textContent = text;
+    ind.classList.remove('hidden');
+    ind.classList.add('flex');
+  }
+}
+
+function hideUploadProgress() {
+  const ind = document.getElementById('chat-upload-indicator');
+  if (ind) {
+    ind.classList.add('hidden');
+    ind.classList.remove('flex');
+  }
+}
+
+// Compresión de fotos ultrarrápida en cliente (createImageBitmap / Off-screen Canvas 1280px max, JPEG 0.82)
 async function compressImageClientSide(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const maxDim = 1600;
-        let width = img.width;
-        let height = img.height;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
+  showUploadProgress('Optimizando foto para envío rápido...');
+  // Intento de alta velocidad con createImageBitmap (Off-the-main-thread)
+  if ('createImageBitmap' in window) {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const maxDim = 1280;
+      let width = bitmap.width;
+      let height = bitmap.height;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
         }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
-        resolve({
-          dataUrl: compressedDataUrl,
-          width,
-          height,
-          originalSize: file.size,
-          compressedSize: Math.round(compressedDataUrl.length * 0.75)
-        });
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      if (typeof bitmap.close === 'function') bitmap.close();
+      return {
+        dataUrl: compressedDataUrl,
+        width,
+        height,
+        originalSize: file.size,
+        compressedSize: Math.round(compressedDataUrl.length * 0.75)
       };
-      img.onerror = () => {
-        resolve({ dataUrl: e.target.result, originalSize: file.size, compressedSize: file.size });
-      };
-      img.src = e.target.result;
+    } catch (err) {
+      console.warn('createImageBitmap fallback:', err);
+    }
+  }
+
+  // Fallback con URL.createObjectURL (mucho más rápido que FileReader)
+  return new Promise((resolve) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const maxDim = 1280;
+      let width = img.width;
+      let height = img.height;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      resolve({
+        dataUrl: compressedDataUrl,
+        width,
+        height,
+        originalSize: file.size,
+        compressedSize: Math.round(compressedDataUrl.length * 0.75)
+      });
     };
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      const reader = new FileReader();
+      reader.onload = (e) => resolve({ dataUrl: e.target.result, originalSize: file.size, compressedSize: file.size });
+      reader.readAsDataURL(file);
+    };
+    img.src = objectUrl;
   });
 }
 
@@ -30655,12 +30715,17 @@ async function stageChatAttachment(file) {
   const isVideo = file.type.startsWith('video/');
 
   if (isImage) {
-    const comp = await compressImageClientSide(file);
-    const saved = Math.max(0, Math.round((1 - comp.compressedSize / comp.originalSize) * 100));
-    if (saved > 15) {
-      showToast(`Foto optimizada con éxito (-${saved}% de espacio)`, 'success');
+    showUploadProgress('Optimizando foto para envío rápido...');
+    try {
+      const comp = await compressImageClientSide(file);
+      const saved = Math.max(0, Math.round((1 - comp.compressedSize / comp.originalSize) * 100));
+      if (saved > 15) {
+        showToast(`Foto optimizada con éxito (-${saved}% de espacio)`, 'success');
+      }
+      openPhotoEditor(comp.dataUrl, file.name);
+    } finally {
+      hideUploadProgress();
     }
-    openPhotoEditor(comp.dataUrl, file.name);
     return;
   }
 
@@ -30789,50 +30854,54 @@ async function sendDirectAttachment(file, captionText = '') {
   const isImage = file.type.startsWith('image/');
   const isVideo = file.type.startsWith('video/');
 
+  showUploadProgress(isImage ? 'Optimizando foto...' : (isVideo ? 'Procesando video...' : 'Preparando archivo...'));
+
   let attachmentPayload = null;
-  if (isImage) {
-    const comp = await compressImageClientSide(file);
-    attachmentPayload = {
-      type: 'image',
-      url: comp.dataUrl,
-      name: file.name,
-      size: formatFileSize(comp.compressedSize),
-      mimeType: 'image/jpeg'
-    };
-  } else if (isVideo) {
-    const vRes = await processVideoClientSide(file);
-    attachmentPayload = {
-      type: 'video',
-      url: vRes.dataUrl,
-      thumbnailUrl: vRes.thumbnailUrl,
-      name: file.name,
-      size: vRes.size,
-      duration: vRes.duration,
-      mimeType: file.type || 'video/mp4'
-    };
-  } else {
-    const reader = new FileReader();
-    const dataUrl = await new Promise(res => {
-      reader.onload = e => res(e.target.result);
-      reader.readAsDataURL(file);
-    });
-    attachmentPayload = {
-      type: 'file',
-      url: dataUrl,
-      name: file.name,
-      size: formatFileSize(file.size),
-      mimeType: file.type
-    };
-  }
-
-  let targetUrl = '';
-  if (activeChannelMode === 'community' && activeCommunityId && activeGroupId) {
-    targetUrl = `/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages`;
-  } else {
-    targetUrl = `/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`;
-  }
-
   try {
+    if (isImage) {
+      const comp = await compressImageClientSide(file);
+      attachmentPayload = {
+        type: 'image',
+        url: comp.dataUrl,
+        name: file.name,
+        size: formatFileSize(comp.compressedSize),
+        mimeType: 'image/jpeg'
+      };
+    } else if (isVideo) {
+      const vRes = await processVideoClientSide(file);
+      attachmentPayload = {
+        type: 'video',
+        url: vRes.dataUrl,
+        thumbnailUrl: vRes.thumbnailUrl,
+        name: file.name,
+        size: vRes.size,
+        duration: vRes.duration,
+        mimeType: file.type || 'video/mp4'
+      };
+    } else {
+      const reader = new FileReader();
+      const dataUrl = await new Promise(res => {
+        reader.onload = e => res(e.target.result);
+        reader.readAsDataURL(file);
+      });
+      attachmentPayload = {
+        type: 'file',
+        url: dataUrl,
+        name: file.name,
+        size: formatFileSize(file.size),
+        mimeType: file.type
+      };
+    }
+
+    let targetUrl = '';
+    if (activeChannelMode === 'community' && activeCommunityId && activeGroupId) {
+      targetUrl = `/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages`;
+    } else {
+      targetUrl = `/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`;
+    }
+
+    showUploadProgress('Enviando archivo...');
+
     const res = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -30844,9 +30913,7 @@ async function sendDirectAttachment(file, captionText = '') {
     });
     const data = await res.json();
     if (data.success && data.data) {
-      currentChatMessages.push(data.data);
-      renderChatMessages(currentChatMessages);
-      scrollChatToBottom();
+      appendMessageSafely(data.data);
       
       if (activeChannelMode === 'direct') {
         const cur = currentConversations.find(c => c.id === activeConversationId);
@@ -30866,10 +30933,14 @@ async function sendDirectAttachment(file, captionText = '') {
           }
         }
       }
+    } else {
+      showToast(data.message || 'Error al enviar archivo', 'error');
     }
   } catch (err) {
     console.error('Error enviando archivo adjunto:', err);
     showToast('Error al enviar archivo ' + file.name, 'error');
+  } finally {
+    hideUploadProgress();
   }
 }
 
@@ -31009,6 +31080,10 @@ async function handleSendChatMessage(e) {
       targetUrl = `/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`;
     }
 
+    if (attachment) {
+      showUploadProgress('Enviando archivo...');
+    }
+
     const res = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -31016,15 +31091,15 @@ async function handleSendChatMessage(e) {
     });
     const data = await res.json();
     if (data.success && data.data) {
-      currentChatMessages.push(data.data);
-      renderChatMessages(currentChatMessages);
-      scrollChatToBottom();
+      appendMessageSafely(data.data);
     } else {
       showToast((data && data.message) || 'Error al enviar mensaje', 'error');
     }
   } catch (err) {
     console.error('Error sending message:', err);
     showToast('Fallo de conexión al enviar mensaje', 'error');
+  } finally {
+    hideUploadProgress();
   }
 }
 
@@ -31309,11 +31384,25 @@ async function selectCommunityChannel(communityId, groupId) {
   const rightPanel = document.getElementById('messages-right-panel');
   const isMobile = window.innerWidth < 768;
   if (isMobile) {
+    document.body.classList.add('mobile-chat-open');
     if (leftPanel) leftPanel.classList.add('hidden');
     if (rightPanel) {
       rightPanel.classList.remove('hidden');
       rightPanel.classList.add('flex');
     }
+    const topBar = document.getElementById('messages-top-bar');
+    const filterBar = document.getElementById('messages-filter-bar');
+    const cardHeader = document.getElementById('messages-card-header');
+    const tabMessages = document.getElementById('tab-messages');
+    const bottomNav = document.getElementById('mobile-bottom-nav');
+    const mobileHeader = document.querySelector('header.lg\\:hidden');
+    if (topBar) topBar.classList.add('hidden');
+    if (filterBar) filterBar.classList.add('hidden');
+    if (cardHeader) cardHeader.classList.add('hidden');
+    if (tabMessages) tabMessages.classList.add('mobile-chat-open');
+    if (bottomNav) bottomNav.classList.add('hidden');
+    if (mobileHeader) mobileHeader.classList.add('hidden');
+
     const wasMobileOpen = window.history.state && window.history.state.mobileChatOpen;
     if (!wasMobileOpen) {
       window.history.pushState({ mobileChatOpen: true, commId: communityId, grpId: groupId }, '');
@@ -32431,8 +32520,8 @@ function formatAudioSeconds(sec) {
 }
 
 async function startAudioRecording() {
-  if (!activeConversationId) {
-    showToast('Selecciona una conversación primero', 'warning');
+  if (!activeConversationId && (!activeCommunityId || !activeGroupId)) {
+    showToast('Selecciona una conversación o canal primero', 'warning');
     return;
   }
 
@@ -32603,7 +32692,7 @@ function discardRecordedAudio() {
 }
 
 async function sendRecordedAudio() {
-  if (!recordedAudioDataUrl || !activeConversationId) return;
+  if (!recordedAudioDataUrl || (!activeConversationId && (!activeCommunityId || !activeGroupId))) return;
 
   if (previewAudio) {
     previewAudio.pause();
@@ -32612,29 +32701,29 @@ async function sendRecordedAudio() {
 
   const dataUrl = recordedAudioDataUrl;
   const durationStr = recordedDurationStr || '00:05';
-
-  const container = document.getElementById('chat-messages-container');
-  const timeFormatted = formatMessageTime(new Date().toISOString());
-
-  if (container) {
-    const bubble = document.createElement('div');
-    bubble.className = 'flex justify-end';
-    bubble.innerHTML = renderAudioBubbleHtml(dataUrl, durationStr, timeFormatted, true);
-    container.appendChild(bubble);
-    scrollChatToBottom();
-  }
+  const textMsg = `🎤 Nota de voz (${durationStr})`;
 
   // Cerrar preview y mostrar formulario listo
   document.getElementById('chat-audio-preview-bar')?.classList.add('hidden');
   document.getElementById('chat-send-form')?.classList.remove('hidden');
   updateChatInputState();
 
+  let targetUrl = '';
+  if (activeChannelMode === 'community' && activeCommunityId && activeGroupId) {
+    targetUrl = `/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages`;
+  } else {
+    targetUrl = `/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`;
+  }
+
+  showUploadProgress('Enviando nota de voz...');
+
   try {
-    await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`, {
+    const res = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        text: `🎤 Nota de voz (${durationStr})`,
+        text: textMsg,
+        sender: 'agent',
         attachment: {
           type: 'audio',
           url: dataUrl,
@@ -32642,14 +32731,34 @@ async function sendRecordedAudio() {
         }
       })
     });
-    const cur = currentConversations.find(c => c.id === activeConversationId);
-    if (cur) {
-      cur.lastMessage = `🎤 Nota de voz (${durationStr})`;
-      cur.lastMessageAt = new Date().toISOString();
-      renderConversationsList(currentConversations);
+    const data = await res.json();
+    if (data.success && data.data) {
+      appendMessageSafely(data.data);
+      if (activeChannelMode === 'direct') {
+        const cur = currentConversations.find(c => c.id === activeConversationId);
+        if (cur) {
+          cur.lastMessage = textMsg;
+          cur.lastMessageAt = new Date().toISOString();
+          renderConversationsList(currentConversations);
+        }
+      } else if (activeChannelMode === 'community') {
+        const comm = currentCommunities.find(c => c.id === activeCommunityId);
+        if (comm) {
+          const grp = comm.groups.find(g => g.id === activeGroupId);
+          if (grp) {
+            grp.lastMessage = textMsg;
+            grp.lastMessageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            renderCommunitiesList(currentCommunities);
+          }
+        }
+      }
+    } else {
+      showToast(data.message || 'Error al enviar nota de voz', 'error');
     }
   } catch (err) {
     showToast('Error al enviar nota de voz', 'error');
+  } finally {
+    hideUploadProgress();
   }
 
   recordedAudioBlob = null;
@@ -33908,15 +34017,15 @@ function downloadAnnotatedPhoto() {
 }
 
 async function sendAnnotatedPhoto() {
-  if (!editorCanvas || !activeConversationId) {
-    showToast('Selecciona una conversación primero', 'warning');
+  if (!editorCanvas || (!activeConversationId && (!activeCommunityId || !activeGroupId))) {
+    showToast('Selecciona una conversación o canal primero', 'warning');
     return;
   }
 
   selectedAnnotationId = null;
   redrawEditor();
 
-  const dataUrl = editorCanvas.toDataURL('image/jpeg', 0.90);
+  const dataUrl = editorCanvas.toDataURL('image/jpeg', 0.85);
   const captionEl = document.getElementById('chat-editor-caption');
   const captionText = (captionEl ? captionEl.value : '').trim();
 
@@ -33925,9 +34034,11 @@ async function sendAnnotatedPhoto() {
   const fileName = editorImageName.replace(/\.[^/.]+$/, '') + '_anotada.jpg';
   const sizeFormatted = formatFileSize(Math.round(dataUrl.length * 0.75));
 
+  showUploadProgress('Enviando foto...');
+
   try {
     const postBody = {
-      text: captionText || 'Foto con anotaciones',
+      text: captionText || 'Foto adjunta',
       sender: 'agent',
       attachment: {
         type: 'image',
@@ -33937,30 +34048,49 @@ async function sendAnnotatedPhoto() {
       }
     };
 
-    const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`, {
+    let targetUrl = '';
+    if (activeChannelMode === 'community' && activeCommunityId && activeGroupId) {
+      targetUrl = `/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages`;
+    } else {
+      targetUrl = `/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`;
+    }
+
+    const res = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(postBody)
     });
     const data = await res.json();
     if (data.success && data.data) {
-      currentChatMessages.push(data.data);
-      renderChatMessages(currentChatMessages);
-      scrollChatToBottom();
+      appendMessageSafely(data.data);
 
-      const cur = currentConversations.find(c => c.id === activeConversationId);
-      if (cur) {
-        cur.lastMessage = captionText || 'Foto con anotaciones';
-        cur.lastMessageAt = new Date().toISOString();
-        renderConversationsList(currentConversations);
+      if (activeChannelMode === 'direct') {
+        const cur = currentConversations.find(c => c.id === activeConversationId);
+        if (cur) {
+          cur.lastMessage = captionText || 'Foto adjunta';
+          cur.lastMessageAt = new Date().toISOString();
+          renderConversationsList(currentConversations);
+        }
+      } else if (activeChannelMode === 'community') {
+        const comm = currentCommunities.find(c => c.id === activeCommunityId);
+        if (comm) {
+          const grp = comm.groups.find(g => g.id === activeGroupId);
+          if (grp) {
+            grp.lastMessage = captionText || 'Foto adjunta';
+            grp.lastMessageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            renderCommunitiesList(currentCommunities);
+          }
+        }
       }
-      showToast('Foto con anotaciones enviada con éxito', 'success');
+      showToast('Foto enviada con éxito', 'success');
     } else {
       showToast(data.message || 'Error al enviar foto', 'error');
     }
   } catch (err) {
     console.error('Error sending annotated photo:', err);
     showToast('Fallo de conexión al enviar foto', 'error');
+  } finally {
+    hideUploadProgress();
   }
 }
 
@@ -34224,8 +34354,8 @@ function closeLocationMenu() {
 
 async function sendCurrentLocation(isLive) {
   closeLocationMenu();
-  if (!activeConversationId) {
-    showToast('Selecciona una conversación primero', 'warning');
+  if (!activeConversationId && (!activeCommunityId || !activeGroupId)) {
+    showToast('Selecciona una conversación o canal primero', 'warning');
     return;
   }
 
@@ -34238,12 +34368,22 @@ async function sendCurrentLocation(isLive) {
 
     const text = isLive ? 'Transmitiendo señal GPS en tiempo real' : 'Ubicación compartida';
 
+    showUploadProgress('Compartiendo ubicación...');
+
     try {
-      const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`, {
+      let targetUrl = '';
+      if (activeChannelMode === 'community' && activeCommunityId && activeGroupId) {
+        targetUrl = `/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages`;
+      } else {
+        targetUrl = `/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`;
+      }
+
+      const res = await fetch(targetUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text,
+          sender: 'agent',
           attachment: {
             type: 'location',
             lat,
@@ -34257,19 +34397,33 @@ async function sendCurrentLocation(isLive) {
       const data = await res.json();
       if (data.success && data.data) {
         showToast(isLive ? 'Ubicación en vivo compartida' : 'Ubicación enviada con éxito', 'success');
-        const cur = currentConversations.find(c => c.id === activeConversationId);
-        if (cur) {
-          cur.lastMessage = text;
-          cur.lastMessageAt = new Date().toISOString();
-          renderConversationsList(currentConversations);
+        appendMessageSafely(data.data);
+        if (activeChannelMode === 'direct') {
+          const cur = currentConversations.find(c => c.id === activeConversationId);
+          if (cur) {
+            cur.lastMessage = text;
+            cur.lastMessageAt = new Date().toISOString();
+            renderConversationsList(currentConversations);
+          }
+        } else if (activeChannelMode === 'community') {
+          const comm = currentCommunities.find(c => c.id === activeCommunityId);
+          if (comm) {
+            const grp = comm.groups.find(g => g.id === activeGroupId);
+            if (grp) {
+              grp.lastMessage = text;
+              grp.lastMessageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              renderCommunitiesList(currentCommunities);
+            }
+          }
         }
-        await selectConversation(activeConversationId);
       } else {
         showToast(data.message || 'Error al enviar ubicación', 'error');
       }
     } catch (err) {
       console.error('Error sending location:', err);
       showToast('Fallo de red al compartir ubicación', 'error');
+    } finally {
+      hideUploadProgress();
     }
   };
 
@@ -34422,5 +34576,14 @@ async function sendCurrentLocation(isLive) {
       window.addEventListener('online', () => showPwaToast(null, 'online'));
     })();
   </script>
+
+  <!-- Indicador flotante de carga / optimización estilo WhatsApp -->
+  <div id="chat-upload-indicator" class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-slate-900/90 dark:bg-white/95 text-white dark:text-slate-900 shadow-2xl backdrop-blur-md items-center space-x-3 text-xs font-semibold border border-white/20 dark:border-slate-800 transition-all duration-300 pointer-events-none">
+    <svg class="animate-spin w-4 h-4 text-blue-400 dark:text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <span id="chat-upload-indicator-text">Optimizando imagen...</span>
+  </div>
 </body>
 </html>

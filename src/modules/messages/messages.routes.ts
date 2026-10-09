@@ -396,7 +396,7 @@ const sendMessageSchema = z.object({
     thumbnailUrl: z.string().optional(),
     width: z.number().optional(),
     height: z.number().optional(),
-  }).optional(),
+  }).passthrough().optional(),
 });
 
 export interface ChatBranding {
@@ -620,7 +620,14 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       );
     }
 
-    return reply.send({ success: true, tenantId, count: list.length, data: list });
+    // Devolver lista ligera sin los mensajes internos completos para máxima velocidad en móviles
+    const lightList = list.map(c => ({
+      ...c,
+      messages: [],
+      messageCount: Array.isArray(c.messages) ? c.messages.length : 0,
+    }));
+
+    return reply.send({ success: true, tenantId, count: lightList.length, data: lightList });
   });
 
   // 6. Obtener una conversación específica con historial paginado
