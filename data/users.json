@@ -16,7 +16,7 @@
     "workSchedule": "08:00 - 17:00",
     "preferences": {
       "primaryColor": "#2563eb",
-      "themeMode": "light",
+      "themeMode": "dark",
       "darkBgColor": "#18181b"
     },
     "assignedTenantId": null,

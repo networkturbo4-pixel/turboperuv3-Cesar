@@ -2083,13 +2083,75 @@
         height: calc(100dvh - 3.5rem - 4.2rem - var(--sat) - var(--sab)) !important;
         max-height: calc(100dvh - 3.5rem - 4.2rem - var(--sat) - var(--sab)) !important;
       }
+      #tab-messages.mobile-chat-open #messages-card-header,
       #tab-messages.mobile-chat-open #messages-top-bar,
       #tab-messages.mobile-chat-open #messages-filter-bar {
         display: none !important;
       }
+
+      /* Chat móvil pantalla completa: oculta top header y bottom navbar para maximizar espacio */
+      body.mobile-chat-open #mobile-bottom-nav,
+      body.mobile-chat-open header.lg\:hidden,
+      body.mobile-chat-open header.pro-header {
+        display: none !important;
+      }
+      body.mobile-chat-open #content-container {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin: 0 !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+      }
+      body.mobile-chat-open main.tab-messages-active {
+        padding: 0 !important;
+        margin: 0 !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      body.mobile-chat-open #tab-messages {
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+      }
+      body.mobile-chat-open #tab-messages > div {
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+      }
+      body.mobile-chat-open #messages-right-panel {
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        border-radius: 0 !important;
+      }
+      body.mobile-chat-open #active-chat-content {
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+      }
+      body.mobile-chat-open #active-chat-header {
+        padding-top: max(0.5rem, env(safe-area-inset-top)) !important;
+        border-radius: 0 !important;
+      }
+      body.mobile-chat-open #chat-bottom-input-container {
+        padding-bottom: max(0.6rem, env(safe-area-inset-bottom)) !important;
+      }
     }
 
     /* HIGH-CONTRAST LIGHT MODE ENHANCEMENTS FOR MESSAGES */
+    html:not(.dark) #messages-card-header {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    html:not(.dark) #messages-top-bar {
+      background-color: #ffffff !important;
+    }
+    html:not(.dark) #messages-filter-bar {
+      background-color: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
     html:not(.dark) #messages-left-panel {
       background-color: #ffffff !important;
       border-color: #e2e8f0 !important;
@@ -2153,6 +2215,43 @@
     .msg-conv-item:active {
       transform: scale(0.992);
     }
+
+    /* Animaciones & Gestos del Chat (Respuesta, Fijado, Swipe Móvil & Selección) */
+    @keyframes msgHighlightFlash {
+      0% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.8), 0 0 20px rgba(59, 130, 246, 0.4); transform: scale(1.015); }
+      50% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.4), 0 0 10px rgba(59, 130, 246, 0.2); }
+      100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); transform: scale(1); }
+    }
+    .msg-highlight-pulse {
+      animation: msgHighlightFlash 1.6s ease-out;
+    }
+    .msg-swipe-container {
+      position: relative;
+      touch-action: pan-y;
+      will-change: transform;
+    }
+    .msg-swipe-transition {
+      transition: transform 0.26s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .msg-swipe-indicator {
+      opacity: 0;
+      transform: translateX(12px) scale(0.8);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      pointer-events: none;
+    }
+    .msg-swiping .msg-swipe-indicator {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    .chat-selection-active .msg-select-check-container {
+      display: flex !important;
+    }
+    .chat-bubble-selected {
+      outline: 2.5px solid #3b82f6 !important;
+      outline-offset: 2px;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25) !important;
+    }
+
 
     /* ======================================================== */
     /* MAPBOX GL POPUP Y CONTRASTE PARA MODO OSCURO / CLARO     */
@@ -6686,56 +6785,66 @@
                 <!-- ======================================================== -->
         <!-- TAB: MENSAJERÍA & WHATSAPP / CHAT INTEGRADO (100vh)     -->
         <!-- ======================================================== -->
-        <section id="tab-messages" class="hidden flex-1 flex flex-col h-full min-h-0 overflow-hidden space-y-2">
+        <section id="tab-messages" class="hidden flex-1 flex flex-col h-full min-h-0 overflow-hidden">
           
-          <!-- Encabezado del Módulo y Acciones Rápidas (Compacto, Libre y Limpio) -->
-          <div id="messages-top-bar" class="flex items-center justify-between gap-2.5 flex-shrink-0 px-1 pt-0.5 pb-0.5">
-            <div class="flex items-center space-x-2.5 min-w-0">
-              <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 shadow-xs">
-                <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <div class="min-w-0">
-                <div class="flex items-center space-x-1.5 sm:space-x-2 truncate">
-                  <h2 class="text-sm sm:text-base font-bold tracking-tight text-slate-900 dark:text-white truncate">Mensajes & Chat</h2>
-                  <span id="messages-tenant-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 truncate">TurboNetwork</span>
-                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex-shrink-0">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span id="messages-online-status" class="hidden xs:inline">En Línea</span>
-                  </span>
+          <!-- TARJETA UNIFICADA INTEGRADA: Cabecera + Contactos + Chat -->
+          <div class="flex-1 min-h-0 flex flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0e121b]/90 shadow-xl h-full">
+            
+            <!-- Cabecera Unificada Integrada del Card -->
+            <div id="messages-card-header" class="flex-shrink-0 border-b border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#121824]/95 backdrop-blur-md">
+              
+              <!-- Fila 1: Título del Módulo, Identificación de Empresa, Estado En Línea y Acciones Rápidas -->
+              <div id="messages-top-bar" class="flex items-center justify-between gap-3 px-3.5 sm:px-4 py-2 sm:py-2.5">
+                <div class="flex items-center space-x-2.5 min-w-0">
+                  <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 shadow-xs">
+                    <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center space-x-1.5 sm:space-x-2 truncate">
+                      <h2 class="text-sm sm:text-base font-bold tracking-tight text-slate-900 dark:text-white truncate">Mensajes & Chat</h2>
+                      <span id="messages-tenant-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 truncate">TurboNetwork</span>
+                      <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex-shrink-0">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="messages-online-status" class="hidden xs:inline">En Línea</span>
+                      </span>
+                    </div>
+                    <p class="hidden md:block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">Comunicación directa con cuadrillas, clientes en servicio, corte y cobranzas</p>
+                  </div>
                 </div>
-                <p class="hidden md:block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">Comunicación directa con cuadrillas, clientes en servicio, corte y cobranzas</p>
+
+                <!-- Botones de Acción Superior -->
+                <div class="flex items-center space-x-1.5 flex-shrink-0">
+                  <button type="button" onclick="openNewChatModal()" class="px-3 sm:px-3.5 py-1.5 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                    <span class="hidden sm:inline">Nuevo Chat</span>
+                    <span class="sm:hidden text-[11px]">Nuevo</span>
+                  </button>
+                  <button type="button" onclick="openManageFiltersModal()" class="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-medium flex items-center space-x-1 border border-slate-200 dark:border-white/10 transition" title="Gestionar Filtros de Mensajes">
+                    <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                    <span class="hidden md:inline">Filtros</span>
+                  </button>
+                </div>
               </div>
+
+              <!-- Fila 2: Pestañas de Filtros Horizontales y Botón para Agregar Filtro -->
+              <div id="messages-filter-bar" class="flex items-center justify-between gap-2 px-3.5 sm:px-4 py-1.5 border-t border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-black/20">
+                <div class="flex items-center space-x-1.5 overflow-x-auto py-0.5 scrollbar-none max-w-full">
+                  <div id="messages-filter-pills" class="flex items-center space-x-1.5 flex-shrink-0">
+                    <!-- Renderizado dinámico de filtros: Todos, Personal, Clientes, Corte, Pendiente, Custom... -->
+                  </div>
+                  <button type="button" onclick="openNewFilterQuickModal()" class="px-2.5 py-1 rounded-full bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-[11px] font-semibold flex items-center space-x-1 flex-shrink-0 transition border border-dashed border-slate-300 dark:border-white/15 shadow-2xs" title="Añadir nueva pestaña de filtro">
+                    <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    <span>Filtro</span>
+                  </button>
+                </div>
+              </div>
+
             </div>
 
-            <!-- Botones de Acción Superior (Compactos en móvil, completos en escritorio) -->
-            <div class="flex items-center space-x-1.5 flex-shrink-0">
-              <button type="button" onclick="openNewChatModal()" class="px-2.5 sm:px-3.5 py-1.5 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-                <span class="hidden sm:inline">Nuevo Chat</span>
-                <span class="sm:hidden text-[11px]">Nuevo</span>
-              </button>
-              <button type="button" onclick="openManageFiltersModal()" class="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-medium flex items-center space-x-1 border border-slate-200 dark:border-white/10 transition" title="Gestionar Filtros de Mensajes">
-                <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-                <span class="hidden md:inline">Filtros</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Barra de Filtros / Pestañas Horizontales -->
-          <div id="messages-filter-bar" class="flex items-center justify-between pb-0.5 flex-shrink-0 gap-2 px-0.5">
-            <div id="messages-filter-pills" class="flex items-center space-x-1.5 overflow-x-auto py-0.5 scrollbar-none max-w-full">
-              <!-- Renderizado dinámico de filtros: Todos, Personal, Clientes, Corte, Pendiente, Custom... -->
-            </div>
-            <button type="button" onclick="openNewFilterQuickModal()" class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-[11px] font-semibold flex items-center space-x-1 flex-shrink-0 transition border border-slate-200 dark:border-white/5" title="Añadir nueva pestaña de filtro">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-              <span>Filtro</span>
-            </button>
-          </div>
-
-          <!-- Área Central: 2 Columnas (Bandeja de Contactos a la Izquierda, Chat a la Derecha) -->
-          <div class="flex-1 min-h-0 flex overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0e121b]/90 shadow-xl h-full">
+            <!-- Área Central: 2 Columnas (Bandeja de Contactos a la Izquierda, Chat a la Derecha) -->
+            <div class="flex-1 min-h-0 flex overflow-hidden">
             
             <!-- COLUMNA IZQUIERDA: Lista de Conversaciones -->
             <div id="messages-left-panel" class="w-full md:w-80 lg:w-96 flex-shrink-0 flex flex-col h-full border-r border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-black/20 min-h-0">
@@ -6763,6 +6872,19 @@
             <!-- COLUMNA DERECHA: Vista de Chat Activo & Pantalla de Bienvenida WhatsApp -->
             <div id="messages-right-panel" class="hidden md:flex flex-1 flex-col h-full overflow-hidden bg-white dark:bg-black/40 min-h-0 relative">
               
+              <!-- Overlay Visual de Arrastrar y Soltar Archivos (Drag & Drop) -->
+              <div id="chat-drag-drop-overlay" class="hidden absolute inset-0 z-[120] bg-blue-600/15 dark:bg-blue-900/30 backdrop-blur-sm flex flex-col items-center justify-center p-6 border-4 border-dashed border-blue-500/80 rounded-2xl transition-all pointer-events-none">
+                <div class="p-6 rounded-3xl bg-white/95 dark:bg-[#111827]/95 border border-blue-500/30 shadow-2xl flex flex-col items-center text-center max-w-sm w-full pointer-events-auto">
+                  <div class="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3 shadow-inner">
+                    <svg class="w-8 h-8 animate-pulse text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+                    </svg>
+                  </div>
+                  <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Suelta tu archivo aquí</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Imágenes, comprobantes de pago, PDFs o documentos para adjuntar al chat</p>
+                </div>
+              </div>
+
               <!-- PANTALLA DE ESTADO VACÍO (Estilo WhatsApp Desktop / Web - Imagen 2) -->
               <div id="messages-empty-state-view" class="flex flex-1 flex-col items-center justify-center h-full p-6 text-center select-none bg-slate-50/60 dark:bg-[#0c1017] overflow-y-auto">
                 <div class="max-w-md w-full flex flex-col items-center my-auto py-8">
@@ -6835,9 +6957,9 @@
                         <h3 id="chat-header-name" class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate group-hover:text-blue-500 transition leading-snug">Contacto</h3>
                       </div>
                       <div class="flex items-center space-x-1 sm:space-x-1.5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono truncate leading-normal mt-0.5">
-                        <span id="chat-header-tag-badge" class="px-2 py-0.2 rounded-full text-[9px] sm:text-[10px] font-semibold whitespace-nowrap flex-shrink-0 bg-blue-500/10 text-blue-500 border border-blue-500/20">Cliente</span>
-                        <span class="text-slate-300 dark:text-slate-600">•</span>
-                        <span id="chat-header-phone" class="flex-shrink-0">+51 900 000 000</span>
+                        <div id="chat-header-tags-container" class="flex items-center gap-1 flex-wrap">
+                          <span id="chat-header-tag-badge" class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold whitespace-nowrap flex-shrink-0 bg-blue-500/10 text-blue-500 border border-blue-500/20">Cliente</span>
+                        </div>
                         <span class="hidden xs:inline text-slate-300 dark:text-slate-600">•</span>
                         <span id="chat-header-detail" class="hidden xs:inline truncate text-[10px] sm:text-xs">Plan de Fibra Óptica</span>
                       </div>
@@ -6856,8 +6978,24 @@
                   </div>
                 </div>
 
+                <!-- Banner de Mensaje Fijado en Cabecera de Chat -->
+                <div id="chat-pinned-banner" class="hidden px-3.5 py-1.5 bg-blue-50/90 dark:bg-blue-950/40 border-b border-blue-200/80 dark:border-blue-500/20 text-xs items-center justify-between transition-all flex-shrink-0 backdrop-blur-xs">
+                  <div class="flex items-center space-x-2 min-w-0 cursor-pointer flex-1" onclick="scrollToPinnedMessage()" title="Clic para ir al mensaje fijado">
+                    <div class="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"/></svg>
+                    </div>
+                    <div class="min-w-0 flex-1 truncate">
+                      <span class="font-bold text-blue-600 dark:text-blue-400 text-[11px]">Mensaje fijado:</span>
+                      <span id="chat-pinned-text" class="text-slate-700 dark:text-slate-300 ml-1 text-[11px] truncate">...</span>
+                    </div>
+                  </div>
+                  <button type="button" onclick="unpinCurrentPinnedMessage()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition" title="Desfijar mensaje">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+
               <!-- Mensajes del Chat con Scroll -->
-              <div id="chat-messages-container" class="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 min-h-0 scrollbar-none">
+              <div id="chat-messages-container" oncontextmenu="handleChatCanvasContextMenu(event)" class="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 min-h-0 scrollbar-none">
                 <div class="m-auto text-center py-12 text-slate-400 text-xs">
                   <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
@@ -6867,21 +7005,68 @@
               </div>
 
               <!-- Barra Inferior de Entrada y Respuestas Rápidas -->
-              <div class="p-2.5 sm:p-3.5 border-t border-slate-200 dark:border-white/10 bg-slate-50/40 dark:bg-white/[0.01] flex-shrink-0 space-y-2">
-                <!-- Chips de Respuestas Rápidas Predefinidas -->
-                <div class="flex items-center space-x-1.5 overflow-x-auto pb-0.5 scrollbar-none text-[11px] px-0.5">
+              <div id="chat-bottom-input-container" class="p-2.5 sm:p-3.5 border-t border-slate-200 dark:border-white/10 bg-slate-50/40 dark:bg-white/[0.01] flex-shrink-0 space-y-2">
+                <!-- Barra de Cita / Respuesta Previa -->
+                <div id="chat-reply-preview-bar" class="hidden p-2 rounded-xl bg-blue-50/70 dark:bg-white/5 border-l-4 border-blue-600 text-xs items-center justify-between space-x-2 shadow-2xs animate-in fade-in slide-in-from-bottom-2 duration-150">
+                  <div class="flex items-center space-x-2 min-w-0 flex-1">
+                    <div class="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/></svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center space-x-1">
+                        <span class="text-[10px] text-slate-400">Respondiendo a</span>
+                        <span id="reply-preview-author" class="font-bold text-[11px] text-blue-600 dark:text-blue-400 truncate">Contacto</span>
+                      </div>
+                      <div id="reply-preview-snippet" class="text-[11px] text-slate-700 dark:text-slate-300 truncate">Texto citado...</div>
+                    </div>
+                  </div>
+                  <button type="button" onclick="cancelReplyMessage()" class="p-1.5 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition" title="Cancelar respuesta">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+
+                <!-- Barra de Previsualización de Archivo Adjunto (Staged File) -->
+                <div id="chat-attachment-preview-bar" class="hidden p-2 rounded-xl bg-blue-50/80 dark:bg-white/5 border border-blue-500/30 text-xs items-center justify-between space-x-2.5 shadow-2xs animate-in fade-in slide-in-from-bottom-2 duration-150">
+                  <div class="flex items-center space-x-2.5 min-w-0 flex-1">
+                    <div id="attachment-preview-icon-box" class="w-11 h-11 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0 overflow-hidden border border-blue-500/20">
+                      <img id="attachment-preview-img" class="w-full h-full object-cover hidden" alt="Adjunto">
+                      <div id="attachment-preview-doc-icon" class="flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                      </div>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 font-mono tracking-wider">Adjunto Listo</span>
+                        <span id="attachment-preview-size" class="text-[10px] text-slate-400 font-mono"></span>
+                      </div>
+                      <div id="attachment-preview-name" class="font-semibold text-xs text-slate-900 dark:text-white truncate">archivo.pdf</div>
+                    </div>
+                  </div>
+                  <button type="button" onclick="cancelChatAttachment()" class="p-1.5 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition" title="Quitar adjunto">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+
+                <!-- Barra de Entrada Normal (Se oculta durante selección múltiple) -->
+                <div id="chat-normal-input-bar" class="space-y-2">
+                  <!-- Chips de Respuestas Rápidas Predefinidas (Sin emojis, con iconos SVG profesionales) -->
+                  <div class="flex items-center space-x-1.5 overflow-x-auto pb-0.5 scrollbar-none text-[11px] px-0.5">
                   <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold mr-0.5 flex-shrink-0">Plantillas:</span>
-                  <button type="button" onclick="insertQuickReply('👋 ¡Hola! ¿En qué podemos ayudarte el día de hoy?')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs">
-                    Saludo
+                  <button type="button" onclick="insertQuickReply('¡Hola! ¿En qué podemos ayudarte el día de hoy?')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    <span>Saludo</span>
                   </button>
-                  <button type="button" onclick="insertQuickReply('💳 Estimado cliente, le recordamos que su recibo mensual se encuentra disponible para pago.')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs">
-                    Aviso de Pago
+                  <button type="button" onclick="insertQuickReply('Estimado cliente, le recordamos que su recibo mensual se encuentra disponible para pago.')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
+                    <span>Aviso de Pago</span>
                   </button>
-                  <button type="button" onclick="insertQuickReply('🔧 Nuestro equipo técnico se encuentra realizando trabajos de mantenimiento en la zona para mejorar su servicio.')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs">
-                    Mantenimiento
+                  <button type="button" onclick="insertQuickReply('Nuestro equipo técnico se encuentra realizando trabajos de mantenimiento en la zona para mejorar su servicio.')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.05a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.097.433.22.846.368 1.233z"/></svg>
+                    <span>Mantenimiento</span>
                   </button>
-                  <button type="button" onclick="insertQuickReply('🚨 Estimado cliente, su servicio presenta suspensión preventiva por saldo vencido. Favor de regularizar.')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs">
-                    Aviso de Corte
+                  <button type="button" onclick="insertQuickReply('Estimado cliente, su servicio presenta suspensión preventiva por saldo vencido. Favor de regularizar.')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <span>Aviso de Corte</span>
                   </button>
                 </div>
 
@@ -6892,7 +7077,10 @@
                       <div class="flex items-center space-x-1 text-base overflow-x-auto scrollbar-none pr-2">
                         <button type="button" onclick="switchEmojiCategory('faces')" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10" title="Caras">😀</button>
                         <button type="button" onclick="switchEmojiCategory('hands')" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10" title="Gestos">👍</button>
+                        <button type="button" onclick="switchEmojiCategory('objects')" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10" title="Objetos">💼</button>
                         <button type="button" onclick="switchEmojiCategory('network')" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10" title="Redes & Equipos">📡</button>
+                        <button type="button" onclick="switchEmojiCategory('animals')" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10" title="Animales">🐶</button>
+                        <button type="button" onclick="switchEmojiCategory('food')" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10" title="Comida">🍎</button>
                         <button type="button" onclick="switchEmojiCategory('symbols')" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10" title="Símbolos">✅</button>
                       </div>
                       <button type="button" onclick="closeEmojiPicker()" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white">
@@ -6924,17 +7112,21 @@
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         </button>
 
-                        <!-- Popover Opciones de Ubicación -->
+                        <!-- Popover Opciones de Ubicación (Con iconos SVG profesionales) -->
                         <div id="chat-location-menu" class="hidden absolute bottom-full right-0 mb-2 z-[250] w-64 bg-white dark:bg-[#161c28] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-2 flex flex-col space-y-1">
                           <button type="button" onclick="sendCurrentLocation(false)" class="w-full px-3 py-2 text-left rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-xs text-slate-800 dark:text-slate-200 transition">
-                            <span class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold flex-shrink-0 text-sm">📍</span>
+                            <span class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold flex-shrink-0 text-sm">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                            </span>
                             <div>
                               <div class="font-semibold text-slate-900 dark:text-white">Ubicación Actual</div>
                               <div class="text-[10px] text-slate-400">Punto fijo GPS en mapa</div>
                             </div>
                           </button>
                           <button type="button" onclick="sendCurrentLocation(true)" class="w-full px-3 py-2 text-left rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-xs text-slate-800 dark:text-slate-200 transition">
-                            <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold flex-shrink-0 text-sm">📡</span>
+                            <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold flex-shrink-0 text-sm">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.98 0 13.789M12 12h.008v.008H12V12z"/></svg>
+                            </span>
                             <div>
                               <div class="font-semibold text-slate-900 dark:text-white">En Tiempo Real</div>
                               <div class="text-[10px] text-slate-400">Baliza activa transmitiendo</div>
@@ -7022,11 +7214,54 @@
                   </div>
                 </div>
               </div>
+              <!-- Fin de chat-normal-input-bar -->
+
+              <!-- Barra de Acciones de Selección Múltiple (Reemplaza la entrada de mensaje) -->
+              <div id="chat-selection-action-bar" class="hidden items-center justify-between p-2 px-3 sm:px-4 rounded-2xl bg-white dark:bg-[#161f2e] border border-blue-500/30 shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-150">
+                <div class="flex items-center space-x-2.5">
+                  <button type="button" onclick="exitMessageSelectionMode()" class="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 flex items-center justify-center transition" title="Cerrar selección">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                  <span id="selection-counter-badge" class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">1 seleccionado</span>
+                </div>
+                
+                <div class="flex items-center space-x-1 sm:space-x-1.5">
+                  <!-- Copiar -->
+                  <button type="button" onclick="copySelectedMessages()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 transition text-xs font-semibold flex items-center space-x-1" title="Copiar seleccionados">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"/></svg>
+                    <span class="hidden sm:inline">Copiar</span>
+                  </button>
+
+                  <!-- Destacar -->
+                  <button type="button" onclick="starSelectedMessages()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 transition text-xs font-semibold flex items-center space-x-1" title="Destacar seleccionados">
+                    <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
+                    <span class="hidden sm:inline">Destacar</span>
+                  </button>
+
+                  <!-- Reenviar -->
+                  <button type="button" onclick="forwardSelectedMessages()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 transition text-xs font-semibold flex items-center space-x-1" title="Reenviar seleccionados">
+                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3"/></svg>
+                    <span class="hidden sm:inline">Reenviar</span>
+                  </button>
+
+                  <!-- Eliminar -->
+                  <button type="button" onclick="deleteSelectedMessagesPrompt()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl hover:bg-rose-500/10 text-rose-500 transition text-xs font-semibold flex items-center space-x-1" title="Eliminar seleccionados">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                    <span class="hidden sm:inline">Eliminar</span>
+                  </button>
+                </div>
+              </div>
             </div>
+          </div>
             <!-- Cierre de active-chat-content -->
           </div>
-          </div>
-        </section>
+          <!-- Cierre de messages-right-panel -->
+        </div>
+        <!-- Cierre de área central 2 columnas -->
+      </div>
+      <!-- Cierre de tarjeta unificada -->
+    </div>
+  </section>
 
 
       </main>
@@ -7933,6 +8168,146 @@
         <div class="text-[11px] text-slate-400 font-mono">TurboNetwork CRM Core</div>
         <button type="button" onclick="closeActiveContactDrawer()" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-xs font-semibold text-slate-700 dark:text-slate-200 transition">
           Cerrar Expediente
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MENÚ CONTEXTUAL FLOTANTE: MENSAJE (CLICK DERECHO)        -->
+  <!-- ======================================================== -->
+  <div id="chat-message-context-menu" class="hidden fixed z-[450] w-64 bg-white/95 dark:bg-[#161c28]/95 backdrop-blur-2xl border border-slate-200/90 dark:border-white/10 rounded-2xl shadow-2xl p-1.5 text-xs text-slate-800 dark:text-slate-100 select-none animate-in fade-in zoom-in-95 duration-100" onclick="event.stopPropagation()">
+    <!-- Acciones principales -->
+    <div class="space-y-0.5">
+      <button type="button" onclick="contextMenuAction('reply')" class="w-full px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-left transition">
+        <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/></svg>
+        <span class="font-medium text-xs">Responder</span>
+      </button>
+      <button type="button" onclick="contextMenuAction('copy')" class="w-full px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-left transition">
+        <svg class="w-4 h-4 text-slate-500 dark:text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"/></svg>
+        <span class="font-medium text-xs">Copiar mensaje</span>
+      </button>
+      <button type="button" onclick="contextMenuAction('forward')" class="w-full px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-left transition">
+        <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3"/></svg>
+        <span class="font-medium text-xs">Reenviar</span>
+      </button>
+      <button type="button" id="cm-pin-btn" onclick="contextMenuAction('pin')" class="w-full px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-left transition">
+        <svg class="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"/></svg>
+        <span id="cm-pin-label" class="font-medium text-xs">Fijar mensaje en el chat</span>
+      </button>
+      <button type="button" id="cm-star-btn" onclick="contextMenuAction('star')" class="w-full px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-left transition">
+        <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
+        <span id="cm-star-label" class="font-medium text-xs">Destacar mensaje</span>
+      </button>
+      <button type="button" onclick="contextMenuAction('select')" class="w-full px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-left transition">
+        <svg class="w-4 h-4 text-cyan-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="font-medium text-xs">Seleccionar</span>
+      </button>
+      <button type="button" id="cm-save-btn" onclick="contextMenuAction('save')" class="hidden w-full px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 items-center space-x-2.5 text-left transition">
+        <svg class="w-4 h-4 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+        <span class="font-medium text-xs">Guardar como...</span>
+      </button>
+      <div class="my-1 border-t border-slate-200 dark:border-white/10"></div>
+      <button type="button" onclick="contextMenuAction('delete')" class="w-full px-2.5 py-1.5 rounded-xl hover:bg-rose-500/10 text-rose-500 flex items-center space-x-2.5 text-left transition">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+        <span class="font-medium text-xs">Eliminar mensaje</span>
+      </button>
+    </div>
+
+    <!-- Barra de 5 Reacciones Rápidas Abajo + Botón '+' -->
+    <div class="mt-1.5 pt-1.5 border-t border-slate-200 dark:border-white/10 flex items-center justify-between px-1 bg-slate-50/70 dark:bg-white/[0.02] rounded-xl p-1">
+      <div class="flex items-center space-x-1">
+        <button type="button" onclick="reactToContextMessage('👍')" class="w-7 h-7 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 hover:scale-125 transition flex items-center justify-center text-sm" title="Me gusta">👍</button>
+        <button type="button" onclick="reactToContextMessage('❤️')" class="w-7 h-7 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 hover:scale-125 transition flex items-center justify-center text-sm" title="Corazón">❤️</button>
+        <button type="button" onclick="reactToContextMessage('😂')" class="w-7 h-7 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 hover:scale-125 transition flex items-center justify-center text-sm" title="Risa">😂</button>
+        <button type="button" onclick="reactToContextMessage('😮')" class="w-7 h-7 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 hover:scale-125 transition flex items-center justify-center text-sm" title="Sorpresa">😮</button>
+        <button type="button" onclick="reactToContextMessage('😢')" class="w-7 h-7 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 hover:scale-125 transition flex items-center justify-center text-sm" title="Triste">😢</button>
+      </div>
+      <button type="button" onclick="openSystemEmojiPickerForReaction()" class="w-7 h-7 rounded-full bg-slate-200/80 dark:bg-white/10 hover:bg-blue-600 hover:text-white transition flex items-center justify-center text-slate-600 dark:text-slate-300" title="Más emoticones">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MENÚ CONTEXTUAL FLOTANTE: FONDO DEL CHAT (CANVAS)        -->
+  <!-- ======================================================== -->
+  <div id="chat-canvas-context-menu" class="hidden fixed z-[450] w-56 bg-white/95 dark:bg-[#161c28]/95 backdrop-blur-2xl border border-slate-200/90 dark:border-white/10 rounded-2xl shadow-2xl p-1.5 text-xs text-slate-800 dark:text-slate-200 select-none animate-in fade-in zoom-in-95 duration-100 space-y-0.5" onclick="event.stopPropagation()">
+    <button type="button" onclick="startMessageSelection(); closeAllChatContextMenus();" class="w-full px-2.5 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-left transition">
+      <svg class="w-4 h-4 text-cyan-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span class="font-medium text-xs">Seleccionar mensajes</span>
+    </button>
+    <button type="button" onclick="closeActiveChat(); closeAllChatContextMenus();" class="w-full px-2.5 py-2 rounded-xl hover:bg-rose-500/10 text-rose-500 flex items-center space-x-2.5 text-left transition">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      <span class="font-medium text-xs">Cerrar chat</span>
+    </button>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: CONFIRMACIÓN DE ELIMINACIÓN DE MENSAJE(S)         -->
+  <!-- ======================================================== -->
+  <div id="chat-delete-confirm-modal" class="hidden fixed inset-0 z-[460] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" onclick="closeDeleteConfirmModal()">
+    <div class="w-full max-w-sm rounded-2xl bg-white dark:bg-[#161c28] border border-slate-200 dark:border-white/10 p-5 shadow-2xl space-y-3.5 animate-in fade-in zoom-in-95 duration-150" onclick="event.stopPropagation()">
+      <div class="flex items-center space-x-3 text-rose-500">
+        <div class="w-10 h-10 rounded-2xl bg-rose-500/10 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+        </div>
+        <div>
+          <h4 class="font-bold text-sm text-slate-900 dark:text-white" id="delete-modal-title">¿Eliminar mensaje?</h4>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">Selecciona el alcance de la eliminación</p>
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <button type="button" id="btn-delete-for-everyone" onclick="executeDeleteMessage('everyone')" class="w-full py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition shadow-sm flex items-center justify-center space-x-1.5">
+          <span>Eliminar para todos</span>
+        </button>
+        <button type="button" id="btn-delete-for-me" onclick="executeDeleteMessage('me')" class="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-800 dark:text-slate-200 font-semibold text-xs transition flex items-center justify-center space-x-1.5">
+          <span>Eliminar para mí</span>
+        </button>
+        <button type="button" onclick="closeDeleteConfirmModal()" class="w-full py-2 px-3 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white text-xs font-medium transition">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: REENVIAR MENSAJE(S) A OTRAS CONVERSACIONES        -->
+  <!-- ======================================================== -->
+  <div id="chat-forward-modal" class="hidden fixed inset-0 z-[460] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" onclick="closeForwardModal()">
+    <div class="w-full max-w-md rounded-2xl bg-white dark:bg-[#161c28] border border-slate-200 dark:border-white/10 p-4 sm:p-5 shadow-2xl space-y-3 animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/10 flex-shrink-0">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3"/></svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white">Reenviar mensaje</h3>
+            <p class="text-[10px] text-slate-400">Elige los destinatarios en la lista</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeForwardModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="relative flex-shrink-0">
+        <input type="text" id="forward-search-input" oninput="filterForwardConversations(this.value)" placeholder="Buscar contacto o chat..." class="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs focus:outline-none focus:border-blue-500 text-slate-900 dark:text-slate-100">
+        <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+      </div>
+
+      <!-- Lista de chats -->
+      <div id="forward-conversations-list" class="flex-1 overflow-y-auto space-y-1.5 max-h-60 pr-1 scrollbar-none">
+        <!-- Renderizado dinámico de contactos -->
+      </div>
+
+      <!-- Footer de Confirmación -->
+      <div class="pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between flex-shrink-0">
+        <span id="forward-selected-count" class="text-xs text-slate-400 font-mono">0 seleccionados</span>
+        <button type="button" id="btn-submit-forward" onclick="submitForwardMessages()" disabled class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-semibold text-xs transition flex items-center space-x-1.5 shadow-sm cursor-pointer disabled:cursor-not-allowed">
+          <span>Reenviar</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
         </button>
       </div>
     </div>
@@ -15077,6 +15452,7 @@
         }
         loadMessagesModule();
       } else {
+        if (typeof closeMobileChatView === 'function') closeMobileChatView();
         if (mainEl) mainEl.classList.remove('tab-messages-active');
         const contentContainer = document.getElementById('content-container');
         if (contentContainer) contentContainer.classList.remove('tab-messages-active-container');
@@ -26647,6 +27023,17 @@ let currentConversations = [];
 let activeConversationId = null;
 let currentMessageFilters = [];
 let chatSearchQuery = '';
+let currentChatMessages = [];
+let activeConversationContactName = 'Contacto';
+let activePinnedMessageId = null;
+let activeContextMenuMsgId = null;
+let isMessageSelectionMode = false;
+let selectedChatMessageIds = new Set();
+let activeReplyMessage = null;
+let activeDeleteTarget = null;
+let forwardSourceMsgIds = [];
+let forwardSelectedTargetIds = new Set();
+let emojiPickerTarget = 'input'; // 'input' | 'reaction'
 
 // Formateador de fechas y horas
 function formatMessageTime(isoString) {
@@ -26723,6 +27110,9 @@ async function loadMessagesModule() {
         renderEmptyChatWorkspace();
       }
     }
+    if (typeof initChatDragAndDrop === 'function') {
+      initChatDragAndDrop();
+    }
   } catch (err) {
     console.error('Error cargando módulo de mensajes:', err);
     showToast('Error cargando centro de mensajería', 'error');
@@ -26781,6 +27171,79 @@ async function loadConversations() {
   }
 }
 
+// Helpers para Archivos Adjuntos y Formato de Mensajes
+function formatFileSize(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  if (typeof bytes === 'string' && (bytes.endsWith('B') || bytes.endsWith('KB') || bytes.endsWith('MB') || bytes.endsWith('GB'))) {
+    return bytes;
+  }
+  const num = Number(bytes);
+  if (isNaN(num) || num <= 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(num) / Math.log(k));
+  return parseFloat((num / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function getFileBadgeInfo(fileName) {
+  const ext = (fileName || '').split('.').pop().toLowerCase();
+  if (ext === 'pdf') {
+    return {
+      typeLabel: 'Documento PDF',
+      colorClass: 'bg-rose-500/10 text-rose-500 border border-rose-500/20',
+      iconSvg: `<svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>`
+    };
+  }
+  if (['xls', 'xlsx', 'csv'].includes(ext)) {
+    return {
+      typeLabel: 'Hoja de Cálculo',
+      colorClass: 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20',
+      iconSvg: `<svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m1.125 0h7.5m-8.625 0v7.5m0-7.5a1.125 1.125 0 011.125-1.125m-1.125 1.125a1.125 1.125 0 00-1.125-1.125m1.125 1.125v7.5m0 0a1.125 1.125 0 01-1.125 1.125m1.125-1.125a1.125 1.125 0 001.125 1.125"/></svg>`
+    };
+  }
+  if (['doc', 'docx'].includes(ext)) {
+    return {
+      typeLabel: 'Documento Word',
+      colorClass: 'bg-blue-500/10 text-blue-500 border border-blue-500/20',
+      iconSvg: `<svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>`
+    };
+  }
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+    return {
+      typeLabel: 'Archivo Comprimido',
+      colorClass: 'bg-amber-500/10 text-amber-500 border border-amber-500/20',
+      iconSvg: `<svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>`
+    };
+  }
+  return {
+    typeLabel: 'Archivo Adjunto',
+    colorClass: 'bg-indigo-500/10 text-indigo-500 border border-indigo-500/20',
+    iconSvg: `<svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>`
+  };
+}
+
+// Helper para mostrar último mensaje con iconos SVG profesionales (sin emojis)
+function formatLastMessageWithSvgIcon(lastMsg) {
+  if (!lastMsg) return 'Conversación iniciada';
+  const clean = String(lastMsg).replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[\u2600-\u26FF\u2700-\u27BF]/g, '').trim();
+  const lower = clean.toLowerCase();
+
+  if (lower.startsWith('[adjunto:') || lower.includes('adjunto') || lower.includes('.pdf') || lower.includes('.xlsx') || lower.includes('.docx') || lower.includes('.png') || lower.includes('.jpg') || lower.includes('.jpeg')) {
+    const cleanDoc = clean.replace(/^\[adjunto:\s*/i, '').replace(/\]$/, '').trim();
+    return `<span class="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300"><svg class="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg><span class="truncate">${escapeHtml(cleanDoc || 'Archivo adjunto')}</span></span>`;
+  }
+  if (lower.includes('foto') || lower.includes('imagen')) {
+    return `<span class="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300"><svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg><span class="truncate">${escapeHtml(clean || 'Foto enviada')}</span></span>`;
+  }
+  if (lower.includes('nota de voz') || lower.includes('audio') || lower.includes('grabación')) {
+    return `<span class="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300"><svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15a3 3 0 01-3-3V4.5a3 3 0 116 0v7.5a3 3 0 01-3 3z"/></svg><span class="truncate">${escapeHtml(clean || 'Nota de voz')}</span></span>`;
+  }
+  if (lower.includes('ubicación') || lower.includes('gps') || lower.includes('nodo')) {
+    return `<span class="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300"><svg class="w-3.5 h-3.5 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg><span class="truncate">${escapeHtml(clean)}</span></span>`;
+  }
+  return `<span class="truncate">${escapeHtml(clean)}</span>`;
+}
+
 // 2. Renderizar Lista de Tarjetas de Conversación
 function renderConversationsList(conversations) {
   const listEl = document.getElementById('messages-conversations-list');
@@ -26799,11 +27262,15 @@ function renderConversationsList(conversations) {
 
   listEl.innerHTML = conversations.map(c => {
     const isSelected = activeConversationId === c.id;
-    const effectiveTag = (Array.isArray(c.tags) && c.tags.length > 0) ? c.tags[0] : (c.tag || c.type || 'clientes');
-    const tagInfo = getFilterTagBadge(effectiveTag);
+    const allTags = (Array.isArray(c.tags) && c.tags.length > 0)
+      ? c.tags
+      : (c.tag ? [c.tag] : (c.type ? [c.type] : ['clientes']));
+    const tagBadgesHtml = allTags.map(t => {
+      const tagInfo = getFilterTagBadge(t);
+      return `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap ${tagInfo.colorClass}" ${tagInfo.style ? `style="${tagInfo.style}"` : ''}>${escapeHtml(tagInfo.name)}</span>`;
+    }).join('');
     const timeFormatted = c.lastMessageTime || formatMessageTime(c.lastMessageAt || c.updatedAt);
     const contactName = c.name || c.contactName || 'Contacto';
-    const contactPhone = c.phone || c.contactPhone || '';
     const avatarUrl = c.avatar || c.contactAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || c.id)}`;
     
     // Status dot color
@@ -26827,15 +27294,12 @@ function renderConversationsList(conversations) {
             <span class="text-[10px] text-slate-400 font-mono whitespace-nowrap ml-1.5 flex-shrink-0">${timeFormatted}</span>
           </div>
 
-          <div class="flex items-center space-x-1.5 mb-1">
-            <span class="px-1.5 py-0.2 rounded text-[9px] font-semibold ${tagInfo.colorClass}" ${tagInfo.style ? `style="${tagInfo.style}"` : ''}>
-              ${escapeHtml(tagInfo.name)}
-            </span>
-            <span class="text-[10px] text-slate-400 truncate font-mono">${escapeHtml(contactPhone)}</span>
+          <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+            ${tagBadgesHtml}
           </div>
 
           <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <p class="truncate text-[11px] leading-tight flex-1 mr-1">${escapeHtml(c.lastMessage || 'Conversación iniciada')}</p>
+            <div class="truncate text-[11px] leading-tight flex-1 mr-1 text-slate-500 dark:text-slate-400 font-normal">${formatLastMessageWithSvgIcon(c.lastMessage)}</div>
             ${
               c.unreadCount > 0
                 ? `<span class="min-w-[18px] h-[18px] px-1.5 rounded-full text-[10px] font-bold bg-blue-600 text-white flex items-center justify-center flex-shrink-0 animate-pulse shadow-xs">${c.unreadCount}</span>`
@@ -26872,8 +27336,10 @@ async function selectConversation(convId) {
   const rightPanel = document.getElementById('messages-right-panel');
   const topBar = document.getElementById('messages-top-bar');
   const filterBar = document.getElementById('messages-filter-bar');
+  const cardHeader = document.getElementById('messages-card-header');
   const tabMessages = document.getElementById('tab-messages');
   if (window.innerWidth < 768) {
+    document.body.classList.add('mobile-chat-open');
     if (leftPanel) leftPanel.classList.add('hidden');
     if (rightPanel) {
       rightPanel.classList.remove('hidden');
@@ -26881,7 +27347,12 @@ async function selectConversation(convId) {
     }
     if (topBar) topBar.classList.add('hidden');
     if (filterBar) filterBar.classList.add('hidden');
+    if (cardHeader) cardHeader.classList.add('hidden');
     if (tabMessages) tabMessages.classList.add('mobile-chat-open');
+    const bottomNav = document.getElementById('mobile-bottom-nav');
+    if (bottomNav) bottomNav.classList.add('hidden');
+    const mobileHeader = document.querySelector('header.lg\\:hidden');
+    if (mobileHeader) mobileHeader.classList.add('hidden');
   }
 
   try {
@@ -26894,15 +27365,25 @@ async function selectConversation(convId) {
 
     const conversation = data.data;
 
+    // Sincronizar estado del chat
+    currentChatMessages = conversation.messages || [];
+    activePinnedMessageId = conversation.pinnedMessageId || null;
+    activeConversationContactName = conversation.name || conversation.contactName || 'Contacto';
+    if (typeof exitMessageSelectionMode === 'function') exitMessageSelectionMode();
+    if (typeof cancelReplyMessage === 'function') cancelReplyMessage();
+    if (typeof closeAllChatContextMenus === 'function') closeAllChatContextMenus();
+    if (typeof updateChatPinnedBanner === 'function') updateChatPinnedBanner();
+
     // Actualizar unreadCount en memoria
     const convLocal = currentConversations.find(c => c.id === convId);
     if (convLocal) convLocal.unreadCount = 0;
 
     // Actualizar Header del Chat
     const contactName = conversation.name || conversation.contactName || 'Contacto';
-    const contactPhone = conversation.phone || conversation.contactPhone || '+51 000 000 000';
     const contactDetail = conversation.planOrRole || conversation.contactDetail || ((conversation.type === 'personal' || conversation.contactType === 'personal') ? 'Cuadrilla Técnica' : 'Cliente Conectado');
-    const effectiveTag = (Array.isArray(conversation.tags) && conversation.tags.length > 0) ? conversation.tags[0] : (conversation.tag || conversation.type || 'clientes');
+    const allConvTags = (Array.isArray(conversation.tags) && conversation.tags.length > 0)
+      ? conversation.tags
+      : (conversation.tag ? [conversation.tag] : (conversation.type ? [conversation.type] : ['clientes']));
 
     const avatarEl = document.getElementById('chat-header-avatar');
     if (avatarEl) {
@@ -26911,23 +27392,28 @@ async function selectConversation(convId) {
     const nameEl = document.getElementById('chat-header-name');
     if (nameEl) nameEl.textContent = contactName;
 
-    const phoneEl = document.getElementById('chat-header-phone');
-    if (phoneEl) phoneEl.textContent = contactPhone;
-
     const detailEl = document.getElementById('chat-header-detail');
     if (detailEl) detailEl.textContent = contactDetail;
 
-    const tagBadgeEl = document.getElementById('chat-header-tag-badge');
-    if (tagBadgeEl) {
-      const tagInfo = getFilterTagBadge(effectiveTag);
-      tagBadgeEl.textContent = tagInfo.name;
-      tagBadgeEl.className = `px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold whitespace-nowrap flex-shrink-0 ${tagInfo.colorClass}`;
-      if (tagInfo.style) tagBadgeEl.setAttribute('style', tagInfo.style);
-      else tagBadgeEl.removeAttribute('style');
+    const tagsContainer = document.getElementById('chat-header-tags-container');
+    if (tagsContainer) {
+      tagsContainer.innerHTML = allConvTags.map(t => {
+        const tagInfo = getFilterTagBadge(t);
+        return `<span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold whitespace-nowrap flex-shrink-0 ${tagInfo.colorClass}" ${tagInfo.style ? `style="${tagInfo.style}"` : ''}>${escapeHtml(tagInfo.name)}</span>`;
+      }).join('');
+    } else {
+      const tagBadgeEl = document.getElementById('chat-header-tag-badge');
+      if (tagBadgeEl) {
+        const tagInfo = getFilterTagBadge(allConvTags[0]);
+        tagBadgeEl.textContent = tagInfo.name;
+        tagBadgeEl.className = `px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold whitespace-nowrap flex-shrink-0 ${tagInfo.colorClass}`;
+        if (tagInfo.style) tagBadgeEl.setAttribute('style', tagInfo.style);
+        else tagBadgeEl.removeAttribute('style');
+      }
     }
 
     // Renderizar Mensajes
-    renderChatMessages(conversation.messages || []);
+    renderChatMessages(currentChatMessages);
 
     // Scroll to bottom
     scrollChatToBottom();
@@ -26937,12 +27423,17 @@ async function selectConversation(convId) {
     if (inputEl) inputEl.focus();
     updateChatInputState();
 
+    if (typeof initChatDragAndDrop === 'function') {
+      initChatDragAndDrop();
+    }
   } catch (err) {
     console.error('Error al seleccionar conversación:', err);
   }
 }
 
-function renderAudioBubbleHtml(audioUrl, duration, timeFormatted, isAgent) {
+const MSG_DOUBLE_CHECK_SVG = `<svg class="w-3.5 h-3.5 inline text-sky-200 flex-shrink-0" viewBox="0 0 16 11" fill="currentColor"><path d="M11.07 0.93a.75.75 0 0 1 0 1.06l-6.5 6.5a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06L4.04 6.91l5.97-5.98a.75.75 0 0 1 1.06 0z"/><path d="M15.07 0.93a.75.75 0 0 1 0 1.06l-6.5 6.5a.75.75 0 0 1-1.06 0l-.7-.7a.75.75 0 1 1 1.06-1.06l.17.17 5.97-5.97a.75.75 0 0 1 1.06 0z"/></svg>`;
+
+function renderAudioBubbleHtml(audioUrl, duration, timeFormatted, isAgent, isPinned, isStarred) {
   const uniqueId = 'vn-' + Math.random().toString(36).substring(2, 9);
   const playerId = uniqueId;
   const safeDuration = duration || '00:05';
@@ -26956,8 +27447,8 @@ function renderAudioBubbleHtml(audioUrl, duration, timeFormatted, isAgent) {
   `).join('');
 
   const bgClass = isAgent 
-    ? 'bg-blue-600 text-white rounded-tr-xs shadow-md shadow-blue-500/10' 
-    : 'bg-white dark:bg-[#1a2233] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 rounded-tl-xs shadow-sm msg-bubble-in';
+    ? 'bg-gradient-to-br from-[#1d4ed8] to-[#1e40af] dark:from-[#2563eb] dark:to-[#1d4ed8] text-white rounded-tr-xs shadow-md shadow-blue-900/10 border border-blue-400/20' 
+    : 'bg-white dark:bg-[#1a2333] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 rounded-tl-xs shadow-sm msg-bubble-in';
 
   const btnBg = isAgent 
     ? 'bg-white text-blue-600 hover:bg-blue-50' 
@@ -26967,13 +27458,13 @@ function renderAudioBubbleHtml(audioUrl, duration, timeFormatted, isAgent) {
     ? 'bg-white/20 hover:bg-white/30 text-white' 
     : 'bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-slate-300';
 
-  const subtextColor = isAgent ? 'text-white/80' : 'text-slate-400 dark:text-slate-500';
+  const subtextColor = isAgent ? 'text-blue-100/80' : 'text-slate-400 dark:text-slate-500';
 
   return `
-    <div class="w-full max-w-[270px] xs:max-w-[295px] sm:max-w-[320px] ${bgClass} rounded-2xl p-2.5 sm:p-3 text-xs space-y-1.5 select-none">
+    <div class="w-full max-w-[275px] xs:max-w-[305px] sm:max-w-[330px] ${bgClass} rounded-2xl p-2.5 sm:p-3 text-xs space-y-2 select-none">
       <div class="flex items-center space-x-2.5">
         <!-- Botón Play/Pausa -->
-        <button type="button" id="btn-${playerId}" onclick="playVoiceNote('${audioUrl}', '${playerId}')" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full ${btnBg} flex items-center justify-center flex-shrink-0 shadow-xs transition transform active:scale-90" title="Reproducir nota de voz">
+        <button type="button" id="btn-${playerId}" onclick="playVoiceNote('${audioUrl}', '${playerId}')" class="w-10 h-10 rounded-full ${btnBg} flex items-center justify-center flex-shrink-0 shadow-xs transition transform active:scale-90 cursor-pointer" title="Reproducir nota de voz">
           <svg id="play-icon-${playerId}" class="w-4 h-4 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           <svg id="pause-icon-${playerId}" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
         </button>
@@ -26986,18 +27477,48 @@ function renderAudioBubbleHtml(audioUrl, duration, timeFormatted, isAgent) {
         </div>
       </div>
 
-      <!-- Pie de Nota de Voz: Duración, Velocidad y Hora -->
-      <div class="flex items-center justify-between pt-0.5 border-t ${isAgent ? 'border-white/10' : 'border-slate-100 dark:border-white/5'}">
+      <!-- Pie de Nota de Voz: Icono Micrófono, Duración, Velocidad, Pin, Star y Hora -->
+      <div class="flex items-center justify-between pt-1 border-t ${isAgent ? 'border-white/15' : 'border-slate-100 dark:border-white/5'}">
         <div class="flex items-center space-x-1.5">
+          <svg class="w-3.5 h-3.5 ${isAgent ? 'text-blue-200' : 'text-slate-400 dark:text-slate-500'} flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15a3 3 0 01-3-3V4.5a3 3 0 116 0v7.5a3 3 0 01-3 3z"/></svg>
           <span id="time-${playerId}" class="font-mono text-[10px] sm:text-[11px] font-semibold opacity-90">${safeDuration}</span>
           <span id="dur-total-${playerId}" class="hidden">${safeDuration}</span>
-          <button type="button" id="speed-${playerId}" data-rate="1" onclick="cycleVoiceNoteSpeed('${playerId}')" class="px-1.5 py-0.2 rounded-full font-mono text-[9px] font-bold ${speedBg} transition" title="Cambiar velocidad">1x</button>
+          <button type="button" id="speed-${playerId}" data-rate="1" onclick="cycleVoiceNoteSpeed('${playerId}')" class="px-1.5 py-0.2 rounded-full font-mono text-[9px] font-bold ${speedBg} transition cursor-pointer" title="Cambiar velocidad">1x</button>
         </div>
         <div class="flex items-center space-x-1 text-[10px] font-mono ${subtextColor}">
+          ${isPinned ? `<svg class="w-3 h-3 text-blue-300 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" title="Fijado"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"/></svg>` : ''}
+          ${isStarred ? `<svg class="w-3 h-3 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" title="Destacado"><path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>` : ''}
           <span>${timeFormatted}</span>
-          ${isAgent ? '<span>✓✓</span>' : ''}
+          ${isAgent ? MSG_DOUBLE_CHECK_SVG : ''}
         </div>
       </div>
+    </div>
+  `;
+}
+
+function renderReactionsCluster(m) {
+  if (!m.reactions) return '';
+  let entries = [];
+  if (Array.isArray(m.reactions)) {
+    entries = m.reactions;
+  } else if (typeof m.reactions === 'object') {
+    entries = Object.entries(m.reactions)
+      .filter(([emoji, users]) => Array.isArray(users) && users.length > 0)
+      .map(([emoji, users]) => ({ emoji, count: users.length, users }));
+  }
+  if (entries.length === 0) return '';
+
+  return `
+    <div class="flex flex-wrap gap-1 mt-1 -mb-1 px-1">
+      ${entries.map(r => {
+        const reactedByMe = r.users && Array.isArray(r.users) && r.users.includes('agent');
+        return `
+          <button type="button" onclick="event.stopPropagation(); toggleMessageReaction('${m.id}', '${r.emoji}')" class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium transition cursor-pointer border ${reactedByMe ? 'bg-blue-500/20 border-blue-500 text-blue-600 dark:text-blue-300' : 'bg-white/95 dark:bg-[#161f2e]/95 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'} shadow-2xs">
+            <span>${r.emoji}</span>
+            ${r.count > 1 ? `<span class="text-[10px] font-bold opacity-80">${r.count}</span>` : ''}
+          </button>
+        `;
+      }).join('')}
     </div>
   `;
 }
@@ -27006,7 +27527,15 @@ function renderChatMessages(messages) {
   const container = document.getElementById('chat-messages-container');
   if (!container) return;
 
-  if (!messages || messages.length === 0) {
+  currentChatMessages = messages || [];
+
+  // Filtrar mensajes eliminados para mí (agent)
+  const visibleMessages = currentChatMessages.filter(m => {
+    if (m.deletedFor && Array.isArray(m.deletedFor) && m.deletedFor.includes('agent')) return false;
+    return true;
+  });
+
+  if (visibleMessages.length === 0) {
     container.innerHTML = `
       <div class="m-auto text-center py-16 text-slate-400 text-xs">
         <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400">
@@ -27018,121 +27547,1023 @@ function renderChatMessages(messages) {
     return;
   }
 
-  container.innerHTML = messages.map(m => {
+  container.innerHTML = visibleMessages.map(m => {
     const isAgent = m.sender === 'agent';
+    const isSelected = selectedChatMessageIds.has(m.id);
     const timeFormatted = m.timeFormatted || formatMessageTime(m.timestamp);
 
-    // 1. Audio Message Attachment
-    if (m.attachment && m.attachment.type === 'audio') {
+    // 0. Mensaje Eliminado para Todos
+    if (m.isDeletedForEveryone) {
+      const deletedBg = isAgent 
+        ? 'bg-blue-900/30 border border-blue-400/20 text-blue-200' 
+        : 'bg-slate-100 dark:bg-white/5 border border-slate-200/90 dark:border-white/10 text-slate-400 dark:text-slate-400';
       return `
-        <div class="flex ${isAgent ? 'justify-end' : 'justify-start'}">
-          ${renderAudioBubbleHtml(m.attachment.url, m.attachment.duration, timeFormatted, isAgent)}
-        </div>
-      `;
-    }
+        <div class="chat-message-row relative w-full flex ${isAgent ? 'justify-end' : 'justify-start'} group py-0.5 select-none"
+             data-msg-id="${m.id}"
+             data-is-agent="${isAgent}"
+             onclick="handleChatMessageClick(event, '${m.id}')"
+             oncontextmenu="handleChatMessageContextMenu(event, '${m.id}')"
+             ondblclick="handleChatMessageDblClick(event, '${m.id}')">
+          <div class="msg-swipe-container flex items-center max-w-full ${isAgent ? 'justify-end' : 'justify-start'} relative"
+               ontouchstart="handleMessageTouchStart(event, '${m.id}')"
+               ontouchmove="handleMessageTouchMove(event, '${m.id}')"
+               ontouchend="handleMessageTouchEnd(event, '${m.id}')">
+            
+            <div class="msg-select-check-container ${isMessageSelectionMode ? 'flex' : 'hidden'} items-center pr-2.5 flex-shrink-0 cursor-pointer"
+                 onclick="event.stopPropagation(); toggleSelectMessage('${m.id}')">
+              <div class="w-5 h-5 rounded-md border-2 ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 dark:border-white/20 bg-white dark:bg-slate-800'} flex items-center justify-center transition shadow-2xs">
+                ${isSelected ? '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>' : ''}
+              </div>
+            </div>
 
-    // 2. Image Message Attachment (Abre visor en el mismo chat)
-    if (m.attachment && m.attachment.type === 'image') {
-      const bgClass = isAgent ? 'bg-blue-600 text-white' : 'bg-white dark:bg-white/10 text-slate-900 dark:text-slate-100 border border-slate-200/80 dark:border-white/10 msg-bubble-in';
-      return `
-        <div class="flex ${isAgent ? 'justify-end' : 'justify-start'}">
-          <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl ${isAgent ? 'rounded-tr-sm' : 'rounded-tl-sm'} p-1.5 shadow-sm text-xs space-y-1">
-            <img src="${m.attachment.url}" class="w-full max-h-64 object-cover rounded-xl border border-white/20 cursor-pointer hover:opacity-95 transition" onclick="openChatImageViewer('${m.attachment.url}')" alt="Foto">
-            ${m.text && m.text !== '📷 Foto enviada' ? `<p class="px-2 py-1 leading-relaxed select-text">${escapeHtml(m.text)}</p>` : ''}
-            <div class="flex items-center justify-end space-x-1 px-1 text-[10px] font-mono opacity-80">
-              <span>${timeFormatted}</span>
-              ${isAgent ? '<span>✓✓</span>' : ''}
+            <div id="msg-${m.id}" class="max-w-[85%] sm:max-w-md ${deletedBg} rounded-2xl ${isAgent ? 'rounded-tr-xs' : 'rounded-tl-xs'} px-3.5 py-2 text-xs italic flex items-center space-x-2 ${isSelected ? 'chat-bubble-selected ring-2 ring-blue-500' : ''}">
+              <svg class="w-4 h-4 flex-shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+              <span>Este mensaje fue eliminado</span>
+              <span class="text-[10px] font-mono not-italic opacity-60 ml-2">${timeFormatted}</span>
+            </div>
+
+            <div class="msg-swipe-indicator flex items-center justify-center pl-2 opacity-0 pointer-events-none transition-all">
+              <div class="w-7 h-7 rounded-full bg-blue-600/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/></svg>
+              </div>
             </div>
           </div>
         </div>
       `;
     }
 
-    // 3. Location Message Attachment (Ubicación Fija o en Tiempo Real)
-    if (m.attachment && m.attachment.type === 'location') {
-      const bgClass = isAgent ? 'bg-blue-600 text-white' : 'bg-white dark:bg-white/10 text-slate-900 dark:text-slate-100 border border-slate-200/80 dark:border-white/10 msg-bubble-in';
+    // Header Bloque Citado (Reply To)
+    const replySnippetHtml = m.replyTo ? `
+      <div onclick="event.stopPropagation(); scrollToMessage('${m.replyTo.id}')" class="mb-1.5 p-1.5 px-2.5 rounded-xl bg-black/10 dark:bg-black/25 border-l-3 ${isAgent ? 'border-white' : 'border-blue-500'} cursor-pointer hover:opacity-90 transition text-left">
+        <div class="font-bold ${isAgent ? 'text-white' : 'text-blue-600 dark:text-blue-400'} text-[10px] truncate">${escapeHtml(m.replyTo.senderName || 'Contacto')}</div>
+        <div class="truncate opacity-85 text-[11px] ${isAgent ? 'text-blue-50' : 'text-slate-600 dark:text-slate-300'}">${escapeHtml(m.replyTo.text || 'Adjunto')}</div>
+      </div>
+    ` : '';
+
+    // Header Reenviado
+    const forwardedHtml = m.forwarded ? `
+      <div class="flex items-center space-x-1 text-[10px] italic ${isAgent ? 'text-blue-100/80' : 'text-slate-400 dark:text-slate-500'} mb-1">
+        <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3"/></svg>
+        <span>Reenviado</span>
+      </div>
+    ` : '';
+
+    // Footer de la Burbuja (Hora, Pin, Star, Checks)
+    const bubbleFooterHtml = `
+      <div class="flex items-center justify-end space-x-1 text-[10px] font-mono ${isAgent ? 'text-blue-100/85' : 'text-slate-400 dark:text-slate-500'} pt-0.5 select-none">
+        ${m.isPinned ? `<svg class="w-3 h-3 text-blue-300 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" title="Fijado"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"/></svg>` : ''}
+        ${m.isStarred ? `<svg class="w-3 h-3 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" title="Destacado"><path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>` : ''}
+        <span>${timeFormatted}</span>
+        ${isAgent ? MSG_DOUBLE_CHECK_SVG : ''}
+      </div>
+    `;
+
+    // 1. Audio Message
+    let innerContentHtml = '';
+    if (m.attachment && m.attachment.type === 'audio') {
+      innerContentHtml = `
+        <div class="space-y-1">
+          ${replySnippetHtml}
+          ${forwardedHtml}
+          ${renderAudioBubbleHtml(m.attachment.url, m.attachment.duration, timeFormatted, isAgent, m.isPinned, m.isStarred)}
+        </div>
+      `;
+    } 
+    // 2. Image Message
+    else if (m.attachment && m.attachment.type === 'image') {
+      const bgClass = isAgent 
+        ? 'bg-gradient-to-br from-[#1d4ed8] to-[#1e40af] dark:from-[#2563eb] dark:to-[#1d4ed8] text-white shadow-md border border-blue-400/20 rounded-tr-xs' 
+        : 'bg-white dark:bg-[#1a2333] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 shadow-sm rounded-tl-xs msg-bubble-in';
+      const rawText = m.text ? m.text.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[\u2600-\u26FF\u2700-\u27BF]/g, '').trim() : '';
+      const hasCustomText = rawText && rawText.toLowerCase() !== 'foto enviada' && rawText.toLowerCase() !== 'foto con anotaciones' && rawText.toLowerCase() !== 'foto enviada con anotaciones';
+
+      innerContentHtml = `
+        <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-1.5 shadow-sm text-xs space-y-1 group">
+          ${replySnippetHtml}
+          ${forwardedHtml}
+          <div class="relative overflow-hidden rounded-xl bg-slate-950/20 cursor-pointer" onclick="openChatImageViewer('${m.attachment.url}')">
+            <img src="${m.attachment.url}" class="w-full max-h-72 object-cover rounded-xl transition duration-200 group-hover:scale-[1.01]" alt="Foto">
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none rounded-xl"></div>
+          </div>
+          <div class="px-2 pt-1 pb-0.5 flex flex-col gap-1">
+            ${hasCustomText ? `<p class="leading-relaxed select-text text-[13px]">${escapeHtml(rawText)}</p>` : `
+              <div class="flex items-center gap-1.5 text-[11px] ${isAgent ? 'text-blue-100/90' : 'text-slate-500 dark:text-slate-400'} font-medium">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
+                <span>Foto adjunta</span>
+              </div>
+            `}
+            ${bubbleFooterHtml}
+          </div>
+        </div>
+      `;
+    }
+    // 3. Location Message
+    else if (m.attachment && m.attachment.type === 'location') {
+      const bgClass = isAgent 
+        ? 'bg-gradient-to-br from-[#1d4ed8] to-[#1e40af] dark:from-[#2563eb] dark:to-[#1d4ed8] text-white shadow-md border border-blue-400/20 rounded-tr-xs' 
+        : 'bg-white dark:bg-[#1a2333] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 shadow-sm rounded-tl-xs msg-bubble-in';
       const lat = m.attachment.lat || -12.046374;
       const lng = m.attachment.lng || -77.042793;
       const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
       const isLive = m.attachment.isLive === true;
+      const cleanAddress = m.attachment.address ? m.attachment.address.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[\u2600-\u26FF\u2700-\u27BF]/g, '').trim() : 'Coordenadas capturadas vía satélite';
 
-      return `
-        <div class="flex ${isAgent ? 'justify-end' : 'justify-start'}">
-          <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl ${isAgent ? 'rounded-tr-sm' : 'rounded-tl-sm'} p-2.5 shadow-sm text-xs space-y-2">
-            <!-- Map Preview Card -->
-            <div class="relative w-full h-32 rounded-xl overflow-hidden bg-slate-800 border border-white/20 flex items-center justify-center">
-              <div class="absolute inset-0 bg-cover bg-center opacity-70" style="background-image: url('https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&auto=format&fit=crop&q=80')"></div>
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-              
-              <!-- Radar / Pin Indicator -->
-              <div class="relative z-10 flex flex-col items-center">
-                ${isLive ? `
-                  <div class="relative flex items-center justify-center">
-                    <span class="absolute w-12 h-12 rounded-full bg-emerald-500/40 animate-ping"></span>
-                    <span class="relative w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg text-sm font-bold">📡</span>
+      innerContentHtml = `
+        <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2">
+          ${replySnippetHtml}
+          ${forwardedHtml}
+          <div class="relative w-full h-32 rounded-xl overflow-hidden bg-slate-900 border border-white/15 flex items-center justify-center">
+            <div class="absolute inset-0 bg-cover bg-center opacity-65" style="background-image: url('https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&auto=format&fit=crop&q=80')"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent"></div>
+            <div class="relative z-10 flex flex-col items-center">
+              ${isLive ? `
+                <div class="relative flex items-center justify-center">
+                  <span class="absolute w-12 h-12 rounded-full bg-emerald-400/40 animate-ping"></span>
+                  <div class="relative w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/40">
+                    <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.98 0 13.789M12 12h.008v.008H12V12z"/></svg>
                   </div>
-                  <span class="mt-1 px-2 py-0.5 rounded-full bg-emerald-600/90 text-white text-[10px] font-bold uppercase tracking-wider shadow-sm animate-pulse">En Vivo</span>
-                ` : `
-                  <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg text-base">📍</div>
-                  <span class="mt-1 px-2 py-0.5 rounded-full bg-slate-900/80 text-white text-[10px] font-semibold">Ubicación GPS</span>
-                `}
-              </div>
-
-              <!-- Coordenadas badge -->
-              <div class="absolute bottom-1.5 left-2 z-10 text-[10px] text-white/90 font-mono">
-                ${lat.toFixed(5)}, ${lng.toFixed(5)}
-              </div>
+                </div>
+                <span class="mt-1 px-2.5 py-0.5 rounded-full bg-emerald-600/90 text-white text-[9px] font-bold uppercase tracking-wider shadow-xs backdrop-blur-xs">GPS En Tiempo Real</span>
+              ` : `
+                <div class="relative flex items-center justify-center">
+                  <div class="w-9 h-9 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-600/40">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                  </div>
+                </div>
+                <span class="mt-1 px-2 py-0.5 rounded-full bg-slate-900/85 text-white text-[9px] font-semibold backdrop-blur-xs">Punto GPS</span>
+              `}
             </div>
-
-            <!-- Información y Botón Abrir Maps -->
-            <div class="px-1">
-              <div class="font-semibold text-xs leading-snug flex items-center space-x-1.5">
-                <span>${isLive ? '📡 Señal GPS en Tiempo Real' : '📍 Ubicación Compartida'}</span>
-              </div>
-              <p class="text-[11px] opacity-85 mt-0.5 leading-tight">${escapeHtml(m.attachment.address || 'Coordenadas capturadas vía satélite')}</p>
+            <div class="absolute bottom-1.5 left-2 z-10 text-[10px] text-white/90 font-mono bg-black/50 px-2 py-0.5 rounded-md backdrop-blur-xs">
+              ${lat.toFixed(5)}, ${lng.toFixed(5)}
             </div>
-
-            <div class="pt-1 flex items-center justify-between border-t border-white/10 px-1">
-              <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg ${isAgent ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'} text-[11px] font-bold flex items-center space-x-1.5 transition shadow-xs">
-                <span>Ver en Google Maps</span>
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-              </a>
-              <div class="flex items-center space-x-1 text-[10px] font-mono opacity-70">
-                <span>${timeFormatted}</span>
-                ${isAgent ? '<span>✓✓</span>' : ''}
-              </div>
+          </div>
+          <div class="px-1 space-y-0.5">
+            <div class="font-semibold text-xs leading-snug flex items-center space-x-1.5">
+              <svg class="w-4 h-4 ${isLive ? 'text-emerald-400' : 'text-rose-400'} flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+              <span>${isLive ? 'Señal GPS en Tiempo Real' : 'Ubicación Compartida'}</span>
             </div>
+            <p class="text-[11px] ${isAgent ? 'text-blue-100/90' : 'text-slate-500 dark:text-slate-400'} mt-0.5 leading-tight">${escapeHtml(cleanAddress)}</p>
+          </div>
+          <div class="pt-1.5 flex items-center justify-between border-t ${isAgent ? 'border-white/15' : 'border-slate-100 dark:border-white/10'} px-1">
+            <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl ${isAgent ? 'bg-white text-blue-700 hover:bg-blue-50 shadow-xs' : 'btn-brand-primary text-white shadow-xs'} text-[11px] font-semibold flex items-center space-x-1.5 transition">
+              <span>Ver en Google Maps</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+            </a>
+            ${bubbleFooterHtml}
           </div>
         </div>
       `;
     }
+    // 3.5 File / Document Message
+    else if (m.attachment && m.attachment.type === 'file') {
+      const bgClass = isAgent 
+        ? 'bg-gradient-to-br from-[#1d4ed8] to-[#1e40af] dark:from-[#2563eb] dark:to-[#1d4ed8] text-white shadow-md border border-blue-400/20 rounded-tr-xs' 
+        : 'bg-white dark:bg-[#1a2333] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 shadow-sm rounded-tl-xs msg-bubble-in';
+      const fileName = m.attachment.name || 'documento.bin';
+      const fileSize = m.attachment.size || '';
+      const fileBadge = getFileBadgeInfo(fileName);
+      const rawText = m.text ? m.text.trim() : '';
+      const hasCaption = rawText && rawText !== fileName && !rawText.startsWith('[Adjunto:');
 
+      innerContentHtml = `
+        <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group">
+          ${replySnippetHtml}
+          ${forwardedHtml}
+          <div class="flex items-center space-x-3 p-2.5 rounded-xl ${isAgent ? 'bg-black/20 border border-white/15' : 'bg-slate-100/90 dark:bg-black/30 border border-slate-200 dark:border-white/10'} hover:bg-black/25 transition">
+            <div class="w-10 h-10 rounded-xl ${fileBadge.colorClass} flex items-center justify-center flex-shrink-0 shadow-2xs">
+              ${fileBadge.iconSvg}
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-xs sm:text-sm truncate select-text" title="${escapeHtml(fileName)}">${escapeHtml(fileName)}</div>
+              <div class="text-[10px] ${isAgent ? 'text-blue-100/80' : 'text-slate-400 dark:text-slate-500'} font-mono mt-0.5">${fileSize ? escapeHtml(fileSize) + ' • ' : ''}${fileBadge.typeLabel}</div>
+            </div>
+            <a href="${m.attachment.url || '#'}" download="${escapeHtml(fileName)}" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-full ${isAgent ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-white'} flex items-center justify-center flex-shrink-0 transition shadow-2xs" title="Descargar archivo">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+            </a>
+          </div>
+          ${hasCaption ? `<p class="px-1 text-[13px] leading-relaxed select-text">${escapeHtml(rawText)}</p>` : ''}
+          ${bubbleFooterHtml}
+        </div>
+      `;
+    }
+    // 3.6 Legacy [Adjunto: ...] Message upgrade
+    else if (!m.attachment && m.text && /^\[Adjunto:\s*(.+?)\]$/i.test(m.text.trim())) {
+      const match = m.text.trim().match(/^\[Adjunto:\s*(.+?)\]$/i);
+      const legacyFileName = match ? match[1] : 'archivo_adjunto';
+      const fileBadge = getFileBadgeInfo(legacyFileName);
+      const bgClass = isAgent 
+        ? 'bg-gradient-to-br from-[#1d4ed8] to-[#1e40af] dark:from-[#2563eb] dark:to-[#1d4ed8] text-white shadow-md border border-blue-400/20 rounded-tr-xs' 
+        : 'bg-white dark:bg-[#1a2333] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 shadow-sm rounded-tl-xs msg-bubble-in';
+
+      innerContentHtml = `
+        <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group">
+          ${replySnippetHtml}
+          ${forwardedHtml}
+          <div class="flex items-center space-x-3 p-2.5 rounded-xl ${isAgent ? 'bg-black/20 border border-white/15' : 'bg-slate-100/90 dark:bg-black/30 border border-slate-200 dark:border-white/10'}">
+            <div class="w-10 h-10 rounded-xl ${fileBadge.colorClass} flex items-center justify-center flex-shrink-0 shadow-2xs">
+              ${fileBadge.iconSvg}
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-xs sm:text-sm truncate select-text" title="${escapeHtml(legacyFileName)}">${escapeHtml(legacyFileName)}</div>
+              <div class="text-[10px] ${isAgent ? 'text-blue-100/80' : 'text-slate-400 dark:text-slate-500'} font-mono mt-0.5">${fileBadge.typeLabel}</div>
+            </div>
+            <div class="w-7 h-7 rounded-full ${isAgent ? 'bg-white/20' : 'bg-slate-200 dark:bg-white/10'} flex items-center justify-center flex-shrink-0 text-[11px] font-bold">
+              ✓
+            </div>
+          </div>
+          ${bubbleFooterHtml}
+        </div>
+      `;
+    }
     // 4. Regular Text Message
-    if (isAgent) {
-      return `
-        <div class="flex justify-end">
-          <div class="max-w-[85%] sm:max-w-md bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 shadow-xs text-xs space-y-1">
-            <p class="leading-relaxed whitespace-pre-wrap select-text">${escapeHtml(m.text)}</p>
-            <div class="flex items-center justify-end space-x-1 text-[10px] text-blue-100/90 font-mono">
-              <span>${timeFormatted}</span>
-              <span title="Entregado">✓✓</span>
-            </div>
-          </div>
-        </div>
-      `;
-    } else {
-      return `
-        <div class="flex justify-start">
-          <div class="max-w-[85%] sm:max-w-md bg-white dark:bg-white/10 text-slate-900 dark:text-slate-100 border border-slate-200/80 dark:border-white/10 rounded-2xl rounded-tl-sm px-4 py-2.5 shadow-xs text-xs space-y-1 msg-bubble-in">
-            <p class="leading-relaxed whitespace-pre-wrap select-text msg-text">${escapeHtml(m.text)}</p>
-            <div class="flex items-center justify-start space-x-1 text-[10px] text-slate-500 dark:text-slate-400 font-mono msg-time">
-              <span>${timeFormatted}</span>
-            </div>
-          </div>
+    else {
+      const bgClass = isAgent 
+        ? 'bg-gradient-to-br from-[#1d4ed8] to-[#1e40af] dark:from-[#2563eb] dark:to-[#1d4ed8] text-white rounded-2xl rounded-tr-xs px-4 py-2.5 shadow-sm border border-blue-400/20' 
+        : 'bg-white dark:bg-[#1a2333] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 rounded-2xl rounded-tl-xs px-4 py-2.5 shadow-xs msg-bubble-in';
+      const cleanText = m.text ? m.text.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[\u2600-\u26FF\u2700-\u27BF]/g, '').trim() : '';
+
+      innerContentHtml = `
+        <div class="max-w-[85%] sm:max-w-md ${bgClass} text-xs sm:text-[13px] space-y-1">
+          ${replySnippetHtml}
+          ${forwardedHtml}
+          <p class="leading-relaxed whitespace-pre-wrap select-text msg-text">${escapeHtml(cleanText || m.text)}</p>
+          ${bubbleFooterHtml}
         </div>
       `;
     }
+
+    const reactionsHtml = renderReactionsCluster(m);
+
+    return `
+      <div class="chat-message-row relative w-full flex ${isAgent ? 'justify-end' : 'justify-start'} group py-0.5 select-none"
+           data-msg-id="${m.id}"
+           data-is-agent="${isAgent}"
+           onclick="handleChatMessageClick(event, '${m.id}')"
+           oncontextmenu="handleChatMessageContextMenu(event, '${m.id}')"
+           ondblclick="handleChatMessageDblClick(event, '${m.id}')">
+        
+        <div class="msg-swipe-container flex items-center max-w-full ${isAgent ? 'justify-end' : 'justify-start'} relative"
+             ontouchstart="handleMessageTouchStart(event, '${m.id}')"
+             ontouchmove="handleMessageTouchMove(event, '${m.id}')"
+             ontouchend="handleMessageTouchEnd(event, '${m.id}')">
+          
+          <!-- Checkbox selección múltiple -->
+          <div class="msg-select-check-container ${isMessageSelectionMode ? 'flex' : 'hidden'} items-center pr-2.5 flex-shrink-0 cursor-pointer"
+               onclick="event.stopPropagation(); toggleSelectMessage('${m.id}')">
+            <div class="w-5 h-5 rounded-md border-2 ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 dark:border-white/20 bg-white dark:bg-slate-800'} flex items-center justify-center transition shadow-2xs">
+              ${isSelected ? '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>' : ''}
+            </div>
+          </div>
+
+          <!-- Bubble wrapper con ID para scroll y pulsos -->
+          <div id="msg-${m.id}" class="flex flex-col ${isAgent ? 'items-end' : 'items-start'} ${isSelected ? 'chat-bubble-selected ring-2 ring-blue-500 rounded-2xl' : ''}">
+            ${innerContentHtml}
+            ${reactionsHtml}
+          </div>
+
+          <!-- Indicador swipe móvil -->
+          <div class="msg-swipe-indicator flex items-center justify-center pl-2 opacity-0 pointer-events-none transition-all">
+            <div class="w-7 h-7 rounded-full bg-blue-600/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/></svg>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    `;
   }).join('');
+}
+
+// ========================================================
+// FUNCIONES INTERACTIVAS DEL CHAT (MENÚ CONTEXTUAL, SELECCIÓN, ETC.)
+// ========================================================
+
+function handleChatMessageClick(e, msgId) {
+  if (isMessageSelectionMode) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleSelectMessage(msgId);
+  }
+}
+
+function handleChatMessageContextMenu(e, msgId) {
+  e.preventDefault();
+  e.stopPropagation();
+  closeAllChatContextMenus();
+
+  activeContextMenuMsgId = msgId;
+  const msg = currentChatMessages.find(m => m.id === msgId);
+  if (!msg) return;
+
+  // Botón Guardar Como (mostrar sólo si hay adjunto)
+  const saveBtn = document.getElementById('cm-save-btn');
+  if (saveBtn) {
+    if (msg.attachment && msg.attachment.url) {
+      saveBtn.classList.remove('hidden');
+      saveBtn.classList.add('flex');
+    } else {
+      saveBtn.classList.add('hidden');
+      saveBtn.classList.remove('flex');
+    }
+  }
+
+  // Actualizar textos de fijar y destacar
+  const pinLabel = document.getElementById('cm-pin-label');
+  if (pinLabel) {
+    pinLabel.textContent = msg.isPinned ? 'Desfijar mensaje' : 'Fijar mensaje en el chat';
+  }
+  const starLabel = document.getElementById('cm-star-label');
+  if (starLabel) {
+    starLabel.textContent = msg.isStarred ? 'Quitar destacado' : 'Destacar mensaje';
+  }
+
+  const menu = document.getElementById('chat-message-context-menu');
+  if (!menu) return;
+
+  menu.classList.remove('hidden');
+
+  // Posicionar con clamp a la pantalla
+  const menuWidth = 256;
+  const menuHeight = 340;
+  let x = e.clientX;
+  let y = e.clientY;
+
+  if (x + menuWidth > window.innerWidth) x = Math.max(10, window.innerWidth - menuWidth - 12);
+  if (y + menuHeight > window.innerHeight) y = Math.max(10, window.innerHeight - menuHeight - 12);
+  if (x < 10) x = 10;
+  if (y < 10) y = 10;
+
+  menu.style.left = `${x}px`;
+  menu.style.top = `${y}px`;
+}
+
+function handleChatCanvasContextMenu(e) {
+  e.preventDefault();
+  closeAllChatContextMenus();
+
+  const menu = document.getElementById('chat-canvas-context-menu');
+  if (!menu) return;
+
+  menu.classList.remove('hidden');
+  const menuWidth = 224;
+  const menuHeight = 110;
+  let x = e.clientX;
+  let y = e.clientY;
+
+  if (x + menuWidth > window.innerWidth) x = Math.max(10, window.innerWidth - menuWidth - 12);
+  if (y + menuHeight > window.innerHeight) y = Math.max(10, window.innerHeight - menuHeight - 12);
+  if (x < 10) x = 10;
+  if (y < 10) y = 10;
+
+  menu.style.left = `${x}px`;
+  menu.style.top = `${y}px`;
+}
+
+function closeAllChatContextMenus() {
+  const msgMenu = document.getElementById('chat-message-context-menu');
+  const canvasMenu = document.getElementById('chat-canvas-context-menu');
+  if (msgMenu) msgMenu.classList.add('hidden');
+  if (canvasMenu) canvasMenu.classList.add('hidden');
+}
+
+function closeActiveChat() {
+  activeConversationId = null;
+  renderEmptyChatWorkspace();
+  closeMobileChatView();
+  closeAllChatContextMenus();
+}
+
+function contextMenuAction(action) {
+  const msgId = activeContextMenuMsgId;
+  closeAllChatContextMenus();
+  if (!msgId) return;
+
+  if (action === 'reply') {
+    setReplyMessage(msgId);
+  } else if (action === 'copy') {
+    copyContextMessage(msgId);
+  } else if (action === 'forward') {
+    openForwardModal(msgId);
+  } else if (action === 'pin') {
+    togglePinChatMessage(msgId);
+  } else if (action === 'star') {
+    toggleStarChatMessage(msgId);
+  } else if (action === 'select') {
+    startMessageSelection(msgId);
+  } else if (action === 'save') {
+    saveContextMessageAttachment(msgId);
+  } else if (action === 'delete') {
+    openDeleteConfirmModal(msgId);
+  }
+}
+
+function copyContextMessage(msgId) {
+  const targetId = msgId || activeContextMenuMsgId;
+  const msg = currentChatMessages.find(m => m.id === targetId);
+  if (!msg) return;
+
+  const content = msg.text || (msg.attachment ? msg.attachment.url : '');
+  if (!content) return;
+
+  navigator.clipboard.writeText(content).then(() => {
+    showToast('Mensaje copiado al portapapeles', 'success');
+  }).catch(() => {
+    showToast('No se pudo copiar el mensaje', 'warning');
+  });
+}
+
+function saveContextMessageAttachment(msgId) {
+  const targetId = msgId || activeContextMenuMsgId;
+  const msg = currentChatMessages.find(m => m.id === targetId);
+  if (!msg || !msg.attachment || !msg.attachment.url) {
+    showToast('Este mensaje no contiene archivo para descargar', 'info');
+    return;
+  }
+
+  const a = document.createElement('a');
+  a.href = msg.attachment.url;
+  a.download = msg.attachment.name || `archivo_${Date.now()}`;
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('Descargando archivo...', 'info');
+}
+
+// MODO SELECCIÓN MÚLTIPLE
+function startMessageSelection(initialMsgId) {
+  isMessageSelectionMode = true;
+  selectedChatMessageIds.clear();
+  if (initialMsgId) {
+    selectedChatMessageIds.add(initialMsgId);
+  }
+
+  const normalBar = document.getElementById('chat-normal-input-bar');
+  const selBar = document.getElementById('chat-selection-action-bar');
+  if (normalBar) normalBar.classList.add('hidden');
+  if (selBar) {
+    selBar.classList.remove('hidden');
+    selBar.classList.add('flex');
+  }
+
+  const container = document.getElementById('chat-messages-container');
+  if (container) container.classList.add('chat-selection-active');
+
+  updateSelectionCounter();
+  renderChatMessages(currentChatMessages);
+}
+
+function toggleSelectMessage(msgId) {
+  if (!isMessageSelectionMode) {
+    startMessageSelection(msgId);
+    return;
+  }
+
+  if (selectedChatMessageIds.has(msgId)) {
+    selectedChatMessageIds.delete(msgId);
+  } else {
+    selectedChatMessageIds.add(msgId);
+  }
+
+  updateSelectionCounter();
+  renderChatMessages(currentChatMessages);
+}
+
+function updateSelectionCounter() {
+  const badge = document.getElementById('selection-counter-badge');
+  if (badge) {
+    const count = selectedChatMessageIds.size;
+    badge.textContent = `${count} seleccionado${count === 1 ? '' : 's'}`;
+  }
+}
+
+function exitMessageSelectionMode() {
+  isMessageSelectionMode = false;
+  selectedChatMessageIds.clear();
+
+  const normalBar = document.getElementById('chat-normal-input-bar');
+  const selBar = document.getElementById('chat-selection-action-bar');
+  if (normalBar) normalBar.classList.remove('hidden');
+  if (selBar) {
+    selBar.classList.add('hidden');
+    selBar.classList.remove('flex');
+  }
+
+  const container = document.getElementById('chat-messages-container');
+  if (container) container.classList.remove('chat-selection-active');
+
+  renderChatMessages(currentChatMessages);
+}
+
+async function copySelectedMessages() {
+  if (selectedChatMessageIds.size === 0) return;
+  const selectedMsgs = currentChatMessages
+    .filter(m => selectedChatMessageIds.has(m.id))
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+  const texts = selectedMsgs.map(m => {
+    const author = m.sender === 'agent' ? 'Tú' : 'Contacto';
+    const time = formatMessageTime(m.timestamp);
+    const content = m.text || (m.attachment ? `[Adjunto: ${m.attachment.type}]` : '');
+    return `[${time}] ${author}: ${content}`;
+  }).join('\n');
+
+  try {
+    await navigator.clipboard.writeText(texts);
+    showToast(`${selectedChatMessageIds.size} mensajes copiados`, 'success');
+  } catch (err) {
+    showToast('No se pudo copiar al portapapeles', 'warning');
+  }
+  exitMessageSelectionMode();
+}
+
+async function starSelectedMessages() {
+  if (selectedChatMessageIds.size === 0 || !activeConversationId) return;
+  const msgIds = Array.from(selectedChatMessageIds);
+  try {
+    const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages/batch-action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'star', messageIds: msgIds })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`${msgIds.length} mensajes destacados`, 'success');
+      await selectConversation(activeConversationId);
+    } else {
+      showToast(data.message || 'Error al destacar mensajes', 'error');
+    }
+  } catch (err) {
+    showToast('Fallo al destacar mensajes', 'error');
+  }
+  exitMessageSelectionMode();
+}
+
+function forwardSelectedMessages() {
+  if (selectedChatMessageIds.size === 0) return;
+  openForwardModal(Array.from(selectedChatMessageIds));
+}
+
+function deleteSelectedMessagesPrompt() {
+  if (selectedChatMessageIds.size === 0) return;
+  openDeleteConfirmModal('batch');
+}
+
+// ELIMINACIÓN DE MENSAJES (MODAL)
+function openDeleteConfirmModal(target) {
+  activeDeleteTarget = target;
+  const modal = document.getElementById('chat-delete-confirm-modal');
+  const title = document.getElementById('delete-modal-title');
+  if (!modal) return;
+
+  if (target === 'batch') {
+    const count = selectedChatMessageIds.size;
+    if (title) title.textContent = `¿Eliminar ${count} mensaje(s)?`;
+  } else {
+    if (title) title.textContent = '¿Eliminar mensaje?';
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeDeleteConfirmModal() {
+  const modal = document.getElementById('chat-delete-confirm-modal');
+  if (modal) modal.classList.add('hidden');
+  activeDeleteTarget = null;
+}
+
+async function executeDeleteMessage(mode) {
+  if (!activeConversationId || !activeDeleteTarget) return;
+
+  try {
+    if (activeDeleteTarget === 'batch') {
+      const msgIds = Array.from(selectedChatMessageIds);
+      const action = mode === 'everyone' ? 'delete_everyone' : 'delete_me';
+      const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages/batch-action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, messageIds: msgIds })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`${msgIds.length} mensajes eliminados`, 'info');
+        exitMessageSelectionMode();
+        await selectConversation(activeConversationId);
+      } else {
+        showToast(data.message || 'Error al eliminar mensajes', 'error');
+      }
+    } else {
+      const msgId = activeDeleteTarget;
+      const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages/${encodeURIComponent(msgId)}?mode=${mode}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(mode === 'everyone' ? 'Mensaje eliminado para todos' : 'Mensaje eliminado para ti', 'info');
+        await selectConversation(activeConversationId);
+      } else {
+        showToast(data.message || 'Error al eliminar mensaje', 'error');
+      }
+    }
+  } catch (err) {
+    console.error('Error deleting message:', err);
+    showToast('Fallo al eliminar mensaje', 'error');
+  } finally {
+    closeDeleteConfirmModal();
+  }
+}
+
+// FIJAR Y DESTACAR MENSAJES
+async function togglePinChatMessage(msgId) {
+  if (!activeConversationId || !msgId) return;
+  try {
+    const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages/${encodeURIComponent(msgId)}/pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    if (data.success) {
+      const isPinned = data.isPinned !== undefined ? data.isPinned : data.data?.isPinned;
+      activePinnedMessageId = data.pinnedMessageId !== undefined ? data.pinnedMessageId : (data.data?.pinnedMessageId || null);
+      
+      const msg = currentChatMessages.find(m => m.id === msgId);
+      if (msg) msg.isPinned = isPinned;
+      
+      updateChatPinnedBanner();
+      renderChatMessages(currentChatMessages);
+      showToast(isPinned ? 'Mensaje fijado en el chat' : 'Mensaje desfijado', 'success');
+    } else {
+      showToast(data.message || 'Error al fijar mensaje', 'error');
+    }
+  } catch (err) {
+    console.error('Error pinning message:', err);
+    showToast('Fallo al fijar mensaje', 'error');
+  }
+}
+
+async function toggleStarChatMessage(msgId) {
+  if (!activeConversationId || !msgId) return;
+  try {
+    const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages/${encodeURIComponent(msgId)}/star`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    if (data.success) {
+      const isStarred = data.isStarred !== undefined ? data.isStarred : data.data?.isStarred;
+      const msg = currentChatMessages.find(m => m.id === msgId);
+      if (msg) msg.isStarred = isStarred;
+      renderChatMessages(currentChatMessages);
+      showToast(isStarred ? 'Mensaje destacado' : 'Mensaje ya no está destacado', 'success');
+    } else {
+      showToast(data.message || 'Error al destacar mensaje', 'error');
+    }
+  } catch (err) {
+    console.error('Error starring message:', err);
+    showToast('Fallo al destacar mensaje', 'error');
+  }
+}
+
+async function unpinCurrentPinnedMessage() {
+  if (!activePinnedMessageId || !activeConversationId) return;
+  await togglePinChatMessage(activePinnedMessageId);
+}
+
+function scrollToPinnedMessage() {
+  if (activePinnedMessageId) {
+    scrollToMessage(activePinnedMessageId);
+  }
+}
+
+function updateChatPinnedBanner() {
+  const banner = document.getElementById('chat-pinned-banner');
+  const textEl = document.getElementById('chat-pinned-text');
+  if (!banner || !textEl) return;
+
+  if (!activePinnedMessageId) {
+    banner.classList.add('hidden');
+    banner.classList.remove('flex');
+    return;
+  }
+
+  const msg = currentChatMessages.find(m => m.id === activePinnedMessageId);
+  if (!msg || msg.isDeletedForEveryone) {
+    banner.classList.add('hidden');
+    banner.classList.remove('flex');
+    return;
+  }
+
+  const snippet = msg.text || (msg.attachment ? `[Adjunto: ${msg.attachment.type || 'archivo'}]` : 'Mensaje fijado');
+  textEl.textContent = snippet;
+  banner.classList.remove('hidden');
+  banner.classList.add('flex');
+}
+
+// RESPUESTAS Y CITAS
+function setReplyMessage(msgId) {
+  const msg = currentChatMessages.find(m => m.id === msgId);
+  if (!msg || msg.isDeletedForEveryone) return;
+
+  const conv = currentConversations.find(c => c.id === activeConversationId);
+  const contactName = conv ? (conv.name || conv.contactName || 'Contacto') : 'Contacto';
+  const authorName = msg.sender === 'agent' ? 'Tú' : contactName;
+  const textSnippet = msg.text || (msg.attachment ? (msg.attachment.name || `[Adjunto: ${msg.attachment.type}]`) : 'Mensaje');
+
+  activeReplyMessage = {
+    id: msg.id,
+    senderName: authorName,
+    text: textSnippet
+  };
+
+  const previewBar = document.getElementById('chat-reply-preview-bar');
+  const authorEl = document.getElementById('reply-preview-author');
+  const snippetEl = document.getElementById('reply-preview-snippet');
+
+  if (authorEl) authorEl.textContent = authorName;
+  if (snippetEl) snippetEl.textContent = textSnippet;
+
+  if (previewBar) {
+    previewBar.classList.remove('hidden');
+    previewBar.classList.add('flex');
+  }
+
+  const inputEl = document.getElementById('chat-input-text');
+  if (inputEl) {
+    inputEl.focus();
+  }
+}
+
+function cancelReplyMessage() {
+  activeReplyMessage = null;
+  const previewBar = document.getElementById('chat-reply-preview-bar');
+  if (previewBar) {
+    previewBar.classList.add('hidden');
+    previewBar.classList.remove('flex');
+  }
+}
+
+function scrollToMessage(msgId) {
+  const el = document.getElementById('msg-' + msgId);
+  if (!el) {
+    showToast('El mensaje no está visible actualmente', 'info');
+    return;
+  }
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.add('msg-highlight-pulse');
+  setTimeout(() => {
+    el.classList.remove('msg-highlight-pulse');
+  }, 1800);
+}
+
+// GESTOS: DOBLE CLIC EN PC Y SWIPE EN MÓVIL
+function handleChatMessageDblClick(e, msgId) {
+  if (isMessageSelectionMode) return;
+  e.preventDefault();
+  e.stopPropagation();
+  setReplyMessage(msgId);
+}
+
+let touchStartX = 0;
+let touchStartY = 0;
+let touchCurrentMsgId = null;
+let isSwipingMsg = false;
+let swipedElement = null;
+
+function handleMessageTouchStart(e, msgId) {
+  if (isMessageSelectionMode || e.touches.length !== 1) return;
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+  touchCurrentMsgId = msgId;
+  isSwipingMsg = false;
+  swipedElement = e.currentTarget;
+}
+
+function handleMessageTouchMove(e, msgId) {
+  if (isMessageSelectionMode || !swipedElement || touchCurrentMsgId !== msgId) return;
+  const currentX = e.touches[0].clientX;
+  const currentY = e.touches[0].clientY;
+  const diffX = currentX - touchStartX;
+  const diffY = currentY - touchStartY;
+
+  // Solo deslizar de derecha a izquierda (diffX < 0)
+  if (diffX < 0 && Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 8) {
+    isSwipingMsg = true;
+    const clampedDiff = Math.max(diffX, -70);
+    swipedElement.style.transform = `translateX(${clampedDiff}px)`;
+    swipedElement.style.transition = 'none';
+
+    const indicator = swipedElement.querySelector('.msg-swipe-indicator');
+    if (indicator) {
+      const progress = Math.min(Math.abs(clampedDiff) / 45, 1);
+      indicator.style.opacity = progress.toString();
+      indicator.style.transform = `scale(${0.7 + progress * 0.3})`;
+    }
+  }
+}
+
+function handleMessageTouchEnd(e, msgId) {
+  if (!swipedElement || touchCurrentMsgId !== msgId) return;
+
+  if (isSwipingMsg) {
+    const currentX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : touchStartX;
+    const diffX = currentX - touchStartX;
+
+    if (diffX <= -40) {
+      setReplyMessage(msgId);
+      if (navigator.vibrate) {
+        try { navigator.vibrate(30); } catch (_) {}
+      }
+    }
+
+    swipedElement.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    swipedElement.style.transform = 'translateX(0px)';
+
+    const indicator = swipedElement.querySelector('.msg-swipe-indicator');
+    if (indicator) {
+      indicator.style.opacity = '0';
+      indicator.style.transform = 'scale(0.7)';
+    }
+
+    setTimeout(() => {
+      if (swipedElement) {
+        swipedElement.style.transition = '';
+      }
+    }, 280);
+  }
+
+  touchStartX = 0;
+  touchStartY = 0;
+  touchCurrentMsgId = null;
+  isSwipingMsg = false;
+  swipedElement = null;
+}
+
+// REACCIONES
+async function toggleMessageReaction(msgId, emoji) {
+  if (!activeConversationId || !msgId || !emoji) return;
+  try {
+    const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages/${encodeURIComponent(msgId)}/reaction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emoji })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const msg = currentChatMessages.find(m => m.id === msgId);
+      if (msg) {
+        msg.reactions = data.reactions || data.data?.reactions || {};
+        renderChatMessages(currentChatMessages);
+      }
+    } else {
+      showToast(data.message || 'Error al reaccionar', 'error');
+    }
+  } catch (err) {
+    console.error('Error reacting to message:', err);
+  }
+}
+
+function reactToContextMessage(emoji) {
+  if (!activeContextMenuMsgId) return;
+  const msgId = activeContextMenuMsgId;
+  closeAllChatContextMenus();
+  closeEmojiPicker();
+  toggleMessageReaction(msgId, emoji);
+}
+
+function openSystemEmojiPickerForReaction() {
+  emojiPickerTarget = 'reaction';
+  const picker = document.getElementById('chat-emoji-picker');
+  const menu = document.getElementById('chat-message-context-menu');
+  if (!picker) return;
+
+  if (menu && !menu.classList.contains('hidden')) {
+    const rect = menu.getBoundingClientRect();
+    picker.style.position = 'fixed';
+    let left = rect.left;
+    let top = rect.bottom + 6;
+    if (left + 320 > window.innerWidth) left = Math.max(10, window.innerWidth - 330);
+    if (top + 280 > window.innerHeight) top = Math.max(10, rect.top - 290);
+    picker.style.left = `${left}px`;
+    picker.style.top = `${top}px`;
+    picker.style.bottom = 'auto';
+  }
+
+  picker.classList.remove('hidden');
+  renderEmojis();
+}
+
+// MODAL REENVIAR MENSAJES
+function openForwardModal(msgIds) {
+  forwardSourceMsgIds = Array.isArray(msgIds) ? msgIds : [msgIds];
+  forwardSelectedTargetIds = new Set();
+  const modal = document.getElementById('chat-forward-modal');
+  const searchInput = document.getElementById('forward-search-input');
+  if (searchInput) searchInput.value = '';
+  renderForwardConversationsList('');
+  updateForwardSubmitButton();
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeForwardModal() {
+  const modal = document.getElementById('chat-forward-modal');
+  if (modal) modal.classList.add('hidden');
+  forwardSourceMsgIds = [];
+  forwardSelectedTargetIds.clear();
+}
+
+function filterForwardConversations(q) {
+  renderForwardConversationsList(q);
+}
+
+function renderForwardConversationsList(query) {
+  const listContainer = document.getElementById('forward-conversations-list');
+  if (!listContainer) return;
+
+  const q = (query || '').toLowerCase().trim();
+  const filtered = (currentConversations || []).filter(c => {
+    if (!q) return true;
+    const name = (c.name || c.contactName || '').toLowerCase();
+    const phone = (c.phone || c.contactPhone || '').toLowerCase();
+    return name.includes(q) || phone.includes(q);
+  });
+
+  if (filtered.length === 0) {
+    listContainer.innerHTML = '<div class="p-4 text-center text-xs text-slate-400">No se encontraron conversaciones</div>';
+    return;
+  }
+
+  listContainer.innerHTML = filtered.map(c => {
+    const isTarget = forwardSelectedTargetIds.has(c.id);
+    const name = c.name || c.contactName || 'Contacto';
+    const avatar = c.avatar || c.contactAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`;
+    const phone = c.phone || c.contactPhone || '';
+
+    return `
+      <div onclick="toggleForwardTarget('${c.id}')" class="p-2 rounded-xl flex items-center justify-between hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer border ${isTarget ? 'border-blue-500/40 bg-blue-50/40 dark:bg-blue-900/10' : 'border-transparent'}">
+        <div class="flex items-center space-x-2.5 min-w-0 flex-1">
+          <img src="${avatar}" class="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-white/10 flex-shrink-0" alt="${escapeHtml(name)}">
+          <div class="min-w-0 flex-1">
+            <div class="font-semibold text-xs text-slate-900 dark:text-white truncate">${escapeHtml(name)}</div>
+            <div class="text-[10px] text-slate-400 font-mono truncate">${escapeHtml(phone)}</div>
+          </div>
+        </div>
+        <div class="w-5 h-5 rounded-md border-2 ${isTarget ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 dark:border-white/20'} flex items-center justify-center transition flex-shrink-0 ml-2">
+          ${isTarget ? '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleForwardTarget(convId) {
+  if (forwardSelectedTargetIds.has(convId)) {
+    forwardSelectedTargetIds.delete(convId);
+  } else {
+    forwardSelectedTargetIds.add(convId);
+  }
+  updateForwardSubmitButton();
+  renderForwardConversationsList(document.getElementById('forward-search-input')?.value || '');
+}
+
+function updateForwardSubmitButton() {
+  const btn = document.getElementById('btn-submit-forward');
+  const countEl = document.getElementById('forward-selected-count');
+  const count = forwardSelectedTargetIds.size;
+  if (countEl) countEl.textContent = `${count} seleccionado${count === 1 ? '' : 's'}`;
+  if (btn) {
+    btn.disabled = count === 0;
+  }
+}
+
+async function submitForwardMessages() {
+  if (forwardSelectedTargetIds.size === 0 || forwardSourceMsgIds.length === 0) return;
+
+  try {
+    const res = await fetch('/api/messages/conversations/forward', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        targetConversationIds: Array.from(forwardSelectedTargetIds),
+        messageIds: forwardSourceMsgIds
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Mensaje(s) reenviado(s) exitosamente`, 'success');
+      closeForwardModal();
+      exitMessageSelectionMode();
+      if (activeConversationId && forwardSelectedTargetIds.has(activeConversationId)) {
+        await selectConversation(activeConversationId);
+      }
+    } else {
+      showToast(data.message || 'Error al reenviar mensajes', 'error');
+    }
+  } catch (err) {
+    console.error('Error forwarding messages:', err);
+    showToast('Fallo de red al reenviar mensajes', 'error');
+  }
 }
 
 function scrollChatToBottom() {
@@ -27159,11 +28590,16 @@ function renderEmptyChatWorkspace() {
 }
 
 function closeMobileChatView() {
+  document.body.classList.remove('mobile-chat-open');
   const leftPanel = document.getElementById('messages-left-panel');
   const rightPanel = document.getElementById('messages-right-panel');
   const topBar = document.getElementById('messages-top-bar');
   const filterBar = document.getElementById('messages-filter-bar');
+  const cardHeader = document.getElementById('messages-card-header');
   const tabMessages = document.getElementById('tab-messages');
+  const bottomNav = document.getElementById('mobile-bottom-nav');
+  const mobileHeader = document.querySelector('header.lg\\:hidden');
+
   if (leftPanel) leftPanel.classList.remove('hidden');
   if (rightPanel) {
     rightPanel.classList.add('hidden');
@@ -27171,10 +28607,260 @@ function closeMobileChatView() {
   }
   if (topBar) topBar.classList.remove('hidden');
   if (filterBar) filterBar.classList.remove('hidden');
+  if (cardHeader) cardHeader.classList.remove('hidden');
   if (tabMessages) tabMessages.classList.remove('mobile-chat-open');
+  if (bottomNav) bottomNav.classList.remove('hidden');
+  if (mobileHeader) mobileHeader.classList.remove('hidden');
 }
 
-// 4. Enviar Mensaje
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 768) {
+    document.body.classList.remove('mobile-chat-open');
+    const leftPanel = document.getElementById('messages-left-panel');
+    const rightPanel = document.getElementById('messages-right-panel');
+    const topBar = document.getElementById('messages-top-bar');
+    const filterBar = document.getElementById('messages-filter-bar');
+    const cardHeader = document.getElementById('messages-card-header');
+    const bottomNav = document.getElementById('mobile-bottom-nav');
+    const mobileHeader = document.querySelector('header.lg\\:hidden');
+    if (leftPanel) leftPanel.classList.remove('hidden');
+    if (rightPanel) {
+      rightPanel.classList.remove('hidden');
+      rightPanel.classList.add('flex');
+    }
+    if (topBar) topBar.classList.remove('hidden');
+    if (filterBar) filterBar.classList.remove('hidden');
+    if (cardHeader) cardHeader.classList.remove('hidden');
+    if (bottomNav) bottomNav.classList.remove('hidden');
+    if (mobileHeader) mobileHeader.classList.remove('hidden');
+  }
+});
+
+// 4. Enviar Mensaje y Manejo de Adjuntos
+let activePendingAttachment = null;
+
+function stageChatAttachment(file) {
+  if (!file) return;
+  if (!activeConversationId) {
+    showToast('Selecciona una conversación primero', 'warning');
+    return;
+  }
+
+  // Límite seguro de 25MB
+  if (file.size > 25 * 1024 * 1024) {
+    showToast('El archivo excede el tamaño máximo permitido (25 MB)', 'error');
+    return;
+  }
+
+  const isImage = file.type.startsWith('image/');
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    activePendingAttachment = {
+      type: isImage ? 'image' : 'file',
+      url: dataUrl,
+      name: file.name,
+      size: formatFileSize(file.size),
+      mimeType: file.type
+    };
+
+    const previewBar = document.getElementById('chat-attachment-preview-bar');
+    const previewImg = document.getElementById('attachment-preview-img');
+    const previewDocIcon = document.getElementById('attachment-preview-doc-icon');
+    const previewName = document.getElementById('attachment-preview-name');
+    const previewSize = document.getElementById('attachment-preview-size');
+
+    if (previewBar) {
+      previewBar.classList.remove('hidden');
+      previewBar.classList.add('flex');
+    }
+    if (previewName) previewName.textContent = file.name;
+    if (previewSize) previewSize.textContent = formatFileSize(file.size);
+
+    if (isImage) {
+      if (previewImg) {
+        previewImg.src = dataUrl;
+        previewImg.classList.remove('hidden');
+      }
+      if (previewDocIcon) previewDocIcon.classList.add('hidden');
+    } else {
+      if (previewImg) previewImg.classList.add('hidden');
+      if (previewDocIcon) {
+        previewDocIcon.classList.remove('hidden');
+        const badge = getFileBadgeInfo(file.name);
+        previewDocIcon.innerHTML = badge.iconSvg;
+      }
+    }
+
+    const inputEl = document.getElementById('chat-input-text');
+    if (inputEl) {
+      inputEl.placeholder = 'Añadir un comentario (opcional)...';
+      inputEl.focus();
+    }
+    updateChatInputState();
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function cancelChatAttachment() {
+  activePendingAttachment = null;
+  const previewBar = document.getElementById('chat-attachment-preview-bar');
+  if (previewBar) {
+    previewBar.classList.add('hidden');
+    previewBar.classList.remove('flex');
+  }
+  const inputEl = document.getElementById('chat-input-text');
+  if (inputEl) {
+    inputEl.placeholder = 'Mensaje...';
+  }
+  updateChatInputState();
+}
+
+function triggerChatAttachment() {
+  if (!activeConversationId) {
+    showToast('Selecciona una conversación antes de adjuntar un archivo', 'warning');
+    return;
+  }
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar';
+  fileInput.onchange = () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (file) {
+      stageChatAttachment(file);
+    }
+  };
+  fileInput.click();
+}
+
+async function sendDirectAttachment(file, captionText = '') {
+  if (!activeConversationId || !file) return;
+  const isImage = file.type.startsWith('image/');
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const dataUrl = e.target.result;
+    const attachmentPayload = {
+      type: isImage ? 'image' : 'file',
+      url: dataUrl,
+      name: file.name,
+      size: formatFileSize(file.size),
+      mimeType: file.type
+    };
+
+    try {
+      const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: captionText || (isImage ? 'Foto adjunta' : file.name),
+          sender: 'agent',
+          attachment: attachmentPayload
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        currentChatMessages.push(data.data);
+        renderChatMessages(currentChatMessages);
+        scrollChatToBottom();
+        
+        const cur = currentConversations.find(c => c.id === activeConversationId);
+        if (cur) {
+          cur.lastMessage = data.data.text;
+          cur.lastMessageAt = new Date().toISOString();
+          renderConversationsList(currentConversations);
+        }
+      }
+    } catch (err) {
+      console.error('Error enviando archivo adjunto:', err);
+      showToast('Error al enviar archivo ' + file.name, 'error');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function initChatDragAndDrop() {
+  const dropZone = document.getElementById('messages-right-panel');
+  const overlay = document.getElementById('chat-drag-drop-overlay');
+  if (!dropZone || !overlay) return;
+
+  if (dropZone._dragDropInitialized) return;
+  dropZone._dragDropInitialized = true;
+
+  // Prevenir que el navegador abra el archivo si se suelta accidentalmente en la ventana
+  if (!window._chatGlobalDragBound) {
+    window._chatGlobalDragBound = true;
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    }, false);
+    window.addEventListener('drop', (e) => {
+      if (!dropZone.contains(e.target)) {
+        e.preventDefault();
+      }
+    }, false);
+  }
+
+  let dragCounter = 0;
+
+  dropZone.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!activeConversationId) return;
+    const isFile = e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+    if (!isFile) return;
+    dragCounter++;
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+  });
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!activeConversationId) return;
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  });
+
+  dropZone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter = 0;
+    overlay.classList.add('hidden');
+    overlay.classList.remove('flex');
+
+    if (!activeConversationId) {
+      showToast('Selecciona una conversación antes de soltar un archivo', 'warning');
+      return;
+    }
+
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length > 0) {
+      if (files.length === 1) {
+        stageChatAttachment(files[0]);
+      } else {
+        Array.from(files).forEach((f, idx) => {
+          setTimeout(() => {
+            sendDirectAttachment(f);
+          }, idx * 250);
+        });
+      }
+    }
+  });
+}
+
 async function handleSendChatMessage(e) {
   if (e) e.preventDefault();
   if (!activeConversationId) {
@@ -27184,48 +28870,54 @@ async function handleSendChatMessage(e) {
 
   const inputEl = document.getElementById('chat-input-text');
   const text = (inputEl ? inputEl.value : '').trim();
-  if (!text) return;
+  const attachment = activePendingAttachment ? { ...activePendingAttachment } : null;
 
-  inputEl.value = '';
+  if (!text && !attachment) return;
+
+  const replyPayload = activeReplyMessage ? {
+    id: activeReplyMessage.id,
+    senderName: activeReplyMessage.senderName,
+    text: activeReplyMessage.text
+  } : undefined;
+  cancelReplyMessage();
+  cancelChatAttachment();
+
+  if (inputEl) inputEl.value = '';
   updateChatInputState();
 
-  // Append optimistic message bubble immediately
-  const container = document.getElementById('chat-messages-container');
-  if (container) {
-    const timeFormatted = formatMessageTime(new Date().toISOString());
-    const bubble = document.createElement('div');
-    bubble.className = 'flex justify-end';
-    bubble.innerHTML = `
-      <div class="max-w-[85%] sm:max-w-md bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 shadow-sm text-xs space-y-1">
-        <p class="leading-relaxed whitespace-pre-wrap select-text">${escapeHtml(text)}</p>
-        <div class="flex items-center justify-end space-x-1 text-[10px] text-blue-100/80 font-mono">
-          <span>${timeFormatted}</span>
-          <span>✓✓</span>
-        </div>
-      </div>
-    `;
-    container.appendChild(bubble);
-    scrollChatToBottom();
-  }
+  const finalMsgText = text || (attachment ? (attachment.type === 'image' ? 'Foto adjunta' : attachment.name) : '');
 
-  // Update conversation card preview locally and bring to top
+  // Optimistic preview in conversation card
   const cur = currentConversations.find(c => c.id === activeConversationId);
   if (cur) {
-    cur.lastMessage = text;
+    cur.lastMessage = finalMsgText;
     cur.lastMessageAt = new Date().toISOString();
     currentConversations = [cur, ...currentConversations.filter(c => c.id !== activeConversationId)];
     renderConversationsList(currentConversations);
   }
 
   try {
+    const postBody = {
+      text: finalMsgText,
+      sender: 'agent',
+      replyTo: replyPayload
+    };
+    if (attachment) {
+      postBody.attachment = attachment;
+    }
+
     const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, sender: 'agent' })
+      body: JSON.stringify(postBody)
     });
     const data = await res.json();
-    if (!data.success) {
-      showToast(data.message || 'Error al enviar mensaje', 'error');
+    if (data.success && data.data) {
+      currentChatMessages.push(data.data);
+      renderChatMessages(currentChatMessages);
+      scrollChatToBottom();
+    } else {
+      showToast((data && data.message) || 'Error al enviar mensaje', 'error');
     }
   } catch (err) {
     console.error('Error sending message:', err);
@@ -27240,24 +28932,6 @@ function insertQuickReply(text) {
     inputEl.focus();
     updateChatInputState();
   }
-}
-
-function triggerChatAttachment() {
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = 'image/*,.pdf,.doc,.docx,.xlsx';
-  fileInput.onchange = () => {
-    const file = fileInput.files && fileInput.files[0];
-    if (file) {
-      const inputEl = document.getElementById('chat-input-text');
-      if (inputEl) {
-        inputEl.value = `[Adjunto: ${file.name}]`;
-        inputEl.focus();
-        updateChatInputState();
-      }
-    }
-  };
-  fileInput.click();
 }
 
 function openActiveChatInWhatsApp() {
@@ -27840,9 +29514,17 @@ document.addEventListener('click', (e) => {
   if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target)) {
     closeContextMenu();
   }
+  const msgMenu = document.getElementById('chat-message-context-menu');
+  if (msgMenu && !msgMenu.classList.contains('hidden') && !msgMenu.contains(e.target)) {
+    msgMenu.classList.add('hidden');
+  }
+  const canvasMenu = document.getElementById('chat-canvas-context-menu');
+  if (canvasMenu && !canvasMenu.classList.contains('hidden') && !canvasMenu.contains(e.target)) {
+    canvasMenu.classList.add('hidden');
+  }
   const picker = document.getElementById('chat-emoji-picker');
   if (picker && !picker.classList.contains('hidden')) {
-    const btn = e.target.closest('button[onclick="toggleEmojiPicker()"]');
+    const btn = e.target.closest('button[onclick="toggleEmojiPicker()"]') || e.target.closest('button[onclick="openSystemEmojiPickerForReaction()"]');
     if (!btn && !picker.contains(e.target)) {
       closeEmojiPicker();
     }
@@ -28013,20 +29695,55 @@ async function confirmDeleteConversation(convId) {
   }
 }
 
-// 3. Biblioteca de Emoticones (WhatsApp Style)
+// 3. Biblioteca de Emoticones del Sistema (WhatsApp Style)
 const EMOJI_CATEGORIES = {
   faces: ['😀','😃','😄','😁','😆','😅','😂','🤣','🥲','☺️','😊','😇','🙂','😉','😌','😍','🥰','😘','😋','😛','😜','🤪','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😮‍💨','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕'],
-  hands: ['👍','👎','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🧠','👀','👁️','👅','👄','👶','👧','🧒','👦','👩','🧑','👨','👱‍♀️','👱','👱‍♂️','👩‍🦳','🧑‍🦳','👨‍🦳','🧔','🧓','👴','👵'],
-  network: ['📡','📶','🔌','💻','🖥️','🖨️','⌨️','🖱️','🖲️','🕹️','🗄️','💾','💿','📀','📱','📲','☎️','📞','📟','📠','🔋','💡','🔦','💰','💳','💎','🪜','🧰','🪛','🔧','🔨','🛠️','🔩','⚙️','🧱','🔗','⚡','🚀','🛰️'],
-  symbols: ['✅','❌','⚠️','🚨','⛔','🚫','🛑','🔔','🔕','📢','📣','💬','💭','🗨️','🔴','🟢','🔵','🟡','🟣','⚪','⚫','🕒','📅','📆','📊','📈','📉','📋','📁','📂','📄','📃','✉️','📨','📩']
+  hands: ['👍','👎','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🧠','👀','👁️','👅','👄','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️'],
+  objects: ['💼','📁','📂','🗂️','📋','📄','📃','📑','📊','📈','📉','📇','📌','📍','📎','🖇️','📏','📐','✂️','🗃️','🗄️','🗑️','🔒','🔓','🔏','🔐','🔑','🗝️','🔨','🪓','⛏️','🛠️','🗡️','⚙️','🧰','🪛','🔧','🪜','🧱','🔩','📦','🏷️'],
+  network: ['📡','📶','🔌','💻','🖥️','🖨️','⌨️','🖱️','🖲️','🕹️','🗄️','💾','💿','📀','📱','📲','☎️','📞','📟','📠','🔋','💡','🔦','💰','💳','💎','🔗','⚡','🚀','🛰️','🌐','🧭','⏱️','⏲️','⏳'],
+  animals: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦟','🐢','🐍','🐙','🦑','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🦈','🐊'],
+  food: ['🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🥑','🍔','🍟','🍕','🌭','🥪','🌮','🌯','🥗','🍲','🍜','🍣','🍤','🍦','🍧','🍨','🍩','🍪','🎂','🍰','🍫','🍿','☕','🍵','🥤','🧃','🍺','🍻'],
+  symbols: ['✅','❌','⚠️','🚨','⛔','🚫','🛑','🔔','🔕','📢','📣','💬','💭','🗨️','🔴','🟢','🔵','🟡','🟣','⚪','⚫','🕒','📅','📆','✉️','📨','📩','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','⭐','🌟','✨','⚡','🔥','💥','💯']
+};
+
+const EMOJI_KEYWORDS = {
+  '👍': ['bien', 'ok', 'like', 'pulgar', 'de acuerdo', 'correcto', 'aprobado', 'yes'],
+  '👎': ['mal', 'dislike', 'no', 'desaprobado', 'rechazado'],
+  '❤️': ['amor', 'corazon', 'love', 'querer', 'rojo', 'favorito'],
+  '😂': ['risa', 'jaja', 'gracioso', 'chiste', 'divertido', 'humor', 'lol'],
+  '😮': ['sorpresa', 'wow', 'asombro', 'boca', 'abierta', 'increible'],
+  '😢': ['triste', 'llorar', 'pena', 'lagrima', 'tristeza', 'dolor'],
+  '🔥': ['fuego', 'candela', 'rapido', 'turbo', 'top', 'genial'],
+  '✅': ['listo', 'check', 'bien', 'exito', 'completado', 'correcto', 'ok'],
+  '❌': ['error', 'cancelado', 'no', 'cruz', 'fallo', 'mal'],
+  '⚠️': ['alerta', 'advertencia', 'cuidado', 'aviso', 'peligro'],
+  '🚨': ['emergencia', 'sirena', 'urgente', 'corte', 'critico'],
+  '📡': ['antena', 'señal', 'wifi', 'red', 'cobertura', 'internet', 'satelite'],
+  '📶': ['cobertura', 'barras', 'señal', 'movil', 'red'],
+  '💻': ['laptop', 'computadora', 'pc', 'tecnico', 'soporte'],
+  '🔧': ['herramienta', 'llave', 'mantenimiento', 'reparacion', 'soporte'],
+  '⚡': ['rayo', 'energia', 'rapido', 'velocidad', 'turbo', 'luz'],
+  '💵': ['dinero', 'pago', 'recibo', 'soles', 'dolares', 'cobro'],
+  '💰': ['dinero', 'bolsa', 'plata', 'saldo', 'pago', 'cuenta'],
+  '📅': ['calendario', 'fecha', 'cita', 'visita', 'agenda'],
+  '🕒': ['hora', 'reloj', 'tiempo', 'horario', 'espera'],
+  '🔒': ['candado', 'seguro', 'clave', 'password', 'privado'],
+  '🔑': ['llave', 'acceso', 'clave', 'password'],
+  '📦': ['paquete', 'router', 'equipo', 'entrega', 'ont'],
+  '🤝': ['trato', 'acuerdo', 'apreton', 'gracias', 'socio']
 };
 
 let activeEmojiCategory = 'faces';
 let emojiSearchQuery = '';
 
 function toggleEmojiPicker() {
+  emojiPickerTarget = 'input';
   const picker = document.getElementById('chat-emoji-picker');
   if (!picker) return;
+  picker.style.position = '';
+  picker.style.left = '';
+  picker.style.top = '';
+  picker.style.bottom = '';
   if (picker.classList.contains('hidden')) {
     picker.classList.remove('hidden');
     renderEmojis();
@@ -28037,17 +29754,25 @@ function toggleEmojiPicker() {
 
 function closeEmojiPicker() {
   const picker = document.getElementById('chat-emoji-picker');
-  if (picker) picker.classList.add('hidden');
+  if (picker) {
+    picker.classList.add('hidden');
+    picker.style.position = '';
+    picker.style.left = '';
+    picker.style.top = '';
+    picker.style.bottom = '';
+  }
 }
 
 function switchEmojiCategory(cat) {
   activeEmojiCategory = cat;
   emojiSearchQuery = '';
+  const searchInput = document.querySelector('#chat-emoji-picker input');
+  if (searchInput) searchInput.value = '';
   renderEmojis();
 }
 
 function filterEmojis(q) {
-  emojiSearchQuery = (q || '').trim();
+  emojiSearchQuery = (q || '').trim().toLowerCase();
   renderEmojis();
 }
 
@@ -28060,22 +29785,42 @@ function renderEmojis() {
     const all = [
       ...EMOJI_CATEGORIES.faces,
       ...EMOJI_CATEGORIES.hands,
+      ...EMOJI_CATEGORIES.objects,
       ...EMOJI_CATEGORIES.network,
+      ...EMOJI_CATEGORIES.animals,
+      ...EMOJI_CATEGORIES.food,
       ...EMOJI_CATEGORIES.symbols
     ];
-    list = all;
+    const uniqueAll = Array.from(new Set(all));
+    const matched = uniqueAll.filter(em => {
+      const kws = EMOJI_KEYWORDS[em];
+      if (kws && kws.some(k => k.toLowerCase().includes(emojiSearchQuery))) return true;
+      for (const [catName, emojis] of Object.entries(EMOJI_CATEGORIES)) {
+        if (catName.toLowerCase().includes(emojiSearchQuery) && emojis.includes(em)) return true;
+      }
+      return false;
+    });
+    list = matched.length > 0 ? matched : uniqueAll.slice(0, 56);
   } else {
     list = EMOJI_CATEGORIES[activeEmojiCategory] || EMOJI_CATEGORIES.faces;
   }
 
   container.innerHTML = list.map(em => `
-    <button type="button" onclick="insertEmoji('${em}')" class="hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-1 transition transform hover:scale-125 text-center flex items-center justify-center">
+    <button type="button" onclick="insertEmoji('${em}')" class="hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg p-1.5 transition transform hover:scale-125 text-center flex items-center justify-center cursor-pointer select-none text-xl">
       ${em}
     </button>
   `).join('');
 }
 
 function insertEmoji(em) {
+  if (emojiPickerTarget === 'reaction') {
+    if (activeContextMenuMsgId) {
+      reactToContextMessage(em);
+    }
+    closeEmojiPicker();
+    return;
+  }
+
   const input = document.getElementById('chat-input-text');
   if (!input) return;
   const start = input.selectionStart || input.value.length;
@@ -28093,18 +29838,20 @@ function updateChatInputState() {
   if (!input || !actionBtn) return;
 
   const hasText = (input.value || '').trim().length > 0;
+  const hasAttachment = !!activePendingAttachment;
+  const canSend = hasText || hasAttachment;
 
   // 1. Ocultar o mostrar botón de cámara para maximizar espacio
   if (cameraBtn) {
-    if (hasText) {
+    if (canSend) {
       cameraBtn.classList.add('hidden');
     } else {
       cameraBtn.classList.remove('hidden');
     }
   }
 
-  // 2. Dinámica del botón acción: Grabar audio si está vacío, Enviar si tiene texto
-  if (hasText) {
+  // 2. Dinámica del botón acción: Grabar audio si está vacío y sin adjuntos, Enviar si tiene texto o adjunto
+  if (canSend) {
     actionBtn.setAttribute('title', 'Enviar mensaje');
     actionBtn.setAttribute('type', 'submit');
     actionBtn.onclick = null;
@@ -29127,11 +30874,20 @@ async function sendAnnotatedPhoto() {
     const bubble = document.createElement('div');
     bubble.className = 'flex justify-end';
     bubble.innerHTML = `
-      <div class="max-w-[85%] sm:max-w-md bg-blue-600 text-white rounded-2xl rounded-tr-sm p-1.5 shadow-sm text-xs space-y-1">
-        <img src="${dataUrl}" class="w-full max-h-64 object-cover rounded-xl border border-white/20 cursor-pointer hover:opacity-95 transition" onclick="openChatImageViewer('${dataUrl}')" alt="Foto">
-        <div class="flex items-center justify-end space-x-1 px-1 text-[10px] text-blue-100/80 font-mono">
-          <span>${timeFormatted}</span>
-          <span>✓✓</span>
+      <div class="max-w-[85%] sm:max-w-md bg-gradient-to-br from-[#1d4ed8] to-[#1e40af] dark:from-[#2563eb] dark:to-[#1d4ed8] text-white rounded-2xl rounded-tr-xs p-1.5 shadow-sm border border-blue-400/20 text-xs space-y-1 group">
+        <div class="relative overflow-hidden rounded-xl bg-slate-950/20 cursor-pointer" onclick="openChatImageViewer('${dataUrl}')">
+          <img src="${dataUrl}" class="w-full max-h-72 object-cover rounded-xl transition duration-200 group-hover:scale-[1.01]" alt="Foto">
+          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none rounded-xl"></div>
+        </div>
+        <div class="px-2 pt-1 pb-0.5 flex flex-col gap-1">
+          <div class="flex items-center gap-1.5 text-[11px] text-blue-100/90 font-medium">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
+            <span>Foto con anotaciones</span>
+          </div>
+          <div class="flex items-center justify-end space-x-1.5 text-[10px] font-mono text-blue-100/80">
+            <span>${timeFormatted}</span>
+            ${MSG_DOUBLE_CHECK_SVG}
+          </div>
         </div>
       </div>
     `;
@@ -29144,7 +30900,7 @@ async function sendAnnotatedPhoto() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        text: '📷 Foto enviada con anotaciones',
+        text: 'Foto con anotaciones',
         attachment: {
           type: 'image',
           url: dataUrl,
@@ -29157,7 +30913,7 @@ async function sendAnnotatedPhoto() {
       showToast('Foto enviada exitosamente', 'success');
       const cur = currentConversations.find(c => c.id === activeConversationId);
       if (cur) {
-        cur.lastMessage = '📷 Foto enviada';
+        cur.lastMessage = 'Foto enviada';
         cur.lastMessageAt = new Date().toISOString();
         renderConversationsList(currentConversations);
       }
@@ -29291,9 +31047,10 @@ function openActiveContactDrawer() {
       <div class="p-4 rounded-2xl ${isGoodPayer ? 'bg-emerald-500/5 dark:bg-emerald-500/[0.04] border-emerald-500/20' : 'bg-amber-500/5 dark:bg-amber-500/[0.04] border-amber-500/20'} border space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-[11px] font-bold uppercase tracking-wider ${isGoodPayer ? 'text-emerald-500' : 'text-amber-500'} flex items-center space-x-1.5">
-            <span>⭐ Valoración del Cliente</span>
+            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <span>Valoración del Cliente</span>
           </span>
-          <span class="text-xs font-bold font-mono">${ratingStars}</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isGoodPayer ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'} font-mono">${isGoodPayer ? '5.0 / 5.0' : '3.8 / 5.0'}</span>
         </div>
         <div class="text-xs font-bold text-slate-900 dark:text-white">${ratingLabel}</div>
         <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">${ratingDesc}</p>
@@ -29372,33 +31129,33 @@ function openActiveContactDrawer() {
         </div>
         
         <div class="space-y-1.5">
-          <div class="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5 text-xs">
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-xs">
             <div class="flex items-center space-x-2">
-              <span>🧰</span>
+              <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.05a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.097.433.22.846.368 1.233z"/></svg>
               <span class="text-slate-700 dark:text-slate-200 font-medium">Fusionadora Fujikura 90S+</span>
             </div>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-mono">Calibrada</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-500 font-mono">Calibrada</span>
           </div>
-          <div class="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5 text-xs">
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-xs">
             <div class="flex items-center space-x-2">
-              <span>📡</span>
+              <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z"/></svg>
               <span class="text-slate-700 dark:text-slate-200 font-medium">OTDR Mini Pro Reflectómetro</span>
             </div>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">Bat 92%</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500 font-mono">Bat 92%</span>
           </div>
-          <div class="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5 text-xs">
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-xs">
             <div class="flex items-center space-x-2">
-              <span>📦</span>
+              <svg class="w-4 h-4 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
               <span class="text-slate-700 dark:text-slate-200 font-medium">4x ONU Huawei EchoLife Wi-Fi 6</span>
             </div>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 font-mono">Stock</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-500 font-mono">Stock</span>
           </div>
-          <div class="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5 text-xs">
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-xs">
             <div class="flex items-center space-x-2">
-              <span>🔌</span>
+              <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
               <span class="text-slate-700 dark:text-slate-200 font-medium">Bobina Drop 1000m G657A</span>
             </div>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono">1 Bobina</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 font-mono">1 Bobina</span>
           </div>
         </div>
       </div>
@@ -29441,7 +31198,7 @@ async function sendCurrentLocation(isLive) {
       ? `Transmitiendo señal GPS en vivo • ${tenantName} (Vigencia 1 hora)`
       : `Punto GPS detectado • Cobertura ${tenantName} (±${Math.round(accuracy || 12)}m)`;
 
-    const text = isLive ? '📡 Transmitiendo mi ubicación en tiempo real' : '📍 He compartido mi ubicación actual';
+    const text = isLive ? 'Transmitiendo señal GPS en tiempo real' : 'Ubicación compartida';
 
     try {
       const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`, {
