@@ -141,6 +141,105 @@ function saveFiltersToDisk(tenantId: string, filters: MessageFilter[]) {
   } catch (err) {}
 }
 
+export interface QuickReplyAttachment {
+  type: "image" | "video" | "file";
+  url: string;
+  name: string;
+  size?: string;
+  mimeType?: string;
+  thumbnailUrl?: string;
+  duration?: string;
+  width?: number;
+  height?: number;
+}
+
+export interface QuickReply {
+  id: string;
+  tenantId: string;
+  shortcut: string;
+  title: string;
+  text: string;
+  category?: string;
+  attachment?: QuickReplyAttachment;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const DEFAULT_QUICK_REPLIES: Omit<QuickReply, "tenantId">[] = [
+  {
+    id: "qr_saludo",
+    shortcut: "saludo",
+    title: "Saludo de Bienvenida",
+    text: "¡Hola! Gracias por comunicarte con nuestro servicio de atención al cliente. ¿En qué podemos ayudarte el día de hoy?",
+    category: "general",
+    createdAt: "2026-10-01T08:00:00.000Z",
+    updatedAt: "2026-10-01T08:00:00.000Z",
+  },
+  {
+    id: "qr_banco",
+    shortcut: "banco",
+    title: "Cuentas Bancarias & Pagos",
+    text: "Estimado cliente, compartimos nuestras cuentas bancarias autorizadas para el abono de su servicio mensual:\n• BCP Soles: 191-98765432-0-12 (CCI: 002-191-0098765432012-55)\n• BBVA Soles: 0011-0123-0200456789 (CCI: 011-123-000200456789-14)\n• Yape / Plin: 987-654-321\nPor favor envíenos la foto o captura del comprobante por este medio para validar su pago de inmediato.",
+    category: "billing",
+    createdAt: "2026-10-01T08:00:00.000Z",
+    updatedAt: "2026-10-01T08:00:00.000Z",
+  },
+  {
+    id: "qr_mantenimiento",
+    shortcut: "mantenimiento",
+    title: "Mantenimiento Preventivo",
+    text: "Nuestro equipo técnico se encuentra realizando trabajos de mantenimiento preventivo y optimización de fibra óptica en su zona. Estimamos el restablecimiento completo en breve. Agradecemos su comprensión.",
+    category: "support",
+    createdAt: "2026-10-01T08:00:00.000Z",
+    updatedAt: "2026-10-01T08:00:00.000Z",
+  },
+  {
+    id: "qr_corte",
+    shortcut: "corte",
+    title: "Aviso de Suspensión Preventiva",
+    text: "Estimado cliente, le informamos que su servicio presenta saldo vencido pendiente. Para evitar la suspensión preventiva automática del servicio de Internet, le solicitamos regularizar su pago o compartirnos su voucher de abono.",
+    category: "billing",
+    createdAt: "2026-10-01T08:00:00.000Z",
+    updatedAt: "2026-10-01T08:00:00.000Z",
+  },
+  {
+    id: "qr_wifi",
+    shortcut: "wifi",
+    title: "Guía de Wi-Fi y Reinicio ONT",
+    text: "Estimado cliente, para optimizar la velocidad de su red Wi-Fi, le recomendamos no obstruir su router y realizar un reinicio desconectándolo de la corriente durante 30 segundos. Si el problema persiste, indíquenos qué luces observa encendidas en el módem.",
+    category: "support",
+    createdAt: "2026-10-01T08:00:00.000Z",
+    updatedAt: "2026-10-01T08:00:00.000Z",
+  }
+];
+
+function loadQuickRepliesFromDisk(tenantId: string): QuickReply[] {
+  const filePath = getTenantFilePath(tenantId, "quick_replies.json");
+  try {
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const data = JSON.parse(raw);
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch (err) {}
+
+  const initialList: QuickReply[] = DEFAULT_QUICK_REPLIES.map(qr => ({
+    ...qr,
+    tenantId,
+  }));
+  saveQuickRepliesToDisk(tenantId, initialList);
+  return initialList;
+}
+
+function saveQuickRepliesToDisk(tenantId: string, items: QuickReply[]) {
+  const filePath = getTenantFilePath(tenantId, "quick_replies.json");
+  try {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(items, null, 2), "utf-8");
+  } catch (err) {}
+}
+
 function generateInitialConversations(_tenantId: string): Conversation[] {
   return [];
 }
@@ -372,6 +471,34 @@ const updateFilterSchema = z.object({
   color: z.string().min(1).optional(),
 });
 
+const quickReplyAttachmentSchema = z.object({
+  type: z.enum(["image", "video", "file"]),
+  url: z.string().min(1, "La URL o archivo multimedia es requerido"),
+  name: z.string().min(1, "El nombre del archivo es requerido"),
+  size: z.string().optional(),
+  mimeType: z.string().optional(),
+  thumbnailUrl: z.string().optional(),
+  duration: z.string().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+});
+
+const createQuickReplySchema = z.object({
+  shortcut: z.string().min(1, "El atajo es requerido").max(30),
+  title: z.string().min(1, "El título es requerido").max(100),
+  text: z.string().min(1, "El texto del mensaje es requerido"),
+  category: z.string().optional().default("general"),
+  attachment: quickReplyAttachmentSchema.optional(),
+});
+
+const updateQuickReplySchema = z.object({
+  shortcut: z.string().min(1).max(30).optional(),
+  title: z.string().min(1).max(100).optional(),
+  text: z.string().min(1).optional(),
+  category: z.string().optional(),
+  attachment: quickReplyAttachmentSchema.nullable().optional(),
+});
+
 const sendMessageSchema = z.object({
   text: z.string().optional().default(""),
   sender: z.enum(["agent", "client", "system"]).optional().default("agent"),
@@ -585,6 +712,113 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     const deleted = filters.splice(index, 1)[0];
     saveFiltersToDisk(tenantId, filters);
     return reply.send({ success: true, message: "Filtro eliminado", data: deleted });
+  });
+
+  // 4.1 Obtener lista de respuestas rápidas del tenant
+  fastify.get("/messages/quick-replies", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const list = loadQuickRepliesFromDisk(tenantId);
+    return reply.send({ success: true, tenantId, count: list.length, data: list });
+  });
+
+  // 4.2 Crear nueva respuesta rápida (con soporte de foto, video o documento)
+  fastify.post("/messages/quick-replies", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const parse = createQuickReplySchema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ success: false, errors: parse.error.format() });
+    }
+
+    const list = loadQuickRepliesFromDisk(tenantId);
+    // Normalizar atajo: minúsculas, sin espacios ni caracteres especiales
+    const normalizedShortcut = parse.data.shortcut.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    if (!normalizedShortcut) {
+      return reply.status(400).send({ success: false, message: "El atajo debe contener caracteres alfanuméricos válidos (ej: saludo, banco)" });
+    }
+
+    // Verificar si ya existe el atajo en este tenant
+    const exists = list.some(q => q.shortcut.toLowerCase() === normalizedShortcut);
+    if (exists) {
+      return reply.status(400).send({ success: false, message: `Ya existe una respuesta rápida con el atajo /${normalizedShortcut}` });
+    }
+
+    const now = new Date().toISOString();
+    const newQuickReply: QuickReply = {
+      id: "qr_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7),
+      tenantId,
+      shortcut: normalizedShortcut,
+      title: parse.data.title.trim(),
+      text: parse.data.text.trim(),
+      category: parse.data.category || "general",
+      attachment: parse.data.attachment ? { ...parse.data.attachment } : undefined,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    list.unshift(newQuickReply);
+    saveQuickRepliesToDisk(tenantId, list);
+
+    return reply.status(201).send({
+      success: true,
+      message: `Respuesta rápida /${normalizedShortcut} creada con éxito`,
+      data: newQuickReply
+    });
+  });
+
+  // 4.3 Actualizar respuesta rápida existente
+  fastify.put("/messages/quick-replies/:id", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const parse = updateQuickReplySchema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ success: false, errors: parse.error.format() });
+    }
+
+    const list = loadQuickRepliesFromDisk(tenantId);
+    const qr = list.find(q => q.id === id);
+    if (!qr) {
+      return reply.status(404).send({ success: false, message: "Respuesta rápida no encontrada" });
+    }
+
+    if (parse.data.shortcut !== undefined) {
+      const normalized = parse.data.shortcut.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+      if (!normalized) {
+        return reply.status(400).send({ success: false, message: "El atajo debe contener caracteres alfanuméricos válidos" });
+      }
+      // Verificar colisión con otro registro
+      const collision = list.some(q => q.id !== id && q.shortcut.toLowerCase() === normalized);
+      if (collision) {
+        return reply.status(400).send({ success: false, message: `Ya existe otra respuesta rápida con el atajo /${normalized}` });
+      }
+      qr.shortcut = normalized;
+    }
+
+    if (parse.data.title !== undefined) qr.title = parse.data.title.trim();
+    if (parse.data.text !== undefined) qr.text = parse.data.text.trim();
+    if (parse.data.category !== undefined) qr.category = parse.data.category;
+    if (parse.data.attachment !== undefined) {
+      qr.attachment = parse.data.attachment ? { ...parse.data.attachment } : undefined;
+    }
+    qr.updatedAt = new Date().toISOString();
+
+    saveQuickRepliesToDisk(tenantId, list);
+    return reply.send({ success: true, message: "Respuesta rápida actualizada con éxito", data: qr });
+  });
+
+  // 4.4 Eliminar respuesta rápida
+  fastify.delete("/messages/quick-replies/:id", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+
+    const list = loadQuickRepliesFromDisk(tenantId);
+    const index = list.findIndex(q => q.id === id);
+    if (index === -1) {
+      return reply.status(404).send({ success: false, message: "Respuesta rápida no encontrada" });
+    }
+
+    const deleted = list.splice(index, 1)[0];
+    saveQuickRepliesToDisk(tenantId, list);
+    return reply.send({ success: true, message: `Respuesta rápida /${deleted.shortcut} eliminada`, data: deleted });
   });
 
   // 5. Listar conversaciones

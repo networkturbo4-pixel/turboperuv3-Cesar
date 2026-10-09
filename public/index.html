@@ -7178,7 +7178,7 @@
                     </svg>
                   </div>
                   <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Suelta tu archivo aquí</h3>
-                  <p class="text-xs text-slate-500 dark:text-slate-400">Imágenes, comprobantes de pago, PDFs o documentos para adjuntar al chat</p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Imágenes, comprobantes de pago, PDFs o documentos (o pega capturas con Ctrl+V)</p>
                 </div>
               </div>
 
@@ -7409,7 +7409,7 @@
                       </button>
 
                       <!-- Campo de entrada de texto -->
-                      <input type="text" id="chat-input-text" autocomplete="off" oninput="updateChatInputState()" placeholder="Mensaje..." class="flex-1 min-w-0 bg-transparent border-0 px-2 py-1.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                      <input type="text" id="chat-input-text" autocomplete="off" oninput="updateChatInputState()" placeholder="Mensaje... (Ctrl+V para capturas)" title="Escribe un mensaje o pega capturas de pantalla directamente con Ctrl+V" class="flex-1 min-w-0 bg-transparent border-0 px-2 py-1.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-0">
 
                       <!-- Botón Compartir Ubicación (en pantallas mayores a móvil) -->
                       <div class="relative flex-shrink-0 hidden sm:flex">
@@ -8769,7 +8769,7 @@
 
         <!-- Campo Comentario Opcional -->
         <div class="flex-1 min-w-[220px] max-w-sm">
-          <input type="text" id="chat-editor-caption" placeholder="Añadir comentario u observación al enviar..." class="w-full bg-slate-950/70 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition">
+          <input type="text" id="chat-editor-caption" onkeydown="if(event.key==='Enter'){event.preventDefault();sendAnnotatedPhoto();}" placeholder="Añadir comentario (Enter para enviar)..." class="w-full bg-slate-950/70 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition">
         </div>
 
         <!-- Acciones Finales: Descargar y Enviar al Chat -->
@@ -28736,6 +28736,9 @@ async function loadMessagesModule() {
     if (typeof initChatDragAndDrop === 'function') {
       initChatDragAndDrop();
     }
+    if (typeof initChatClipboardPaste === 'function') {
+      initChatClipboardPaste();
+    }
     initMessagesRealtime();
   } catch (err) {
     console.error('Error cargando módulo de mensajes:', err);
@@ -29112,6 +29115,9 @@ async function selectConversation(convId) {
 
     if (typeof initChatDragAndDrop === 'function') {
       initChatDragAndDrop();
+    }
+    if (typeof initChatClipboardPaste === 'function') {
+      initChatClipboardPaste();
     }
 
     // Inicializar scroll infinito hacia arriba para cargar mensajes antiguos
@@ -30698,7 +30704,7 @@ async function processVideoClientSide(file) {
   });
 }
 
-async function stageChatAttachment(file) {
+async function stageChatAttachment(file, initialCaption = '') {
   if (!file) return;
   if (!activeConversationId && (!activeCommunityId || !activeGroupId)) {
     showToast('Selecciona una conversación o canal primero', 'warning');
@@ -30722,7 +30728,7 @@ async function stageChatAttachment(file) {
       if (saved > 15) {
         showToast(`Foto optimizada con éxito (-${saved}% de espacio)`, 'success');
       }
-      openPhotoEditor(comp.dataUrl, file.name);
+      openPhotoEditor(comp.dataUrl, file.name, initialCaption);
     } finally {
       hideUploadProgress();
     }
@@ -31014,6 +31020,139 @@ function initChatDragAndDrop() {
       }
     }
   });
+}
+
+// ========================================================
+// CONTROL + V: PEGAR CAPTURAS DIRECTAMENTE EN EL CHAT
+// ========================================================
+function initChatClipboardPaste() {
+  if (window._chatClipboardPasteInitialized) return;
+  window._chatClipboardPasteInitialized = true;
+  document.addEventListener('paste', handleChatClipboardPaste, false);
+}
+
+async function handleChatClipboardPaste(e) {
+  // En la app principal (index.html), verificar si el módulo de mensajes está activo
+  const tabMessages = document.getElementById('tab-messages');
+  if (tabMessages && tabMessages.classList.contains('hidden')) {
+    return;
+  }
+
+  const activeEl = document.activeElement;
+  const photoModal = document.getElementById('photo-editor-modal');
+  const isInsideChat = !tabMessages || (tabMessages && tabMessages.contains(activeEl)) || (photoModal && photoModal.contains(activeEl));
+
+  // Si está enfocado en un campo de texto ajeno al chat, ignorar
+  if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+    if (!isInsideChat) return;
+  }
+
+  const cbd = e.clipboardData || window.clipboardData;
+  if (!cbd) return;
+
+  // 1. Extraer archivos de imagen o items del portapapeles (capturas de pantalla de Windows / Mac / Browser)
+  let imageFiles = [];
+  if (cbd.files && cbd.files.length > 0) {
+    for (let i = 0; i < cbd.files.length; i++) {
+      const f = cbd.files[i];
+      if (f && f.type && f.type.startsWith('image/')) {
+        imageFiles.push(f);
+      }
+    }
+  }
+
+  if (imageFiles.length === 0 && cbd.items && cbd.items.length > 0) {
+    for (let i = 0; i < cbd.items.length; i++) {
+      const it = cbd.items[i];
+      if (it && it.type && it.type.startsWith('image/')) {
+        const bl = it.getAsFile();
+        if (bl) imageFiles.push(bl);
+      }
+    }
+  }
+
+  // Si no hay ninguna imagen en el portapapeles, no intervenir (permitir pegar texto normalmente)
+  if (imageFiles.length === 0) return;
+
+  // Interceptar el pegado para evitar pegar bytes o texto binario en el input
+  e.preventDefault();
+
+  // Si el editor de fotos ya está abierto, sustituir la imagen actual por la nueva captura pegada
+  if (photoModal && !photoModal.classList.contains('hidden')) {
+    const newImgFile = imageFiles[0];
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const timeStr = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      editorImageName = `captura_${timeStr}.png`;
+      const nameBadge = document.getElementById('editor-image-name-badge');
+      if (nameBadge) {
+        nameBadge.textContent = editorImageName;
+        nameBadge.title = editorImageName;
+      }
+      editorBaseImage = new Image();
+      editorBaseImage.onload = () => {
+        const maxW = 1200;
+        const maxH = 900;
+        let w = editorBaseImage.naturalWidth || editorBaseImage.width;
+        let h = editorBaseImage.naturalHeight || editorBaseImage.height;
+        if (w > maxW || h > maxH) {
+          const ratio = Math.min(maxW / w, maxH / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        if (editorCanvas) {
+          editorCanvas.width = w;
+          editorCanvas.height = h;
+          redrawEditor();
+        }
+        showToast('Nueva captura cargada en el editor', 'info');
+      };
+      editorBaseImage.src = ev.target.result;
+    };
+    reader.readAsDataURL(newImgFile);
+    return;
+  }
+
+  // Verificar si hay chat seleccionado
+  if (!activeConversationId && (!activeCommunityId || !activeGroupId)) {
+    showToast('Selecciona una conversación o canal antes de pegar una captura', 'warning');
+    return;
+  }
+
+  // Si se pegaron varias imágenes a la vez
+  if (imageFiles.length > 1) {
+    showToast(`Enviando ${imageFiles.length} capturas...`, 'info');
+    imageFiles.forEach((f, idx) => {
+      setTimeout(() => sendDirectAttachment(f), idx * 250);
+    });
+    return;
+  }
+
+  // Caso principal: 1 captura de pantalla pegada directamente con Ctrl+V
+  const rawFile = imageFiles[0];
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const timeStr = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  let fileName = rawFile.name;
+  if (!fileName || fileName === 'image.png' || fileName === 'blob' || !fileName.includes('.')) {
+    const ext = (rawFile.type === 'image/jpeg') ? 'jpg' : 'png';
+    fileName = `captura_${timeStr}.${ext}`;
+  }
+  const namedFile = new File([rawFile], fileName, { type: rawFile.type || 'image/png' });
+
+  // Tomar el texto que el usuario ya hubiera escrito en el campo de mensaje como comentario inicial
+  const chatInput = document.getElementById('chat-input-text');
+  const initialCaption = chatInput ? chatInput.value.trim() : '';
+
+  showToast('Captura recibida. Abriendo editor...', 'info');
+  await stageChatAttachment(namedFile, initialCaption);
+}
+
+// Auto-inicializar listener global para capturas en el portapapeles
+if (typeof initChatClipboardPaste === 'function') {
+  initChatClipboardPaste();
 }
 
 async function handleSendChatMessage(e) {
@@ -32988,7 +33127,7 @@ let dragStartY = 0;
 let dragInitialState = null;
 let editorEventsInitialized = false;
 
-function openPhotoEditor(imageDataUrl, fileName = 'foto_adjunta.jpg') {
+function openPhotoEditor(imageDataUrl, fileName = 'foto_adjunta.jpg', initialCaption = '') {
   const modal = document.getElementById('photo-editor-modal');
   if (!modal) return;
   modal.classList.remove('hidden');
@@ -33001,7 +33140,15 @@ function openPhotoEditor(imageDataUrl, fileName = 'foto_adjunta.jpg') {
   }
 
   const captionInput = document.getElementById('chat-editor-caption');
-  if (captionInput) captionInput.value = '';
+  if (captionInput) {
+    captionInput.value = initialCaption || '';
+    setTimeout(() => {
+      captionInput.focus();
+      if (captionInput.value) {
+        captionInput.setSelectionRange(captionInput.value.length, captionInput.value.length);
+      }
+    }, 120);
+  }
 
   const wmSwitch = document.getElementById('editor-watermark-switch');
   if (wmSwitch) wmSwitch.checked = editorWatermarkEnabled;
@@ -33647,6 +33794,13 @@ function initEditorEvents() {
   window.addEventListener('keydown', (e) => {
     const modal = document.getElementById('photo-editor-modal');
     if (!modal || modal.classList.contains('hidden')) return;
+
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      sendAnnotatedPhoto();
+      return;
+    }
+
     const isInputFocused = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
     if (isInputFocused) return;
 
@@ -34063,6 +34217,12 @@ async function sendAnnotatedPhoto() {
     const data = await res.json();
     if (data.success && data.data) {
       appendMessageSafely(data.data);
+
+      const inputEl = document.getElementById('chat-input-text');
+      if (inputEl && captionText && inputEl.value.trim() === captionText) {
+        inputEl.value = '';
+        updateChatInputState();
+      }
 
       if (activeChannelMode === 'direct') {
         const cur = currentConversations.find(c => c.id === activeConversationId);
