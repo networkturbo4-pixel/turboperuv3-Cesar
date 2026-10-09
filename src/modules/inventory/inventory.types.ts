@@ -57,9 +57,25 @@ export interface InventoryProduct {
   isDeleted?: boolean;
   deletedAt?: string;
 
+  // Unidades individuales físicas con SKU / Código de barras propio
+  itemUnits?: ProductItemUnit[];
+
   status: "optimal" | "low" | "critical" | "out_of_stock";
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ProductItemUnit {
+  id: string;
+  itemNumber: number;
+  sku: string;
+  barcode?: string;
+  status: "disponible" | "asignado" | "en_uso" | "baja";
+  assignedTo?: string;
+  assignedAt?: string;
+  serialNumber?: string;
+  notes?: string;
+  createdAt?: string;
 }
 
 export interface StockMovement {
@@ -120,6 +136,45 @@ export interface AssetHistoryEvent {
   videos?: string[];
 }
 
+export interface VehicleTIV {
+  number?: string; // N° de Tarjeta de Propiedad / TIVE
+  plateNumber?: string;
+  vin?: string; // Número de Chasis / VIN
+  engineNumber?: string; // N° de Motor
+  color?: string;
+  fuelType?: string; // Diésel, Gasolina, GNV, GLP, Eléctrico
+  year?: number | string; // Año de fabricación / modelo
+  ownerName?: string; // Titular registral (ej. TURBONETWORK S.A.C.)
+  registrationOffice?: string; // ej. SUNARP - Zona Registral IX Sede Lima
+  documentUrl?: string; // Enlace al PDF o imagen de la TIVE
+}
+
+export interface VehicleSOAT {
+  policyNumber?: string;
+  insurer?: string; // Rímac, Pacífico, La Positiva, Mapfre, Interseguro
+  startDate?: string;
+  endDate?: string;
+  certificateType?: "electronico" | "fisico";
+  status?: "vigente" | "por_vencer" | "vencido";
+  documentUrl?: string; // Enlace al certificado SOAT o consulta APESEG
+}
+
+export interface VehicleCITV {
+  certificateNumber?: string;
+  inspectionCenter?: string; // Centro de Inspección Técnica Vehicular autorizado MTC (ej. Farenet, Lidercon)
+  issueDate?: string;
+  expirationDate?: string;
+  result?: "aprobado" | "desaprobado" | "no_aplica";
+  mileageAtInspection?: number | string;
+  documentUrl?: string; // Enlace al certificado CITV
+}
+
+export interface VehicleDocumentation {
+  tiv?: VehicleTIV;
+  soat?: VehicleSOAT;
+  citv?: VehicleCITV;
+}
+
 export interface FixedAsset {
   id: number;
   tenantId: string;
@@ -140,9 +195,11 @@ export interface FixedAsset {
   videos: string[];
   maintenanceHistory: AssetMaintenance[];
   eventHistory: AssetHistoryEvent[];
+  vehicleDocs?: VehicleDocumentation; // Tarjeta de Identificación Vehicular, SOAT y CITV
   createdAt: string;
   updatedAt: string;
 }
+
 
 // ==========================================
 // HISTORIAL & TRAZABILIDAD 360°
@@ -191,6 +248,9 @@ export interface PersonnelAssignment {
   returnCondition?: "buen_estado" | "danado" | "observacion";
   variantName?: string;
   notes?: string;
+  unitSku?: string;
+  itemUnitId?: string;
+  unitNumber?: number;
 }
 
 export interface ProductTraceabilitySummary {
@@ -207,4 +267,5 @@ export interface ProductTraceabilitySummary {
   purchases: ProductPurchase[];
   installations: ClientInstallation[];
   assignments: PersonnelAssignment[];
+  matchedUnit?: ProductItemUnit;
 }

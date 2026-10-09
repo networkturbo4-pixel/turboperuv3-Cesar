@@ -7,6 +7,8 @@ import {
   createProduct,
   updateProduct,
   softDeleteProduct,
+  bulkSoftDeleteProducts,
+  bulkUpdateProductCategory,
   getTrashProducts,
   restoreProduct,
   permanentDeleteProduct,
@@ -29,6 +31,7 @@ import {
   createPurchase,
   createClientInstallation,
   createPersonnelAssignment,
+  createPersonnelAssignmentsBatch,
   returnPersonnelAssignment,
   getPersonnelAssignments,
   getInventoryMetrics,
@@ -42,6 +45,19 @@ const variantSchema = z.object({
   quantity: z.number().min(0).default(0),
   costPrice: z.number().min(0).optional(),
   salePrice: z.number().min(0).optional(),
+});
+
+const itemUnitSchema = z.object({
+  id: z.string(),
+  itemNumber: z.number(),
+  sku: z.string(),
+  barcode: z.string().optional(),
+  status: z.enum(["disponible", "asignado", "en_uso", "baja"]).default("disponible"),
+  assignedTo: z.string().optional(),
+  assignedAt: z.string().optional(),
+  serialNumber: z.string().optional(),
+  notes: z.string().optional(),
+  createdAt: z.string().optional(),
 });
 
 const productSchema = z.object({
@@ -68,6 +84,8 @@ const productSchema = z.object({
   // Específico para EPP
   hasDifferentCostPerVariant: z.boolean().optional(),
   variants: z.array(variantSchema).optional(),
+  // Unidades individuales
+  itemUnits: z.array(itemUnitSchema).optional(),
 });
 
 export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
@@ -157,6 +175,43 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
     };
   });
 
+  // GESTIÓN DE UNIDADES INDIVIDUALES Y SKUS POR ÍTEM
+  fastify.get("/inventory/products/:id/units", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+    const product = getProductById(tenantId, numId);
+    if (!product) {
+      return reply.status(404).send({ success: false, message: "Producto no encontrado" });
+    }
+    return { success: true, count: (product.itemUnits || []).length, data: product.itemUnits || [] };
+  });
+
+  fastify.put("/inventory/products/:id/units", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+    const body = request.body as { units?: any[] };
+    if (!body || !Array.isArray(body.units)) {
+      return reply.status(400).send({ success: false, message: "Lista de unidades requerida" });
+    }
+    const updated = updateProduct(tenantId, numId, { itemUnits: body.units });
+    if (!updated) {
+      return reply.status(404).send({ success: false, message: "Producto no encontrado" });
+    }
+    return {
+      success: true,
+      message: "Unidades individuales y SKUs actualizados correctamente",
+      data: updated.itemUnits || [],
+    };
+  });
+
   // Soft-delete a la papelera (máximo 60 días)
   fastify.delete("/inventory/products/:id", async (request, reply) => {
     const tenantId = resolveTenantId(request);
@@ -186,6 +241,43 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
     }
     const result = markBarcodesPrinted(tenantId, parse.data.productIds);
     return { success: true, message: "Productos marcados como impresos", ...result };
+  });
+
+  // Eliminación masiva hacia la papelera
+  fastify.post("/inventory/products/bulk-delete", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const schema = z.object({
+      productIds: z.array(z.number()).min(1, "Debe enviar al menos un ID"),
+    });
+    const parse = schema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ success: false, message: "Lista de IDs inválida" });
+    }
+    const result = bulkSoftDeleteProducts(tenantId, parse.data.productIds);
+    return {
+      success: true,
+      message: `${result.successCount} producto(s) enviado(s) a la papelera`,
+      ...result,
+    };
+  });
+
+  // Asignación masiva de categoría
+  fastify.post("/inventory/products/bulk-category", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const schema = z.object({
+      productIds: z.array(z.number()).min(1, "Debe enviar al menos un ID"),
+      categoryId: z.string().min(1, "La categoría es requerida"),
+    });
+    const parse = schema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ success: false, message: "Datos de solicitud inválidos" });
+    }
+    const result = bulkUpdateProductCategory(tenantId, parse.data.productIds, parse.data.categoryId);
+    return {
+      success: true,
+      message: `${result.successCount} producto(s) asignado(s) a la categoría`,
+      ...result,
+    };
   });
 
   // ========================================================
@@ -375,6 +467,38 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       description: z.string().optional(),
       photos: z.array(z.string()).default([]),
       videos: z.array(z.string()).default([]),
+      vehicleDocs: z.object({
+        tiv: z.object({
+          number: z.string().optional(),
+          plateNumber: z.string().optional(),
+          vin: z.string().optional(),
+          engineNumber: z.string().optional(),
+          color: z.string().optional(),
+          fuelType: z.string().optional(),
+          year: z.union([z.string(), z.number()]).optional(),
+          ownerName: z.string().optional(),
+          registrationOffice: z.string().optional(),
+          documentUrl: z.string().optional(),
+        }).optional(),
+        soat: z.object({
+          policyNumber: z.string().optional(),
+          insurer: z.string().optional(),
+          startDate: z.string().optional(),
+          endDate: z.string().optional(),
+          certificateType: z.enum(["electronico", "fisico"]).optional(),
+          status: z.enum(["vigente", "por_vencer", "vencido"]).optional(),
+          documentUrl: z.string().optional(),
+        }).optional(),
+        citv: z.object({
+          certificateNumber: z.string().optional(),
+          inspectionCenter: z.string().optional(),
+          issueDate: z.string().optional(),
+          expirationDate: z.string().optional(),
+          result: z.enum(["aprobado", "desaprobado", "no_aplica"]).optional(),
+          mileageAtInspection: z.union([z.string(), z.number()]).optional(),
+          documentUrl: z.string().optional(),
+        }).optional(),
+      }).optional(),
     });
 
     const parse = schema.safeParse(request.body);
@@ -519,7 +643,10 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ success: false, errors: parse.error.format() });
     }
 
-    const purchase = createPurchase(tenantId, parse.data);
+    const purchase = createPurchase(tenantId, {
+      ...parse.data,
+      totalCost: parse.data.quantity * parse.data.unitCost,
+    });
     return reply.status(201).send({
       success: true,
       message: "Compra registrada e ingresada al Kardex de almacén",
@@ -576,6 +703,9 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       status: z.enum(["entregado", "devuelto", "en_uso", "baja"]).default("en_uso"),
       variantName: z.string().optional(),
       notes: z.string().optional(),
+      unitSku: z.string().optional(),
+      itemUnitId: z.string().optional(),
+      unitNumber: z.number().optional(),
     });
 
     const parse = schema.safeParse(request.body);
@@ -594,6 +724,54 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       success: true,
       message: "Material/EPP asignado a personal y registrado en almacén",
       data: assignment,
+    });
+  });
+
+  fastify.post("/inventory/personnel-assignments/batch", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const itemSchema = z.object({
+      productId: z.number().int().positive(),
+      productName: z.string().optional(),
+      productSku: z.string().optional(),
+      productImage: z.string().optional(),
+      quantity: z.number().positive().default(1),
+      status: z.enum(["entregado", "devuelto", "en_uso", "baja"]).default("en_uso"),
+      variantName: z.string().optional(),
+      notes: z.string().optional(),
+      unitSku: z.string().optional(),
+      itemUnitId: z.string().optional(),
+      unitNumber: z.number().optional(),
+    });
+
+    const batchSchema = z.object({
+      employeeId: z.union([z.number(), z.string()]),
+      employeeName: z.string().optional(),
+      personnelName: z.string().optional(),
+      assignedAt: z.string().default(new Date().toISOString()),
+      items: z.array(itemSchema).min(1, "Debe incluir al menos un material a despachar"),
+    });
+
+    const parse = batchSchema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ success: false, errors: parse.error.format() });
+    }
+
+    const employeeName = parse.data.employeeName || parse.data.personnelName || "Colaborador";
+    const assignments = createPersonnelAssignmentsBatch(
+      tenantId,
+      parse.data.employeeId,
+      employeeName,
+      parse.data.items.map((it) => ({
+        ...it,
+        assignedAt: parse.data.assignedAt,
+      }))
+    );
+
+    return reply.status(201).send({
+      success: true,
+      message: `¡Se asignaron exitosamente ${assignments.length} materiales a ${employeeName}!`,
+      count: assignments.length,
+      data: assignments,
     });
   });
 
