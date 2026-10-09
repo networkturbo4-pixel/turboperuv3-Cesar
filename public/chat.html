@@ -2253,6 +2253,7 @@ let emojiPickerTarget = 'input'; // 'input' | 'reaction'
 let currentMessagesTab = 'direct'; // 'direct' | 'communities'
 let activeChannelMode = 'direct'; // 'direct' | 'community'
 let currentCommunities = [];
+let communitiesLoaded = false;
 let activeCommunityId = null;
 let activeGroupId = null;
 let communitySearchQuery = '';
@@ -5566,7 +5567,7 @@ function switchMessagesTab(tab) {
     if (contComm) contComm.classList.remove('hidden');
     if (filterBar) filterBar.classList.add('hidden');
 
-    if (!currentCommunities || currentCommunities.length === 0) {
+    if (!communitiesLoaded) {
       fetchCommunities();
     } else {
       renderCommunitiesList(currentCommunities);
@@ -5578,6 +5579,7 @@ async function fetchCommunities() {
   try {
     const res = await fetch('/api/messages/communities');
     const data = await res.json();
+    communitiesLoaded = true;
     if (data.success && Array.isArray(data.data)) {
       currentCommunities = data.data;
       renderCommunitiesList(currentCommunities);

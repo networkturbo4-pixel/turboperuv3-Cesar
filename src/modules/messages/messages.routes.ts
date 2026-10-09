@@ -185,7 +185,7 @@ function loadFiltersFromDisk(tenantId: string): MessageFilter[] {
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf-8");
       const data = JSON.parse(raw);
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     }
   } catch (err) {}
   saveFiltersToDisk(tenantId, DEFAULT_FILTERS);
@@ -279,7 +279,7 @@ function loadQuickRepliesFromDisk(tenantId: string): QuickReply[] {
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf-8");
       const data = JSON.parse(raw);
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     }
   } catch (err) {}
 
@@ -503,7 +503,7 @@ function loadCommunitiesFromDisk(tenantId: string): Community[] {
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf-8");
       const data = JSON.parse(raw);
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     }
   } catch (err) {}
 
