@@ -1,0 +1,207 @@
+[
+  {
+    "id": "comm-1",
+    "tenantId": "turbonetwork",
+    "name": "Condominio Los Jazmines (Sector Norte)",
+    "description": "Comunidad residencial conectada a la Troncal GPON Norte (Cajas NAP 01 a 06).",
+    "avatarUrl": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80",
+    "coverImage": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80",
+    "type": "building",
+    "linkedNaps": [
+      "NAP-01",
+      "NAP-02",
+      "NAP-03"
+    ],
+    "linkedZones": [
+      "Sector Norte"
+    ],
+    "memberCount": 42,
+    "createdAt": "2026-10-09T16:35:26.951Z",
+    "updatedAt": "2026-10-09T16:41:17.709Z",
+    "groups": [
+      {
+        "id": "grp-1-1",
+        "communityId": "comm-1",
+        "name": "📢 Avisos Oficiales & Red",
+        "description": "Canal exclusivo del ISP para alertas de mantenimiento y comunicados de corte preventivo.",
+        "type": "announcements",
+        "isReadOnly": true,
+        "unreadCount": 0,
+        "lastMessage": "Mantenimiento preventivo completado con éxito.",
+        "lastMessageTime": "11:35 a. m.",
+        "messages": [
+          {
+            "id": "gm-1",
+            "sender": "system",
+            "senderName": "NOC TurboNetwork",
+            "text": "Bienvenido al canal oficial de avisos de Condominio Los Jazmines. Aquí recibirás novedades de red y mejoras de servicio.",
+            "timestamp": "2026-10-09T16:35:26.951Z",
+            "timeFormatted": "11:35 a. m.",
+            "status": "read"
+          },
+          {
+            "id": "gm-2",
+            "sender": "agent",
+            "senderName": "Ing. Carlos Mendoza (NOC)",
+            "text": "Mantenimiento preventivo de fibra óptica completado. Todos los enlaces operando con potencia -18.4 dBm dentro de rango óptimo.",
+            "timestamp": "2026-10-09T16:35:26.951Z",
+            "timeFormatted": "11:35 a. m.",
+            "status": "read",
+            "reactions": {
+              "👍": [
+                "client1",
+                "client2",
+                "agent"
+              ],
+              "👏": [
+                "client3"
+              ]
+            }
+          }
+        ],
+        "createdAt": "2026-10-09T16:35:26.951Z",
+        "updatedAt": "2026-10-09T16:35:26.951Z"
+      },
+      {
+        "id": "grp-1-2",
+        "communityId": "comm-1",
+        "name": "🛠️ Soporte Técnico & Fibra",
+        "description": "Canal abierto para consultas técnicas y reportes de vecinos del condominio.",
+        "type": "support",
+        "isReadOnly": false,
+        "unreadCount": 0,
+        "lastMessage": "Video instructivo: Guía de reinicio de ONT",
+        "lastMessageTime": "11:41 a. m.",
+        "messages": [
+          {
+            "id": "gm-3",
+            "sender": "client",
+            "senderName": "Juan Pérez (Dpto 402)",
+            "text": "Buenas tardes, ¿hay alguna lentitud en el bloque B?",
+            "timestamp": "2026-10-09T16:35:26.951Z",
+            "timeFormatted": "11:35 a. m.",
+            "status": "read"
+          },
+          {
+            "id": "gm-4",
+            "sender": "agent",
+            "senderName": "Soporte Técnico TurboNetwork",
+            "text": "Hola Juan, verificamos la potencia de tu ONU y está en orden. Vamos a reiniciar la sesión PPPoE desde la central.",
+            "timestamp": "2026-10-09T16:35:26.951Z",
+            "timeFormatted": "11:35 a. m.",
+            "status": "read"
+          },
+          {
+            "id": "gm-1791564077710",
+            "sender": "agent",
+            "senderName": "Operador TurboNetwork",
+            "text": "Video instructivo: Guía de reinicio de ONT",
+            "timestamp": "2026-10-09T16:41:17.709Z",
+            "timeFormatted": "11:41 a. m.",
+            "status": "read",
+            "attachment": {
+              "type": "video",
+              "url": "https://www.w3schools.com/html/mov_bbb.mp4",
+              "name": "guia_ont.mp4",
+              "size": "3.4 MB",
+              "duration": "0:45",
+              "thumbnailUrl": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600&auto=format&fit=crop&q=80"
+            }
+          }
+        ],
+        "createdAt": "2026-10-09T16:35:26.951Z",
+        "updatedAt": "2026-10-09T16:41:17.709Z"
+      },
+      {
+        "id": "grp-1-3",
+        "communityId": "comm-1",
+        "name": "💳 Pagos & Facturación",
+        "description": "Fechas de corte, métodos de pago y comprobantes para vecinos.",
+        "type": "billing",
+        "isReadOnly": false,
+        "unreadCount": 0,
+        "lastMessage": "Recordatorio: La fecha de vencimiento es el 15 de cada mes.",
+        "lastMessageTime": "11:35 a. m.",
+        "messages": [
+          {
+            "id": "gm-5",
+            "sender": "agent",
+            "senderName": "Facturación TurboNetwork",
+            "text": "Estimados vecinos, pueden realizar sus pagos mediante Yape, Plin o Transferencia bancaria indicando su código de cliente.",
+            "timestamp": "2026-10-09T16:35:26.951Z",
+            "timeFormatted": "11:35 a. m.",
+            "status": "read"
+          }
+        ],
+        "createdAt": "2026-10-09T16:35:26.951Z",
+        "updatedAt": "2026-10-09T16:35:26.951Z"
+      }
+    ]
+  },
+  {
+    "id": "comm-2",
+    "tenantId": "turbonetwork",
+    "name": "Urbanización El Sol (Troncal Este)",
+    "description": "Sector Este con conexión GPON fibra directa hasta el hogar (Cajas NAP 10 a 16).",
+    "avatarUrl": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&auto=format&fit=crop&q=80",
+    "coverImage": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80",
+    "type": "zone",
+    "linkedNaps": [
+      "NAP-10",
+      "NAP-11",
+      "NAP-12"
+    ],
+    "linkedZones": [
+      "Sector Este"
+    ],
+    "memberCount": 58,
+    "createdAt": "2026-10-09T16:35:26.951Z",
+    "updatedAt": "2026-10-09T16:35:26.951Z",
+    "groups": [
+      {
+        "id": "grp-2-1",
+        "communityId": "comm-2",
+        "name": "📢 Comunicados Generales",
+        "description": "Avisos oficiales y estados de red para Urbanización El Sol.",
+        "type": "announcements",
+        "isReadOnly": true,
+        "unreadCount": 0,
+        "lastMessage": "Nuevas velocidades disponibles con tecnología Wi-Fi 6.",
+        "lastMessageTime": "11:35 a. m.",
+        "messages": [
+          {
+            "id": "gm-6",
+            "sender": "agent",
+            "senderName": "Administración TurboNetwork",
+            "text": "Aviso importante: Hemos habilitado planes de hasta 600 Mbps simétricos para la Urbanización El Sol.",
+            "timestamp": "2026-10-09T16:35:26.951Z",
+            "timeFormatted": "11:35 a. m.",
+            "status": "read",
+            "reactions": {
+              "🎉": [
+                "client1",
+                "client2"
+              ]
+            }
+          }
+        ],
+        "createdAt": "2026-10-09T16:35:26.951Z",
+        "updatedAt": "2026-10-09T16:35:26.951Z"
+      },
+      {
+        "id": "grp-2-2",
+        "communityId": "comm-2",
+        "name": "🛠️ Atención al Cliente",
+        "description": "Canal abierto para dudas de instalación y servicio.",
+        "type": "support",
+        "isReadOnly": false,
+        "unreadCount": 0,
+        "lastMessage": "Servicio restablecido en la manzana D.",
+        "lastMessageTime": "11:35 a. m.",
+        "messages": [],
+        "createdAt": "2026-10-09T16:35:26.951Z",
+        "updatedAt": "2026-10-09T16:35:26.951Z"
+      }
+    ]
+  }
+]

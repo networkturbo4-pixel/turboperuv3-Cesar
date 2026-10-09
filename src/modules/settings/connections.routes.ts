@@ -12,6 +12,7 @@ import {
 } from "./connections.service";
 import { resolveTenantId, loadTenantsFromDisk } from "../tenants/tenants.service";
 import { generateTOTP, verifyTOTP } from "../rrhh/rrhh.routes";
+import { WhatsAppService } from "../messages/whatsapp.service";
 
 export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
   // 1. Obtener configuración de conexiones del tenant activo
@@ -31,6 +32,12 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
       : "";
     const safeMapboxToken = config.mapbox?.accessToken
       ? config.mapbox.accessToken.substring(0, 8) + "••••••••" + config.mapbox.accessToken.slice(-4)
+      : "";
+    const safeEvolutionKey = config.whatsapp?.evolution?.apiKey
+      ? config.whatsapp.evolution.apiKey.substring(0, 4) + "••••••••" + config.whatsapp.evolution.apiKey.slice(-4)
+      : "";
+    const safeMetaToken = config.whatsapp?.meta?.accessToken
+      ? config.whatsapp.meta.accessToken.substring(0, 6) + "••••••••" + config.whatsapp.meta.accessToken.slice(-4)
       : "";
 
     return reply.send({
@@ -60,6 +67,19 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
           }),
           accessTokenMasked: safeMapboxToken,
           hasAccessToken: !!config.mapbox?.accessToken,
+        },
+        whatsapp: {
+          ...config.whatsapp,
+          evolution: {
+            ...config.whatsapp.evolution,
+            apiKeyMasked: safeEvolutionKey,
+            hasApiKey: !!config.whatsapp.evolution.apiKey,
+          },
+          meta: {
+            ...config.whatsapp.meta,
+            accessTokenMasked: safeMetaToken,
+            hasAccessToken: !!config.whatsapp.meta.accessToken,
+          },
         },
       },
     });
@@ -93,6 +113,16 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
       mapboxToken = body.mapbox.accessToken.trim();
     }
 
+    let evolutionApiKey = current.whatsapp?.evolution?.apiKey || "";
+    if (body.whatsapp?.evolution?.apiKey && !body.whatsapp.evolution.apiKey.includes("••••")) {
+      evolutionApiKey = body.whatsapp.evolution.apiKey.trim();
+    }
+
+    let metaAccessToken = current.whatsapp?.meta?.accessToken || "";
+    if (body.whatsapp?.meta?.accessToken && !body.whatsapp.meta.accessToken.includes("••••")) {
+      metaAccessToken = body.whatsapp.meta.accessToken.trim();
+    }
+
     const updated = saveConnectionsConfig(
       {
         kuti: {
@@ -124,6 +154,30 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
           defaultCenter: Array.isArray(body.mapbox?.defaultCenter) ? body.mapbox.defaultCenter : current.mapbox?.defaultCenter || [-77.0368, -12.0970],
           defaultZoom: typeof body.mapbox?.defaultZoom === "number" ? body.mapbox.defaultZoom : current.mapbox?.defaultZoom || 14,
         },
+        whatsapp: {
+          provider: body.whatsapp?.provider || current.whatsapp?.provider || "both",
+          activeProvider: body.whatsapp?.activeProvider || current.whatsapp?.activeProvider || "evolution",
+          evolution: {
+            enabled: Boolean(body.whatsapp?.evolution?.enabled),
+            apiUrl: (body.whatsapp?.evolution?.apiUrl || current.whatsapp?.evolution?.apiUrl || "http://localhost:8080").trim(),
+            apiKey: evolutionApiKey,
+            instanceName: (body.whatsapp?.evolution?.instanceName || current.whatsapp?.evolution?.instanceName || "turbonetwork").trim(),
+            webhookSecret: (body.whatsapp?.evolution?.webhookSecret || "").trim(),
+            autoReconnect: body.whatsapp?.evolution?.autoReconnect !== false,
+          },
+          meta: {
+            enabled: Boolean(body.whatsapp?.meta?.enabled),
+            phoneNumberId: (body.whatsapp?.meta?.phoneNumberId || current.whatsapp?.meta?.phoneNumberId || "").trim(),
+            businessAccountId: (body.whatsapp?.meta?.businessAccountId || current.whatsapp?.meta?.businessAccountId || "").trim(),
+            accessToken: metaAccessToken,
+            verifyToken: (body.whatsapp?.meta?.verifyToken || current.whatsapp?.meta?.verifyToken || "turbonetwork_webhook_token").trim(),
+          },
+          notifyOnCustomerCreate: Boolean(body.whatsapp?.notifyOnCustomerCreate),
+          notifyOnInvoiceDue: body.whatsapp?.notifyOnInvoiceDue !== false,
+          notifyOnPayment: body.whatsapp?.notifyOnPayment !== false,
+          notifyOnServiceCut: body.whatsapp?.notifyOnServiceCut !== false,
+          notifyOnTicketAssignment: body.whatsapp?.notifyOnTicketAssignment !== false,
+        },
       },
       tenantId
     );
@@ -133,6 +187,61 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
       message: "Configuración de Conexiones e Integraciones guardada exitosamente.",
       data: updated,
     });
+  });
+
+  // 2.05 Probar Conexión WhatsApp (Evolution API o Meta Cloud API)
+  fastify.post("/settings/connections/whatsapp/test", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const body = (request.body as any) || {};
+    const config = loadConnectionsConfig(tenantId);
+    const provider = body.provider || body.activeProvider || config.whatsapp?.activeProvider || "evolution";
+
+    if (provider === "meta") {
+      let token = body.meta?.accessToken || config.whatsapp?.meta?.accessToken || "";
+      if (token.includes("••••")) token = config.whatsapp?.meta?.accessToken || "";
+      const metaConfig = {
+        phoneNumberId: body.meta?.phoneNumberId || config.whatsapp?.meta?.phoneNumberId || "",
+        accessToken: token,
+        verifyToken: body.meta?.verifyToken || config.whatsapp?.meta?.verifyToken || "",
+        enabled: true,
+      };
+      const testRes = await WhatsAppService.testMetaCredentials(metaConfig);
+      return reply.send(testRes);
+    } else {
+      let apiKey = body.evolution?.apiKey || config.whatsapp?.evolution?.apiKey || "";
+      if (apiKey.includes("••••")) apiKey = config.whatsapp?.evolution?.apiKey || "";
+      const evoConfig = {
+        apiUrl: body.evolution?.apiUrl || config.whatsapp?.evolution?.apiUrl || "http://localhost:8080",
+        apiKey,
+        instanceName: body.evolution?.instanceName || config.whatsapp?.evolution?.instanceName || "turbonetwork",
+        enabled: true,
+      };
+      const qrRes = await WhatsAppService.getEvolutionQr(tenantId, evoConfig);
+      return reply.send({
+        success: qrRes.status === "connected" || qrRes.status === "qrcode",
+        status: qrRes.status,
+        message: qrRes.message,
+        details: qrRes.details,
+        apiUrl: qrRes.apiUrl,
+        instance: qrRes.instance,
+        qrcode: qrRes.qrcode,
+        pairingCode: qrRes.pairingCode,
+      });
+    }
+  });
+
+  // 2.06 Obtener código QR de Evolution API en vivo
+  fastify.get("/settings/connections/whatsapp/qr", async (request, reply) => {
+    const query = request.query as any;
+    const tenantId = (query?.tenantId && query.tenantId !== "undefined" && query.tenantId !== "null") ? query.tenantId : resolveTenantId(request);
+    const overrides = {
+      apiUrl: query?.apiUrl,
+      apiKey: query?.apiKey,
+      instanceName: query?.instanceName,
+      demo: query?.demo === "true" || query?.demo === true,
+    };
+    const qrResult = await WhatsAppService.getEvolutionQr(tenantId, overrides);
+    return reply.send(qrResult);
   });
 
   // 2.1 Probar Token de Mapbox API

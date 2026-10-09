@@ -6,6 +6,7 @@ import { db, schema, dbCircuitBreaker } from "../../db";
 import { eq } from "drizzle-orm";
 import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
 import { MikroTikService } from "../network/mikrotik.service";
+import { SystemNotificationsService } from "../messages/system-notifications.service";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const CUSTOMERS_FILE = path.join(DATA_DIR, "customers.json");
@@ -315,7 +316,7 @@ const defaultCustomers: CustomerRecord[] = [
   },
 ];
 
-function loadCustomersFromDisk(tenantId = "turbonetwork"): CustomerRecord[] {
+export function loadCustomersFromDisk(tenantId = "turbonetwork"): CustomerRecord[] {
   try {
     const file = getTenantFilePath(tenantId, "customers.json");
     if (fs.existsSync(file)) {
@@ -335,16 +336,19 @@ function loadCustomersFromDisk(tenantId = "turbonetwork"): CustomerRecord[] {
   }
 }
 
-function saveCustomersToDisk(tenantId = "turbonetwork", list: CustomerRecord[]) {
+export function saveCustomersToDisk(tenantId = "turbonetwork", list: CustomerRecord[]) {
   try {
     const file = getTenantFilePath(tenantId, "customers.json");
     const dir = path.dirname(file);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(file, JSON.stringify(list, null, 2), "utf-8");
   } catch (err) {
-    console.error(`Error al guardar customers.json para ${tenantId}:`, err);
+    console.error(`Error al persistir customers.json para ${tenantId}:`, err);
   }
 }
+
+export const loadTenantCustomers = loadCustomersFromDisk;
+export const saveTenantCustomers = saveCustomersToDisk;
 
 function getServiceDetails(tenantId = "turbonetwork", serviceId?: number) {
   if (!serviceId) return null;
@@ -556,6 +560,13 @@ export const customersRoutes: FastifyPluginAsync = async (fastify) => {
       console.warn("Aviso al sincronizar estado de cliente con MikroTik:", mktErr?.message);
     }
 
+    // Si el estado pasó a suspendido, notificar al abonado por TurboChat y WhatsApp
+    if (status === "suspended") {
+      SystemNotificationsService.notifyServiceCutoff(tenantId, customer).catch((err) => {
+        console.warn("Aviso al enviar notificación de corte:", err?.message);
+      });
+    }
+
     const message = mikrotikReport
       ? `Estado del cliente actualizado a '${status}'. Regla aplicada en MikroTik (${mikrotikReport.message}).`
       : `Estado del cliente actualizado a '${status}'`;
@@ -735,6 +746,19 @@ export const customersRoutes: FastifyPluginAsync = async (fastify) => {
       message: "Configuración de envíos de recibos guardada correctamente",
       data: updatedConfig,
     });
+  });
+
+  // Ejecutar despacho de recibos en vivo (según configuración del modal)
+  fastify.post("/customers/receipt-dispatch/execute", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const body = (request.body as any) || {};
+
+    const report = await SystemNotificationsService.executeAutomatedReceiptDispatch(tenantId, {
+      forceStage: body.stage,
+      dryRun: Boolean(body.dryRun),
+    });
+
+    return reply.send(report);
   });
 
   // Simular / Probar envío de plantilla

@@ -21,6 +21,7 @@ import { rrhhRoutes, getCredentialHtmlByToken } from "./modules/rrhh/rrhh.routes
 import { tenantsRoutes } from "./modules/tenants/tenants.routes";
 import { inventoryRoutes } from "./modules/inventory/inventory.routes";
 import { messagesRoutes } from "./modules/messages/messages.routes";
+import { whatsappRoutes } from "./modules/messages/whatsapp.routes";
 import { mapsRoutes } from "./modules/maps/maps.routes";
 import { databaseRoutes } from "./modules/database/database.routes";
 import { ogRoutes } from "./modules/og/og.routes";
@@ -107,6 +108,24 @@ export async function buildApp() {
       return reply.type("text/html; charset=utf-8").send(processedHtml);
     };
 
+    // Función para servir la aplicación desacoplada de mensajería (TurboChat)
+    const serveDynamicChatHtml = (req: any, reply: any, tenantSlug?: string) => {
+      const chatPath = path.join(publicPath, "chat.html");
+      if (!fs.existsSync(chatPath)) {
+        return reply.status(404).send("chat.html not found");
+      }
+      const rawHtml = fs.readFileSync(chatPath, "utf-8");
+      const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
+      const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
+      const baseUrl = `${proto}://${host}`;
+      const currentUrl = `${baseUrl}${req.url}`;
+
+      const tenant = resolveTenantFromRequest(req, tenantSlug);
+
+      const processedHtml = injectOpenGraphHtml(rawHtml, tenant, currentUrl, baseUrl);
+      return reply.type("text/html; charset=utf-8").send(processedHtml);
+    };
+
     // 1. Ruta Raíz (ej: https://tudominio.com o https://tudominio.com/?tenant=celeris)
     fastify.get("/", async (req, reply) => {
       return serveDynamicHtml(req, reply);
@@ -116,10 +135,29 @@ export async function buildApp() {
       return serveDynamicHtml(req, reply);
     });
 
+    // 1.1 Rutas Desacopladas de Mensajería (TurboChat Standalone Desktop & Mobile)
+    fastify.get("/chat", async (req, reply) => {
+      return serveDynamicChatHtml(req, reply);
+    });
+
+    fastify.get("/messages", async (req, reply) => {
+      return serveDynamicChatHtml(req, reply);
+    });
+
     // 2. Ruta Amigable de Negocio Directa (ej: https://tudominio.com/t/celeris o /t/loanetwork)
     fastify.get("/t/:tenantSlug", async (req, reply) => {
       const { tenantSlug } = req.params as { tenantSlug: string };
       return serveDynamicHtml(req, reply, tenantSlug);
+    });
+
+    fastify.get("/t/:tenantSlug/chat", async (req, reply) => {
+      const { tenantSlug } = req.params as { tenantSlug: string };
+      return serveDynamicChatHtml(req, reply, tenantSlug);
+    });
+
+    fastify.get("/t/:tenantSlug/messages", async (req, reply) => {
+      const { tenantSlug } = req.params as { tenantSlug: string };
+      return serveDynamicChatHtml(req, reply, tenantSlug);
     });
 
     // 3. Servir assets estáticos (CSS, JS, iconos, imágenes)
@@ -146,6 +184,8 @@ export async function buildApp() {
   await fastify.register(connectionsRoutes, { prefix: "/api" });
   await fastify.register(inventoryRoutes, { prefix: "/api" });
   await fastify.register(messagesRoutes, { prefix: "/api" });
+  await fastify.register(whatsappRoutes, { prefix: "/api" });
+  await fastify.register(whatsappRoutes); // Permite /webhooks/whatsapp directo sin /api
   await fastify.register(mapsRoutes, { prefix: "/api" });
   await fastify.register(databaseRoutes, { prefix: "/api" });
 

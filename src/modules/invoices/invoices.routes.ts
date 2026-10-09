@@ -3,6 +3,7 @@ import { z } from "zod";
 import fs from "fs";
 import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
 import { MikroTikService } from "../network/mikrotik.service";
+import { SystemNotificationsService } from "../messages/system-notifications.service";
 
 const registerPaymentSchema = z.object({
   paymentMethod: z.enum(["cash", "bank_transfer", "pos", "efectivo", "transferencia", "tarjeta", "other"]).default("cash"),
@@ -14,7 +15,7 @@ function getTenantInvoicesFile(tenantId: string): string {
   return getTenantFilePath(tenantId, "invoices.json");
 }
 
-function loadTenantInvoices(tenantId: string): any[] {
+export function loadTenantInvoices(tenantId: string): any[] {
   const filePath = getTenantInvoicesFile(tenantId);
   try {
     if (fs.existsSync(filePath)) {
@@ -26,7 +27,7 @@ function loadTenantInvoices(tenantId: string): any[] {
   return [];
 }
 
-function saveTenantInvoices(tenantId: string, invoices: any[]): void {
+export function saveTenantInvoices(tenantId: string, invoices: any[]): void {
   const filePath = getTenantInvoicesFile(tenantId);
   try {
     fs.writeFileSync(filePath, JSON.stringify(invoices, null, 2), "utf-8");
@@ -35,7 +36,7 @@ function saveTenantInvoices(tenantId: string, invoices: any[]): void {
   }
 }
 
-function loadTenantCustomers(tenantId: string): any[] {
+export function loadTenantCustomers(tenantId: string): any[] {
   try {
     const p = getTenantFilePath(tenantId, "customers.json");
     if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf-8"));
@@ -43,14 +44,14 @@ function loadTenantCustomers(tenantId: string): any[] {
   return [];
 }
 
-function saveTenantCustomers(tenantId: string, list: any[]): void {
+export function saveTenantCustomers(tenantId: string, list: any[]): void {
   try {
     const p = getTenantFilePath(tenantId, "customers.json");
     fs.writeFileSync(p, JSON.stringify(list, null, 2), "utf-8");
   } catch (e) {}
 }
 
-function loadTenantDevices(tenantId: string): any[] {
+export function loadTenantDevices(tenantId: string): any[] {
   try {
     const p = getTenantFilePath(tenantId, "devices.json");
     if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf-8"));
@@ -174,6 +175,19 @@ export const invoicesRoutes: FastifyPluginAsync = async (fastify) => {
       }
     } catch (mktErr: any) {
       console.warn("Aviso al intentar auto-reactivación MikroTik:", mktErr?.message);
+    }
+
+    // Notificación automática en tiempo real al chat del cliente y por WhatsApp
+    try {
+      const customers = loadTenantCustomers(tenantId);
+      const customer = customers.find((c: any) => c.id === inv.customerId);
+      if (customer) {
+        SystemNotificationsService.notifyPaymentReceived(tenantId, inv, customer, mikrotikReactivationReport).catch((err) => {
+          console.warn("Aviso al despachar notificación de pago:", err?.message);
+        });
+      }
+    } catch (notifErr: any) {
+      console.warn("Aviso al preparar notificación de pago:", notifErr?.message);
     }
 
     const message = mikrotikReactivationReport

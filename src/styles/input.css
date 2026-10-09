@@ -1,3 +1,159 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ========================================================
+   ESTILOS DEDICADOS: MENSAJES, COMUNIDADES & GRUPOS
+   ======================================================== */
+
+/* Pestañas de Navegación Directos / Comunidades */
+.msg-tab-btn {
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  user-select: none;
+}
+
+.msg-tab-inactive {
+  background-color: transparent !important;
+  color: #64748b !important;
+}
+.dark .msg-tab-inactive {
+  color: #94a3b8 !important;
+}
+.msg-tab-inactive:hover {
+  color: #0f172a !important;
+}
+.dark .msg-tab-inactive:hover {
+  color: #ffffff !important;
+}
+
+.msg-tab-active-direct {
+  background-color: #ffffff !important;
+  color: #2563eb !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.dark .msg-tab-active-direct {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+}
+
+.msg-tab-active-comm {
+  background-color: #ffffff !important;
+  color: #059669 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.dark .msg-tab-active-comm {
+  background-color: #059669 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.3);
+}
+
+/* Tarjeta de Comunidad */
+.community-card {
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+.dark .community-card {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: #111827;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.community-card-header {
+  padding: 0.75rem;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dark .community-card-header {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.community-card-title {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  color: #0f172a;
+}
+.dark .community-card-title {
+  color: #f8fafc;
+}
+
+.community-card-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 0.125rem;
+}
+.dark .community-card-subtitle {
+  color: #94a3b8;
+}
+
+/* Canales dentro de la Comunidad */
+.community-channel-item {
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  color: #334155;
+  background-color: transparent;
+  border-left: 3px solid transparent;
+}
+.dark .community-channel-item {
+  color: #cbd5e1;
+}
+.community-channel-item:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+.dark .community-channel-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.community-channel-item.active {
+  background-color: #eff6ff;
+  border-left-color: #2563eb;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+.dark .community-channel-item.active {
+  background-color: rgba(37, 99, 235, 0.18);
+  border-left-color: #3b82f6;
+  color: #ffffff;
+}
+
+.community-channel-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+.dark .community-channel-name {
+  color: #f1f5f9;
+}
+.community-channel-item.active .community-channel-name {
+  color: #1d4ed8;
+}
+.dark .community-channel-item.active .community-channel-name {
+  color: #ffffff;
+}

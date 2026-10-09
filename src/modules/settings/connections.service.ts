@@ -60,13 +60,68 @@ export interface MapboxSettings {
   defaultZoom: number;
 }
 
+export interface EvolutionSettings {
+  enabled: boolean;
+  apiUrl: string;
+  apiKey: string;
+  instanceName: string;
+  webhookSecret?: string;
+  autoReconnect?: boolean;
+}
+
+export interface MetaSettings {
+  enabled: boolean;
+  phoneNumberId: string;
+  businessAccountId?: string;
+  accessToken: string;
+  verifyToken: string;
+}
+
+export interface WhatsAppConfig {
+  provider: "evolution" | "meta" | "both";
+  activeProvider: "evolution" | "meta";
+  evolution: EvolutionSettings;
+  meta: MetaSettings;
+  notifyOnCustomerCreate: boolean;
+  notifyOnInvoiceDue: boolean;
+  notifyOnPayment: boolean;
+  notifyOnServiceCut: boolean;
+  notifyOnTicketAssignment: boolean;
+}
+
 export interface ConnectionsConfig {
   kuti: KutiSettings;
   jsonpe: JsonPeSettings;
   security: MasterSecuritySettings;
   mapbox: MapboxSettings;
+  whatsapp: WhatsAppConfig;
   updatedAt?: string;
 }
+
+export const defaultWhatsApp: WhatsAppConfig = {
+  provider: "both",
+  activeProvider: "evolution",
+  evolution: {
+    enabled: false,
+    apiUrl: "http://localhost:8080",
+    apiKey: "",
+    instanceName: "turbonetwork",
+    webhookSecret: "",
+    autoReconnect: true,
+  },
+  meta: {
+    enabled: false,
+    phoneNumberId: "",
+    businessAccountId: "",
+    accessToken: "",
+    verifyToken: "turbonetwork_webhook_token",
+  },
+  notifyOnCustomerCreate: false,
+  notifyOnInvoiceDue: true,
+  notifyOnPayment: true,
+  notifyOnServiceCut: true,
+  notifyOnTicketAssignment: true,
+};
 
 // RFC 4648 Base32 limpio (16 caracteres, sin números 0, 1, 8, 9)
 export const DEFAULT_MASTER_TOTP_SECRET = "TURBONETWORKKEY2";
@@ -102,6 +157,7 @@ const defaultConnections: ConnectionsConfig = {
     defaultCenter: [-77.0368, -12.0970],
     defaultZoom: 14,
   },
+  whatsapp: defaultWhatsApp,
 };
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
@@ -115,7 +171,22 @@ export function loadConnectionsConfig(tenantId?: string): ConnectionsConfig {
       if (fs.existsSync(tenantFile)) {
         const raw = fs.readFileSync(tenantFile, "utf-8");
         const parsed = JSON.parse(raw);
-        const config: ConnectionsConfig = { ...defaultConnections, ...parsed };
+        const config: ConnectionsConfig = {
+          ...defaultConnections,
+          ...parsed,
+          whatsapp: {
+            ...defaultWhatsApp,
+            ...(parsed.whatsapp || {}),
+            evolution: {
+              ...defaultWhatsApp.evolution,
+              ...(parsed.whatsapp?.evolution || {}),
+            },
+            meta: {
+              ...defaultWhatsApp.meta,
+              ...(parsed.whatsapp?.meta || {}),
+            },
+          },
+        };
 
         // Asegurar que el secreto sea Base32 válido (sin dígitos ilegales como 0 de versiones previas)
         if (!isValidBase32Secret(config.security?.masterTotpSecret)) {
@@ -137,6 +208,7 @@ export function loadConnectionsConfig(tenantId?: string): ConnectionsConfig {
             masterTotpSecret: generateBase32Secret(16),
             require2faOnLogin: false,
           },
+          whatsapp: defaultWhatsApp,
           updatedAt: new Date().toISOString(),
         };
         try {
@@ -152,7 +224,22 @@ export function loadConnectionsConfig(tenantId?: string): ConnectionsConfig {
     if (fs.existsSync(GLOBAL_CONNECTIONS_FILE)) {
       const raw = fs.readFileSync(GLOBAL_CONNECTIONS_FILE, "utf-8");
       const parsed = JSON.parse(raw);
-      const config: ConnectionsConfig = { ...defaultConnections, ...parsed };
+      const config: ConnectionsConfig = {
+        ...defaultConnections,
+        ...parsed,
+        whatsapp: {
+          ...defaultWhatsApp,
+          ...(parsed.whatsapp || {}),
+          evolution: {
+            ...defaultWhatsApp.evolution,
+            ...(parsed.whatsapp?.evolution || {}),
+          },
+          meta: {
+            ...defaultWhatsApp.meta,
+            ...(parsed.whatsapp?.meta || {}),
+          },
+        },
+      };
       if (!isValidBase32Secret(config.security?.masterTotpSecret)) {
         config.security.masterTotpSecret = DEFAULT_MASTER_TOTP_SECRET;
       }
@@ -175,6 +262,18 @@ export function saveConnectionsConfig(config: Partial<ConnectionsConfig>, tenant
     jsonpe: { ...current.jsonpe, ...(config.jsonpe || {}) },
     security: { ...current.security, ...(config.security || {}) },
     mapbox: { ...current.mapbox, ...(config.mapbox || {}) },
+    whatsapp: {
+      ...current.whatsapp,
+      ...(config.whatsapp || {}),
+      evolution: {
+        ...current.whatsapp.evolution,
+        ...(config.whatsapp?.evolution || {}),
+      },
+      meta: {
+        ...current.whatsapp.meta,
+        ...(config.whatsapp?.meta || {}),
+      },
+    },
     updatedAt: new Date().toISOString(),
   };
 

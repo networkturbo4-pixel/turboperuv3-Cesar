@@ -1,0 +1,57 @@
+{
+  "name": "TurboChat - Mensajes & Comunidades ISP",
+  "short_name": "TurboChat",
+  "description": "Aplicación Dedicada de Mensajería, Comunidades y Soporte Técnico en Tiempo Real para ISP/WISP",
+  "start_url": "/chat?source=pwa",
+  "scope": "/",
+  "id": "/chat-app",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0b101b",
+  "theme_color": "#2563eb",
+  "orientation": "any",
+  "lang": "es",
+  "categories": ["communication", "business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Chats Directos",
+      "short_name": "Directos",
+      "description": "Bandeja de clientes y cuadrillas técnicas",
+      "url": "/chat?tab=direct",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Comunidades",
+      "short_name": "Comunidades",
+      "description": "Grupos por condominio y sectores de fibra óptica",
+      "url": "/chat?tab=communities",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
