@@ -39,6 +39,17 @@ export async function buildApp() {
     disableRequestLogging: env.NODE_ENV === "production",
   });
 
+  // Permitir peticiones con Content-Type: application/json sin cuerpo (evita error FST_ERR_CTP_EMPTY_JSON_BODY)
+  fastify.addContentTypeParser("application/json", { parseAs: "string" }, (req, body, done) => {
+    try {
+      const json = (body && typeof body === "string" && body.trim().length > 0) ? JSON.parse(body) : {};
+      done(null, json);
+    } catch (err: any) {
+      err.statusCode = 400;
+      done(err, undefined);
+    }
+  });
+
   // Seguridad y CORS
   await fastify.register(helmet, {
     contentSecurityPolicy: false, // Permite cargar assets del dashboard embebido

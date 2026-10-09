@@ -17,6 +17,7 @@ import {
   ProductPurchase,
   ClientInstallation,
   PersonnelAssignment,
+  ProductItemUnit,
   ProductTraceabilitySummary,
 } from "./inventory.types";
 
@@ -581,6 +582,7 @@ export function updateProduct(
     alternativeNames: payload.alternativeNames || current.alternativeNames,
     images: payload.images || current.images,
     variants: payload.variants || current.variants,
+    itemUnits: payload.itemUnits !== undefined ? payload.itemUnits : current.itemUnits,
     status: calculateStatus(totalStock, stockMin, stockCritical),
     updatedAt: new Date().toISOString(),
   };
@@ -612,6 +614,48 @@ export function softDeleteProduct(tenantId: string, id: number): boolean {
   });
 
   return true;
+}
+
+// Operaciones masivas (Bulk / Lote)
+export function bulkSoftDeleteProducts(
+  tenantId: string,
+  ids: number[]
+): { successCount: number; failedCount: number } {
+  let successCount = 0;
+  let failedCount = 0;
+  for (const id of ids) {
+    if (softDeleteProduct(tenantId, id)) {
+      successCount++;
+    } else {
+      failedCount++;
+    }
+  }
+  return { successCount, failedCount };
+}
+
+export function bulkUpdateProductCategory(
+  tenantId: string,
+  ids: number[],
+  categoryId: string
+): { successCount: number; failedCount: number } {
+  const cats = loadCategories(tenantId);
+  const cat = cats.find((c) => c.id === categoryId);
+  const categoryName = cat ? cat.name : undefined;
+
+  let successCount = 0;
+  let failedCount = 0;
+  for (const id of ids) {
+    const updated = updateProduct(tenantId, id, {
+      categoryId,
+      ...(categoryName ? { categoryName } : {}),
+    });
+    if (updated) {
+      successCount++;
+    } else {
+      failedCount++;
+    }
+  }
+  return { successCount, failedCount };
 }
 
 // ==========================================
@@ -692,7 +736,6 @@ export function markBarcodesPrinted(tenantId: string, productIds: number[]): { u
   products.forEach((p) => {
     if (productIds.includes(p.id)) {
       p.barcodePrinted = true;
-      p.isBarcodePrinted = true;
       p.barcodePrintedAt = now;
       count++;
     }
@@ -1240,6 +1283,34 @@ export function createPersonnelAssignment(
   const products = loadProducts(tenantId);
   const product = products.find((p) => p.id === payload.productId);
 
+  const cleanUnitKey = (s?: string) => (s || "").toLowerCase().replace(/[\s\-_./]/g, "");
+
+  let matchedUnitNumber: number | undefined = payload.unitNumber;
+  let matchedUnitSku: string | undefined = payload.unitSku;
+  let matchedUnitId: string | undefined = payload.itemUnitId;
+
+  // Si tiene unidades individuales y se especificó una unidad (por ID, SKU o variante)
+  if (product && Array.isArray(product.itemUnits) && (payload.itemUnitId || payload.unitSku || payload.variantName)) {
+    const targetKey = cleanUnitKey(payload.itemUnitId || payload.unitSku || payload.variantName);
+    const unit = product.itemUnits.find(
+      (u) =>
+        (payload.itemUnitId && u.id === payload.itemUnitId) ||
+        cleanUnitKey(u.sku) === targetKey ||
+        cleanUnitKey(u.id) === targetKey ||
+        (payload.variantName && cleanUnitKey(payload.variantName).includes(cleanUnitKey(u.sku)))
+    );
+
+    if (unit) {
+      unit.status = "en_uso";
+      unit.assignedTo = payload.employeeName;
+      unit.assignedAt = payload.assignedAt || new Date().toISOString();
+      matchedUnitNumber = unit.itemNumber;
+      matchedUnitSku = unit.sku;
+      matchedUnitId = unit.id;
+      saveProducts(tenantId, products);
+    }
+  }
+
   const newAssignment: PersonnelAssignment = {
     ...payload,
     productName: payload.productName || product?.name || "Material",
@@ -1247,6 +1318,9 @@ export function createPersonnelAssignment(
     productImage: payload.productImage || (product?.images && product.images[0]) || "",
     id: "asg-" + crypto.randomBytes(3).toString("hex"),
     tenantId,
+    unitNumber: matchedUnitNumber,
+    unitSku: matchedUnitSku,
+    itemUnitId: matchedUnitId,
   };
 
   assignments.unshift(newAssignment);
@@ -1256,11 +1330,30 @@ export function createPersonnelAssignment(
   adjustStock(tenantId, payload.productId, {
     type: "out",
     quantity: payload.quantity,
-    reason: `Asignación a técnico: ${payload.employeeName}`,
+    reason: `Asignación a técnico: ${payload.employeeName}${matchedUnitSku ? ` [Unidad #${matchedUnitNumber || ""} ${matchedUnitSku}]` : ""}`,
     operatorName: "Despacho Almacén",
   });
 
   return newAssignment;
+}
+
+// ASIGNACIÓN MÚLTIPLE / POR LOTE (VALE DE DESPACHO)
+export function createPersonnelAssignmentsBatch(
+  tenantId: string,
+  employeeId: number | string,
+  employeeName: string,
+  items: Array<Omit<PersonnelAssignment, "id" | "tenantId" | "employeeId" | "employeeName">>
+): PersonnelAssignment[] {
+  const created: PersonnelAssignment[] = [];
+  for (const item of items) {
+    const asg = createPersonnelAssignment(tenantId, {
+      ...item,
+      employeeId,
+      employeeName,
+    });
+    created.push(asg);
+  }
+  return created;
 }
 
 // DEVOLUCIÓN DE ASIGNACIÓN
@@ -1283,12 +1376,35 @@ export function returnPersonnelAssignment(
 
   saveAssignments(tenantId, assignments);
 
+  // Actualizar estado de la unidad individual serializada si existía
+  if (asg.itemUnitId || asg.unitSku) {
+    const products = loadProducts(tenantId);
+    const product = products.find((p) => p.id === asg.productId);
+    if (product && Array.isArray(product.itemUnits)) {
+      const cleanUnitKey = (s?: string) => (s || "").toLowerCase().replace(/[\s\-_./]/g, "");
+      const targetKey = cleanUnitKey(asg.itemUnitId || asg.unitSku);
+      const unit = product.itemUnits.find(
+        (u) => (asg.itemUnitId && u.id === asg.itemUnitId) || cleanUnitKey(u.sku) === targetKey
+      );
+      if (unit) {
+        if (asg.returnCondition === "buen_estado") {
+          unit.status = "disponible";
+          unit.assignedTo = undefined;
+          unit.assignedAt = undefined;
+        } else if (asg.returnCondition === "danado") {
+          unit.status = "baja";
+        }
+        saveProducts(tenantId, products);
+      }
+    }
+  }
+
   // Reingresar stock al almacén principal solo si está en buen estado
   if (asg.returnCondition === "buen_estado") {
     adjustStock(tenantId, asg.productId, {
       type: "in",
       quantity: asg.quantity,
-      reason: `Devolución de material/EPP por ${asg.employeeName} (Buen estado)`,
+      reason: `Devolución de material/EPP por ${asg.employeeName} (Buen estado)${asg.unitSku ? ` [Unidad ${asg.unitSku}]` : ""}`,
       operatorName: "Recepción Almacén",
     });
   } else {
@@ -1296,7 +1412,7 @@ export function returnPersonnelAssignment(
     adjustStock(tenantId, asg.productId, {
       type: "adjustment",
       quantity: 0,
-      reason: `Devolución de ${asg.employeeName} reportada como: ${asg.returnCondition} (Requiere reposición/taller)`,
+      reason: `Devolución de ${asg.employeeName} reportada como: ${asg.returnCondition} (Requiere reposición/taller)${asg.unitSku ? ` [Unidad ${asg.unitSku}]` : ""}`,
       operatorName: "Recepción Almacén",
     });
   }
@@ -1325,18 +1441,57 @@ export function getProductTraceability(
   skuOrBarcodeOrId: string
 ): ProductTraceabilitySummary | null {
   const products = loadProducts(tenantId);
-  const needle = skuOrBarcodeOrId.trim().toLowerCase();
+  const rawQuery = (skuOrBarcodeOrId || "").trim();
+  if (!rawQuery) return null;
 
-  const product = products.find((p) => {
-    return (
-      String(p.id) === needle ||
-      (p.sku && p.sku.toLowerCase() === needle) ||
-      (p.barcode && p.barcode.toLowerCase() === needle) ||
-      (p.unitSku && p.unitSku.toLowerCase() === needle) ||
-      (p.variants && p.variants.some((v) => v.sku && v.sku.toLowerCase() === needle)) ||
-      (p.bulkUnits && p.bulkUnits.some((u) => u.sku && u.sku.toLowerCase() === needle))
-    );
-  }) || products.find((p) => (p.name && p.name.toLowerCase().includes(needle)));
+  const needle = rawQuery.toLowerCase();
+  const cleanNeedle = needle.replace(/[\s\-_./]/g, "");
+
+  const cleanMatch = (str?: string) => {
+    if (!str) return false;
+    const s = str.toLowerCase().trim();
+    if (s === needle) return true;
+    const c = s.replace(/[\s\-_./]/g, "");
+    return c === cleanNeedle;
+  };
+
+  let matchedUnit: ProductItemUnit | undefined = undefined;
+
+  // 1. Buscar coincidencia exacta o normalizada (insensible a espacios, guiones o mayúsculas)
+  let product = products.find((p) => {
+    if (String(p.id) === needle || String(p.id) === cleanNeedle) return true;
+    if (cleanMatch(p.sku) || cleanMatch(p.barcode) || cleanMatch(p.unitSku)) return true;
+    if (p.variants && p.variants.some((v) => cleanMatch(v.sku))) return true;
+
+    if (p.itemUnits && p.itemUnits.length > 0) {
+      const uMatch = p.itemUnits.find(
+        (u) => cleanMatch(u.sku) || cleanMatch(u.barcode) || cleanMatch(u.serialNumber)
+      );
+      if (uMatch) {
+        matchedUnit = uMatch;
+        return true;
+      }
+    }
+
+    return false;
+  });
+
+  // 2. Si no hubo coincidencia directa por código, buscar por prefijo de SKU o por nombre
+  if (!product) {
+    product = products.find((p) => {
+      const cSku = (p.sku || "").toLowerCase().replace(/[\s\-_./]/g, "");
+      if (cSku && (cleanNeedle.startsWith(cSku) || cSku.startsWith(cleanNeedle))) {
+        if (p.itemUnits && p.itemUnits.length > 0) {
+          const uMatch = p.itemUnits.find(
+            (u) => cleanMatch(u.sku) || cleanMatch(u.barcode) || cleanMatch(u.serialNumber)
+          );
+          if (uMatch) matchedUnit = uMatch;
+        }
+        return true;
+      }
+      return p.name && p.name.toLowerCase().includes(needle);
+    });
+  }
 
   if (!product) return null;
 
@@ -1380,6 +1535,7 @@ export function getProductTraceability(
     purchases: allPurchases,
     installations: allInstallations,
     assignments: allAssignments,
+    matchedUnit,
   };
 }
 
