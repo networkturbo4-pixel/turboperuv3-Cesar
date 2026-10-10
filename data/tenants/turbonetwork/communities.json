@@ -1,1 +1,122 @@
-[]
+[
+  {
+    "id": "comm-1791593214525",
+    "tenantId": "turbonetwork",
+    "name": "Prueba",
+    "description": "Comunidad de telecomunicaciones TurboNetwork",
+    "avatarUrl": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=150&auto=format&fit=crop&q=80",
+    "coverImage": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80",
+    "type": "building",
+    "linkedNaps": [],
+    "linkedZones": [],
+    "memberCount": 2,
+    "members": [
+      {
+        "id": 1790781290504,
+        "userId": 1790781290504,
+        "name": "Emanuel Lopez",
+        "email": "emanuelalopez@gmail.com",
+        "phone": "",
+        "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=hhbzmd",
+        "roleName": "Cajero Sucursal Centro",
+        "type": "system_user",
+        "communityRole": "member",
+        "addedAt": "2026-10-10T00:46:52.649Z"
+      },
+      {
+        "id": 1790787042063,
+        "userId": 1790787042063,
+        "name": "Miguel Mendoza",
+        "email": "miguelmendoza@gmail.com",
+        "phone": "",
+        "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Miguel%20Mendoza",
+        "roleName": "Administrador de Red / NOC",
+        "type": "system_user",
+        "communityRole": "member",
+        "addedAt": "2026-10-10T00:46:52.649Z"
+      }
+    ],
+    "createdAt": "2026-10-10T00:46:54.525Z",
+    "updatedAt": "2026-10-10T00:46:54.525Z",
+    "groups": [
+      {
+        "id": "grp-comm-1791593214525-1",
+        "communityId": "comm-1791593214525",
+        "name": "Anuncios y Avisos",
+        "description": "Canal de anuncios oficiales del condominio o torre",
+        "type": "announcements",
+        "isReadOnly": true,
+        "permission": "admin_only",
+        "avatarUrl": "https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?w=150&auto=format&fit=crop&q=80",
+        "unreadCount": 0,
+        "lastMessage": "Canal Anuncios y Avisos activado",
+        "lastMessageTime": "07:46 p. m.",
+        "messages": [
+          {
+            "id": "gm-1791593214525-0",
+            "sender": "system",
+            "senderName": "Sistema TurboNetwork",
+            "text": "Canal Anuncios y Avisos activado en la comunidad Prueba.",
+            "timestamp": "2026-10-10T00:46:54.525Z",
+            "timeFormatted": "07:46 p. m.",
+            "status": "read"
+          }
+        ],
+        "createdAt": "2026-10-10T00:46:54.525Z",
+        "updatedAt": "2026-10-10T00:46:54.525Z"
+      },
+      {
+        "id": "grp-comm-1791593214525-2",
+        "communityId": "comm-1791593214525",
+        "name": "Soporte y Consultas",
+        "description": "Consultas de servicio y atención",
+        "type": "general",
+        "isReadOnly": false,
+        "permission": "everyone",
+        "avatarUrl": "https://images.unsplash.com/photo-1534536281715-e28d76689b4d?w=150&auto=format&fit=crop&q=80",
+        "unreadCount": 0,
+        "lastMessage": "Canal Soporte y Consultas activado",
+        "lastMessageTime": "07:46 p. m.",
+        "messages": [
+          {
+            "id": "gm-1791593214525-1",
+            "sender": "system",
+            "senderName": "Sistema TurboNetwork",
+            "text": "Canal Soporte y Consultas activado en la comunidad Prueba.",
+            "timestamp": "2026-10-10T00:46:54.525Z",
+            "timeFormatted": "07:46 p. m.",
+            "status": "read"
+          }
+        ],
+        "createdAt": "2026-10-10T00:46:54.525Z",
+        "updatedAt": "2026-10-10T00:46:54.525Z"
+      },
+      {
+        "id": "grp-comm-1791593214525-3",
+        "communityId": "comm-1791593214525",
+        "name": "Comunidad General",
+        "description": "Espacio para conversar entre vecinos",
+        "type": "general",
+        "isReadOnly": false,
+        "permission": "everyone",
+        "avatarUrl": "https://images.unsplash.com/photo-1577495508048-b635879837f1?w=150&auto=format&fit=crop&q=80",
+        "unreadCount": 0,
+        "lastMessage": "Canal Comunidad General activado",
+        "lastMessageTime": "07:46 p. m.",
+        "messages": [
+          {
+            "id": "gm-1791593214525-2",
+            "sender": "system",
+            "senderName": "Sistema TurboNetwork",
+            "text": "Canal Comunidad General activado en la comunidad Prueba.",
+            "timestamp": "2026-10-10T00:46:54.525Z",
+            "timeFormatted": "07:46 p. m.",
+            "status": "read"
+          }
+        ],
+        "createdAt": "2026-10-10T00:46:54.525Z",
+        "updatedAt": "2026-10-10T00:46:54.525Z"
+      }
+    ]
+  }
+]

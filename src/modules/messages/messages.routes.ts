@@ -122,6 +122,13 @@ export interface Conversation {
   ratingLabel?: string;
   address?: string;
   backpackItems?: string[];
+  creatorId?: number | string;
+  creatorName?: string;
+  creatorRole?: string;
+  creatorAvatar?: string;
+  creatorPhone?: string;
+  creatorEmail?: string;
+  participants?: (number | string)[];
 }
 
 export function getFormattedTime(date: Date = new Date()): string {
@@ -900,11 +907,56 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   // 5. Listar conversaciones
   fastify.get("/messages/conversations", async (request, reply) => {
     const tenantId = resolveTenantId(request);
-    const query = request.query as { category?: string; q?: string; includeArchived?: string } | undefined;
+    const query = request.query as { category?: string; q?: string; includeArchived?: string; userId?: string; currentUserId?: string } | undefined;
+    const currentUserId = query?.userId || query?.currentUserId || (request.headers["x-user-id"] as string);
     let list = loadConversationsFromDisk(tenantId);
 
     // Enriquecer avatares con fotos de perfil actualizadas del sistema (usuarios y clientes)
     list = enrichConversationAvatars(tenantId, list);
+
+    // Adaptar perspectiva de conversaciones entre colaboradores (personal) según el usuario logueado
+    if (currentUserId) {
+      const uId = String(currentUserId);
+      let systemUsers: any[] = [];
+      try {
+        const uPath = path.resolve(process.cwd(), "data", "users.json");
+        if (fs.existsSync(uPath)) systemUsers = JSON.parse(fs.readFileSync(uPath, "utf-8"));
+      } catch {}
+
+      list = list.map(c => {
+        if (c.type === "personal" || (c.tags && c.tags.includes("personal"))) {
+          const cContact = String(c.contactId || "");
+          const cCreator = String(c.creatorId || "");
+
+          // Si yo soy el contactId de este chat de personal, la contraparte que veo es el creador/otro participante
+          if (cContact === uId && cCreator && cCreator !== uId) {
+            const partner = systemUsers.find(u => String(u.id) === cCreator);
+            return {
+              ...c,
+              name: partner ? partner.name : (c.creatorName || "Colaborador"),
+              avatar: partner ? (partner.avatar || partner.avatarUrl) : (c.creatorAvatar || c.avatar),
+              planOrRole: partner ? (partner.roleName || partner.role) : (c.creatorRole || "Personal"),
+              phone: partner ? (partner.phone || partner.email) : (c.creatorPhone || c.creatorEmail || c.phone),
+              email: partner ? partner.email : (c.creatorEmail || c.email),
+              contactId: cCreator
+            };
+          }
+        }
+        return c;
+      });
+
+      // Filtrar chats consigo mismo (donde contactId y creatorId son el mismo usuario)
+      list = list.filter(c => {
+        if (c.type === "personal" || (c.tags && c.tags.includes("personal"))) {
+          const cContact = String(c.contactId || "");
+          const cCreator = String(c.creatorId || "");
+          if (cContact === uId && (!cCreator || cCreator === uId)) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
 
     // Filtro por archivados o categoría
     const isArchivedFilter = query?.category === "archived";
@@ -956,7 +1008,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get("/messages/conversations/:id", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const { id } = request.params as { id: string };
-    const query = (request.query as { limit?: string; before?: string; all?: string }) || {};
+    const query = (request.query as { limit?: string; before?: string; all?: string; userId?: string; currentUserId?: string }) || {};
 
     const list = loadConversationsFromDisk(tenantId);
     let conv = list.find(c => c.id === id);
@@ -967,6 +1019,30 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     // Enriquecer avatar si el usuario o cliente actualizó su foto de perfil
     const enrichedList = enrichConversationAvatars(tenantId, [conv]);
     conv = enrichedList[0] || conv;
+
+    const currentUserId = query.userId || query.currentUserId || (request.headers["x-user-id"] as string);
+    if (currentUserId && (conv.type === "personal" || (conv.tags && conv.tags.includes("personal")))) {
+      const uId = String(currentUserId);
+      const cContact = String(conv.contactId || "");
+      const cCreator = String(conv.creatorId || "");
+      if (cContact === uId && cCreator && cCreator !== uId) {
+        let systemUsers: any[] = [];
+        try {
+          const uPath = path.resolve(process.cwd(), "data", "users.json");
+          if (fs.existsSync(uPath)) systemUsers = JSON.parse(fs.readFileSync(uPath, "utf-8"));
+        } catch {}
+        const partner = systemUsers.find(u => String(u.id) === cCreator);
+        conv = {
+          ...conv,
+          name: partner ? partner.name : (conv.creatorName || "Colaborador"),
+          avatar: partner ? (partner.avatar || partner.avatarUrl) : (conv.creatorAvatar || conv.avatar),
+          planOrRole: partner ? (partner.roleName || partner.role) : (conv.creatorRole || "Personal"),
+          phone: partner ? (partner.phone || partner.email) : (conv.creatorPhone || conv.creatorEmail || conv.phone),
+          email: partner ? partner.email : (conv.creatorEmail || conv.email),
+          contactId: cCreator
+        };
+      }
+    }
 
     // Marcar como leída
     conv.unreadCount = 0;
@@ -1054,7 +1130,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     };
 
     conv.messages.push(newMsg);
-    if (sender === "client") {
+    const isPersonalChat = conv.type === "personal" || (conv.tags && conv.tags.includes("personal"));
+    if (sender === "client" || isPersonalChat) {
       conv.unreadCount = (conv.unreadCount || 0) + 1;
     }
     conv.lastMessage = fallbackText;
@@ -1079,6 +1156,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       tenantId,
       conversationId: id,
       message: newMsg,
+      senderId: newMsg.senderId,
+      senderName: newMsg.senderName,
       unreadCount: conv.unreadCount,
       lastMessage: conv.lastMessage,
       lastMessageTime: conv.lastMessageTime
@@ -1524,11 +1603,42 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     if (!phone) phone = "+51 (Interno)";
 
     const list = loadConversationsFromDisk(tenantId);
+    const contactId = body.contactId || body.userId;
+    const creatorId = body.creatorId || (request.headers["x-user-id"] as string);
+
+    // Si es un chat de personal, verificar si ya existe un chat directo entre estos dos usuarios
+    if ((type === "personal" || (body.tags && body.tags.includes("personal"))) && contactId) {
+      const targetId = String(contactId);
+      const myId = creatorId ? String(creatorId) : "";
+      const existing = list.find(c => {
+        if (c.type !== "personal" && !(c.tags && c.tags.includes("personal"))) return false;
+        const cContact = String(c.contactId || "");
+        const cCreator = String(c.creatorId || "");
+        if (myId && ((cContact === targetId && cCreator === myId) || (cContact === myId && cCreator === targetId))) {
+          return true;
+        }
+        if (Array.isArray(c.participants) && myId && c.participants.map(String).includes(targetId) && c.participants.map(String).includes(myId)) {
+          return true;
+        }
+        if (cContact === targetId) return true;
+        return false;
+      });
+
+      if (existing) {
+        if (!existing.participants || existing.participants.length < 2) {
+          existing.participants = [creatorId || 1, contactId].filter(Boolean);
+        }
+        if (!existing.creatorId && creatorId) existing.creatorId = creatorId;
+        saveConversationsToDisk(tenantId, list);
+        return reply.send({ success: true, message: "Chat existente recuperado", data: existing });
+      }
+    }
+
     const now = new Date();
     const newConv: Conversation = {
       id: "conv-" + Date.now(),
       type: type as ("cliente" | "personal"),
-      contactId: body.contactId || body.userId,
+      contactId: contactId,
       name,
       phone,
       email: body.email,
@@ -1560,6 +1670,13 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       ratingLabel: body.ratingLabel,
       address: body.address,
       backpackItems: body.backpackItems,
+      creatorId: creatorId || undefined,
+      creatorName: body.creatorName || undefined,
+      creatorRole: body.creatorRole || undefined,
+      creatorAvatar: body.creatorAvatar || undefined,
+      creatorEmail: body.creatorEmail || undefined,
+      creatorPhone: body.creatorPhone || undefined,
+      participants: [creatorId, contactId].filter(Boolean),
     };
 
     list.unshift(newConv);

@@ -2429,24 +2429,38 @@ function formatMessageTime(val) {
 // Función para determinar si un mensaje fue enviado por el usuario actualmente logueado
 function checkIfMessageIsMe(m) {
   if (!m) return false;
-  if (activeChannelMode === 'community') {
-    if (typeof currentUser !== 'undefined' && currentUser) {
-      if (m.senderId && (String(m.senderId) === String(currentUser.id) || String(m.senderId) === String(currentUser.username))) return true;
-      if (m.senderName && currentUser.name && m.senderName.trim().toLowerCase() === currentUser.name.trim().toLowerCase()) return true;
-      if (m.senderName && currentUser.username && m.senderName.trim().toLowerCase() === currentUser.username.trim().toLowerCase()) return true;
-      if (m.senderName === 'Tú') return true;
-    }
-    return false;
-  }
-  // En chats directos/personales:
-  // Mensajes de tipo 'client' son recibidos del contacto (a la izquierda)
-  if (m.sender === 'client' || m.from === 'client') return false;
-  // Mensajes de tipo 'agent' u 'operator' son enviados por nosotros (a la derecha)
-  if (m.sender === 'agent' || m.from === 'agent' || m.from === 'operator') return true;
+  
   if (typeof currentUser !== 'undefined' && currentUser) {
-    if (m.senderId && (String(m.senderId) === String(currentUser.id) || String(m.senderId) === String(currentUser.username))) return true;
-    if (m.senderName && currentUser.name && m.senderName.trim().toLowerCase() === currentUser.name.trim().toLowerCase()) return true;
+    const myId = String(currentUser.id || '');
+    const myUsername = String(currentUser.username || '').toLowerCase();
+    const myName = String(currentUser.name || '').trim().toLowerCase();
+    const myEmail = String(currentUser.email || '').trim().toLowerCase();
+
+    const mSenderId = m.senderId ? String(m.senderId) : '';
+    const mSenderName = m.senderName ? String(m.senderName).trim().toLowerCase() : '';
+
+    if (mSenderId) {
+      if (myId && mSenderId === myId) return true;
+      if (myUsername && mSenderId.toLowerCase() === myUsername) return true;
+      return false; // Tiene senderId y no es el mío -> fue enviado por otra persona
+    }
+
+    if (mSenderName) {
+      if (mSenderName === 'tú' || mSenderName === 'tu') return true;
+      if (myName && mSenderName === myName) return true;
+      if (myUsername && mSenderName === myUsername) return true;
+      if (myEmail && mSenderName === myEmail) return true;
+      // Si el nombre es de un usuario registrado diferente a mí
+      if (mSenderName !== 'operador turbonetwork' && mSenderName !== 'agente' && mSenderName !== 'sistema') {
+        return false;
+      }
+    }
   }
+
+  // En chats con clientes externos (WhatsApp / Webhook):
+  if (m.sender === 'client' || m.from === 'client') return false;
+  if (m.sender === 'system' || m.from === 'system') return false;
+  if (m.sender === 'agent' || m.from === 'agent' || m.from === 'operator') return true;
   return false;
 }
 
@@ -2950,9 +2964,11 @@ async function loadMessagesModule() {
     if (badgeEl) badgeEl.textContent = curTenant ? curTenant.name : (activeTenantId || 'TurboNetwork');
 
     // Fetch filters & conversations in parallel
+    const myId = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? currentUser.id : '';
+    const convsUrl = `/api/messages/conversations?category=${encodeURIComponent(activeMessageFilter)}${myId ? `&currentUserId=${encodeURIComponent(myId)}` : ''}`;
     const [filtersRes, convsRes] = await Promise.all([
       fetch('/api/messages/filters'),
-      fetch(`/api/messages/conversations?category=${encodeURIComponent(activeMessageFilter)}`)
+      fetch(convsUrl, { headers: myId ? { 'x-user-id': String(myId) } : {} })
     ]);
 
     const filtersData = await filtersRes.json();
@@ -3021,8 +3037,10 @@ async function switchMessageFilter(filterId) {
 
 async function loadConversations() {
   try {
+    const myId = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? currentUser.id : '';
     const qParam = chatSearchQuery ? `&q=${encodeURIComponent(chatSearchQuery)}` : '';
-    const res = await fetch(`/api/messages/conversations?category=${encodeURIComponent(activeMessageFilter)}${qParam}`);
+    const convsUrl = `/api/messages/conversations?category=${encodeURIComponent(activeMessageFilter)}${qParam}${myId ? `&currentUserId=${encodeURIComponent(myId)}` : ''}`;
+    const res = await fetch(convsUrl, { headers: myId ? { 'x-user-id': String(myId) } : {} });
     const data = await res.json();
     if (data.success) {
       currentConversations = data.data || [];
@@ -3112,6 +3130,84 @@ function formatLastMessageWithSvgIcon(lastMsg) {
   return `<span class="truncate">${escapeHtml(clean)}</span>`;
 }
 
+// Resolver la perspectiva de visualización de una conversación (especialmente entre colaboradores del sistema)
+function getConversationDisplayInfo(c) {
+  if (!c) return { name: 'Contacto', avatar: '', role: '', phone: '', isSelf: false };
+  
+  const isPersonal = (c.type === 'personal' || (Array.isArray(c.tags) && c.tags.includes('personal')) || c.contactType === 'personal');
+  
+  if (isPersonal && typeof currentUser !== 'undefined' && currentUser) {
+    const myId = String(currentUser.id || '');
+    const myName = String(currentUser.name || '').trim().toLowerCase();
+    const contactId = String(c.contactId || '');
+    const creatorId = String(c.creatorId || '');
+    
+    // Si este chat tiene ambos lados apuntando a mí (self chat de prueba), descartarlo
+    if (myId && contactId === myId && (!creatorId || creatorId === myId)) {
+      return { name: c.name || 'Yo', avatar: c.avatar || '', role: 'Yo', isSelf: true };
+    }
+
+    // Si yo soy el "contactId" (destinatario original del chat) o el nombre del chat coincide con mi nombre:
+    const isContactMe = (myId && contactId === myId) || (c.name && c.name.trim().toLowerCase() === myName);
+    
+    if (isContactMe) {
+      // Para mí, la persona con la que estoy chateando es el CREADOR / el otro participante
+      let partnerUser = null;
+      if (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers)) {
+        if (creatorId && creatorId !== myId) {
+          partnerUser = currentUsers.find(u => String(u.id) === creatorId);
+        }
+        if (!partnerUser && c.participants && Array.isArray(c.participants)) {
+          const otherId = c.participants.find(p => String(p) !== myId);
+          if (otherId) partnerUser = currentUsers.find(u => String(u.id) === String(otherId));
+        }
+        // Fallback: buscar en los mensajes un remitente que no sea yo
+        if (!partnerUser && c.messages && Array.isArray(c.messages)) {
+          const otherMsg = c.messages.slice().reverse().find(m => m.senderId && String(m.senderId) !== myId);
+          if (otherMsg) {
+            partnerUser = currentUsers.find(u => String(u.id) === String(otherMsg.senderId) || (u.name && u.name.trim().toLowerCase() === (otherMsg.senderName || '').trim().toLowerCase()));
+          }
+        }
+      }
+
+      const partnerName = partnerUser ? partnerUser.name : (c.creatorName || 'Colaborador');
+      const partnerAvatar = partnerUser ? (partnerUser.avatarUrl || partnerUser.avatar) : (c.creatorAvatar || '');
+      const partnerRole = partnerUser ? (partnerUser.roleName || partnerUser.role) : (c.creatorRole || 'Personal');
+      const partnerPhone = partnerUser ? (partnerUser.phone || partnerUser.email) : (c.creatorPhone || c.creatorEmail || '');
+
+      return {
+        name: partnerName,
+        avatar: partnerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(partnerName)}`,
+        role: partnerRole,
+        phone: partnerPhone,
+        isSelf: false
+      };
+    }
+  }
+
+  // Comportamiento regular para chats de clientes o donde yo soy el iniciador del chat
+  let dynamicAvatar = c.avatar || c.contactAvatar;
+  const contactName = c.name || c.contactName || 'Contacto';
+  if (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers) && currentUsers.length > 0) {
+    const matchedUser = currentUsers.find(u => 
+      (c.userId && (String(u.id) === String(c.userId) || u.username === c.userId)) ||
+      (c.contactId && String(u.id) === String(c.contactId)) ||
+      (u.name && contactName && u.name.trim().toLowerCase() === contactName.trim().toLowerCase())
+    );
+    if (matchedUser && (matchedUser.avatarUrl || matchedUser.avatar)) {
+      dynamicAvatar = matchedUser.avatarUrl || matchedUser.avatar;
+    }
+  }
+
+  return {
+    name: contactName,
+    avatar: dynamicAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || c.id)}`,
+    role: c.planOrRole || c.contactDetail || (isPersonal ? 'Personal' : 'Cliente Conectado'),
+    phone: c.phone || c.email || '',
+    isSelf: false
+  };
+}
+
 // 2. Renderizar Lista de Tarjetas de Conversación
 function renderConversationsList(conversations) {
   const listEl = document.getElementById('messages-conversations-list');
@@ -3132,6 +3228,9 @@ function renderConversationsList(conversations) {
 
   listEl.innerHTML = sortedList.map(c => {
     const isSelected = activeConversationId === c.id;
+    const displayInfo = getConversationDisplayInfo(c);
+    if (displayInfo.isSelf) return ''; // Omitir chat con uno mismo
+
     const allTags = (Array.isArray(c.tags) && c.tags.length > 0)
       ? c.tags
       : (c.tag ? [c.tag] : (c.type ? [c.type] : ['clientes']));
@@ -3140,22 +3239,8 @@ function renderConversationsList(conversations) {
       return `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap ${tagInfo.colorClass}" ${tagInfo.style ? `style="${tagInfo.style}"` : ''}>${escapeHtml(tagInfo.name)}</span>`;
     }).join('');
     const timeFormatted = formatMessageTime(c.lastMessageAt || c.updatedAt) || c.lastMessageTime || '';
-    const contactName = c.name || c.contactName || 'Contacto';
-    
-    // Sincronización en vivo de foto de perfil con usuarios del sistema (data/users.json)
-    let dynamicAvatar = c.avatar || c.contactAvatar;
-    if (Array.isArray(currentUsers) && currentUsers.length > 0) {
-      const matchedUser = currentUsers.find(u => 
-        (c.userId && (u.id === c.userId || u.username === c.userId)) ||
-        (c.id && (u.id === c.id || u.username === c.id)) ||
-        (u.name && contactName && u.name.trim().toLowerCase() === contactName.trim().toLowerCase())
-      );
-      if (matchedUser && (matchedUser.avatarUrl || matchedUser.avatar)) {
-        dynamicAvatar = matchedUser.avatarUrl || matchedUser.avatar;
-        c.avatar = dynamicAvatar;
-      }
-    }
-    const avatarUrl = dynamicAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || c.id)}`;
+    const contactName = displayInfo.name;
+    const avatarUrl = displayInfo.avatar;
     
     // Status dot color & Unread highlight
     const hasUnread = (c.unreadCount || 0) > 0;
@@ -3289,20 +3374,11 @@ async function selectConversation(convId) {
   if (convLocal) {
     convLocal.unreadCount = 0;
     updateGlobalUnreadBadges();
-    const contactName = convLocal.name || convLocal.contactName || 'Contacto';
-    const contactDetail = convLocal.planOrRole || convLocal.contactDetail || ((convLocal.type === 'personal' || convLocal.contactType === 'personal') ? 'Cuadrilla Técnica' : 'Cliente Conectado');
-    
-    let headerAvatar = convLocal.avatar || convLocal.contactAvatar;
-    if (Array.isArray(currentUsers) && currentUsers.length > 0) {
-      const matchedUser = currentUsers.find(u => 
-        (convLocal.userId && (u.id === convLocal.userId || u.username === convLocal.userId)) ||
-        (convLocal.id && (u.id === convLocal.id || u.username === convLocal.id)) ||
-        (u.name && contactName && u.name.trim().toLowerCase() === contactName.trim().toLowerCase())
-      );
-      if (matchedUser && (matchedUser.avatarUrl || matchedUser.avatar)) {
-        headerAvatar = matchedUser.avatarUrl || matchedUser.avatar;
-      }
-    }
+    const displayInfo = getConversationDisplayInfo(convLocal);
+    const contactName = displayInfo.name;
+    const contactDetail = displayInfo.role;
+    const headerAvatar = displayInfo.avatar;
+
     const avatarEl = document.getElementById('chat-header-avatar');
     if (avatarEl) {
       avatarEl.src = headerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || convLocal.id)}`;
@@ -3340,7 +3416,10 @@ async function selectConversation(convId) {
 
   try {
     // Cargar los 35 mensajes más recientes (chunking para alto rendimiento)
-    const res = await fetch(`/api/messages/conversations/${encodeURIComponent(convId)}?limit=35`);
+    const myCurrentId = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? currentUser.id : '';
+    const res = await fetch(`/api/messages/conversations/${encodeURIComponent(convId)}?limit=35${myCurrentId ? `&userId=${encodeURIComponent(myCurrentId)}` : ''}`, {
+      headers: myCurrentId ? { 'x-user-id': String(myCurrentId) } : {}
+    });
     const data = await res.json();
     if (!data.success) {
       showToast(data.message || 'Error cargando chat', 'error');
@@ -3353,7 +3432,8 @@ async function selectConversation(convId) {
     currentChatMessages = conversation.messages || [];
     currentChatHasMore = Boolean(conversation.hasMore);
     activePinnedMessageId = conversation.pinnedMessageId || null;
-    activeConversationContactName = conversation.name || conversation.contactName || 'Contacto';
+    const displayInfo = getConversationDisplayInfo(conversation);
+    activeConversationContactName = displayInfo.name || 'Contacto';
     if (typeof exitMessageSelectionMode === 'function') exitMessageSelectionMode();
     if (typeof cancelReplyMessage === 'function') cancelReplyMessage();
     if (typeof closeAllChatContextMenus === 'function') closeAllChatContextMenus();
@@ -3363,15 +3443,15 @@ async function selectConversation(convId) {
     if (convLocal) convLocal.unreadCount = 0;
 
     // Actualizar Header del Chat
-    const contactName = conversation.name || conversation.contactName || 'Contacto';
-    const contactDetail = conversation.planOrRole || conversation.contactDetail || ((conversation.type === 'personal' || conversation.contactType === 'personal') ? 'Cuadrilla Técnica' : 'Cliente Conectado');
+    const contactName = displayInfo.name;
+    const contactDetail = displayInfo.role;
     const allConvTags = (Array.isArray(conversation.tags) && conversation.tags.length > 0)
       ? conversation.tags
       : (conversation.tag ? [conversation.tag] : (conversation.type ? [conversation.type] : ['clientes']));
 
     const avatarEl = document.getElementById('chat-header-avatar');
     if (avatarEl) {
-      avatarEl.src = conversation.avatar || conversation.contactAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || conversation.id)}`;
+      avatarEl.src = displayInfo.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || conversation.id)}`;
     }
     const nameEl = document.getElementById('chat-header-name');
     if (nameEl) nameEl.textContent = contactName;
@@ -7689,22 +7769,35 @@ async function handleCreateNewChat(e) {
   }
 
   try {
+    const payload = {
+      contactName: name,
+      contactPhone: phone,
+      contactType,
+      tag,
+      contactDetail,
+      contactId,
+      email: contactEmail,
+      avatar: contactAvatar,
+      planOrRole: contactRole || (contactType === 'personal' ? 'Personal' : contactDetail),
+      address: contactAddress,
+      contractStartDate: contractStartDate
+    };
+    if (typeof currentUser !== 'undefined' && currentUser) {
+      payload.creatorId = currentUser.id;
+      payload.creatorName = currentUser.name;
+      payload.creatorRole = currentUser.roleName || currentUser.role || 'Superadministrador';
+      payload.creatorAvatar = currentUser.avatarUrl || currentUser.avatar || '';
+      payload.creatorEmail = currentUser.email || '';
+      payload.creatorPhone = currentUser.phone || '';
+    }
+
     const res = await fetch('/api/messages/conversations', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contactName: name,
-        contactPhone: phone,
-        contactType,
-        tag,
-        contactDetail,
-        contactId,
-        email: contactEmail,
-        avatar: contactAvatar,
-        planOrRole: contactRole || (contactType === 'personal' ? 'Personal' : contactDetail),
-        address: contactAddress,
-        contractStartDate: contractStartDate
-      })
+      headers: { 
+        'Content-Type': 'application/json',
+        ...(typeof currentUser !== 'undefined' && currentUser && currentUser.id ? { 'x-user-id': String(currentUser.id) } : {})
+      },
+      body: JSON.stringify(payload)
     });
 
     const data = await res.json();
