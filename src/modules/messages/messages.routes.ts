@@ -1845,8 +1845,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     let initialGroups: CommunityGroup[] = [];
     if (Array.isArray(body.groups) && body.groups.length > 0) {
       initialGroups = body.groups.map((g, idx) => {
-        const grpType = g.type || (idx === 0 ? "announcements" : "general");
-        const isReadOnly = g.permission === "admin_only" ? true : (grpType === "announcements" ? true : (g.isReadOnly ?? false));
+        const permission: "everyone" | "admin_only" = g.permission === "admin_only" || g.isReadOnly === true ? "admin_only" : "everyone";
+        const isReadOnly = permission === "admin_only";
+        const grpType = g.type || (isReadOnly ? "announcements" : "general");
         return {
           id: `grp-${commId}-${idx + 1}`,
           communityId: commId,
@@ -1854,7 +1855,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
           description: g.description?.trim() || "",
           type: grpType,
           isReadOnly,
-          permission: isReadOnly ? "admin_only" : (g.permission || "everyone"),
+          permission,
           avatarUrl: g.avatarUrl || "",
           unreadCount: 0,
           lastMessage: `Canal ${g.name.trim()} activado`,
@@ -1972,12 +1973,67 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     if (body.name) comm.name = body.name.trim();
-    if (body.description) comm.description = body.description.trim();
+    if (body.description !== undefined) comm.description = body.description.trim();
     if (body.avatarUrl) comm.avatarUrl = body.avatarUrl;
     if (body.coverImage) comm.coverImage = body.coverImage;
     if (body.type) comm.type = body.type;
     if (Array.isArray(body.linkedNaps)) comm.linkedNaps = body.linkedNaps;
     if (Array.isArray(body.linkedZones)) comm.linkedZones = body.linkedZones;
+
+    if (Array.isArray(body.groups)) {
+      const existingGroupsMap = new Map((comm.groups || []).map(g => [g.id, g]));
+      const now = new Date();
+      const timeFormatted = getFormattedTime(now);
+
+      comm.groups = body.groups.map((g: any, idx: number) => {
+        const existing = g.id ? existingGroupsMap.get(g.id) : null;
+        const permission: "everyone" | "admin_only" = g.permission === "admin_only" || g.isReadOnly === true ? "admin_only" : "everyone";
+        const isReadOnly = permission === "admin_only";
+        const grpType = g.type || (isReadOnly ? "announcements" : "general");
+
+        if (existing) {
+          return {
+            ...existing,
+            name: (g.name || existing.name).trim(),
+            description: g.description !== undefined ? g.description.trim() : existing.description,
+            permission,
+            isReadOnly,
+            type: grpType,
+            avatarUrl: g.avatarUrl !== undefined ? g.avatarUrl : existing.avatarUrl,
+            updatedAt: now.toISOString()
+          };
+        } else {
+          const newGrpId = g.id || `grp-${comm.id}-${Date.now().toString().slice(-4)}-${idx}`;
+          return {
+            id: newGrpId,
+            communityId: comm.id,
+            name: (g.name || `Canal ${idx + 1}`).trim(),
+            description: g.description?.trim() || "",
+            type: grpType,
+            isReadOnly,
+            permission,
+            avatarUrl: g.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(g.name || newGrpId)}`,
+            unreadCount: 0,
+            lastMessage: `Canal ${(g.name || '').trim()} activado`,
+            lastMessageTime: timeFormatted,
+            messages: [
+              {
+                id: "gm-" + Date.now() + "-" + idx,
+                sender: "system",
+                senderName: "Sistema TurboNetwork",
+                text: `Canal ${(g.name || '').trim()} activado en la comunidad ${comm.name}.`,
+                timestamp: now.toISOString(),
+                timeFormatted,
+                status: "read",
+              }
+            ],
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString()
+          };
+        }
+      });
+    }
+
     comm.updatedAt = new Date().toISOString();
 
     saveCommunitiesToDisk(tenantId, communities);
@@ -1989,6 +2045,45 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     });
 
     return reply.send({ success: true, message: "Comunidad actualizada con éxito", data: comm });
+  });
+
+  // 12.35 Reordenar canales/grupos de una comunidad (arrastrar y soltar)
+  fastify.put("/messages/communities/:id/reorder-groups", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const { groupIds } = (request.body as { groupIds?: string[] }) || {};
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) {
+      return reply.status(404).send({ success: false, message: "Comunidad no encontrada" });
+    }
+
+    if (Array.isArray(groupIds) && comm.groups) {
+      const groupMap = new Map(comm.groups.map(g => [g.id, g]));
+      const reordered: CommunityGroup[] = [];
+      for (const gid of groupIds) {
+        const found = groupMap.get(gid);
+        if (found) {
+          reordered.push(found);
+          groupMap.delete(gid);
+        }
+      }
+      for (const remaining of groupMap.values()) {
+        reordered.push(remaining);
+      }
+      comm.groups = reordered;
+      comm.updatedAt = new Date().toISOString();
+      saveCommunitiesToDisk(tenantId, communities);
+
+      broadcastMessageEvent({
+        type: "community_updated",
+        tenantId,
+        community: comm
+      });
+    }
+
+    return reply.send({ success: true, message: "Posiciones de canales actualizadas", data: comm });
   });
 
   // 12.4 Eliminar comunidad
@@ -2039,8 +2134,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const now = new Date();
-    const type = body.type || "general";
-    const isReadOnly = body.permission === "admin_only" ? true : (type === "announcements" ? true : (body.isReadOnly ?? false));
+    const permission: "everyone" | "admin_only" = body.permission === "admin_only" || body.isReadOnly === true ? "admin_only" : "everyone";
+    const isReadOnly = permission === "admin_only";
+    const type = body.type || (isReadOnly ? "announcements" : "general");
 
     const newGroup: CommunityGroup = {
       id: `grp-${id}-${Date.now().toString().slice(-4)}`,
@@ -2049,7 +2145,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       description: body.description?.trim() || "",
       type,
       isReadOnly,
-      permission: isReadOnly ? "admin_only" : (body.permission || "everyone"),
+      permission,
       avatarUrl: body.avatarUrl || "",
       icon: body.icon || "",
       unreadCount: 0,
