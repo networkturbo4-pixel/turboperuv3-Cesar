@@ -7455,10 +7455,57 @@
                         </div>
                       </div>
 
-                      <!-- Botón Adjuntar Archivo (Clip) -->
-                      <button type="button" id="chat-attach-btn" onclick="triggerChatAttachment()" class="w-8 h-8 rounded-full text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center flex-shrink-0 transition" title="Adjuntar comprobante o archivo">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-                      </button>
+                      <!-- Botón Adjuntar (Clip con Submenú: Imágenes, Documentos y Tareas) -->
+                      <div class="relative flex-shrink-0">
+                        <button type="button" id="chat-attach-btn" onclick="toggleAttachmentMenu(event)" class="w-8 h-8 rounded-full text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center flex-shrink-0 transition" title="Adjuntar imágenes, documentos o crear tareas">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                        </button>
+
+                        <!-- Popover Submenú de Adjuntos -->
+                        <div id="chat-attachment-menu" class="hidden absolute bottom-full right-0 mb-3 z-[260] w-64 bg-white/95 dark:bg-[#161c28]/95 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-2 flex flex-col space-y-1">
+                          
+                          <!-- Opción 1: Imágenes -->
+                          <button type="button" onclick="selectAttachmentType('image')" class="w-full px-3 py-2 text-left rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-xs text-slate-800 dark:text-slate-200 transition group">
+                            <span class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+                            </span>
+                            <div>
+                              <div class="font-semibold text-slate-900 dark:text-white flex items-center space-x-1.5">
+                                <span>Fotos e Imágenes</span>
+                              </div>
+                              <div class="text-[10px] text-slate-400">JPG, PNG, WebP o capturas</div>
+                            </div>
+                          </button>
+
+                          <!-- Opción 2: Documentos -->
+                          <button type="button" onclick="selectAttachmentType('document')" class="w-full px-3 py-2 text-left rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-xs text-slate-800 dark:text-slate-200 transition group">
+                            <span class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                            </span>
+                            <div>
+                              <div class="font-semibold text-slate-900 dark:text-white flex items-center space-x-1.5">
+                                <span>Documentos</span>
+                              </div>
+                              <div class="text-[10px] text-slate-400">PDF, Word, Excel, ZIP, TXT</div>
+                            </div>
+                          </button>
+
+                          <!-- Opción 3: Tareas -->
+                          <button type="button" onclick="selectAttachmentType('task')" class="w-full px-3 py-2 text-left rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center space-x-2.5 text-xs text-slate-800 dark:text-slate-200 transition group">
+                            <span class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </span>
+                            <div>
+                              <div class="font-semibold text-slate-900 dark:text-white flex items-center space-x-1.5">
+                                <span>Crear Tarea</span>
+                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">Nuevo</span>
+                              </div>
+                              <div class="text-[10px] text-slate-400">Card interactivo para el equipo</div>
+                            </div>
+                          </button>
+
+                        </div>
+                      </div>
 
                       <!-- Botón Cámara & Anotaciones (Se oculta dinámicamente al escribir) -->
                       <button type="button" id="chat-camera-btn" onclick="openCameraModal()" class="w-8 h-8 rounded-full text-slate-500 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center flex-shrink-0 transition" title="Tomar foto con cámara y editar">
@@ -8515,6 +8562,120 @@
   </div>
 
   <!-- ======================================================== -->
+  
+  <!-- ======================================================== -->
+  <!-- MODAL: CREAR / EDITAR TAREA PARA EL EQUIPO              -->
+  <!-- ======================================================== -->
+  <div id="chat-task-modal" class="fixed inset-0 z-[385] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6 select-none" onclick="if(event.target===this) closeChatTaskModal()">
+    <div class="w-full max-w-lg bg-white dark:bg-[#111827] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200" onclick="event.stopPropagation()">
+      
+      <!-- Header del Modal -->
+      <div class="px-6 py-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/80 dark:bg-white/[0.02]">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 id="task-modal-title" class="text-base font-bold text-slate-900 dark:text-white leading-tight">Nueva Tarea</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Card interactivo para coordinar cuadrillas y técnicos</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeChatTaskModal()" class="w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 flex items-center justify-center transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Cuerpo del Formulario con Scroll -->
+      <form id="chat-task-form" onsubmit="handleSaveChatTask(event)" class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+        <input type="hidden" id="task-modal-edit-msg-id" value="">
+        <input type="hidden" id="task-modal-task-id" value="">
+
+        <!-- Título de la Tarea -->
+        <div>
+          <label class="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Título de la Tarea <span class="text-rose-500">*</span></label>
+          <input type="text" id="task-input-title" required placeholder="Ej. Calibrar potencia en Caja NAP-04 Sector Norte" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+        </div>
+
+        <!-- Descripción detallada -->
+        <div>
+          <label class="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Instrucciones / Descripción</label>
+          <textarea id="task-input-desc" rows="3" placeholder="Detalles de avería, dirección exacta o pasos técnicos a realizar..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition resize-none"></textarea>
+        </div>
+
+        <!-- Fila: Asignado a & Prioridad -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Responsable Asignado</label>
+            <select id="task-input-assignee" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-[#1a2333] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+              <!-- Dinámico -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Nivel de Prioridad</label>
+            <select id="task-input-priority" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-[#1a2333] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-medium">
+              <option value="low">🟢 Baja (Rutinaria)</option>
+              <option value="medium" selected>🟡 Media (Normal)</option>
+              <option value="high">🟠 Alta (Preferente)</option>
+              <option value="urgent">🔴 Urgente (Crítica / Corte)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Fila: Estado & Fecha Límite -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Estado de la Tarea</label>
+            <select id="task-input-status" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-[#1a2333] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-medium">
+              <option value="pending" selected>⏳ Pendiente</option>
+              <option value="in_progress">🔄 En Progreso</option>
+              <option value="completed">✅ Completada</option>
+              <option value="cancelled">⛔ Cancelada</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Fecha y Hora Límite</label>
+            <input type="datetime-local" id="task-input-due" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-[#1a2333] text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 text-xs">
+            <div class="flex items-center gap-1.5 mt-1.5">
+              <button type="button" onclick="setTaskDuePreset(0, 18)" class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-[10px] text-slate-600 dark:text-slate-300 transition">Hoy 6pm</button>
+              <button type="button" onclick="setTaskDuePreset(1, 12)" class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-[10px] text-slate-600 dark:text-slate-300 transition">Mañana</button>
+              <button type="button" onclick="setTaskDuePreset(3, 18)" class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-[10px] text-slate-600 dark:text-slate-300 transition">+3 días</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checklist / Subtareas -->
+        <div class="pt-2 border-t border-slate-100 dark:border-white/5">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-slate-700 dark:text-slate-300 font-semibold flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+              <span>Checklist de Subtareas (Opcional)</span>
+            </label>
+            <button type="button" onclick="addTaskChecklistRow()" class="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold text-[11px] flex items-center gap-1">
+              <span>+ Agregar ítem</span>
+            </button>
+          </div>
+          <div id="task-modal-checklist-items" class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+            <!-- Ítems dinámicos -->
+          </div>
+        </div>
+
+        <!-- Footer de Botones -->
+        <div class="pt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-end space-x-2.5">
+          <button type="button" onclick="closeChatTaskModal()" class="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 font-semibold transition">
+            Cancelar
+          </button>
+          <button type="submit" id="task-modal-submit-btn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold shadow-lg shadow-emerald-600/30 flex items-center space-x-1.5 transition transform active:scale-95">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+            <span id="task-modal-submit-text">Asignar Tarea</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
   <!-- MODAL: CREAR NUEVA COMUNIDAD (AMPLIADO CON FOTO Y GRUPOS) -->
   <!-- ======================================================== -->
   <div id="new-community-modal" class="fixed inset-0 z-[270] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6">
@@ -29188,6 +29349,15 @@ function initMessagesRealtime() {
 
         if (data.type === 'new_message') {
           handleIncomingRealtimeMessage(data);
+        } else if (data.type === 'task_updated') {
+          if (data.messageId && data.task) {
+            const msg = (currentChatMessages || []).find(m => m.id === data.messageId);
+            if (msg) {
+              if (!msg.attachment) msg.attachment = { type: 'task' };
+              msg.attachment.task = data.task;
+              renderChatMessages(currentChatMessages);
+            }
+          }
         } else if (data.type === 'community_message') {
           handleIncomingCommunityMessage(data);
         } else if (data.type === 'community_updated') {
@@ -30504,6 +30674,168 @@ function renderChatMessageRowHtml(m) {
         </div>
       `;
     }
+    
+    // 3.7 Task Message (Card Moderno de Tarea Interactiva)
+    else if ((m.attachment && m.attachment.type === 'task') || m.task) {
+      const task = (m.attachment && m.attachment.task) || m.task || {};
+      const title = task.title || 'Tarea asignada';
+      const desc = task.description || '';
+      const priority = task.priority || 'medium';
+      const status = task.status || 'pending';
+      const dueDate = task.dueDate || '';
+      const assignee = task.assignedTo || null;
+      const checklist = Array.isArray(task.checklist) ? task.checklist : [];
+      const completedCount = checklist.filter(c => c.completed).length;
+      const totalCount = checklist.length;
+      const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+      const priorityConfig = {
+        urgent: { label: '🔴 Urgente', bg: 'bg-rose-500/15 text-rose-500 border-rose-500/30 ring-1 ring-rose-500/20' },
+        high: { label: '🟠 Alta', bg: 'bg-amber-500/15 text-amber-500 border-amber-500/30 ring-1 ring-amber-500/20' },
+        medium: { label: '🟡 Media', bg: 'bg-blue-500/15 text-blue-500 border-blue-500/30' },
+        low: { label: '🟢 Baja', bg: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30' }
+      }[priority] || { label: '🟡 Media', bg: 'bg-blue-500/15 text-blue-500 border-blue-500/30' };
+
+      const statusConfig = {
+        pending: { label: '⏳ Pendiente', pillClass: 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300 border-slate-300 dark:border-white/10' },
+        in_progress: { label: '🔄 En Progreso', pillClass: 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/40 animate-pulse' },
+        completed: { label: '✅ Completada', pillClass: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/40' },
+        cancelled: { label: '⛔ Cancelada', pillClass: 'bg-rose-500/15 text-rose-500 border-rose-500/30 line-through' }
+      }[status] || { label: '⏳ Pendiente', pillClass: 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300' };
+
+      let dueFormatted = '';
+      let isOverdue = false;
+      if (dueDate) {
+        try {
+          const d = new Date(dueDate);
+          dueFormatted = d.toLocaleDateString([], { day: '2-digit', month: 'short' }) + ', ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          if (status !== 'completed' && status !== 'cancelled' && d.getTime() < Date.now()) {
+            isOverdue = true;
+          }
+        } catch (e) {
+          dueFormatted = dueDate;
+        }
+      }
+
+      const cardBg = isAgent
+        ? 'bg-gradient-to-br from-[#162138] via-[#111827] to-[#0f172a] text-white border border-emerald-500/30 shadow-xl rounded-tr-xs'
+        : 'bg-white dark:bg-[#161c28] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 shadow-md rounded-tl-xs msg-bubble-in';
+
+      innerContentHtml = `
+        <div class="max-w-[92%] sm:max-w-md ${cardBg} rounded-2xl p-3 shadow-md text-xs space-y-2.5 group">
+          ${senderHeaderHtml}
+          ${replySnippetHtml}
+          ${forwardedHtml}
+
+          <!-- Header del Card: Tag de Tarea, Prioridad y Estado -->
+          <div class="flex items-center justify-between gap-1.5 pb-2 border-b border-black/5 dark:border-white/10">
+            <div class="flex items-center space-x-1.5">
+              <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-bold">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </span>
+              <span class="text-[10px] font-bold tracking-wider uppercase text-emerald-600 dark:text-emerald-400">Tarea Asignada</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${priorityConfig.bg}">
+                ${priorityConfig.label}
+              </span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig.pillClass}">
+                ${statusConfig.label}
+              </span>
+            </div>
+          </div>
+
+          <!-- Título y Descripción -->
+          <div class="space-y-1">
+            <h4 class="font-bold text-sm sm:text-[15px] leading-snug tracking-tight text-slate-900 dark:text-white">${escapeHtml(title)}</h4>
+            ${desc ? `<p class="text-xs leading-relaxed text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/5 p-2 rounded-xl border border-black/5 dark:border-white/5 whitespace-pre-wrap">${escapeHtml(desc)}</p>` : ''}
+          </div>
+
+          <!-- Metadatos: Responsable y Vencimiento -->
+          <div class="grid grid-cols-2 gap-2 p-2 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200/80 dark:border-white/5 text-[11px]">
+            <div class="flex items-center space-x-1.5 truncate">
+              <div class="w-6 h-6 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center flex-shrink-0 text-xs font-bold overflow-hidden">
+                ${assignee && assignee.avatar ? `<img src="${assignee.avatar}" class="w-full h-full object-cover">` : '👤'}
+              </div>
+              <div class="truncate">
+                <div class="text-[9px] text-slate-400 uppercase font-semibold">Responsable</div>
+                <div class="font-bold text-slate-800 dark:text-slate-200 truncate">${escapeHtml(assignee ? assignee.name : 'Todo el Equipo')}</div>
+              </div>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <div class="w-6 h-6 rounded-full ${isOverdue ? 'bg-rose-500/20 text-rose-500' : 'bg-slate-200/60 dark:bg-white/10 text-slate-400'} flex items-center justify-center flex-shrink-0">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div class="truncate">
+                <div class="text-[9px] text-slate-400 uppercase font-semibold flex items-center gap-1">
+                  <span>Vence</span>
+                  ${isOverdue ? '<span class="text-rose-500 font-bold">¡Vencida!</span>' : ''}
+                </div>
+                <div class="font-bold ${isOverdue ? 'text-rose-500' : 'text-slate-800 dark:text-slate-200'} truncate">${dueFormatted || 'Sin fecha límite'}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Checklist de Subtareas (si tiene) -->
+          ${totalCount > 0 ? `
+            <div class="space-y-1.5 p-2 rounded-xl bg-slate-50/80 dark:bg-black/25 border border-slate-200/60 dark:border-white/5">
+              <div class="flex items-center justify-between text-[10px]">
+                <span class="font-semibold text-slate-600 dark:text-slate-300">Progreso de Subtareas</span>
+                <span class="font-bold ${progressPercent === 100 ? 'text-emerald-500' : 'text-blue-500'}">${completedCount}/${totalCount} (${progressPercent}%)</span>
+              </div>
+              <div class="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+                <div class="h-full ${progressPercent === 100 ? 'bg-emerald-500' : 'bg-blue-600'} transition-all duration-300" style="width: ${progressPercent}%"></div>
+              </div>
+              <div class="space-y-1 pt-1">
+                ${checklist.map(item => `
+                  <div class="flex items-center space-x-2 py-0.5 cursor-pointer select-none group/item" onclick="event.stopPropagation(); toggleTaskChecklistItem('${m.id}', '${item.id}')">
+                    <div class="w-4 h-4 rounded border ${item.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 dark:border-white/20 bg-white dark:bg-white/5'} flex items-center justify-center transition flex-shrink-0">
+                      ${item.completed ? '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>' : ''}
+                    </div>
+                    <span class="text-xs ${item.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'} group-hover/item:text-blue-500 transition leading-tight">${escapeHtml(item.text)}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Botones de Acción Interactiva -->
+          <div class="flex items-center justify-between pt-1 gap-2">
+            <div class="flex items-center space-x-1.5">
+              ${status === 'pending' ? `
+                <button type="button" onclick="event.stopPropagation(); quickUpdateTaskStatus('${m.id}', 'in_progress')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] shadow-xs flex items-center space-x-1 transition">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"/></svg>
+                  <span>Iniciar</span>
+                </button>
+              ` : ''}
+              ${status === 'in_progress' ? `
+                <button type="button" onclick="event.stopPropagation(); quickUpdateTaskStatus('${m.id}', 'completed')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] shadow-xs flex items-center space-x-1 transition">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                  <span>Completar</span>
+                </button>
+              ` : ''}
+              ${status === 'completed' ? `
+                <button type="button" onclick="event.stopPropagation(); quickUpdateTaskStatus('${m.id}', 'in_progress')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-600 dark:text-slate-300 font-medium text-[10px] transition">
+                  ↩️ Reabrir
+                </button>
+              ` : ''}
+            </div>
+
+            <!-- Botón Editar Tarea (Abre Modal) -->
+            <button type="button" onclick="event.stopPropagation(); openEditChatTaskModal('${m.id}')" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold text-[11px] flex items-center space-x-1 transition">
+              <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+              <span>Editar</span>
+            </button>
+          </div>
+
+          <!-- Bubble Footer -->
+          <div class="pt-0.5 border-t border-black/5 dark:border-white/10">
+            ${bubbleFooterHtml}
+          </div>
+        </div>
+      `;
+    }
+
     // 4. Regular Text Message
     else {
       const bgClass = isAgent 
@@ -30697,7 +31029,405 @@ function closeAllChatContextMenus() {
   const canvasMenu = document.getElementById('chat-canvas-context-menu');
   if (msgMenu) msgMenu.classList.add('hidden');
   if (canvasMenu) canvasMenu.classList.add('hidden');
+  const attachMenu = document.getElementById('chat-attachment-menu');
+  if (attachMenu) attachMenu.classList.add('hidden');
 }
+
+
+/* ======================================================== */
+/* GESTIÓN DE SUBMENÚ DE ADJUNTOS & TAREAS INTERACTIVAS    */
+/* ======================================================== */
+
+function toggleAttachmentMenu(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const menu = document.getElementById('chat-attachment-menu');
+  if (!menu) return;
+  const isHidden = menu.classList.contains('hidden');
+  closeAllChatContextMenus();
+  if (isHidden) {
+    menu.classList.remove('hidden');
+  } else {
+    menu.classList.add('hidden');
+  }
+}
+
+function closeAttachmentMenu() {
+  const menu = document.getElementById('chat-attachment-menu');
+  if (menu && !menu.classList.contains('hidden')) {
+    menu.classList.add('hidden');
+    return true;
+  }
+  return false;
+}
+
+function selectAttachmentType(type) {
+  closeAttachmentMenu();
+
+  if (!activeConversationId && (!activeCommunityId || !activeGroupId)) {
+    showToast('Selecciona una conversación o canal antes de adjuntar', 'warning');
+    return;
+  }
+
+  if (type === 'image') {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.onchange = () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (file) stageChatAttachment(file);
+    };
+    fileInput.click();
+  } else if (type === 'document') {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,application/*';
+    fileInput.onchange = () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (file) stageChatAttachment(file);
+    };
+    fileInput.click();
+  } else if (type === 'task') {
+    openChatTaskModal();
+  }
+}
+
+let currentTaskEditingMsgId = null;
+
+function openChatTaskModal(taskToEdit = null, msgId = null) {
+  closeAttachmentMenu();
+  const modal = document.getElementById('chat-task-modal');
+  if (!modal) return;
+
+  currentTaskEditingMsgId = msgId || null;
+  const editMsgIdEl = document.getElementById('task-modal-edit-msg-id');
+  const taskIdEl = document.getElementById('task-modal-task-id');
+  if (editMsgIdEl) editMsgIdEl.value = msgId || '';
+  if (taskIdEl) taskIdEl.value = taskToEdit?.id || '';
+
+  const titleEl = document.getElementById('task-modal-title');
+  const submitTextEl = document.getElementById('task-modal-submit-text');
+
+  if (taskToEdit) {
+    if (titleEl) titleEl.textContent = 'Editar Tarea';
+    if (submitTextEl) submitTextEl.textContent = 'Guardar Cambios';
+    const tIn = document.getElementById('task-input-title');
+    const dIn = document.getElementById('task-input-desc');
+    const pIn = document.getElementById('task-input-priority');
+    const sIn = document.getElementById('task-input-status');
+    const dueIn = document.getElementById('task-input-due');
+    if (tIn) tIn.value = taskToEdit.title || '';
+    if (dIn) dIn.value = taskToEdit.description || '';
+    if (pIn) pIn.value = taskToEdit.priority || 'medium';
+    if (sIn) sIn.value = taskToEdit.status || 'pending';
+    if (dueIn) dueIn.value = taskToEdit.dueDate ? taskToEdit.dueDate.slice(0, 16) : '';
+  } else {
+    if (titleEl) titleEl.textContent = 'Nueva Tarea para el Equipo';
+    if (submitTextEl) submitTextEl.textContent = 'Asignar Tarea';
+    const tIn = document.getElementById('task-input-title');
+    const dIn = document.getElementById('task-input-desc');
+    const pIn = document.getElementById('task-input-priority');
+    const sIn = document.getElementById('task-input-status');
+    if (tIn) tIn.value = '';
+    if (dIn) dIn.value = '';
+    if (pIn) pIn.value = 'medium';
+    if (sIn) sIn.value = 'pending';
+    setTaskDuePreset(1, 18);
+  }
+
+  populateTaskAssigneeSelect(taskToEdit?.assignedTo?.id);
+  renderTaskChecklistRows(taskToEdit?.checklist || []);
+
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    const tIn = document.getElementById('task-input-title');
+    if (tIn) tIn.focus();
+  }, 100);
+}
+
+function closeChatTaskModal() {
+  const modal = document.getElementById('chat-task-modal');
+  if (modal) modal.classList.add('hidden');
+  currentTaskEditingMsgId = null;
+}
+
+function setTaskDuePreset(daysAhead, hourOfDay) {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  d.setHours(hourOfDay, 0, 0, 0);
+  const pad = (n) => String(n).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const min = pad(d.getMinutes());
+  const val = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+  const input = document.getElementById('task-input-due');
+  if (input) input.value = val;
+}
+
+function populateTaskAssigneeSelect(selectedId = null) {
+  const select = document.getElementById('task-input-assignee');
+  if (!select) return;
+
+  select.innerHTML = '';
+  const optAll = document.createElement('option');
+  optAll.value = 'all';
+  optAll.textContent = '👥 Todo el Equipo / Cuadrilla General';
+  select.appendChild(optAll);
+
+  if (activeChannelMode === 'community' && activeCommunityId) {
+    const comm = (currentCommunities || []).find(c => c.id === activeCommunityId);
+    if (comm && Array.isArray(comm.members)) {
+      comm.members.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = String(m.id || m.userId);
+        opt.textContent = `👤 ${m.name || 'Miembro'} (${m.roleName || m.communityRole || 'Personal'})`;
+        opt.dataset.name = m.name || '';
+        opt.dataset.avatar = m.avatar || '';
+        opt.dataset.role = m.roleName || '';
+        select.appendChild(opt);
+      });
+    }
+  }
+
+  if (activeChannelMode === 'direct' && activeConversationId) {
+    const conv = (currentConversations || []).find(c => c.id === activeConversationId);
+    if (conv) {
+      const opt = document.createElement('option');
+      opt.value = String(conv.contactId || conv.id);
+      opt.textContent = `👤 ${conv.name || 'Contacto'} (${conv.planOrRole || 'Contacto'})`;
+      opt.dataset.name = conv.name || '';
+      opt.dataset.avatar = conv.avatar || '';
+      opt.dataset.role = conv.planOrRole || '';
+      select.appendChild(opt);
+    }
+  }
+
+  if (typeof communityCandidateUsers !== 'undefined' && Array.isArray(communityCandidateUsers)) {
+    communityCandidateUsers.forEach(u => {
+      const uId = String(u.id);
+      if (!Array.from(select.options).some(o => o.value === uId)) {
+        const opt = document.createElement('option');
+        opt.value = uId;
+        opt.textContent = `👤 ${u.name} (${u.roleName || 'Personal'})`;
+        opt.dataset.name = u.name;
+        opt.dataset.avatar = u.avatar || '';
+        opt.dataset.role = u.roleName || '';
+        select.appendChild(opt);
+      }
+    });
+  }
+
+  if (selectedId) {
+    select.value = String(selectedId);
+  }
+}
+
+function renderTaskChecklistRows(items) {
+  const container = document.getElementById('task-modal-checklist-items');
+  if (!container) return;
+  container.innerHTML = '';
+  if (Array.isArray(items) && items.length > 0) {
+    items.forEach(it => addTaskChecklistRow(it.text, it.completed));
+  }
+}
+
+function addTaskChecklistRow(text = '', completed = false) {
+  const container = document.getElementById('task-modal-checklist-items');
+  if (!container) return;
+
+  const row = document.createElement('div');
+  row.className = 'flex items-center space-x-2 task-checklist-row';
+  row.innerHTML = `
+    <input type="checkbox" ${completed ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-white/20">
+    <input type="text" value="${escapeHtml(text)}" placeholder="Escribe una subtarea (ej. Medir potencia)..." class="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 text-xs focus:outline-none focus:border-emerald-500">
+    <button type="button" onclick="this.closest('.task-checklist-row').remove()" class="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-white/10 flex items-center justify-center transition">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  `;
+  container.appendChild(row);
+  const input = row.querySelector('input[type="text"]');
+  if (input && !text) input.focus();
+}
+
+async function handleSaveChatTask(event) {
+  if (event) event.preventDefault();
+
+  const titleIn = document.getElementById('task-input-title');
+  const title = (titleIn ? titleIn.value : '').trim();
+  if (!title) {
+    showToast('Ingresa el título de la tarea', 'warning');
+    return;
+  }
+
+  const descIn = document.getElementById('task-input-desc');
+  const desc = (descIn ? descIn.value : '').trim();
+  const priority = document.getElementById('task-input-priority')?.value || 'medium';
+  const status = document.getElementById('task-input-status')?.value || 'pending';
+  const dueDate = document.getElementById('task-input-due')?.value || '';
+
+  const assigneeSelect = document.getElementById('task-input-assignee');
+  const selectedOpt = assigneeSelect ? assigneeSelect.options[assigneeSelect.selectedIndex] : null;
+  let assignedTo = null;
+  if (selectedOpt && selectedOpt.value !== 'all') {
+    assignedTo = {
+      id: selectedOpt.value,
+      name: selectedOpt.dataset.name || selectedOpt.textContent.replace('👤 ', '').split(' (')[0],
+      avatar: selectedOpt.dataset.avatar || null,
+      role: selectedOpt.dataset.role || null
+    };
+  }
+
+  const checklistRows = document.querySelectorAll('#task-modal-checklist-items .task-checklist-row');
+  const checklist = [];
+  checklistRows.forEach((row, idx) => {
+    const chk = row.querySelector('input[type="checkbox"]');
+    const txt = row.querySelector('input[type="text"]');
+    const val = txt ? txt.value.trim() : '';
+    if (val) {
+      checklist.push({
+        id: 'chk-' + (idx + 1),
+        text: val,
+        completed: chk ? chk.checked : false
+      });
+    }
+  });
+
+  const editMsgId = document.getElementById('task-modal-edit-msg-id')?.value;
+  const taskId = document.getElementById('task-modal-task-id')?.value || ('task-' + Date.now());
+
+  const taskPayload = {
+    id: taskId,
+    title,
+    description: desc,
+    priority,
+    status,
+    dueDate,
+    assignedTo,
+    checklist,
+    updatedAt: new Date().toISOString()
+  };
+
+  closeChatTaskModal();
+
+  if (editMsgId) {
+    await updateTaskOnBackend(editMsgId, taskPayload);
+    showToast('Tarea actualizada correctamente', 'success');
+    return;
+  }
+
+  taskPayload.createdAt = new Date().toISOString();
+  taskPayload.createdBy = {
+    id: (currentUser && (currentUser.id || currentUser.username)) || 'me',
+    name: (currentUser && currentUser.name) || 'Operador',
+    avatar: (currentUser && (currentUser.avatar || currentUser.avatarUrl)) || null
+  };
+
+  let targetUrl = '';
+  if (activeChannelMode === 'direct' && activeConversationId) {
+    targetUrl = `/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages`;
+  } else if (activeChannelMode === 'community' && activeCommunityId && activeGroupId) {
+    targetUrl = `/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages`;
+  } else {
+    showToast('Selecciona un chat antes de enviar la tarea', 'warning');
+    return;
+  }
+
+  const messagePayload = {
+    text: `📋 Tarea: ${title}`,
+    attachment: {
+      type: 'task',
+      task: taskPayload
+    }
+  };
+
+  try {
+    const res = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(messagePayload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Tarea asignada y compartida en el chat', 'success');
+      if (data.data) {
+        currentChatMessages.push(data.data);
+        renderChatMessages(currentChatMessages);
+        scrollChatToBottom('smooth');
+      }
+    } else {
+      showToast(data.message || 'Error al enviar tarea', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión al enviar tarea', 'error');
+  }
+}
+
+function openEditChatTaskModal(msgId) {
+  const msg = (currentChatMessages || []).find(m => m.id === msgId);
+  if (!msg) return;
+  const task = (msg.attachment && msg.attachment.task) || msg.task;
+  if (!task) return;
+  openChatTaskModal(task, msgId);
+}
+
+async function updateTaskOnBackend(msgId, taskUpdates) {
+  let url = '';
+  if (activeChannelMode === 'direct' && activeConversationId) {
+    url = `/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages/${encodeURIComponent(msgId)}/task`;
+  } else if (activeChannelMode === 'community' && activeCommunityId && activeGroupId) {
+    url = `/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages/${encodeURIComponent(msgId)}/task`;
+  } else {
+    return;
+  }
+
+  const msg = (currentChatMessages || []).find(m => m.id === msgId);
+  if (msg) {
+    if (!msg.attachment) msg.attachment = { type: 'task' };
+    msg.attachment.task = { ...(msg.attachment.task || {}), ...taskUpdates };
+    renderChatMessages(currentChatMessages);
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(taskUpdates)
+    });
+    const d = await res.json();
+    if (d.success && d.task && msg) {
+      msg.attachment.task = d.task;
+      renderChatMessages(currentChatMessages);
+    }
+  } catch (err) {}
+}
+
+async function toggleTaskChecklistItem(msgId, itemId) {
+  const msg = (currentChatMessages || []).find(m => m.id === msgId);
+  if (!msg) return;
+  const task = (msg.attachment && msg.attachment.task) || msg.task;
+  if (!task || !Array.isArray(task.checklist)) return;
+
+  const item = task.checklist.find(i => i.id === itemId);
+  if (!item) return;
+
+  item.completed = !item.completed;
+  if (typeof haptic === 'function') haptic('selection');
+  await updateTaskOnBackend(msgId, { checklist: task.checklist });
+}
+
+async function quickUpdateTaskStatus(msgId, newStatus) {
+  const msg = (currentChatMessages || []).find(m => m.id === msgId);
+  if (!msg) return;
+  if (typeof haptic === 'function') haptic('medium');
+  await updateTaskOnBackend(msgId, { status: newStatus });
+  const statusLabels = { completed: 'Completada', in_progress: 'En Progreso', pending: 'Pendiente', cancelled: 'Cancelada' };
+  showToast(`Estado actualizado: ${statusLabels[newStatus] || newStatus}`, 'success');
+}
+
 
 function closeActiveChat() {
   activeConversationId = null;
@@ -34962,6 +35692,13 @@ function handleMessagesEscapeKey() {
   const filterModal = document.getElementById('chat-filter-manage-modal');
   if (filterModal && !filterModal.classList.contains('hidden')) {
     closeFilterManageModal();
+    return true;
+  }
+
+  // Modal de tareas
+  const taskModal = document.getElementById('chat-task-modal');
+  if (taskModal && !taskModal.classList.contains('hidden')) {
+    closeChatTaskModal();
     return true;
   }
 

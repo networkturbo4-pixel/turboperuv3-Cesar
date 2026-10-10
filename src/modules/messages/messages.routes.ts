@@ -5,6 +5,35 @@ import path from "path";
 import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
 import { WhatsAppService } from "./whatsapp.service";
 
+export interface TaskChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface TaskItem {
+  id: string;
+  title: string;
+  description?: string;
+  assignedTo?: {
+    id: string | number;
+    name: string;
+    avatar?: string;
+    role?: string;
+  };
+  priority: "low" | "medium" | "high" | "urgent";
+  status: "pending" | "in_progress" | "completed" | "cancelled";
+  dueDate?: string;
+  checklist?: TaskChecklistItem[];
+  createdBy?: {
+    id: string | number;
+    name: string;
+    avatar?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MessageItem {
   id: string;
   sender: "client" | "agent" | "system";
@@ -27,7 +56,7 @@ export interface MessageItem {
   deletedFor?: string[];
   forwarded?: boolean;
   attachment?: {
-    type: "image" | "file" | "audio" | "location" | "video";
+    type: "image" | "file" | "audio" | "location" | "video" | "task";
     url?: string;
     name?: string;
     size?: string;
@@ -41,6 +70,7 @@ export interface MessageItem {
     thumbnailUrl?: string;
     width?: number;
     height?: number;
+    task?: TaskItem;
   };
 }
 
@@ -595,7 +625,7 @@ const sendMessageSchema = z.object({
     text: z.string(),
   }).optional(),
   attachment: z.object({
-    type: z.enum(["image", "file", "audio", "location", "video"]),
+    type: z.enum(["image", "file", "audio", "location", "video", "task"]),
     url: z.string().optional(),
     name: z.string().optional(),
     size: z.string().optional(),
@@ -648,12 +678,14 @@ type MessageListener = (data: any) => void;
 const messageListeners = new Set<MessageListener>();
 
 export function broadcastMessageEvent(event: {
-  type: "new_message" | "community_message" | "conversation_read" | "reaction";
+  type: "new_message" | "community_message" | "conversation_read" | "reaction" | "task_updated";
   tenantId: string;
   conversationId?: string;
   communityId?: string;
   groupId?: string;
+  messageId?: string;
   message?: MessageItem;
+  task?: TaskItem;
   unreadCount?: number;
   lastMessage?: string;
   lastMessageTime?: string;
@@ -1466,6 +1498,57 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     saveConversationsToDisk(tenantId, list);
 
     return reply.send({ success: true, isStarred, message: isStarred ? "Mensaje destacado" : "Destacado eliminado" });
+  });
+
+  // 7.3.1. Actualizar o editar una tarea dentro de una conversación
+  fastify.put("/messages/conversations/:id/messages/:msgId/task", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, msgId } = request.params as { id: string; msgId: string };
+    const taskUpdates = (request.body as Partial<TaskItem>) || {};
+
+    const list = loadConversationsFromDisk(tenantId);
+    const conv = list.find(c => c.id === id);
+    if (!conv) {
+      return reply.status(404).send({ success: false, message: "Conversación no encontrada" });
+    }
+
+    const msg = conv.messages.find(m => m.id === msgId);
+    if (!msg) {
+      return reply.status(404).send({ success: false, message: "Mensaje no encontrado" });
+    }
+
+    if (!msg.attachment || msg.attachment.type !== "task") {
+      msg.attachment = { type: "task" };
+    }
+
+    const existingTask: TaskItem = msg.attachment.task || {
+      id: "task-" + Date.now(),
+      title: "Tarea",
+      priority: "medium",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedTask: TaskItem = {
+      ...existingTask,
+      ...taskUpdates,
+      updatedAt: new Date().toISOString()
+    };
+
+    msg.attachment.task = updatedTask;
+    conv.updatedAt = new Date().toISOString();
+    saveConversationsToDisk(tenantId, list);
+
+    broadcastMessageEvent({
+      type: "task_updated",
+      tenantId,
+      conversationId: id,
+      messageId: msgId,
+      task: updatedTask
+    });
+
+    return reply.send({ success: true, task: updatedTask, message: "Tarea actualizada correctamente" });
   });
 
   // 7.4. Eliminar mensaje (Para todos o Para mí)
@@ -2899,6 +2982,58 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     saveCommunitiesToDisk(tenantId, communities);
 
     return reply.send({ success: true, reactions: msg.reactions, message: "Reacción guardada" });
+  });
+
+  // 12.10 Actualizar o editar una tarea dentro de un canal de comunidad
+  fastify.put("/messages/communities/:id/groups/:groupId/messages/:msgId/task", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, groupId, msgId } = request.params as { id: string; groupId: string; msgId: string };
+    const taskUpdates = (request.body as Partial<TaskItem>) || {};
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) return reply.status(404).send({ success: false, message: "Comunidad no encontrada" });
+
+    const group = comm.groups.find(g => g.id === groupId);
+    if (!group) return reply.status(404).send({ success: false, message: "Canal no encontrado" });
+
+    const msg = group.messages.find(m => m.id === msgId);
+    if (!msg) return reply.status(404).send({ success: false, message: "Mensaje no encontrado" });
+
+    if (!msg.attachment || msg.attachment.type !== "task") {
+      msg.attachment = { type: "task" };
+    }
+
+    const existingTask: TaskItem = msg.attachment.task || {
+      id: "task-" + Date.now(),
+      title: "Tarea",
+      priority: "medium",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedTask: TaskItem = {
+      ...existingTask,
+      ...taskUpdates,
+      updatedAt: new Date().toISOString()
+    };
+
+    msg.attachment.task = updatedTask;
+    group.updatedAt = new Date().toISOString();
+    comm.updatedAt = new Date().toISOString();
+    saveCommunitiesToDisk(tenantId, communities);
+
+    broadcastMessageEvent({
+      type: "task_updated",
+      tenantId,
+      communityId: id,
+      groupId,
+      messageId: msgId,
+      task: updatedTask
+    });
+
+    return reply.send({ success: true, task: updatedTask, message: "Tarea de comunidad actualizada" });
   });
 };
 
