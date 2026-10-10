@@ -80,6 +80,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   // B. RUTAS API (/api/*): Network First estricto con respuesta offline controlada
+  // IMPORTANTE: Omitir SSE (Server-Sent Events) para que el navegador mantenga el flujo continuo directo sin buffering
+  if (url.pathname.startsWith('/api/messages/events') || req.headers.get('accept')?.includes('text/event-stream')) {
+    return;
+  }
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(req)
@@ -129,4 +133,65 @@ self.addEventListener('fetch', (event) => {
       return cachedResponse || fetchPromise;
     })
   );
+});
+
+// ==============================================================================
+// 4. NOTIFICACIONES PUSH & MOBILE (ANDROID & IPHONE IOS 16.4+ PWA)
+// ==============================================================================
+
+// Manejar clic en una notificación en Android e iOS
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) ? event.notification.data.url : '/chat';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Si la ventana de chat ya está abierta, traerla al frente
+      for (const client of clientList) {
+        if (client.url.includes('/chat') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Si no hay ventana abierta, abrir una nueva
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+
+// Evento Push remoto (Web Push API)
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  try {
+    const payload = event.data.json();
+    const title = payload.title || 'TurboChat • Mensaje Nuevo';
+    const options = {
+      body: payload.body || 'Has recibido un nuevo mensaje',
+      icon: payload.icon || '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      vibrate: [200, 100, 200],
+      tag: payload.tag || 'turbochat-push-' + Date.now(),
+      renotify: true,
+      data: {
+        url: payload.url || '/chat',
+        conversationId: payload.conversationId,
+        timestamp: Date.now()
+      }
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch (err) {
+    // Si el payload es texto plano
+    const text = event.data.text();
+    event.waitUntil(
+      self.registration.showNotification('TurboChat', {
+        body: text,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        data: { url: '/chat' }
+      })
+    );
+  }
 });

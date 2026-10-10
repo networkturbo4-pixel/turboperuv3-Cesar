@@ -9,35 +9,10 @@
     "type": "building",
     "linkedNaps": [],
     "linkedZones": [],
-    "memberCount": 2,
-    "members": [
-      {
-        "id": 1790781290504,
-        "userId": 1790781290504,
-        "name": "Emanuel Lopez",
-        "email": "emanuelalopez@gmail.com",
-        "phone": "",
-        "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=hhbzmd",
-        "roleName": "Cajero Sucursal Centro",
-        "type": "system_user",
-        "communityRole": "member",
-        "addedAt": "2026-10-10T00:46:52.649Z"
-      },
-      {
-        "id": 1790787042063,
-        "userId": 1790787042063,
-        "name": "Miguel Mendoza",
-        "email": "miguelmendoza@gmail.com",
-        "phone": "",
-        "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Miguel%20Mendoza",
-        "roleName": "Administrador de Red / NOC",
-        "type": "system_user",
-        "communityRole": "member",
-        "addedAt": "2026-10-10T00:46:52.649Z"
-      }
-    ],
+    "memberCount": 0,
+    "members": [],
     "createdAt": "2026-10-10T00:46:54.525Z",
-    "updatedAt": "2026-10-10T00:46:54.525Z",
+    "updatedAt": "2026-10-10T02:19:54.820Z",
     "groups": [
       {
         "id": "grp-comm-1791593214525-1",
@@ -47,7 +22,7 @@
         "type": "announcements",
         "isReadOnly": true,
         "permission": "admin_only",
-        "avatarUrl": "https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?w=150&auto=format&fit=crop&q=80",
+        "avatarUrl": "https://api.dicebear.com/7.x/bottts/svg?seed=Anuncios%20y%20Avisos",
         "unreadCount": 0,
         "lastMessage": "Canal Anuncios y Avisos activado",
         "lastMessageTime": "07:46 p. m.",
@@ -63,7 +38,7 @@
           }
         ],
         "createdAt": "2026-10-10T00:46:54.525Z",
-        "updatedAt": "2026-10-10T00:46:54.525Z"
+        "updatedAt": "2026-10-10T02:19:54.820Z"
       },
       {
         "id": "grp-comm-1791593214525-2",
@@ -73,7 +48,7 @@
         "type": "general",
         "isReadOnly": false,
         "permission": "everyone",
-        "avatarUrl": "https://images.unsplash.com/photo-1534536281715-e28d76689b4d?w=150&auto=format&fit=crop&q=80",
+        "avatarUrl": "https://api.dicebear.com/7.x/bottts/svg?seed=Soporte%20y%20Consultas",
         "unreadCount": 0,
         "lastMessage": "Canal Soporte y Consultas activado",
         "lastMessageTime": "07:46 p. m.",
@@ -89,7 +64,7 @@
           }
         ],
         "createdAt": "2026-10-10T00:46:54.525Z",
-        "updatedAt": "2026-10-10T00:46:54.525Z"
+        "updatedAt": "2026-10-10T02:19:54.820Z"
       },
       {
         "id": "grp-comm-1791593214525-3",
@@ -99,7 +74,7 @@
         "type": "general",
         "isReadOnly": false,
         "permission": "everyone",
-        "avatarUrl": "https://images.unsplash.com/photo-1577495508048-b635879837f1?w=150&auto=format&fit=crop&q=80",
+        "avatarUrl": "https://api.dicebear.com/7.x/bottts/svg?seed=Comunidad%20General",
         "unreadCount": 0,
         "lastMessage": "Canal Comunidad General activado",
         "lastMessageTime": "07:46 p. m.",
@@ -115,8 +90,10 @@
           }
         ],
         "createdAt": "2026-10-10T00:46:54.525Z",
-        "updatedAt": "2026-10-10T00:46:54.525Z"
+        "updatedAt": "2026-10-10T02:19:54.820Z"
       }
-    ]
+    ],
+    "privacy": "public",
+    "isPublic": true
   }
 ]

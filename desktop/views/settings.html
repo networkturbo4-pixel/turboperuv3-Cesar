@@ -237,6 +237,12 @@
       window.close();
     }
 
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        window.close();
+      }
+    });
+
     load();
   </script>
 </body>

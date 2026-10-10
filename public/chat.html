@@ -486,29 +486,34 @@
                 </div>
 
                 <!-- Barra de Entrada Normal (Se oculta durante selecciÃ³n mÃºltiple) -->
-                <div id="chat-normal-input-bar" class="space-y-2">
-                  <!-- Chips de Respuestas RÃ¡pidas Predefinidas (Sin emojis, con iconos SVG profesionales) -->
-                  <div class="flex items-center space-x-1.5 overflow-x-auto pb-0.5 scrollbar-none text-[11px] px-0.5">
-                  <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold mr-0.5 flex-shrink-0">Plantillas:</span>
-                  <button type="button" onclick="insertQuickReply('Â¡Hola! Â¿En quÃ© podemos ayudarte el dÃ­a de hoy?')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs flex items-center space-x-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                    <span>Saludo</span>
-                  </button>
-                  <button type="button" onclick="insertQuickReply('Estimado cliente, le recordamos que su recibo mensual se encuentra disponible para pago.')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs flex items-center space-x-1.5">
-                    <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
-                    <span>Aviso de Pago</span>
-                  </button>
-                  <button type="button" onclick="insertQuickReply('Nuestro equipo tÃ©cnico se encuentra realizando trabajos de mantenimiento en la zona para mejorar su servicio.')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs flex items-center space-x-1.5">
-                    <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.05a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.097.433.22.846.368 1.233z"/></svg>
-                    <span>Mantenimiento</span>
-                  </button>
-                  <button type="button" onclick="insertQuickReply('Estimado cliente, su servicio presenta suspensiÃ³n preventiva por saldo vencido. Favor de regularizar.')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs flex items-center space-x-1.5">
-                    <svg class="w-3.5 h-3.5 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                    <span>Aviso de Corte</span>
-                  </button>
-                </div>
+                <div id="chat-normal-input-bar" class="space-y-2 relative">
+                  <!-- Chips de Respuestas RÃ¡pidas DinÃ¡micas -->
+                  <div id="chat-quick-replies-chips" class="flex items-center space-x-1.5 overflow-x-auto pb-0.5 scrollbar-none text-[11px] px-0.5">
+                    <button type="button" onclick="openQuickRepliesManager()" class="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 whitespace-nowrap transition text-xs font-semibold flex items-center space-x-1.5 flex-shrink-0 shadow-2xs" title="Gestionar respuestas rÃ¡pidas y atajos">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                      <span>/ Atajos</span>
+                    </button>
+                    <div id="chat-quick-chips-list" class="flex items-center space-x-1.5">
+                      <!-- Renderizado dinÃ¡mico de respuestas rÃ¡pidas desde backend -->
+                    </div>
+                  </div>
 
                 <div class="relative">
+                  <!-- POPOVER AUTOCOMPLETADO DE COMANDOS / RESPUESTAS RÃPIDAS (Estilo Slack / WhatsApp) -->
+                  <div id="chat-slash-command-popover" class="hidden absolute bottom-full left-0 mb-2 z-[250] w-full max-w-lg bg-white dark:bg-[#161c28] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl flex flex-col max-h-72">
+                    <div class="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        <span>Respuestas RÃ¡pidas (Usa â†‘ â†“ y Enter para insertar)</span>
+                      </div>
+                      <button type="button" onclick="openQuickRepliesManager()" class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1">
+                        <span>+ Administrar</span>
+                      </button>
+                    </div>
+                    <div id="chat-slash-command-list" class="overflow-y-auto divide-y divide-slate-100 dark:divide-white/5 scrollbar-none max-h-60 p-1">
+                      <!-- Items de autocompletado dinÃ¡micos -->
+                    </div>
+                  </div>
                   <!-- EMOJI PICKER POPOVER (Estilo WhatsApp) -->
                   <div id="chat-emoji-picker" class="hidden absolute bottom-full left-0 mb-2 z-[250] w-72 sm:w-80 max-w-[92vw] bg-white dark:bg-[#161c28] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-2.5 backdrop-blur-xl flex flex-col space-y-2">
                     <div class="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-white/5">
@@ -1138,13 +1143,20 @@
           <textarea id="ncomm-desc" rows="2" placeholder="Detalle de ubicaciÃ³n, cajas NAP o clientes que forman parte..." class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"></textarea>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Tipo de Comunidad</label>
             <select id="ncomm-type" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
               <option value="building">Condominio / Edificio</option>
               <option value="zone">Zona / Sector GeogrÃ¡fico</option>
               <option value="custom">Grupo Personalizado</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Privacidad *</label>
+            <select id="ncomm-privacy" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-medium">
+              <option value="public">ğŸŒ PÃºblica (Todos los usuarios)</option>
+              <option value="private">ğŸ”’ Privada (Solo asignados)</option>
             </select>
           </div>
           <div>
@@ -1261,13 +1273,20 @@
           <textarea id="ecomm-desc" rows="2" placeholder="Detalle de ubicaciÃ³n o clientes..." class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"></textarea>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Tipo de Comunidad</label>
             <select id="ecomm-type" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
               <option value="building">Condominio / Edificio</option>
               <option value="zone">Zona / Sector GeogrÃ¡fico</option>
               <option value="custom">Grupo Personalizado</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Privacidad *</label>
+            <select id="ecomm-privacy" class="w-full bg-black/30 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-medium">
+              <option value="public">ğŸŒ PÃºblica (Todos los usuarios)</option>
+              <option value="private">ğŸ”’ Privada (Solo asignados)</option>
             </select>
           </div>
           <div>
@@ -2048,6 +2067,104 @@
     </div>
   </div>
 
+  <!-- ======================================================== -->
+  <!-- MODAL: GESTIÃ“N DE RESPUESTAS RÃPIDAS & ATAJOS           -->
+  <!-- ======================================================== -->
+  <div id="quick-replies-manager-modal" class="fixed inset-0 z-[380] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6" onclick="if(event.target===this) closeQuickRepliesManager()">
+    <div class="bg-white dark:bg-[#111827] max-w-2xl w-full p-5 sm:p-6 rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col justify-between my-auto max-h-[90vh] overflow-hidden">
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3.5 border-b border-slate-200 dark:border-white/10 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Respuestas RÃ¡pidas & Atajos</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Escribe <code class="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono font-bold">/atajo</code> en el chat para insertar plantillas al instante</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeQuickRepliesManager()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Barra de Filtros, CategorÃ­as y BotÃ³n Nuevo -->
+      <div class="py-3 space-y-2.5 border-b border-slate-100 dark:border-white/5 flex-shrink-0">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex-1 min-w-[200px] relative">
+            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="qr-search-input" oninput="filterQuickRepliesModal(this.value)" placeholder="Buscar por atajo, tÃ­tulo o contenido..." class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500">
+          </div>
+          <button type="button" onclick="openNewQuickReplyForm()" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center space-x-1.5 transition shadow-xs cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            <span>Nueva Respuesta</span>
+          </button>
+        </div>
+        <!-- PestaÃ±as de CategorÃ­a -->
+        <div class="flex items-center space-x-1 overflow-x-auto scrollbar-none text-[11px] pb-0.5">
+          <button type="button" onclick="filterQuickRepliesByCategory('all')" id="qr-cat-tab-all" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-semibold transition text-xs whitespace-nowrap">Todas</button>
+          <button type="button" onclick="filterQuickRepliesByCategory('general')" id="qr-cat-tab-general" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-medium transition text-xs whitespace-nowrap">General</button>
+          <button type="button" onclick="filterQuickRepliesByCategory('billing')" id="qr-cat-tab-billing" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-medium transition text-xs whitespace-nowrap">Cobranzas</button>
+          <button type="button" onclick="filterQuickRepliesByCategory('support')" id="qr-cat-tab-support" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-medium transition text-xs whitespace-nowrap">Soporte</button>
+          <button type="button" onclick="filterQuickRepliesByCategory('sales')" id="qr-cat-tab-sales" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-medium transition text-xs whitespace-nowrap">Ventas</button>
+        </div>
+      </div>
+
+      <!-- Formulario para Crear / Editar (Ocultable) -->
+      <div id="qr-editor-container" class="hidden p-4 my-2 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-500/30 space-y-3 flex-shrink-0 animate-in fade-in duration-150">
+        <div class="flex items-center justify-between">
+          <h4 id="qr-editor-title" class="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider">Crear Respuesta RÃ¡pida</h4>
+          <button type="button" onclick="closeQuickReplyEditor()" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white font-medium cursor-pointer">Cancelar</button>
+        </div>
+        <form id="qr-edit-form" onsubmit="handleSaveQuickReply(event)" class="space-y-2.5">
+          <input type="hidden" id="qr-edit-id" value="">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Atajo (sin barra /)</label>
+              <div class="relative flex items-center">
+                <span class="absolute left-2.5 text-blue-500 font-mono font-bold text-xs">/</span>
+                <input type="text" id="qr-edit-shortcut" required pattern="[a-zA-Z0-9_-]+" title="Solo letras, nÃºmeros y guiones" placeholder="saludo" class="w-full pl-6 pr-2.5 py-1.5 text-xs rounded-xl bg-white dark:bg-[#161c28] border border-slate-200 dark:border-white/10 font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">TÃ­tulo de la Plantilla</label>
+              <input type="text" id="qr-edit-title-input" required placeholder="Saludo de Bienvenida" class="w-full px-2.5 py-1.5 text-xs rounded-xl bg-white dark:bg-[#161c28] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">CategorÃ­a</label>
+              <select id="qr-edit-category" class="w-full px-2.5 py-1.5 text-xs rounded-xl bg-white dark:bg-[#161c28] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+                <option value="general">General</option>
+                <option value="billing">Cobranzas & Pagos</option>
+                <option value="support">Soporte TÃ©cnico</option>
+                <option value="sales">Ventas & Promociones</option>
+                <option value="network">Redes & Nodos</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Adjunto Opcional (URL imagen o archivo)</label>
+              <input type="text" id="qr-edit-attachment-url" placeholder="https://ejemplo.com/cuentas.png (opcional)" class="w-full px-2.5 py-1.5 text-xs rounded-xl bg-white dark:bg-[#161c28] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Contenido del Mensaje</label>
+            <textarea id="qr-edit-text" required rows="3" placeholder="Escribe el mensaje completo que se insertarÃ¡ al usar el atajo..." class="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-[#161c28] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"></textarea>
+          </div>
+          <div class="flex items-center justify-end space-x-2 pt-1">
+            <button type="button" onclick="closeQuickReplyEditor()" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer">Cancelar</button>
+            <button type="submit" id="qr-edit-save-btn" class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shadow-xs cursor-pointer">Guardar Plantilla</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Lista de Respuestas RÃ¡pidas -->
+      <div id="qr-cards-list-container" class="flex-1 overflow-y-auto pr-1 py-2 space-y-2.5 scrollbar-none min-h-[160px]">
+        <!-- Render dinÃ¡mico desde JS -->
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL DE PERSONALIZACIÃ“N EXCLUSIVO TURBOCHAT -->
   
   <!-- ======================================================== -->
@@ -2416,6 +2533,15 @@ let activeCommunityId = null;
 let activeGroupId = null;
 let communitySearchQuery = '';
 
+// Memoria cachÃ© para transiciÃ³n instantÃ¡nea de mensajes (0ms latency switching)
+const conversationMessagesCache = new Map(); // convId -> { messages: [], hasMore: boolean, timestamp: number }
+
+// Estado global de respuestas rÃ¡pidas y atajos con slash command (/)
+let quickRepliesList = [];
+let activeSlashCommandIndex = 0;
+let filteredQuickReplies = [];
+let activeQuickReplyCategoryFilter = 'all';
+
 // Formateador de fechas y horas adaptado a zona horaria local del navegador
 function formatMessageTime(val) {
   if (!val) return '';
@@ -2605,17 +2731,48 @@ function playMessageNotificationSound() {
   }
 }
 
-function showSystemNotification(title, body, iconUrl, onClick) {
+async function showSystemNotification(title, body, iconUrl, onClick) {
   if (typeof iconUrl === 'function') {
     onClick = iconUrl;
     iconUrl = null;
   }
   const avatarIcon = iconUrl || '/icons/icon-192.png';
+
+  // 1. NotificaciÃ³n en Desktop (.exe de Windows)
   if (window.electronDesktop && window.electronDesktop.notify) {
     try { window.electronDesktop.notify({ title, body, icon: avatarIcon }); } catch (_) {}
   }
+
+  // 2. VibraciÃ³n hÃ¡ptica en dispositivos mÃ³viles (Android & iOS)
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    try { navigator.vibrate([150, 80, 150]); } catch (_) {}
+  }
+
   if (!('Notification' in window)) return;
+
   if (Notification.permission === 'granted') {
+    // 3. Service Worker showNotification (OBLIGATORIO para iOS Safari 16.4+ PWA y Chrome Android en segundo plano)
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        if (registration && typeof registration.showNotification === 'function') {
+          await registration.showNotification(title, {
+            body: body || '',
+            icon: avatarIcon,
+            badge: '/icons/icon-192.png',
+            tag: 'turbochat-msg-' + Date.now(),
+            renotify: true,
+            vibrate: [150, 80, 150],
+            data: { url: '/chat' }
+          });
+          return;
+        }
+      } catch (err) {
+        console.warn('Fallo showNotification vÃ­a ServiceWorker, usando fallback estÃ¡ndar:', err);
+      }
+    }
+
+    // 4. Fallback estÃ¡ndar para navegadores de escritorio
     try {
       const n = new Notification(title, {
         body,
@@ -2643,6 +2800,17 @@ function updateGlobalUnreadBadges() {
   
   if (window.electronDesktop && window.electronDesktop.setUnreadCount) {
     try { window.electronDesktop.setUnreadCount(totalUnread); } catch (_) {}
+  }
+
+  // Actualizar App Badge nativo en Android y iOS PWA (Ã­cono en pantalla de inicio con contador)
+  if (typeof navigator !== 'undefined' && 'setAppBadge' in navigator) {
+    try {
+      if (totalUnread > 0) {
+        navigator.setAppBadge(totalUnread).catch(() => {});
+      } else {
+        navigator.clearAppBadge().catch(() => {});
+      }
+    } catch (_) {}
   }
 
   if (totalUnread > 0) {
@@ -2804,6 +2972,31 @@ function initMessagesRealtime() {
               if (chatContent) chatContent.classList.add('hidden');
             }
           }
+        } else if (data.type === 'community_members_updated') {
+          const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+          const isRemoved = myId && String(data.removedMemberId) === myId;
+          const comm = (currentCommunities || []).find(c => c.id === data.communityId);
+          const isPrivate = comm && (comm.privacy === 'private' || comm.isPublic === false);
+          const isStillMember = myId && Array.isArray(data.members) && data.members.some(m => String(m.id) === myId || String(m.userId) === myId);
+
+          if (isRemoved || (isPrivate && !isStillMember && !isCurrentUserAdmin())) {
+            // Eliminar la comunidad inmediatamente para este usuario si fue expulsado o no pertenece
+            currentCommunities = (currentCommunities || []).filter(c => c.id !== data.communityId);
+            renderCommunitiesList(currentCommunities);
+            updateGlobalUnreadBadges();
+            if (activeChannelMode === 'community' && activeCommunityId === data.communityId) {
+              closeActiveChat();
+              showToast('Ya no perteneces a esta comunidad', 'warning');
+            }
+          } else {
+            // Actualizar lista y contador de miembros en tiempo real
+            const idx = (currentCommunities || []).findIndex(c => c.id === data.communityId);
+            if (idx !== -1) {
+              currentCommunities[idx].members = data.members;
+              currentCommunities[idx].memberCount = data.memberCount || (data.members ? data.members.length : currentCommunities[idx].memberCount);
+              renderCommunitiesList(currentCommunities);
+            }
+          }
         } else if (data.type === 'conversation_read') {
           const conv = (currentConversations || []).find(c => c.id === data.conversationId);
           if (conv) {
@@ -2865,10 +3058,17 @@ function handleIncomingRealtimeMessage(data) {
       }
 
       currentChatMessages.push(message);
-      renderChatMessages(currentChatMessages);
+      if (activeConversationId) {
+        conversationMessagesCache.set(conversationId, {
+          messages: currentChatMessages,
+          hasMore: currentChatHasMore,
+          timestamp: Date.now()
+        });
+      }
+      appendSingleMessageNode(message, false);
 
       if (isScrolledNearBottom) {
-        scrollChatToBottom();
+        scrollChatToBottom('smooth');
       }
     }
 
@@ -2915,8 +3115,8 @@ function handleIncomingCommunityMessage(data) {
   if (isCurrentGroupOpen) {
     if (!currentChatMessages.some(m => m.id === message.id)) {
       currentChatMessages.push(message);
-      renderChatMessages(currentChatMessages);
-      scrollChatToBottom();
+      appendSingleMessageNode(message, false);
+      scrollChatToBottom('smooth');
     }
   }
 
@@ -3005,6 +3205,8 @@ async function loadMessagesModule() {
     }
     initMessagesRealtime();
     fetchCommunities();
+    loadQuickReplies();
+    setupChatInputListeners();
   } catch (err) {
     console.error('Error cargando mÃ³dulo de mensajes:', err);
     showToast('Error cargando centro de mensajerÃ­a', 'error');
@@ -3270,7 +3472,7 @@ function renderConversationsList(conversations) {
     const pinIconHtml = c.isPinned ? `<span title="Chat Fijado" class="text-blue-500 dark:text-blue-400 text-xs flex-shrink-0 ml-1">ğŸ“Œ</span>` : '';
 
     return `
-      <div onclick="selectConversation('${c.id}')" oncontextmenu="handleConversationContextMenu(event, '${c.id}')" ontouchstart="handleCardTouchStart('${c.id}', event)" ontouchmove="handleCardTouchMove()" ontouchend="handleCardTouchEnd()" class="msg-conv-item p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-center space-x-3 ${cardClasses}">
+      <div data-conv-id="${c.id}" data-has-unread="${hasUnread}" onclick="selectConversation('${c.id}')" oncontextmenu="handleConversationContextMenu(event, '${c.id}')" ontouchstart="handleCardTouchStart('${c.id}', event)" ontouchmove="handleCardTouchMove()" ontouchend="handleCardTouchEnd()" class="msg-conv-item p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-center space-x-3 ${cardClasses}">
         <div class="relative flex-shrink-0">
           <img src="${avatarUrl}" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-slate-300 dark:border-white/15 shadow-2xs" alt="${escapeHtml(contactName)}">
           <span class="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${dotColor}"></span>
@@ -3291,7 +3493,7 @@ function renderConversationsList(conversations) {
             <div class="truncate text-[11px] leading-tight flex-1 mr-1.5 ${lastMsgStyle}">${formatLastMessageWithSvgIcon(c.lastMessage)}</div>
             ${
               hasUnread
-                ? `<span class="min-w-[22px] h-[22px] px-2 rounded-full text-[11px] font-black bg-blue-600 text-white flex items-center justify-center flex-shrink-0 animate-bounce shadow-md ring-2 ring-white dark:ring-slate-900">${c.unreadCount}</span>`
+                ? `<span class="msg-unread-badge min-w-[22px] h-[22px] px-2 rounded-full text-[11px] font-black bg-blue-600 text-white flex items-center justify-center flex-shrink-0 animate-bounce shadow-md ring-2 ring-white dark:ring-slate-900">${c.unreadCount}</span>`
                 : ''
             }
           </div>
@@ -3299,6 +3501,25 @@ function renderConversationsList(conversations) {
       </div>
     `;
   }).join('');
+}
+
+// ActualizaciÃ³n instantÃ¡nea de clases en la tarjeta activa sin reconstruir todo el DOM de la lista
+function updateSelectedConversationCard(convId) {
+  const cards = document.querySelectorAll('.msg-conv-item');
+  cards.forEach(card => {
+    const id = card.getAttribute('data-conv-id');
+    if (id === convId) {
+      card.className = 'msg-conv-item p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-center space-x-3 bg-blue-50 dark:bg-blue-950/60 border-2 border-blue-600 dark:border-blue-500 text-slate-900 dark:text-white shadow-sm ring-1 ring-blue-500/20';
+      card.setAttribute('data-has-unread', 'false');
+      const badges = card.querySelectorAll('.msg-unread-badge');
+      badges.forEach(b => b.remove());
+    } else {
+      const hasUnread = card.getAttribute('data-has-unread') === 'true';
+      if (!hasUnread) {
+        card.className = 'msg-conv-item p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-center space-x-3 bg-white dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white shadow-2xs';
+      }
+    }
+  });
 }
 
 // 3. Seleccionar ConversaciÃ³n y Desplegar Mensajes
@@ -3330,8 +3551,8 @@ async function selectConversation(convId) {
     chatContent.classList.add('flex');
   }
 
-  // Actualizar estilos seleccionados en la lista izquierda
-  renderConversationsList(currentConversations);
+  // Actualizar estilos seleccionados en la lista izquierda de manera quirÃºrgica y rÃ¡pida
+  updateSelectedConversationCard(convId);
 
   // Toggle vista mÃ³vil si corresponde con soporte para botÃ³n atrÃ¡s nativo
   const leftPanel = document.getElementById('messages-left-panel');
@@ -3396,9 +3617,15 @@ async function selectConversation(convId) {
     const detailEl = document.getElementById('chat-header-detail');
     if (detailEl) detailEl.textContent = contactDetail;
 
-    // Si aÃºn no hay mensajes cargados para este chat, mostrar placeholder instantÃ¡neo con el Ãºltimo mensaje
+    // Verificar si ya tenemos los mensajes en memoria cachÃ© (transiciÃ³n instantÃ¡nea 0ms)
     const msgContainer = document.getElementById('chat-messages-container');
-    if (msgContainer && (!currentChatMessages || currentChatMessages.length === 0 || activeConversationId !== convId)) {
+    const cachedData = conversationMessagesCache.get(convId);
+    if (cachedData && Array.isArray(cachedData.messages) && cachedData.messages.length > 0) {
+      currentChatMessages = [...cachedData.messages];
+      currentChatHasMore = Boolean(cachedData.hasMore);
+      renderChatMessages(currentChatMessages);
+      scrollChatToBottom('auto');
+    } else if (msgContainer && (!currentChatMessages || currentChatMessages.length === 0 || activeConversationId !== convId)) {
       const timeFmt = convLocal.lastMessageTime || formatMessageTime(convLocal.lastMessageAt || new Date().toISOString());
       msgContainer.innerHTML = `
         <div id="chat-messages-loading-bar" class="w-full py-4 flex flex-col items-center justify-center space-y-2 text-slate-400 text-xs">
@@ -3435,11 +3662,23 @@ async function selectConversation(convId) {
     }
 
     const conversation = data.data;
+    const fetchedMessages = conversation.messages || [];
 
-    // Sincronizar estado del chat
-    currentChatMessages = conversation.messages || [];
-    currentChatHasMore = Boolean(conversation.hasMore);
-    activePinnedMessageId = conversation.pinnedMessageId || null;
+    // Guardar en memoria cachÃ© para transiciones instantÃ¡neas a 0ms en siguientes clics
+    conversationMessagesCache.set(convId, {
+      messages: fetchedMessages,
+      hasMore: Boolean(conversation.hasMore),
+      timestamp: Date.now()
+    });
+
+    // Sincronizar estado del chat Ãºnicamente si el usuario sigue en esta conversaciÃ³n activa
+    if (activeConversationId === convId) {
+      currentChatMessages = fetchedMessages;
+      currentChatHasMore = Boolean(conversation.hasMore);
+      activePinnedMessageId = conversation.pinnedMessageId || null;
+      renderChatMessages(currentChatMessages);
+      scrollChatToBottom('auto');
+    }
     const displayInfo = getConversationDisplayInfo(conversation);
     activeConversationContactName = displayInfo.name || 'Contacto';
     if (typeof exitMessageSelectionMode === 'function') exitMessageSelectionMode();
@@ -3709,9 +3948,12 @@ function renderChatMessages(messages) {
     return;
   }
 
-  container.innerHTML = visibleMessages.map(m => {
-    const isMe = checkIfMessageIsMe(m);
-    const isAgent = isMe;
+  container.innerHTML = visibleMessages.map(m => renderChatMessageRowHtml(m)).join('');
+}
+
+function renderChatMessageRowHtml(m) {
+  const isMe = checkIfMessageIsMe(m);
+  const isAgent = isMe;
     const isSelected = selectedChatMessageIds.has(m.id);
     const timeFormatted = m.timestamp ? formatMessageTime(m.timestamp) : (m.timeFormatted || '');
 
@@ -3785,7 +4027,7 @@ function renderChatMessages(messages) {
         ${m.isPinned ? `<svg class="w-3 h-3 text-blue-300 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" title="Fijado"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"/></svg>` : ''}
         ${m.isStarred ? `<svg class="w-3 h-3 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" title="Destacado"><path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>` : ''}
         <span>${timeFormatted}</span>
-        ${isAgent ? MSG_DOUBLE_CHECK_SVG : ''}
+        <span class="bubble-footer-checks">${m.isOptimistic ? '<span title="Enviando..." class="text-[10px] opacity-80 animate-pulse">ğŸ•’</span>' : (isAgent ? MSG_DOUBLE_CHECK_SVG : '')}</span>
       </div>
     `;
 
@@ -4088,7 +4330,50 @@ function renderChatMessages(messages) {
         </div>
       </div>
     `;
-  }).join('');
+}
+
+// InserciÃ³n suave e incremental de un solo mensaje sin re-renderizar todo el DOM
+function appendSingleMessageNode(m, isOptimistic = false) {
+  const container = document.getElementById('chat-messages-container');
+  if (!container || !m || !m.id) return;
+
+  // Si habÃ­a un empty state en el contenedor, limpiarlo primero
+  const emptyState = container.querySelector('.text-slate-400.text-xs');
+  if (emptyState) {
+    container.innerHTML = '';
+  }
+
+  // Si el mensaje es una confirmaciÃ³n real de un mensaje optimista
+  if (!isOptimistic) {
+    const pendingOptimisticRow = container.querySelector('[data-is-optimistic="true"]');
+    if (pendingOptimisticRow) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = renderChatMessageRowHtml(m);
+      const confirmedNode = tempDiv.firstElementChild;
+      if (confirmedNode) {
+        pendingOptimisticRow.replaceWith(confirmedNode);
+        return;
+      }
+    }
+  }
+
+  // Si el nodo ya existe exactamente en el DOM, evitar duplicarlo
+  const existingNode = container.querySelector(`[data-msg-id="${m.id}"]`);
+  if (existingNode) {
+    return;
+  }
+
+  const tempDiv = document.createElement('div');
+  m.isOptimistic = isOptimistic;
+  tempDiv.innerHTML = renderChatMessageRowHtml(m);
+  const newRow = tempDiv.firstElementChild;
+  if (!newRow) return;
+
+  if (isOptimistic) {
+    newRow.setAttribute('data-is-optimistic', 'true');
+  }
+
+  container.appendChild(newRow);
 }
 
 // ========================================================
@@ -4185,8 +4470,20 @@ function closeAllChatContextMenus() {
 
 function closeActiveChat() {
   activeConversationId = null;
-  renderEmptyChatWorkspace();
+  activeCommunityId = null;
+  activeGroupId = null;
+  activeChannelMode = 'direct';
   closeMobileChatView();
+  renderEmptyChatWorkspace();
+  if (currentMessagesTab === 'direct') {
+    if (typeof renderConversationsList === 'function' && typeof currentConversations !== 'undefined') {
+      renderConversationsList(currentConversations);
+    }
+  } else {
+    if (typeof renderCommunitiesList === 'function' && typeof currentCommunities !== 'undefined') {
+      renderCommunitiesList(currentCommunities);
+    }
+  }
   closeAllChatContextMenus();
 }
 
@@ -4921,8 +5218,18 @@ function appendMessageSafely(msg) {
   const exists = (currentChatMessages || []).some(m => m.id === msg.id);
   if (exists) return false;
   currentChatMessages.push(msg);
-  renderChatMessages(currentChatMessages);
-  scrollChatToBottom();
+
+  // Actualizar cachÃ© en memoria
+  if (activeConversationId) {
+    conversationMessagesCache.set(activeConversationId, {
+      messages: currentChatMessages,
+      hasMore: currentChatHasMore,
+      timestamp: Date.now()
+    });
+  }
+
+  appendSingleMessageNode(msg, false);
+  scrollChatToBottom('smooth');
   return true;
 }
 
@@ -5610,7 +5917,36 @@ async function handleSendChatMessage(e) {
 
   const finalMsgText = text || (attachment ? (attachment.type === 'image' ? 'Foto adjunta' : (attachment.type === 'video' ? `Video enviado (${attachment.duration || ''})` : attachment.name)) : '');
 
-  // Vista optimista
+  // Mensaje Optimista InstantÃ¡neo (0ms de latencia en la UI)
+  const optimisticId = 'temp-' + Date.now();
+  const optimisticMsg = {
+    id: optimisticId,
+    sender: 'agent',
+    senderName: currentUser ? (currentUser.name || currentUser.username) : 'Operador TurboNetwork',
+    senderAvatar: currentUser ? (currentUser.avatarUrl || currentUser.avatar || '') : '',
+    text: finalMsgText,
+    timestamp: new Date().toISOString(),
+    timeFormatted: formatMessageTime(new Date()),
+    status: 'sending',
+    replyTo: replyPayload,
+    attachment: attachment || undefined,
+    isOptimistic: true
+  };
+
+  currentChatMessages.push(optimisticMsg);
+  appendSingleMessageNode(optimisticMsg, true);
+  scrollChatToBottom('smooth');
+
+  // Actualizar cachÃ© de memoria
+  if (activeConversationId) {
+    conversationMessagesCache.set(activeConversationId, {
+      messages: currentChatMessages,
+      hasMore: currentChatHasMore,
+      timestamp: Date.now()
+    });
+  }
+
+  // Vista optimista en la lista lateral
   if (activeChannelMode === 'direct') {
     const cur = currentConversations.find(c => c.id === activeConversationId);
     if (cur) {
@@ -5665,13 +6001,44 @@ async function handleSendChatMessage(e) {
     });
     const data = await res.json();
     if (data.success && data.data) {
-      appendMessageSafely(data.data);
+      // Reemplazar mensaje optimista con el confirmado del backend
+      const idx = currentChatMessages.findIndex(m => m.id === optimisticId);
+      if (idx !== -1) currentChatMessages[idx] = data.data;
+
+      if (activeConversationId) {
+        conversationMessagesCache.set(activeConversationId, {
+          messages: currentChatMessages,
+          hasMore: currentChatHasMore,
+          timestamp: Date.now()
+        });
+      }
+
+      // Actualizar nodo DOM sin re-renderizar todo el chat
+      const row = document.querySelector(`[data-msg-id="${optimisticId}"]`);
+      if (row) {
+        row.setAttribute('data-msg-id', data.data.id);
+        row.removeAttribute('data-is-optimistic');
+        const bubble = row.querySelector(`#msg-${optimisticId}`);
+        if (bubble) bubble.id = `msg-${data.data.id}`;
+        const checks = row.querySelector('.bubble-footer-checks');
+        if (checks) checks.innerHTML = MSG_DOUBLE_CHECK_SVG;
+      }
     } else {
       showToast((data && data.message) || 'Error al enviar mensaje', 'error');
+      const row = document.querySelector(`[data-msg-id="${optimisticId}"]`);
+      if (row) {
+        const checks = row.querySelector('.bubble-footer-checks');
+        if (checks) checks.innerHTML = `<span title="Error al enviar" class="text-rose-500 font-bold text-xs">âš ï¸</span>`;
+      }
     }
   } catch (err) {
     console.error('Error sending message:', err);
     showToast('Fallo de conexiÃ³n al enviar mensaje', 'error');
+    const row = document.querySelector(`[data-msg-id="${optimisticId}"]`);
+    if (row) {
+      const checks = row.querySelector('.bubble-footer-checks');
+      if (checks) checks.innerHTML = `<span title="Error al enviar" class="text-rose-500 font-bold text-xs">âš ï¸</span>`;
+    }
   } finally {
     hideUploadProgress();
   }
@@ -5841,7 +6208,11 @@ function switchMessagesTab(tab) {
 
 async function fetchCommunities() {
   try {
-    const res = await fetch('/api/messages/communities');
+    const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+    const query = myId ? `?userId=${encodeURIComponent(myId)}` : '';
+    const headers = {};
+    if (myId) headers['x-user-id'] = myId;
+    const res = await fetch(`/api/messages/communities${query}`, { headers });
     const data = await res.json();
     communitiesLoaded = true;
     if (data.success && Array.isArray(data.data)) {
@@ -6004,6 +6375,7 @@ function renderCommunitiesList(communities) {
             <div class="min-w-0">
               <h4 class="community-card-title truncate flex items-center gap-1.5">
                 <span class="truncate">${escapeHtml(c.name)}</span>
+                ${c.privacy === 'private' || c.isPublic === false ? `<span class="px-1.5 py-0.2 rounded text-[8.5px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">ğŸ”’ Privada</span>` : `<span class="px-1.5 py-0.2 rounded text-[8.5px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">ğŸŒ PÃºblica</span>`}
                 ${commUnread > 0 ? `<span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-rose-600 text-white animate-pulse shadow-xs">${commUnread > 99 ? '99+' : commUnread}</span>` : ''}
               </h4>
               <div class="community-card-subtitle">
@@ -6349,6 +6721,10 @@ async function handleCreateCommunity(e) {
     };
   });
 
+  const privacyEl = document.getElementById('ncomm-privacy');
+  const privacy = privacyEl ? privacyEl.value : 'public';
+  const isPublic = privacy === 'public';
+
   try {
     const res = await fetch('/api/messages/communities', {
       method: 'POST',
@@ -6357,6 +6733,8 @@ async function handleCreateCommunity(e) {
         name, 
         description: desc, 
         type, 
+        privacy,
+        isPublic,
         avatarUrl, 
         linkedNaps, 
         memberCount: newCommunityMembersList.length || 1,
@@ -6970,6 +7348,11 @@ function openEditCommunityModal(communityId) {
   if (napsInput) napsInput.value = Array.isArray(comm.linkedNaps) ? comm.linkedNaps.join(', ') : (comm.linkedNaps || '');
   if (avatarPreview) avatarPreview.src = comm.avatarUrl || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80';
 
+  const privacySelect = document.getElementById('ecomm-privacy');
+  if (privacySelect) {
+    privacySelect.value = (comm.privacy === 'private' || comm.isPublic === false) ? 'private' : 'public';
+  }
+
   // Clonar profundamente los miembros de la comunidad para ediciÃ³n
   editCommunityMembersList = Array.isArray(comm.members) ? comm.members.map(m => ({ ...m })) : [];
   renderEditCommunityMembers();
@@ -7026,6 +7409,9 @@ async function handleUpdateCommunity(e) {
   const name = document.getElementById('ecomm-name')?.value.trim();
   const desc = document.getElementById('ecomm-desc')?.value.trim();
   const type = document.getElementById('ecomm-type')?.value || 'building';
+  const privacyEl = document.getElementById('ecomm-privacy');
+  const privacy = privacyEl ? privacyEl.value : 'public';
+  const isPublic = privacy === 'public';
   const napsRaw = document.getElementById('ecomm-naps')?.value.trim() || '';
   const avatarUrl = document.getElementById('ecomm-avatar-preview')?.src;
 
@@ -7052,6 +7438,8 @@ async function handleUpdateCommunity(e) {
         name,
         description: desc,
         type,
+        privacy,
+        isPublic,
         avatarUrl,
         linkedNaps,
         groups: editCommunityGroupsList,
@@ -7328,13 +7716,484 @@ async function handleCreateChannel(e) {
   }
 }
 
-function insertQuickReply(text) {
+// ========================================================
+// SISTEMA INTEGRAL DE RESPUESTAS RÃPIDAS (SLASH COMMAND /)
+// ========================================================
+
+async function loadQuickReplies() {
+  try {
+    const res = await fetch('/api/messages/quick-replies');
+    const data = await res.json();
+    if (data.success && Array.isArray(data.data)) {
+      quickRepliesList = data.data;
+      renderQuickReplyChips();
+    }
+  } catch (err) {
+    console.error('Error cargando respuestas rÃ¡pidas:', err);
+  }
+}
+
+function renderQuickReplyChips() {
+  const container = document.getElementById('chat-quick-chips-list');
+  if (!container) return;
+
+  if (!quickRepliesList || quickRepliesList.length === 0) {
+    container.innerHTML = `
+      <span class="text-slate-400 text-[11px] italic px-1">Sin plantillas creadas</span>
+    `;
+    return;
+  }
+
+  // Renderizar hasta 8 atajos como chips dinÃ¡micos
+  const displayChips = quickRepliesList.slice(0, 8);
+  container.innerHTML = displayChips.map(qr => {
+    let catColor = 'text-blue-500';
+    if (qr.category === 'billing') catColor = 'text-emerald-500';
+    else if (qr.category === 'support') catColor = 'text-amber-500';
+    else if (qr.category === 'sales') catColor = 'text-purple-500';
+
+    const hasAttachment = Boolean(qr.attachment);
+
+    return `
+      <button type="button" onclick="applyQuickReply('${qr.id}')" title="${escapeHtml(qr.text)}" class="px-2.5 py-1 rounded-lg bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 whitespace-nowrap transition text-xs shadow-2xs flex items-center space-x-1.5 cursor-pointer flex-shrink-0">
+        <span class="font-mono text-[10px] font-bold ${catColor}">/${escapeHtml(qr.shortcut)}</span>
+        <span>${escapeHtml(qr.title)}</span>
+        ${hasAttachment ? `<svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.373L8.557 18.315a1.5 1.5 0 01-2.121-2.121L15.9 6.732"/></svg>` : ''}
+      </button>
+    `;
+  }).join('');
+}
+
+function handleChatInputSlashCommand(val) {
+  const popover = document.getElementById('chat-slash-command-popover');
+  const listEl = document.getElementById('chat-slash-command-list');
+  if (!popover || !listEl) return;
+
+  const raw = String(val || '');
+  if (!raw.startsWith('/')) {
+    closeSlashCommandPopover();
+    return;
+  }
+
+  const query = raw.slice(1).trim().toLowerCase();
+  filteredQuickReplies = (quickRepliesList || []).filter(qr => {
+    if (!query) return true;
+    const s = (qr.shortcut || '').toLowerCase();
+    const t = (qr.title || '').toLowerCase();
+    const txt = (qr.text || '').toLowerCase();
+    return s.includes(query) || t.includes(query) || txt.includes(query);
+  });
+
+  if (filteredQuickReplies.length === 0) {
+    listEl.innerHTML = `
+      <div class="p-3 text-center text-slate-400 text-xs">
+        <p>No se encontraron respuestas para <code class="font-mono text-blue-500">/${escapeHtml(query)}</code></p>
+        <button type="button" onclick="openNewQuickReplyForm(); closeSlashCommandPopover();" class="mt-2 px-3 py-1 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-blue-400 text-xs font-semibold inline-flex items-center space-x-1">
+          <span>+ Crear plantilla con este atajo</span>
+        </button>
+      </div>
+    `;
+    popover.classList.remove('hidden');
+    return;
+  }
+
+  if (activeSlashCommandIndex >= filteredQuickReplies.length) {
+    activeSlashCommandIndex = 0;
+  }
+
+  renderSlashCommandPopoverItems();
+  popover.classList.remove('hidden');
+}
+
+function renderSlashCommandPopoverItems() {
+  const listEl = document.getElementById('chat-slash-command-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = filteredQuickReplies.map((qr, index) => {
+    const isHighlight = index === activeSlashCommandIndex;
+    const catLabel = qr.category === 'billing' ? 'Cobranzas' : (qr.category === 'support' ? 'Soporte' : (qr.category === 'sales' ? 'Ventas' : 'General'));
+    const catBadgeClass = qr.category === 'billing' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : (qr.category === 'support' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20');
+    const snippet = (qr.text || '').replace(/\n/g, ' ').slice(0, 75) + ((qr.text || '').length > 75 ? '...' : '');
+
+    return `
+      <div onclick="applyQuickReply('${qr.id}')" onmouseenter="activeSlashCommandIndex = ${index}; renderSlashCommandPopoverHighlight();" class="p-2.5 rounded-xl cursor-pointer transition flex items-center justify-between space-x-2.5 ${isHighlight ? 'bg-blue-50 dark:bg-blue-950/50 border border-blue-500/30' : 'hover:bg-slate-50 dark:hover:bg-white/[0.03] border border-transparent'}">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center space-x-2 mb-0.5">
+            <span class="font-mono text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">/${escapeHtml(qr.shortcut)}</span>
+            <span class="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">${escapeHtml(qr.title)}</span>
+            <span class="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded border ${catBadgeClass}">${catLabel}</span>
+          </div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">${escapeHtml(snippet)}</div>
+        </div>
+        ${qr.attachment ? `
+          <div class="flex-shrink-0 text-slate-400" title="Incluye archivo adjunto">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.373L8.557 18.315a1.5 1.5 0 01-2.121-2.121L15.9 6.732"/></svg>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSlashCommandPopoverHighlight() {
+  const listEl = document.getElementById('chat-slash-command-list');
+  if (!listEl) return;
+  const items = listEl.children;
+  for (let i = 0; i < items.length; i++) {
+    if (i === activeSlashCommandIndex) {
+      items[i].classList.add('bg-blue-50', 'dark:bg-blue-950/50', 'border-blue-500/30');
+      items[i].classList.remove('border-transparent');
+    } else {
+      items[i].classList.remove('bg-blue-50', 'dark:bg-blue-950/50', 'border-blue-500/30');
+      items[i].classList.add('border-transparent');
+    }
+  }
+}
+
+function handleChatInputKeydown(e) {
+  const popover = document.getElementById('chat-slash-command-popover');
+  const isPopoverOpen = popover && !popover.classList.contains('hidden');
+
+  if (isPopoverOpen && filteredQuickReplies.length > 0) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeSlashCommandIndex = (activeSlashCommandIndex + 1) % filteredQuickReplies.length;
+      renderSlashCommandPopoverItems();
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeSlashCommandIndex = (activeSlashCommandIndex - 1 + filteredQuickReplies.length) % filteredQuickReplies.length;
+      renderSlashCommandPopoverItems();
+      return;
+    }
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      if (filteredQuickReplies[activeSlashCommandIndex]) {
+        applyQuickReply(filteredQuickReplies[activeSlashCommandIndex].id);
+      }
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeSlashCommandPopover();
+      return;
+    }
+  }
+
+  // Enter normal para enviar mensaje (si no es Shift+Enter)
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleSendChatMessage(e);
+  }
+}
+
+function closeSlashCommandPopover() {
+  const popover = document.getElementById('chat-slash-command-popover');
+  if (popover) popover.classList.add('hidden');
+}
+
+function applyQuickReply(qrId) {
+  const qr = (quickRepliesList || []).find(q => q.id === qrId);
+  if (!qr) return;
+
+  const inputEl = document.getElementById('chat-input-text');
+  if (inputEl) {
+    inputEl.value = qr.text;
+    inputEl.focus();
+  }
+
+  // Si la respuesta rÃ¡pida contiene adjunto, precargarlo
+  if (qr.attachment) {
+    activePendingAttachment = { ...qr.attachment };
+    const prev = document.getElementById('chat-attachment-preview');
+    const nameEl = document.getElementById('attachment-preview-name');
+    const sizeEl = document.getElementById('attachment-preview-size');
+    if (prev && nameEl) {
+      nameEl.textContent = qr.attachment.name || 'Plantilla Adjunta';
+      if (sizeEl) sizeEl.textContent = qr.attachment.size || '';
+      prev.classList.remove('hidden');
+      prev.classList.add('flex');
+    }
+  }
+
+  closeSlashCommandPopover();
+  updateChatInputState();
+}
+
+// Compatibilidad hacia atrÃ¡s
+function insertQuickReply(text, attachment) {
   const inputEl = document.getElementById('chat-input-text');
   if (inputEl) {
     inputEl.value = text;
     inputEl.focus();
-    updateChatInputState();
   }
+  if (attachment) {
+    activePendingAttachment = { ...attachment };
+    const prev = document.getElementById('chat-attachment-preview');
+    if (prev) {
+      prev.classList.remove('hidden');
+      prev.classList.add('flex');
+    }
+  }
+  closeSlashCommandPopover();
+  updateChatInputState();
+}
+
+function openQuickRepliesManager() {
+  closeSlashCommandPopover();
+  const modal = document.getElementById('quick-replies-manager-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    renderQuickRepliesManagerList('', activeQuickReplyCategoryFilter);
+  }
+}
+
+function closeQuickRepliesManager() {
+  const modal = document.getElementById('quick-replies-manager-modal');
+  if (modal) modal.classList.add('hidden');
+  closeQuickReplyEditor();
+}
+
+function filterQuickRepliesModal(query) {
+  renderQuickRepliesManagerList(query, activeQuickReplyCategoryFilter);
+}
+
+function filterQuickRepliesByCategory(category) {
+  activeQuickReplyCategoryFilter = category;
+  ['all', 'general', 'billing', 'support', 'sales'].forEach(c => {
+    const tab = document.getElementById(`qr-cat-tab-${c}`);
+    if (tab) {
+      if (c === category) {
+        tab.className = 'px-2.5 py-1 rounded-lg bg-blue-600 text-white font-semibold transition text-xs whitespace-nowrap';
+      } else {
+        tab.className = 'px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-medium transition text-xs whitespace-nowrap';
+      }
+    }
+  });
+  const searchInput = document.getElementById('qr-search-input');
+  renderQuickRepliesManagerList(searchInput ? searchInput.value : '', category);
+}
+
+function renderQuickRepliesManagerList(query = '', category = 'all') {
+  const container = document.getElementById('qr-cards-list-container');
+  if (!container) return;
+
+  const qLower = (query || '').trim().toLowerCase();
+  const filtered = (quickRepliesList || []).filter(qr => {
+    if (category !== 'all' && (qr.category || 'general') !== category) return false;
+    if (!qLower) return true;
+    return (qr.shortcut || '').toLowerCase().includes(qLower) ||
+           (qr.title || '').toLowerCase().includes(qLower) ||
+           (qr.text || '').toLowerCase().includes(qLower);
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="py-10 text-center text-slate-400 text-xs">
+        <svg class="w-8 h-8 mx-auto mb-2 text-slate-500 opacity-60" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <p class="font-semibold text-slate-700 dark:text-slate-300">No se encontraron respuestas rÃ¡pidas</p>
+        <p class="text-[11px] text-slate-400 mt-1">Crea una nueva con el botÃ³n superior para empezar a usarla</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(qr => {
+    const catLabel = qr.category === 'billing' ? 'Cobranzas' : (qr.category === 'support' ? 'Soporte' : (qr.category === 'sales' ? 'Ventas' : 'General'));
+    const catBadgeClass = qr.category === 'billing' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : (qr.category === 'support' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20');
+
+    return `
+      <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 hover:border-blue-500/40 transition space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="font-mono text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-lg border border-blue-500/20">/${escapeHtml(qr.shortcut)}</span>
+            <span class="font-bold text-xs text-slate-900 dark:text-white">${escapeHtml(qr.title)}</span>
+            <span class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded border ${catBadgeClass}">${catLabel}</span>
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <button type="button" onclick="applyQuickReply('${qr.id}'); closeQuickRepliesManager();" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] transition shadow-2xs flex items-center space-x-1 cursor-pointer" title="Insertar en chat activo">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+              <span>Usar</span>
+            </button>
+            <button type="button" onclick="openEditQuickReplyForm('${qr.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-blue-500 hover:bg-blue-500/10 transition cursor-pointer" title="Editar plantilla">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+            </button>
+            <button type="button" onclick="deleteQuickReply('${qr.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer" title="Eliminar plantilla">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed bg-white dark:bg-[#161c28] p-2.5 rounded-xl border border-slate-200/60 dark:border-white/5 select-text font-sans">${escapeHtml(qr.text)}</div>
+
+        ${qr.attachment ? `
+          <div class="flex items-center space-x-1.5 text-[10px] text-blue-600 dark:text-blue-400 font-mono">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.373L8.557 18.315a1.5 1.5 0 01-2.121-2.121L15.9 6.732"/></svg>
+            <span>Adjunto: ${escapeHtml(qr.attachment.name || qr.attachment.url)}</span>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function openNewQuickReplyForm() {
+  const formBox = document.getElementById('qr-editor-container');
+  const titleEl = document.getElementById('qr-editor-title');
+  const idEl = document.getElementById('qr-edit-id');
+  const form = document.getElementById('qr-edit-form');
+  if (form) form.reset();
+  if (idEl) idEl.value = '';
+  if (titleEl) titleEl.textContent = 'Crear Nueva Respuesta RÃ¡pida';
+  if (formBox) {
+    formBox.classList.remove('hidden');
+    const shortcutInput = document.getElementById('qr-edit-shortcut');
+    if (shortcutInput) shortcutInput.focus();
+  }
+}
+
+function closeQuickReplyEditor() {
+  const formBox = document.getElementById('qr-editor-container');
+  if (formBox) formBox.classList.add('hidden');
+}
+
+function openEditQuickReplyForm(qrId) {
+  const qr = (quickRepliesList || []).find(q => q.id === qrId);
+  if (!qr) return;
+
+  const formBox = document.getElementById('qr-editor-container');
+  const titleEl = document.getElementById('qr-editor-title');
+  const idEl = document.getElementById('qr-edit-id');
+  const shortcutEl = document.getElementById('qr-edit-shortcut');
+  const titleInput = document.getElementById('qr-edit-title-input');
+  const catEl = document.getElementById('qr-edit-category');
+  const textEl = document.getElementById('qr-edit-text');
+  const attUrlEl = document.getElementById('qr-edit-attachment-url');
+
+  if (idEl) idEl.value = qr.id;
+  if (shortcutEl) shortcutEl.value = qr.shortcut;
+  if (titleInput) titleInput.value = qr.title;
+  if (catEl) catEl.value = qr.category || 'general';
+  if (textEl) textEl.value = qr.text;
+  if (attUrlEl) attUrlEl.value = (qr.attachment && qr.attachment.url) ? qr.attachment.url : '';
+
+  if (titleEl) titleEl.textContent = `Editar Respuesta RÃ¡pida: /${qr.shortcut}`;
+  if (formBox) {
+    formBox.classList.remove('hidden');
+    formBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+async function handleSaveQuickReply(e) {
+  if (e) e.preventDefault();
+
+  const id = document.getElementById('qr-edit-id')?.value;
+  const rawShortcut = document.getElementById('qr-edit-shortcut')?.value || '';
+  const title = (document.getElementById('qr-edit-title-input')?.value || '').trim();
+  const category = document.getElementById('qr-edit-category')?.value || 'general';
+  const text = (document.getElementById('qr-edit-text')?.value || '').trim();
+  const attachmentUrl = (document.getElementById('qr-edit-attachment-url')?.value || '').trim();
+
+  const shortcut = rawShortcut.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!shortcut) {
+    showToast('El atajo debe contener caracteres alfanumÃ©ricos vÃ¡lidos', 'warning');
+    return;
+  }
+  if (!title || !text) {
+    showToast('TÃ­tulo y contenido son obligatorios', 'warning');
+    return;
+  }
+
+  const payload = {
+    shortcut,
+    title,
+    category,
+    text
+  };
+
+  if (attachmentUrl) {
+    const isImg = /\.(jpeg|jpg|png|gif|webp)/i.test(attachmentUrl);
+    payload.attachment = {
+      type: isImg ? 'image' : 'file',
+      url: attachmentUrl,
+      name: attachmentUrl.split('/').pop() || 'adjunto'
+    };
+  }
+
+  const saveBtn = document.getElementById('qr-edit-save-btn');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Guardando...'; }
+
+  try {
+    const url = id ? `/api/messages/quick-replies/${encodeURIComponent(id)}` : '/api/messages/quick-replies';
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Respuesta rÃ¡pida guardada con Ã©xito', 'success');
+      closeQuickReplyEditor();
+      await loadQuickReplies();
+      renderQuickRepliesManagerList('', activeQuickReplyCategoryFilter);
+    } else {
+      showToast(data.message || 'Error al guardar respuesta rÃ¡pida', 'error');
+    }
+  } catch (err) {
+    console.error('Error guardando respuesta rÃ¡pida:', err);
+    showToast('Fallo al conectar con el servidor', 'error');
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Guardar Plantilla'; }
+  }
+}
+
+async function deleteQuickReply(qrId) {
+  const qr = (quickRepliesList || []).find(q => q.id === qrId);
+  const shortcutName = qr ? `/${qr.shortcut}` : 'esta respuesta';
+  if (!confirm(`Â¿EstÃ¡s seguro de eliminar la respuesta rÃ¡pida ${shortcutName}?`)) return;
+
+  try {
+    const res = await fetch(`/api/messages/quick-replies/${encodeURIComponent(qrId)}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Respuesta rÃ¡pida eliminada', 'info');
+      await loadQuickReplies();
+      renderQuickRepliesManagerList('', activeQuickReplyCategoryFilter);
+    } else {
+      showToast(data.message || 'Error al eliminar', 'error');
+    }
+  } catch (err) {
+    console.error('Error eliminando respuesta rÃ¡pida:', err);
+    showToast('Fallo al conectar con el servidor', 'error');
+  }
+}
+
+function setupChatInputListeners() {
+  const inputEl = document.getElementById('chat-input-text');
+  if (!inputEl || inputEl._slashCommandAttached) return;
+  inputEl._slashCommandAttached = true;
+
+  inputEl.addEventListener('input', () => {
+    handleChatInputSlashCommand(inputEl.value);
+  });
+
+  inputEl.addEventListener('keydown', (e) => {
+    handleChatInputKeydown(e);
+  });
+
+  document.addEventListener('click', (e) => {
+    const popover = document.getElementById('chat-slash-command-popover');
+    if (popover && !popover.classList.contains('hidden')) {
+      if (!popover.contains(e.target) && e.target !== inputEl) {
+        closeSlashCommandPopover();
+      }
+    }
+  });
 }
 
 function openActiveChatInWhatsApp() {
@@ -7831,134 +8690,40 @@ async function handleCreateNewChat(e) {
 
 // 1. Tecla Escape para cerrar chat o modales
 function handleMessagesEscapeKey() {
-  const imgViewer = document.getElementById('chat-image-viewer-modal');
-  if (imgViewer && !imgViewer.classList.contains('hidden')) {
-    closeChatImageViewer();
-    return true;
-  }
-  const drawerModal = document.getElementById('contact-detail-drawer-modal');
-  if (drawerModal && !drawerModal.classList.contains('hidden')) {
-    closeActiveContactDrawer();
-    return true;
-  }
-  const locMenu = document.getElementById('chat-location-menu');
-  if (locMenu && !locMenu.classList.contains('hidden')) {
-    closeLocationMenu();
-    return true;
-  }
-  const photoModal = document.getElementById('photo-editor-modal');
-  if (photoModal && !photoModal.classList.contains('hidden')) {
-    closePhotoEditor();
-    return true;
-  }
-  const cameraModal = document.getElementById('camera-capture-modal');
-  if (cameraModal && !cameraModal.classList.contains('hidden')) {
-    closeCameraModal();
-    return true;
-  }
-  const emojiPicker = document.getElementById('chat-emoji-picker');
-  if (emojiPicker && !emojiPicker.classList.contains('hidden')) {
-    closeEmojiPicker();
-    return true;
-  }
-  const contextMenu = document.getElementById('chat-context-menu');
-  if (contextMenu && !contextMenu.classList.contains('hidden')) {
-    closeContextMenu();
-    return true;
-  }
-  const sheetModal = document.getElementById('mobile-chat-actions-sheet');
-  if (sheetModal && !sheetModal.classList.contains('hidden')) {
-    closeMobileActionsSheet();
-    return true;
-  }
-  const tagModal = document.getElementById('change-chat-tag-modal');
-  if (tagModal && !tagModal.classList.contains('hidden')) {
-    closeChangeTagModal();
-    return true;
-  }
-
-  // Cerrar chat activo si estamos en messages
-  if (typeof activeTabId !== 'undefined' && activeTabId === 'messages' && activeConversationId) {
-    closeActiveChat();
-    return true;
-  }
-
-  return false;
-}
-
-function closeActiveChat() {
-  activeConversationId = null;
-  closeMobileChatView();
-  renderEmptyChatWorkspace();
-  renderConversationsList(currentConversations);
-}
-
-// 2. Clic Derecho (PC) y Long Press (MÃ³vil)
-let selectedContextConvId = null;
-let longPressTimer = null;
-
-function handleConversationContextMenu(e, convId) {
-  e.preventDefault();
-  e.stopPropagation();
-  selectedContextConvId = convId;
-  const menu = document.getElementById('chat-context-menu');
-  if (!menu) return;
-
-  const conv = currentConversations.find(c => c.id === convId);
-  const nameEl = document.getElementById('ctx-chat-name');
-  if (nameEl) nameEl.textContent = conv ? (conv.name || conv.contactName) : 'Opciones de Chat';
-
-  const pinLabel = document.getElementById('ctx-pin-label');
-  if (pinLabel) {
-    pinLabel.textContent = (conv && conv.isPinned) ? 'Desfijar Chat ğŸ“Œ' : 'Fijar Chat ğŸ“Œ (MÃ¡x 25)';
-  }
-
-  const archiveLabel = document.getElementById('ctx-archive-label');
-  if (archiveLabel) {
-    archiveLabel.textContent = (conv && conv.isArchived) ? 'Desarchivar Chat' : 'Archivar Chat';
-  }
-
-  const x = Math.min(e.clientX, window.innerWidth - 240);
-  const y = Math.min(e.clientY, window.innerHeight - 180);
-  menu.style.left = `${x}px`;
-  menu.style.top = `${y}px`;
-  menu.classList.remove('hidden');
-}
-
-function closeContextMenu() {
-  const menu = document.getElementById('chat-context-menu');
-  if (menu) menu.classList.add('hidden');
-}
-
-document.addEventListener('click', (e) => {
-  const menu = document.getElementById('chat-context-menu');
-  if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target)) {
-    closeContextMenu();
-  }
-  const msgMenu = document.getElementById('chat-message-context-menu');
-  if (msgMenu && !msgMenu.classList.contains('hidden') && !msgMenu.contains(e.target)) {
-    msgMenu.classList.add('hidden');
-  }
-  const canvasMenu = document.getElementById('chat-canvas-context-menu');
-  if (canvasMenu && !canvasMenu.classList.contains('hidden') && !canvasMenu.contains(e.target)) {
-    canvasMenu.classList.add('hidden');
-  }
-  const picker = document.getElementById('chat-emoji-picker');
-  if (picker && !picker.classList.contains('hidden')) {
-    const btn = e.target.closest('button[onclick="toggleEmojiPicker()"]') || e.target.closest('button[onclick="openSystemEmojiPickerForReaction()"]');
-    if (!btn && !picker.contains(e.target)) {
-      closeEmojiPicker();
-    }
-  }
-});
-
-function handleCardTouchStart(convId, e) {
-  longPressTimer = setTimeout(() => {
-    if (navigator.vibrate) navigator.vibrate(40);
-    openMobileActionsSheet(convId);
-  }, 480);
-}
-function handleCardTouchMove() {
+  // Modales de medios / visor
+  const imgViewer = document.getElementById('chat-$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTEC$œ’m…Îmo“LÒDüÜ;˜%gÏ?wêÁÅ·øîùovH0õÉa‡5£Ú*î Ø’ÃÌlÍ››S iyä”rÕO7ª“%L]İ×%±ºÇhk ¶«·÷>v1­HB£®±ßŞÚd\(eoIx¢>3´6BS%ÌØá“(
+œÛf$Ãhıé¿¶åeÔôÚèHœ‚`İ¶f{Fo©Yò¿Ôó@00uMb’z-ëìXI$&ÂgfÖú¶7Ó´Şu|'K.ÌoP
+PİÀùFË.Ğıoûò9B<~. ’ïÅË[’´˜Ë<Ù­„$¯•¢·ä{1¹A•.òbKxºL ¯İ·'¯u8n5 ’ºe ,]ñH©–’ÆV¨ŒWwÃ$ùCƒel¹“|zys«™KŠi-ğqÊİ¬bk,wnGÿâ;¥  ~ÖeÉrÍ’‰ÜÔ~'1`Vâ¦«¹-*[ÉñLÔKÄ'2@ŸÜşĞä»ª ²n‘Íß2¸Nß ˆÆ¶µG•¢ói/U¢µ'Eï@¦`Hæ¹˜;J•¼¼ÜÅ+Jén#»¼‚6Ú´—Ä¹G•ü¡NÒGğ'—Z!öáí¸‰Wi»NJ @óàšAûÜZ|ª[¨ï$q}iÒ·µQbtTECction handleCardTouchMove() {
   if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
 }
 function handleCardTouchEnd() {
@@ -10328,12 +11093,26 @@ async function sendCurrentLocation(isLive) {
   }
 }
 
+    function hasConversationsChanged(oldList, newList) {
+      if (!oldList || !newList) return true;
+      if (oldList.length !== newList.length) return true;
+      for (let i = 0; i < oldList.length; i++) {
+        const a = oldList[i];
+        const b = newList[i];
+        if (a.id !== b.id || a.lastMessage !== b.lastMessage || a.unreadCount !== b.unreadCount || a.isPinned !== b.isPinned || a.lastMessageAt !== b.lastMessageAt) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     // SincronizaciÃ³n en segundo plano de respaldo para producciÃ³n (evita pÃ©rdidas si SSE se desconecta)
     let lastSyncTimestamp = 0;
     async function syncMessagesInProduction() {
       try {
         if (activeChannelMode === 'direct' && activeConversationId) {
           const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages?limit=50`);
+          if (!res.ok) return;
           const data = await res.json();
           if (data.success && Array.isArray(data.data)) {
             const existingIds = new Set((currentChatMessages || []).map(m => m.id));
@@ -10357,8 +11136,45 @@ async function sendCurrentLocation(isLive) {
             }
             if (hasNew) {
               currentChatMessages = data.data;
+              if (activeConversationId) {
+                conversationMessagesCache.set(activeConversationId, {
+                  messages: currentChatMessages,
+                  hasMore: currentChatHasMore,
+                  timestamp: Date.now()
+                });
+              }
               renderChatMessages(currentChatMessages);
-              scrollChatToBottom();
+              scrollChatToBottom('smooth');
+            }
+          }
+        } else if (activeChannelMode === 'community' && activeCommunityId && activeGroupId) {
+          const res = await fetch(`/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages?limit=50`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data)) {
+            const existingIds = new Set((currentChatMessages || []).map(m => m.id));
+            let hasNew = false;
+            for (const m of data.data) {
+              if (!existingIds.has(m.id)) {
+                hasNew = true;
+                const isMe = checkIfMessageIsMe(m);
+                if (!isMe && (Date.now() - new Date(m.timestamp).getTime() < 300000)) {
+                  playMessageNotificationSound();
+                  if (document.hidden) {
+                    showSystemNotification(
+                      m.senderName || 'Canal de Comunidad',
+                      m.text || 'Nuevo mensaje en el canal',
+                      m.senderAvatar || null,
+                      () => { window.focus(); }
+                    );
+                  }
+                }
+              }
+            }
+            if (hasNew) {
+              currentChatMessages = data.data;
+              renderChatMessages(currentChatMessages);
+              scrollChatToBottom('smooth');
             }
           }
         }
@@ -10367,13 +11183,16 @@ async function sendCurrentLocation(isLive) {
           const r = await fetch('/api/messages/conversations');
           const d = await r.json();
           if (d.success && Array.isArray(d.data)) {
-            currentConversations = sortConversationsList(d.data);
+            const newSorted = sortConversationsList(d.data);
             if (activeChannelMode === 'direct' && activeConversationId) {
-              const cur = currentConversations.find(c => c.id === activeConversationId);
+              const cur = newSorted.find(c => c.id === activeConversationId);
               if (cur) cur.unreadCount = 0;
             }
-            renderConversationsList(currentConversations);
-            updateGlobalUnreadBadges();
+            if (hasConversationsChanged(currentConversations, newSorted)) {
+              currentConversations = newSorted;
+              renderConversationsList(currentConversations);
+              updateGlobalUnreadBadges();
+            }
           }
         }
       } catch (e) {}
@@ -10388,15 +11207,33 @@ async function sendCurrentLocation(isLive) {
         const pwaBtn = document.getElementById('btn-pwa-install');
         if (pwaBtn) pwaBtn.style.display = 'none';
       }
+      // Registro del Service Worker para notificaciones push en mÃ³viles Android & iPhone (iOS 16.4+ PWA)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then((reg) => {
+            console.log('[TurboChat] Service Worker registrado para notificaciones PWA:', reg.scope);
+          })
+          .catch((err) => {
+            console.warn('[TurboChat] Error registrando Service Worker:', err);
+          });
+      }
+
       if ('Notification' in window && Notification.permission === 'default') {
         try { Notification.requestPermission(); } catch (_) {}
       }
-      fetch('/api/auth/me').then(r => r.json()).then(d => { if (d.user) currentUser = d.user; }).catch(() => {});
+      fetch('/api/auth/me').then(r => r.json()).then(d => { 
+        if (d.user) { 
+          currentUser = d.user; 
+          fetchCommunities(); 
+        } 
+      }).catch(() => {});
       fetch('/api/users').then(r => r.json()).then(d => { if (d && d.data) currentUsers = d.data; else if (d && d.users) currentUsers = d.users; }).catch(() => {});
       loadTurboChatBranding();
       loadMessagesModule();
       fetchCommunities();
       initChatClipboardPaste();
+      loadQuickReplies();
+      setupChatInputListeners();
     });
   </script>
 

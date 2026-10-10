@@ -15,8 +15,8 @@
     "planOrRole": "Cajero Sucursal Centro",
     "serviceStatus": "active",
     "unreadCount": 0,
-    "lastMessage": "Foto adjunta",
-    "lastMessageTime": "08:06 p. m.",
+    "lastMessage": "Estimado cliente, compartimos nuestras cuentas bancarias autorizadas para el abono de su servicio mensual:• BCP Soles: 191-98765432-0-12 (CCI: 002-191-0098765432012-55)• BBVA Soles: 0011-0123-0200456789 (CCI: 011-123-000200456789-14)• Yape / Plin: 987-654-321Por favor envíenos la foto o captura del comprobante por este medio para validar su pago de inmediato.",
+    "lastMessageTime": "09:15 p. m.",
     "lastMessageDate": "2026-10-10",
     "messages": [
       {
@@ -228,10 +228,43 @@
           "name": "WhatsApp Image 2026-10-09 at 4.57.24 PM_anotada.jpg",
           "size": "139 KB"
         }
+      },
+      {
+        "id": "m-1791598407445",
+        "sender": "agent",
+        "senderId": 1,
+        "senderName": "César Administrador",
+        "senderAvatar": "https://api.dicebear.com/7.x/bottts/svg?seed=en2xce",
+        "text": "Estimado cliente, para optimizar la velocidad de su red Wi-Fi, le recomendamos no obstruir su router y realizar un reinicio desconectándolo de la corriente durante 30 segundos. Si el problema persiste, indíquenos qué luces observa encendidas en el módem.",
+        "timestamp": "2026-10-10T02:13:27.444Z",
+        "timeFormatted": "09:13 p. m.",
+        "status": "read"
+      },
+      {
+        "id": "m-1791598419107",
+        "sender": "agent",
+        "senderId": 1,
+        "senderName": "César Administrador",
+        "senderAvatar": "https://api.dicebear.com/7.x/bottts/svg?seed=en2xce",
+        "text": "Estimado cliente, le informamos que su servicio presenta saldo vencido pendiente. Para evitar la suspensión preventiva automática del servicio de Internet, le solicitamos regularizar su pago o compartirnos su voucher de abono.",
+        "timestamp": "2026-10-10T02:13:39.107Z",
+        "timeFormatted": "09:13 p. m.",
+        "status": "read"
+      },
+      {
+        "id": "m-1791598538097",
+        "sender": "agent",
+        "senderId": 1,
+        "senderName": "César Administrador",
+        "senderAvatar": "https://api.dicebear.com/7.x/bottts/svg?seed=en2xce",
+        "text": "Estimado cliente, compartimos nuestras cuentas bancarias autorizadas para el abono de su servicio mensual:• BCP Soles: 191-98765432-0-12 (CCI: 002-191-0098765432012-55)• BBVA Soles: 0011-0123-0200456789 (CCI: 011-123-000200456789-14)• Yape / Plin: 987-654-321Por favor envíenos la foto o captura del comprobante por este medio para validar su pago de inmediato.",
+        "timestamp": "2026-10-10T02:15:38.097Z",
+        "timeFormatted": "09:15 p. m.",
+        "status": "read"
       }
     ],
     "createdAt": "2026-09-30T21:48:13.756Z",
-    "updatedAt": "2026-10-10T01:06:39.123Z",
+    "updatedAt": "2026-10-10T02:15:38.097Z",
     "contractStartDate": "",
     "address": "",
     "creatorId": 1,
@@ -241,7 +274,7 @@
       1,
       1790781290504
     ],
-    "lastMessageAt": "2026-10-10T01:06:39.123Z"
+    "lastMessageAt": "2026-10-10T02:15:38.097Z"
   },
   {
     "id": "conv-1791561395916",

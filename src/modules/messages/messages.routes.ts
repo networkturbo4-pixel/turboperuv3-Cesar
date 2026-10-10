@@ -83,10 +83,13 @@ export interface Community {
   avatarUrl?: string;
   coverImage?: string;
   type: "zone" | "building" | "custom";
+  privacy?: "public" | "private";
+  isPublic?: boolean;
   linkedNaps?: string[];
   linkedZones?: string[];
   memberCount: number;
   members?: CommunityMember[];
+  removedMemberIds?: (string | number)[];
   groups: CommunityGroup[];
   createdAt: string;
   updatedAt: string;
@@ -1084,6 +1087,50 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
+  // 6.1 Obtener exclusivamente la lista de mensajes de una conversación (sync / polling / paginación)
+  fastify.get("/messages/conversations/:id/messages", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const query = (request.query as { limit?: string; before?: string; all?: string; userId?: string; currentUserId?: string }) || {};
+
+    const list = loadConversationsFromDisk(tenantId);
+    let conv = list.find(c => c.id === id);
+    if (!conv) {
+      return reply.send({ success: false, data: [], totalMessages: 0, hasMore: false, message: "Conversación no encontrada" });
+    }
+
+    const totalMessages = conv.messages.length;
+    const limitNum = query.limit ? parseInt(query.limit, 10) : (query.all === "true" ? 0 : 50);
+
+    let messagesToReturn = conv.messages;
+    let hasMore = false;
+
+    if (limitNum > 0 && totalMessages > limitNum) {
+      if (query.before) {
+        const idx = conv.messages.findIndex(m => m.id === query.before);
+        if (idx > 0) {
+          const startIdx = Math.max(0, idx - limitNum);
+          messagesToReturn = conv.messages.slice(startIdx, idx);
+          hasMore = startIdx > 0;
+        } else {
+          messagesToReturn = [];
+          hasMore = false;
+        }
+      } else {
+        const startIdx = Math.max(0, totalMessages - limitNum);
+        messagesToReturn = conv.messages.slice(startIdx);
+        hasMore = startIdx > 0;
+      }
+    }
+
+    return reply.send({
+      success: true,
+      data: messagesToReturn,
+      totalMessages,
+      hasMore
+    });
+  });
+
   // 7. Enviar mensaje a una conversación
   fastify.post("/messages/conversations/:id/messages", async (request, reply) => {
     const tenantId = resolveTenantId(request);
@@ -1908,37 +1955,68 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   // ==========================================
 
   // 12.1 Listar todas las comunidades con resumen de grupos
+  // 12.1 Listar todas las comunidades con resumen de grupos y filtrado de privacidad
   fastify.get("/messages/communities", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const communities = loadCommunitiesFromDisk(tenantId);
+    const query = (request.query as Record<string, any>) || {};
+    const currentUserId = query.userId || query.currentUserId || (request.headers["x-user-id"] as string);
+
+    // Filtrar comunidades según privacidad y usuarios eliminados
+    const visibleCommunities = communities.filter(c => {
+      if (!currentUserId) return true;
+      const uId = String(currentUserId);
+
+      // Si el usuario fue explícitamente eliminado de la comunidad, NO le aparece
+      if (Array.isArray(c.removedMemberIds) && c.removedMemberIds.some(rmId => String(rmId) === uId)) {
+        return false;
+      }
+
+      // Si la comunidad es privada (isPublic === false o privacy === "private"), solo se muestra si es miembro asignado
+      const isPrivate = c.privacy === "private" || c.isPublic === false;
+      if (isPrivate) {
+        const isMember = Array.isArray(c.members) && c.members.some(m => String(m.id) === uId || String(m.userId) === uId);
+        if (!isMember) {
+          return false;
+        }
+      }
+
+      return true;
+    });
 
     // Mapeo ligero sin arrays de mensajes pesados para listar al instante
-    const lightList = communities.map(c => ({
-      id: c.id,
-      name: c.name,
-      description: c.description,
-      avatarUrl: c.avatarUrl,
-      coverImage: c.coverImage,
-      type: c.type,
-      linkedNaps: c.linkedNaps || [],
-      linkedZones: c.linkedZones || [],
-      memberCount: Array.isArray(c.members) ? c.members.length : (c.memberCount || 0),
-      members: c.members || [],
-      createdAt: c.createdAt,
-      groups: c.groups.map(g => ({
-        id: g.id,
-        communityId: g.communityId,
-        name: g.name,
-        description: g.description,
-        type: g.type,
-        isReadOnly: g.isReadOnly,
-        icon: g.icon,
-        unreadCount: g.unreadCount || 0,
-        lastMessage: g.lastMessage || "Sin mensajes",
-        lastMessageTime: g.lastMessageTime || "",
-        messageCount: g.messages.length,
-      })),
-    }));
+    const lightList = visibleCommunities.map(c => {
+      const isPrivate = c.privacy === "private" || c.isPublic === false;
+      return {
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        avatarUrl: c.avatarUrl,
+        coverImage: c.coverImage,
+        type: c.type,
+        privacy: isPrivate ? "private" : "public",
+        isPublic: !isPrivate,
+        linkedNaps: c.linkedNaps || [],
+        linkedZones: c.linkedZones || [],
+        memberCount: Array.isArray(c.members) ? c.members.length : (c.memberCount || 0),
+        members: c.members || [],
+        createdAt: c.createdAt,
+        groups: c.groups.map(g => ({
+          id: g.id,
+          communityId: g.communityId,
+          name: g.name,
+          description: g.description,
+          type: g.type,
+          isReadOnly: g.isReadOnly,
+          permission: g.permission || (g.isReadOnly ? "admin_only" : "everyone"),
+          icon: g.icon,
+          unreadCount: g.unreadCount || 0,
+          lastMessage: g.lastMessage || "Sin mensajes",
+          lastMessageTime: g.lastMessageTime || "",
+          messageCount: g.messages.length,
+        })),
+      };
+    });
 
     return reply.send({ success: true, tenantId, count: lightList.length, data: lightList });
   });
@@ -2087,6 +2165,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       }));
     }
 
+    const isPrivate = (body as any).privacy === "private" || (body as any).isPublic === false;
     const newCommunity: Community = {
       id: commId,
       tenantId,
@@ -2095,10 +2174,13 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       avatarUrl: body.avatarUrl || `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80`,
       coverImage: body.coverImage || `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80`,
       type: body.type || "zone",
+      privacy: isPrivate ? "private" : "public",
+      isPublic: !isPrivate,
       linkedNaps: body.linkedNaps || [],
       linkedZones: body.linkedZones || [],
       memberCount: initialMembers.length || body.memberCount || 1,
       members: initialMembers,
+      removedMemberIds: [],
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
       groups: initialGroups
@@ -2127,6 +2209,13 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     if (body.avatarUrl) comm.avatarUrl = body.avatarUrl;
     if (body.coverImage) comm.coverImage = body.coverImage;
     if (body.type) comm.type = body.type;
+    if (body.privacy !== undefined) {
+      comm.privacy = body.privacy;
+      comm.isPublic = body.privacy === "public";
+    } else if (body.isPublic !== undefined) {
+      comm.isPublic = body.isPublic;
+      comm.privacy = body.isPublic ? "public" : "private";
+    }
     if (Array.isArray(body.linkedNaps)) comm.linkedNaps = body.linkedNaps;
     if (Array.isArray(body.linkedZones)) comm.linkedZones = body.linkedZones;
 
@@ -2373,6 +2462,11 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       } else {
         comm.members.push(entry);
       }
+
+      // Si había sido eliminado anteriormente, limpiarlo de la lista de expulsados
+      if (Array.isArray(comm.removedMemberIds)) {
+        comm.removedMemberIds = comm.removedMemberIds.filter(rmId => String(rmId) !== String(memId));
+      }
     }
 
     comm.memberCount = comm.members.length;
@@ -2410,7 +2504,16 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       comm.members = [];
     }
 
-    comm.members = comm.members.filter(m => String(m.id) !== String(memberId) && String(m.userId) !== String(memberId));
+    // Registrar como expulsado/removido para que no vuelva a ver la comunidad
+    if (!Array.isArray(comm.removedMemberIds)) {
+      comm.removedMemberIds = [];
+    }
+    const memStr = String(memberId);
+    if (!comm.removedMemberIds.includes(memStr)) {
+      comm.removedMemberIds.push(memStr);
+    }
+
+    comm.members = comm.members.filter(m => String(m.id) !== memStr && String(m.userId) !== memStr);
     comm.memberCount = comm.members.length;
     comm.updatedAt = new Date().toISOString();
     saveCommunitiesToDisk(tenantId, communities);
@@ -2419,6 +2522,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       type: "community_members_updated",
       tenantId,
       communityId: id,
+      removedMemberId: memberId,
       members: comm.members,
       memberCount: comm.memberCount
     });
@@ -2633,6 +2737,55 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
           hasMore,
         }
       }
+    });
+  });
+
+  // 12.7.1 Obtener exclusivamente los mensajes de un canal de comunidad (sync / polling / paginación)
+  fastify.get("/messages/communities/:id/groups/:groupId/messages", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, groupId } = request.params as { id: string; groupId: string };
+    const query = (request.query as { limit?: string; before?: string; all?: string }) || {};
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) {
+      return reply.send({ success: false, data: [], totalMessages: 0, hasMore: false, message: "Comunidad no encontrada" });
+    }
+
+    const group = comm.groups.find(g => g.id === groupId);
+    if (!group) {
+      return reply.send({ success: false, data: [], totalMessages: 0, hasMore: false, message: "Canal no encontrado" });
+    }
+
+    const totalMessages = group.messages.length;
+    const limitNum = query.limit ? parseInt(query.limit, 10) : (query.all === "true" ? 0 : 50);
+
+    let messagesToReturn = group.messages;
+    let hasMore = false;
+
+    if (limitNum > 0 && totalMessages > limitNum) {
+      if (query.before) {
+        const idx = group.messages.findIndex(m => m.id === query.before);
+        if (idx > 0) {
+          const startIdx = Math.max(0, idx - limitNum);
+          messagesToReturn = group.messages.slice(startIdx, idx);
+          hasMore = startIdx > 0;
+        } else {
+          messagesToReturn = [];
+          hasMore = false;
+        }
+      } else {
+        const startIdx = Math.max(0, totalMessages - limitNum);
+        messagesToReturn = group.messages.slice(startIdx);
+        hasMore = startIdx > 0;
+      }
+    }
+
+    return reply.send({
+      success: true,
+      data: messagesToReturn,
+      totalMessages,
+      hasMore
     });
   });
 

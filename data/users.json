@@ -46,7 +46,7 @@
     "hireDate": "2026-09-01",
     "birthDate": "2026-09-16",
     "preferences": {
-      "themeMode": "light",
+      "themeMode": "dark",
       "primaryColor": "#7c3aed",
       "darkBgColor": "#000000",
       "lightBgColor": "#ffffff",
