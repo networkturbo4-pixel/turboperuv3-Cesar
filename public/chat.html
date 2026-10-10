@@ -136,10 +136,18 @@
         <span class="hidden lg:inline">Espacio</span>
       </button>
 
+      <!-- Botón Descargar App para Windows (.exe) -->
+      <a href="/descargas/windows" id="btn-download-desktop" class="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-blue-600/90 hover:bg-blue-600 text-white text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition" title="Descargar TurboChat para Windows (.exe)">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 88 88" fill="currentColor">
+          <path d="M0 12.402l35.689-4.86.016 34.423-35.67.203zm35.67 33.529l.028 34.453L.028 75.48.005 45.7zm4.326-39.027L87.914 0v41.527l-47.918.378zm47.919 45.827v41.341l-47.919-6.73V46.689z"/>
+        </svg>
+        <span class="hidden md:inline">App Windows (.exe)</span>
+      </a>
+
       <!-- Botón Instalar Aplicación (PWA Prompt) -->
-      <button type="button" id="btn-pwa-install" onclick="triggerPwaInstallPrompt()" class="hidden p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition" title="Instalar como aplicación en este dispositivo">
+      <button type="button" id="btn-pwa-install" onclick="triggerPwaInstallPrompt()" class="hidden p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center space-x-1.5 border border-slate-200 dark:border-white/10 transition" title="Instalar como aplicación en este dispositivo">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-        <span class="hidden sm:inline">Instalar App</span>
+        <span class="hidden sm:inline">PWA</span>
       </button>
 
       <!-- Botón Ir al Sistema Completo (ERP) -->
@@ -10374,6 +10382,12 @@ async function sendCurrentLocation(isLive) {
 
     // Inicialización al cargar la aplicación
     document.addEventListener('DOMContentLoaded', () => {
+      if (window.electronDesktop) {
+        const dlBtn = document.getElementById('btn-download-desktop');
+        if (dlBtn) dlBtn.style.display = 'none';
+        const pwaBtn = document.getElementById('btn-pwa-install');
+        if (pwaBtn) pwaBtn.style.display = 'none';
+      }
       if ('Notification' in window && Notification.permission === 'default') {
         try { Notification.requestPermission(); } catch (_) {}
       }

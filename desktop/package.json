@@ -1,0 +1,60 @@
+{
+  "name": "turbochat-desktop",
+  "productName": "TurboChat",
+  "version": "1.0.0",
+  "description": "Aplicación de Escritorio de Mensajería y Comunidades ISP para TurboNetwork",
+  "main": "main.js",
+  "author": "TurboNetwork",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:portable": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.turbonetwork.turbochat",
+    "productName": "TurboChat",
+    "copyright": "Copyright © 2026 TurboNetwork",
+    "directories": {
+      "output": "../dist-desktop"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "config.js",
+      "assets/**/*",
+      "views/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "TurboChat",
+      "uninstallDisplayName": "TurboChat",
+      "language": 1034
+    },
+    "portable": {
+      "artifactName": "TurboChat-Portable-1.0.0.exe"
+    }
+  }
+}

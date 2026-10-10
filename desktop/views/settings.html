@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración de TurboChat Desktop</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background: #0b101b;
+      color: #f1f5f9;
+      padding: 24px;
+      user-select: none;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .header h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .header p {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+    .helper {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      background: #060911;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: #f8fafc;
+      font-size: 13.5px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    input[type="text"]:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+    }
+    .switch-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .switch-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #e2e8f0;
+    }
+    .switch-sub {
+      font-size: 11px;
+      color: #64748b;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .2s;
+      border-radius: 22px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #2563eb; }
+    input:checked + .slider:before { transform: translateX(18px); }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-cancel {
+      background: rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+    }
+    .btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #f1f5f9;
+    }
+    .btn-save {
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    }
+    .btn-save:hover {
+      background: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div style="width: 38px; height: 38px; border-radius: 10px; background: #2563eb; display:flex; align-items:center; justify-content:center; color:white;">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    </div>
+    <div>
+      <h2>Ajustes de Conexión</h2>
+      <p>Configura la dirección de tu servidor y preferencias de Windows</p>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="server-url">URL / Host del Servidor</label>
+    <input type="text" id="server-url" placeholder="http://localhost:3000">
+    <div class="helper">Dirección del panel TurboNetwork (ej. http://localhost:3000 o https://panel.tu-isp.com)</div>
+  </div>
+
+  <div class="form-group">
+    <label for="tenant-slug">Identificador de Empresa / ISP (Opcional)</label>
+    <input type="text" id="tenant-slug" placeholder="Ej: celeris">
+    <div class="helper">Déjalo vacío para usar la empresa por defecto configurada en el servidor.</div>
+  </div>
+
+  <div class="switch-group">
+    <div>
+      <div class="switch-label">Minimizar a la Bandeja del Sistema</div>
+      <div class="switch-sub">Al cerrar la ventana con la 'X', continúa en segundo plano junto al reloj.</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="min-tray" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="switch-group">
+    <div>
+      <div class="switch-label">Iniciar con Windows</div>
+      <div class="switch-sub">Arranca automáticamente al iniciar sesión en el computador.</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="start-login">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="switch-group">
+    <div>
+      <div class="switch-label">Notificaciones de Windows</div>
+      <div class="switch-sub">Muestra alertas flotantes cuando entra un mensaje nuevo.</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="native-notif" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-cancel" onclick="window.close()">Cancelar</button>
+    <button class="btn btn-save" onclick="save()">Guardar y Aplicar</button>
+  </div>
+
+  <script>
+    async function load() {
+      if (window.electronDesktop) {
+        const cfg = await window.electronDesktop.getServerConfig();
+        if (cfg) {
+          document.getElementById('server-url').value = cfg.serverUrl || 'http://localhost:3000';
+          document.getElementById('tenant-slug').value = cfg.tenantSlug || '';
+          document.getElementById('min-tray').checked = cfg.minimizeToTray !== false;
+          document.getElementById('start-login').checked = !!cfg.startAtLogin;
+          document.getElementById('native-notif').checked = cfg.enableNativeNotifications !== false;
+        }
+      }
+    }
+
+    async function save() {
+      const serverUrl = document.getElementById('server-url').value.trim() || 'http://localhost:3000';
+      const tenantSlug = document.getElementById('tenant-slug').value.trim();
+      const minimizeToTray = document.getElementById('min-tray').checked;
+      const startAtLogin = document.getElementById('start-login').checked;
+      const enableNativeNotifications = document.getElementById('native-notif').checked;
+
+      if (window.electronDesktop) {
+        await window.electronDesktop.saveServerConfig({
+          serverUrl,
+          tenantSlug,
+          minimizeToTray,
+          startAtLogin,
+          enableNativeNotifications
+        });
+        window.electronDesktop.reconnect();
+      }
+      window.close();
+    }
+
+    load();
+  </script>
+</body>
+</html>

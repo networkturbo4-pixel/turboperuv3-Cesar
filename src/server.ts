@@ -160,6 +160,61 @@ export async function buildApp() {
       return serveDynamicChatHtml(req, reply, tenantSlug);
     });
 
+    // 2.1 Rutas de Descarga Directa del Aplicativo de Escritorio Windows (.exe)
+    const distDesktopPath = path.resolve(process.cwd(), "dist-desktop");
+    const installerFile = path.join(distDesktopPath, "TurboChat Setup 1.0.0.exe");
+    const portableFile = path.join(distDesktopPath, "TurboChat-Portable-1.0.0.exe");
+
+    fastify.get("/descargas/windows", async (req, reply) => {
+      if (fs.existsSync(installerFile)) {
+        const stream = fs.createReadStream(installerFile);
+        const stat = fs.statSync(installerFile);
+        return reply
+          .header("Content-Disposition", 'attachment; filename="TurboChat-Setup-1.0.0.exe"')
+          .header("Content-Type", "application/vnd.microsoft.portable-executable")
+          .header("Content-Length", stat.size)
+          .send(stream);
+      }
+      if (fs.existsSync(portableFile)) {
+        const stream = fs.createReadStream(portableFile);
+        const stat = fs.statSync(portableFile);
+        return reply
+          .header("Content-Disposition", 'attachment; filename="TurboChat-Portable-1.0.0.exe"')
+          .header("Content-Type", "application/vnd.microsoft.portable-executable")
+          .header("Content-Length", stat.size)
+          .send(stream);
+      }
+      return reply.status(404).type("text/html; charset=utf-8").send(`
+        <div style="font-family:sans-serif; text-align:center; padding:50px; background:#0b101b; color:#fff; min-height:100vh;">
+          <h1 style="color:#f43f5e;">Instalador en Preparación</h1>
+          <p style="color:#94a3b8;">El instalador de TurboChat para Windows se está compilando o no se encuentra en el servidor.</p>
+          <a href="/chat" style="display:inline-block; margin-top:20px; padding:10px 20px; background:#2563eb; color:#fff; text-decoration:none; border-radius:8px;">Volver al Chat Web</a>
+        </div>
+      `);
+    });
+
+    fastify.get("/descargas/portable", async (req, reply) => {
+      if (fs.existsSync(portableFile)) {
+        const stream = fs.createReadStream(portableFile);
+        const stat = fs.statSync(portableFile);
+        return reply
+          .header("Content-Disposition", 'attachment; filename="TurboChat-Portable-1.0.0.exe"')
+          .header("Content-Type", "application/vnd.microsoft.portable-executable")
+          .header("Content-Length", stat.size)
+          .send(stream);
+      }
+      return reply.status(404).type("text/html; charset=utf-8").send(`
+        <div style="font-family:sans-serif; text-align:center; padding:50px; background:#0b101b; color:#fff; min-height:100vh;">
+          <h1 style="color:#f43f5e;">Versión Portable no disponible</h1>
+          <p style="color:#94a3b8;">Ejecuta 'npm run desktop:portable' para compilar la versión portable.</p>
+        </div>
+      `);
+    });
+
+    fastify.get("/download/desktop", async (req, reply) => {
+      return reply.redirect("/descargas/windows");
+    });
+
     // 3. Servir assets estáticos (CSS, JS, iconos, imágenes)
     await fastify.register(fastifyStatic, {
       root: publicPath,

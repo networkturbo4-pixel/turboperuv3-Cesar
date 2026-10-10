@@ -15,6 +15,10 @@ package-lock.json
 # Build output
 dist/
 build/
+dist-desktop/win-unpacked/
+dist-desktop/.icon-ico/
+dist-desktop/*.blockmap
+dist-desktop/*.yml
 
 # Operating System files
 .DS_Store
