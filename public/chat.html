@@ -2279,26 +2279,24 @@ function formatMessageTime(val) {
 // Función para determinar si un mensaje fue enviado por el usuario actualmente logueado
 function checkIfMessageIsMe(m) {
   if (!m) return false;
-  if (currentUser) {
-    if (m.senderId && (m.senderId === currentUser.id || m.senderId === currentUser.username)) return true;
-    if (m.senderName && currentUser.name && m.senderName.trim().toLowerCase() === currentUser.name.trim().toLowerCase()) return true;
-    if (m.senderName && currentUser.username && m.senderName.trim().toLowerCase() === currentUser.username.trim().toLowerCase()) return true;
-  }
   if (activeChannelMode === 'community') {
-    if (currentUser && m.senderId && m.senderId !== currentUser.id) return false;
+    if (typeof currentUser !== 'undefined' && currentUser) {
+      if (m.senderId && (String(m.senderId) === String(currentUser.id) || String(m.senderId) === String(currentUser.username))) return true;
+      if (m.senderName && currentUser.name && m.senderName.trim().toLowerCase() === currentUser.name.trim().toLowerCase()) return true;
+      if (m.senderName && currentUser.username && m.senderName.trim().toLowerCase() === currentUser.username.trim().toLowerCase()) return true;
+      if (m.senderName === 'Tú') return true;
+    }
     return false;
   }
-  const conv = (currentConversations || []).find(c => c.id === activeConversationId);
-  const isStaffChat = conv && conv.tags && (conv.tags.includes('personal') || conv.tags.includes('cuadrilla'));
-  if (isStaffChat) {
-    if (currentUser) {
-      if (m.senderId && m.senderId === currentUser.id) return true;
-      if (m.senderName && currentUser.name && m.senderName.trim().toLowerCase() === currentUser.name.trim().toLowerCase()) return true;
-      if (m.senderId && m.senderId !== currentUser.id) return false;
-    }
+  // En chats directos/personales:
+  // Mensajes de tipo 'client' son recibidos del contacto (a la izquierda)
+  if (m.sender === 'client' || m.from === 'client') return false;
+  // Mensajes de tipo 'agent' u 'operator' son enviados por nosotros (a la derecha)
+  if (m.sender === 'agent' || m.from === 'agent' || m.from === 'operator') return true;
+  if (typeof currentUser !== 'undefined' && currentUser) {
+    if (m.senderId && (String(m.senderId) === String(currentUser.id) || String(m.senderId) === String(currentUser.username))) return true;
+    if (m.senderName && currentUser.name && m.senderName.trim().toLowerCase() === currentUser.name.trim().toLowerCase()) return true;
   }
-  if (m.sender === 'client') return false;
-  if (m.sender === 'agent' && !isStaffChat) return true;
   return false;
 }
 
@@ -2696,7 +2694,7 @@ function handleIncomingRealtimeMessage(data) {
     }
 
     // Marcar como leído en backend
-    fetch(`/api/messages/conversations/${encodeURIComponent(conversationId)}/read`, { method: 'POST' }).catch(() => {});
+    fetch(`/api/messages/conversations/${encodeURIComponent(conversationId)}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
   }
 
   // 3. Actualizar conversación en memoria y lista lateral
@@ -2704,9 +2702,14 @@ function handleIncomingRealtimeMessage(data) {
   if (conv) {
     conv.lastMessage = message.text || (message.attachment ? (message.attachment.type === 'image' ? '📷 Foto' : '📎 Archivo') : '');
     conv.lastMessageTime = formatMessageTime(message.timestamp) || message.timeFormatted;
-    conv.lastMessageAt = message.timestamp || new Date().toISOString();
-    if (!isCurrentChatOpen && !isFromMe) {
-      conv.unreadCount = (conv.unreadCount || 0) + 1;
+    if (isCurrentChatOpen) {
+      conv.unreadCount = 0;
+    } else if (!isFromMe) {
+      if (typeof data.unreadCount === 'number' && data.unreadCount > 0) {
+        conv.unreadCount = data.unreadCount;
+      } else {
+        conv.unreadCount = (conv.unreadCount || 0) + 1;
+      }
     }
     // Reordenar respetando fijados y fecha más reciente
     currentConversations = sortConversationsList(currentConversations);
@@ -3054,6 +3057,16 @@ async function selectConversation(convId) {
   activeChannelMode = 'direct';
   activeCommunityId = null;
   activeGroupId = null;
+
+  // Desmarcar inmediatamente el chat como leído y limpiar contador
+  const convLocal = (currentConversations || []).find(c => c.id === convId);
+  if (convLocal) {
+    convLocal.unreadCount = 0;
+    updateGlobalUnreadBadges();
+  }
+
+  // Notificar al backend de inmediato para persistir lectura
+  fetch(`/api/messages/conversations/${encodeURIComponent(convId)}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
 
   // Alternar visibilidad de pantalla de bienvenida WhatsApp vs Chat activo
   const emptyView = document.getElementById('messages-empty-state-view');
@@ -3456,9 +3469,7 @@ function renderChatMessages(messages) {
     const isSelected = selectedChatMessageIds.has(m.id);
     const timeFormatted = m.timestamp ? formatMessageTime(m.timestamp) : (m.timeFormatted || '');
 
-    const conv = (currentConversations || []).find(c => c.id === activeConversationId);
-    const isGroupOrStaffChat = activeChannelMode === 'community' || (conv && conv.tags && (conv.tags.includes('personal') || conv.tags.includes('cuadrilla')));
-    const showSenderHeader = !isMe && isGroupOrStaffChat && (m.senderName || m.senderAvatar);
+    const showSenderHeader = activeChannelMode === 'community' && !isMe && (m.senderName || m.senderAvatar);
     const senderHeaderHtml = showSenderHeader ? `
       <div class="flex items-center gap-1.5 pb-1 mb-1 border-b border-black/5 dark:border-white/10 text-left">
         ${m.senderAvatar ? `<img src="${m.senderAvatar}" class="w-4 h-4 rounded-full object-cover border border-blue-400/30">` : ''}
@@ -5073,14 +5084,21 @@ async function sendDirectAttachment(file, captionText = '') {
 
     showUploadProgress('Enviando archivo...');
 
+    const attachPostBody = {
+      text: captionText || (isImage ? 'Foto adjunta' : (isVideo ? `Video adjunto (${attachmentPayload.duration || ''})` : file.name)),
+      sender: 'agent',
+      attachment: attachmentPayload
+    };
+    if (typeof currentUser !== 'undefined' && currentUser) {
+      attachPostBody.senderId = currentUser.id || currentUser.username;
+      attachPostBody.senderName = currentUser.name || currentUser.username;
+      attachPostBody.senderAvatar = currentUser.avatarUrl || currentUser.avatar || '';
+    }
+
     const res = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: captionText || (isImage ? 'Foto adjunta' : (isVideo ? `Video adjunto (${attachmentPayload.duration || ''})` : file.name)),
-        sender: 'agent',
-        attachment: attachmentPayload
-      })
+      body: JSON.stringify(attachPostBody)
     });
     const data = await res.json();
     if (data.success && data.data) {
@@ -9310,6 +9328,10 @@ async function sendCurrentLocation(isLive) {
           const d = await r.json();
           if (d.success && Array.isArray(d.data)) {
             currentConversations = sortConversationsList(d.data);
+            if (activeChannelMode === 'direct' && activeConversationId) {
+              const cur = currentConversations.find(c => c.id === activeConversationId);
+              if (cur) cur.unreadCount = 0;
+            }
             renderConversationsList(currentConversations);
             updateGlobalUnreadBadges();
           }
