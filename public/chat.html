@@ -382,6 +382,10 @@
 
                   <!-- Acciones del Chat Header -->
                   <div class="flex items-center space-x-1 sm:space-x-1.5 flex-shrink-0">
+                    <button type="button" id="btn-community-members-view" onclick="openCommunityMembersModal()" title="Ver miembros de la comunidad" class="hidden p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 transition flex items-center space-x-1.5 text-xs font-semibold">
+                      <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                      <span class="hidden sm:inline">Miembros</span>
+                    </button>
                     <button type="button" id="btn-community-group-settings" onclick="openActiveGroupSettingsModal()" title="Gestionar canal o grupo" class="hidden p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 transition flex items-center space-x-1.5 text-xs font-semibold">
                       <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                       <span class="hidden sm:inline">Ajustes Canal</span>
@@ -1165,6 +1169,26 @@
           </div>
         </div>
 
+        <!-- Miembros de la Comunidad (Usuarios del Sistema) -->
+        <div class="pt-2 border-t border-white/10">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>Miembros de la Comunidad</span>
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30" id="ncomm-members-count">0 usuarios</span>
+              </h4>
+              <p class="text-[11px] text-slate-400">Vincula usuarios u operadores del sistema a esta nueva comunidad:</p>
+            </div>
+            <button type="button" onclick="openAddMemberModal('new')" class="px-2.5 py-1 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 border border-blue-500/30 text-xs font-semibold flex items-center gap-1 transition cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.765z"/></svg>
+              <span>+ Añadir Usuario</span>
+            </button>
+          </div>
+          <div id="ncomm-members-container" class="space-y-1.5 max-h-40 overflow-y-auto pr-1 scrollbar-thin">
+            <!-- Renderizado dinámico vía renderNewCommunityMembers() -->
+          </div>
+        </div>
+
         <!-- Footer -->
         <div class="flex items-center justify-end space-x-2 pt-3 border-t border-white/10">
           <button type="button" onclick="closeNewCommunityModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300">Cancelar</button>
@@ -1257,6 +1281,23 @@
             </button>
           </div>
           <div id="ecomm-groups-builder-container" class="space-y-2 max-h-56 overflow-y-auto pr-1 scrollbar-thin"></div>
+        </div>
+
+        <!-- Miembros de la Comunidad (Usuarios del Sistema) -->
+        <div class="pt-3 border-t border-white/10">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider">Miembros de la Comunidad <span id="ecomm-members-count" class="text-blue-400 font-bold ml-1">0 usuarios</span></label>
+              <p class="text-[10px] text-slate-400">Usuarios, operadores o clientes del sistema asignados a esta comunidad:</p>
+            </div>
+            <button type="button" onclick="openAddMemberModal('edit')" class="px-2.5 py-1 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 border border-blue-500/30 text-[11px] font-semibold flex items-center gap-1 transition cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.765z"/></svg>
+              <span>+ Añadir Usuario</span>
+            </button>
+          </div>
+          <div id="ecomm-members-container" class="space-y-1.5 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
+            <!-- Renderizado dinámico vía renderEditCommunityMembers() -->
+          </div>
         </div>
 
         <!-- Footer con Eliminar y Guardar -->
@@ -1394,8 +1435,98 @@
           </div>
         </div>
       </form>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: AÑADIR USUARIOS DEL SISTEMA A LA COMUNIDAD       -->
+  <!-- ======================================================== -->
+  <div id="add-community-member-modal" class="fixed inset-0 z-[285] hidden flex items-center justify-center bg-black/85 backdrop-blur-md px-4 py-6">
+    <div class="pro-card max-w-lg w-full p-5 sm:p-6 rounded-3xl border border-white/10 shadow-2xl relative flex flex-col justify-between overflow-hidden my-auto max-h-[85vh]">
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-white/10 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center justify-center shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.765z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white tracking-tight">Añadir Usuarios del Sistema</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Selecciona operadores, técnicos o clientes para la comunidad</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeAddMemberModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Buscador y Categorías -->
+      <div class="py-3 space-y-2 flex-shrink-0">
+        <div class="relative">
+          <input type="text" id="member-picker-search" oninput="filterCandidateMembers(this.value)" placeholder="Buscar por nombre, correo, teléfono o rol..." class="w-full bg-black/40 border border-white/15 rounded-xl pl-9 pr-8 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+          <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+          <button type="button" onclick="document.getElementById('member-picker-search').value=''; filterCandidateMembers('');" class="absolute right-2.5 top-2 text-slate-400 hover:text-white text-xs">✕</button>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs">
+          <button type="button" id="tab-candidates-all" onclick="setCandidateFilter('all')" class="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30 transition">Todos</button>
+          <button type="button" id="tab-candidates-users" onclick="setCandidateFilter('system_user')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition">🛡️ Operadores / Personal</button>
+          <button type="button" id="tab-candidates-customers" onclick="setCandidateFilter('customer')" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition">👥 Clientes</button>
+        </div>
+      </div>
+
+      <!-- Lista Scrollable de Candidatos -->
+      <div id="member-picker-list" class="flex-1 overflow-y-auto space-y-1.5 pr-1 min-h-[220px] max-h-[320px] scrollbar-thin">
+        <div class="text-center py-8 text-xs text-slate-400">Cargando usuarios del sistema...</div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-between pt-3.5 border-t border-white/10 flex-shrink-0 mt-2">
+        <div class="text-xs text-slate-400">
+          <span class="font-bold text-white" id="member-picker-count">0</span> seleccionados
+        </div>
+        <div class="flex items-center space-x-2">
+          <button type="button" onclick="closeAddMemberModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 transition">Cancelar</button>
+          <button type="button" id="btn-confirm-add-members" onclick="confirmAddSelectedMembers()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">Añadir Seleccionados</button>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: VER MIEMBROS DE LA COMUNIDAD ACTIVA               -->
+  <!-- ======================================================== -->
+  <div id="view-community-members-modal" class="fixed inset-0 z-[280] hidden flex items-center justify-center bg-black/85 backdrop-blur-md px-4 py-6">
+    <div class="pro-card max-w-lg w-full p-5 sm:p-6 rounded-3xl border border-white/10 shadow-2xl relative flex flex-col justify-between overflow-hidden my-auto max-h-[85vh]">
+      <div class="flex items-center justify-between pb-3.5 border-b border-white/10 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center justify-center shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+          </div>
+          <div>
+            <h3 id="view-members-title" class="text-base font-bold text-white tracking-tight">Miembros de la Comunidad</h3>
+            <p id="view-members-subtitle" class="text-xs text-slate-400 mt-0.5">Participantes de la comunidad</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeCommunityMembersModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="py-3 flex items-center justify-between gap-2 flex-shrink-0">
+        <div class="relative flex-1">
+          <input type="text" id="view-members-search" oninput="filterViewMembers(this.value)" placeholder="Buscar miembro..." class="w-full bg-black/40 border border-white/15 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+          <svg class="w-4 h-4 absolute left-3 top-2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+        </div>
+        <button type="button" onclick="openAddMemberModal('direct')" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+          <span>Añadir</span>
+        </button>
+      </div>
+
+      <div id="view-members-list" class="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[220px] max-h-[360px] scrollbar-thin"></div>
+
+      <div class="pt-3 border-t border-white/10 flex items-center justify-end flex-shrink-0 mt-2">
+        <button type="button" onclick="closeCommunityMembersModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 transition">Cerrar</button>
+      </div>
+    </div>
   </div>
 
   <!-- ======================================================== -->
@@ -2457,8 +2588,11 @@ function showSystemNotification(title, body, iconUrl, onClick) {
     onClick = iconUrl;
     iconUrl = null;
   }
-  if (!('Notification' in window)) return;
   const avatarIcon = iconUrl || '/icons/icon-192.png';
+  if (window.electronDesktop && window.electronDesktop.notify) {
+    try { window.electronDesktop.notify({ title, body, icon: avatarIcon }); } catch (_) {}
+  }
+  if (!('Notification' in window)) return;
   if (Notification.permission === 'granted') {
     try {
       const n = new Notification(title, {
@@ -2485,6 +2619,10 @@ function updateGlobalUnreadBadges() {
   }, 0);
   const totalUnread = directUnread + communitiesUnread;
   
+  if (window.electronDesktop && window.electronDesktop.setUnreadCount) {
+    try { window.electronDesktop.setUnreadCount(totalUnread); } catch (_) {}
+  }
+
   if (totalUnread > 0) {
     document.title = `(${totalUnread}) TurboNetwork • Mensajes`;
   } else {
@@ -3134,9 +3272,11 @@ async function selectConversation(convId) {
     }
   }
 
-  // Ocultar botón de ajustes de grupo cuando estamos en chat directo
+  // Ocultar botones de comunidad cuando estamos en chat directo
   const btnSettings = document.getElementById('btn-community-group-settings');
   if (btnSettings) btnSettings.classList.add('hidden');
+  const btnMembers = document.getElementById('btn-community-members-view');
+  if (btnMembers) btnMembers.classList.add('hidden');
   const inputEl = document.getElementById('chat-input-text');
   const sendBtn = document.getElementById('chat-btn-send-message');
   if (inputEl) {
@@ -5918,10 +6058,12 @@ async function selectCommunityChannel(communityId, groupId) {
       const tagsContainer = document.getElementById('chat-header-tags-container');
       const btnSettings = document.getElementById('btn-community-group-settings');
       if (btnSettings) btnSettings.classList.remove('hidden');
+      const btnMembers = document.getElementById('btn-community-members-view');
+      if (btnMembers) btnMembers.classList.remove('hidden');
 
       if (nameEl) nameEl.textContent = `${commData.communityName} • ${group.name}`;
       if (avatarEl) avatarEl.src = group.avatarUrl || commData.communityAvatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80';
-      if (detailEl) detailEl.textContent = `${commData.memberCount || 0} miembros en el sector`;
+      if (detailEl) detailEl.textContent = `${commData.memberCount || (commData.members ? commData.members.length : 0)} miembros en la comunidad`;
 
       const isReadOnly = group.permission === 'admin_only' || group.isReadOnly;
       if (tagsContainer) {
@@ -6081,6 +6223,8 @@ function removeCommunityGroupRow(idx) {
 
 function openNewCommunityModal() {
   const modal = document.getElementById('new-community-modal');
+  newCommunityMembersList = [];
+  renderNewCommunityMembers();
   renderNewCommunityGroups();
   if (modal) modal.classList.remove('hidden');
 }
@@ -6127,25 +6271,473 @@ async function handleCreateCommunity(e) {
         type, 
         avatarUrl, 
         linkedNaps, 
-        memberCount: 1,
-        groups: cleanGroups 
+        memberCount: newCommunityMembersList.length || 1,
+        groups: cleanGroups,
+        members: newCommunityMembersList
       })
     });
     const data = await res.json();
     if (data.success && data.data) {
-      showToast('Comunidad creada exitosamente con sus grupos', 'success');
+      showToast('Comunidad creada exitosamente con sus grupos y miembros', 'success');
       closeNewCommunityModal();
       currentCommunities.unshift(data.data);
       renderCommunitiesList(currentCommunities);
       updateGlobalUnreadBadges();
       if (nameEl) nameEl.value = '';
       if (descEl) descEl.value = '';
+      newCommunityMembersList = [];
       if (napsEl) napsEl.value = '';
     } else {
       showToast(data.message || 'Error al crear comunidad', 'error');
     }
   } catch (err) {
     console.error('Error creando comunidad:', err);
+    showToast('Fallo al conectar con el servidor', 'error');
+  }
+}
+
+// ========================================================
+// GESTIÓN DE MIEMBROS Y USUARIOS DEL SISTEMA EN COMUNIDADES
+// ========================================================
+let editCommunityMembersList = [];
+let newCommunityMembersList = [];
+let availableSystemCandidates = [];
+let selectedMemberCandidateIds = new Set();
+let candidateActiveFilter = 'all'; // 'all', 'system_user', 'customer'
+let currentMemberPickerTarget = 'edit'; // 'edit', 'new', 'direct'
+let currentCandidateSearchText = '';
+
+async function loadCandidateUsers() {
+  try {
+    const res = await fetch('/api/messages/communities-candidate-users');
+    const data = await res.json();
+    if (data.success) {
+      availableSystemCandidates = [...(data.users || []), ...(data.customers || [])];
+      return availableSystemCandidates;
+    }
+  } catch (err) {
+    console.warn('Fallback al cargar candidatos:', err);
+  }
+
+  // Fallback con currentUsers si falla el endpoint dedicado
+  if (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers) && currentUsers.length > 0) {
+    availableSystemCandidates = currentUsers.map(u => ({
+      id: u.id,
+      name: u.name || 'Usuario',
+      email: u.email || '',
+      roleName: u.roleName || (u.isSuperAdmin ? 'Superadministrador' : 'Operador'),
+      avatar: u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.name || u.id)}`,
+      type: 'system_user',
+      isActive: u.isActive !== false
+    }));
+  }
+  return availableSystemCandidates;
+}
+
+async function openAddMemberModal(target) {
+  currentMemberPickerTarget = target || 'edit';
+  selectedMemberCandidateIds.clear();
+  candidateActiveFilter = 'all';
+  currentCandidateSearchText = '';
+
+  const searchInput = document.getElementById('member-picker-search');
+  if (searchInput) searchInput.value = '';
+
+  updateCandidateFilterTabs();
+  updateMemberPickerCount();
+
+  const modal = document.getElementById('add-community-member-modal');
+  if (modal) modal.classList.remove('hidden');
+
+  renderCandidateMemberList();
+  await loadCandidateUsers();
+  renderCandidateMemberList();
+}
+
+function closeAddMemberModal() {
+  const modal = document.getElementById('add-community-member-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function setCandidateFilter(filterType) {
+  candidateActiveFilter = filterType;
+  updateCandidateFilterTabs();
+  renderCandidateMemberList();
+}
+
+function updateCandidateFilterTabs() {
+  const tabs = {
+    all: document.getElementById('tab-candidates-all'),
+    system_user: document.getElementById('tab-candidates-users'),
+    customer: document.getElementById('tab-candidates-customers')
+  };
+  Object.keys(tabs).forEach(k => {
+    const el = tabs[k];
+    if (!el) return;
+    if (k === candidateActiveFilter) {
+      el.className = 'px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30 transition';
+    } else {
+      el.className = 'px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition';
+    }
+  });
+}
+
+function filterCandidateMembers(query) {
+  currentCandidateSearchText = (query || '').trim().toLowerCase();
+  renderCandidateMemberList();
+}
+
+function isUserAlreadyMember(candId) {
+  const sId = String(candId);
+  let activeList = [];
+  if (currentMemberPickerTarget === 'edit') {
+    activeList = editCommunityMembersList;
+  } else if (currentMemberPickerTarget === 'new') {
+    activeList = newCommunityMembersList;
+  } else if (currentMemberPickerTarget === 'direct') {
+    const comm = (currentCommunities || []).find(c => c.id === activeCommunityId);
+    activeList = (comm && comm.members) ? comm.members : [];
+  }
+  return activeList.some(m => String(m.id) === sId || String(m.userId) === sId);
+}
+
+function toggleCandidateSelection(candId) {
+  const sId = String(candId);
+  if (isUserAlreadyMember(candId)) return;
+  if (selectedMemberCandidateIds.has(sId)) {
+    selectedMemberCandidateIds.delete(sId);
+  } else {
+    selectedMemberCandidateIds.add(sId);
+  }
+  updateMemberPickerCount();
+  renderCandidateMemberList();
+}
+
+function updateMemberPickerCount() {
+  const countEl = document.getElementById('member-picker-count');
+  const btn = document.getElementById('btn-confirm-add-members');
+  const cnt = selectedMemberCandidateIds.size;
+  if (countEl) countEl.textContent = String(cnt);
+  if (btn) {
+    btn.disabled = (cnt === 0);
+    btn.textContent = cnt > 0 ? `Añadir Seleccionados (${cnt})` : 'Añadir Seleccionados';
+  }
+}
+
+function renderCandidateMemberList() {
+  const container = document.getElementById('member-picker-list');
+  if (!container) return;
+
+  let filtered = availableSystemCandidates;
+  if (candidateActiveFilter !== 'all') {
+    filtered = filtered.filter(c => c.type === candidateActiveFilter);
+  }
+  if (currentCandidateSearchText) {
+    filtered = filtered.filter(c => {
+      const name = (c.name || '').toLowerCase();
+      const email = (c.email || '').toLowerCase();
+      const phone = (c.phone || '').toLowerCase();
+      const role = (c.roleName || '').toLowerCase();
+      return name.includes(currentCandidateSearchText) ||
+             email.includes(currentCandidateSearchText) ||
+             phone.includes(currentCandidateSearchText) ||
+             role.includes(currentCandidateSearchText);
+    });
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-8 text-xs text-slate-400">
+        <svg class="w-8 h-8 mx-auto text-slate-500 mb-2 opacity-50" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+        No se encontraron usuarios o clientes con ese criterio.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(c => {
+    const sId = String(c.id);
+    const already = isUserAlreadyMember(c.id);
+    const isSelected = selectedMemberCandidateIds.has(sId);
+    const isCustomer = c.type === 'customer';
+    const defaultAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(c.name || sId)}`;
+
+    return `
+      <div onclick="${already ? '' : `toggleCandidateSelection('${sId}')`}" class="flex items-center justify-between p-2.5 rounded-xl border transition select-none ${already ? 'bg-white/[0.01] border-white/5 opacity-60 cursor-default' : (isSelected ? 'bg-blue-500/10 border-blue-500/60 cursor-pointer shadow-xs' : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 cursor-pointer')}">
+        <div class="flex items-center space-x-3 min-w-0">
+          <div class="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 text-[10px] font-bold transition ${already ? 'border-emerald-500/40 bg-emerald-500/20 text-emerald-400' : (isSelected ? 'bg-blue-600 border-blue-500 text-white' : 'border-white/30 bg-black/40')}">
+            ${already ? '✓' : (isSelected ? '✓' : '')}
+          </div>
+          <img src="${c.avatar || defaultAvatar}" class="w-8 h-8 rounded-xl object-cover border border-white/20 flex-shrink-0" onerror="this.src='${defaultAvatar}'">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-xs font-bold text-white truncate">${escapeHtml(c.name || 'Usuario')}</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded-full font-semibold ${isCustomer ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
+                ${escapeHtml(c.roleName || (isCustomer ? 'Cliente' : 'Operador'))}
+              </span>
+            </div>
+            <p class="text-[10px] text-slate-400 truncate">${escapeHtml(c.email || c.phone || c.address || '')}</p>
+          </div>
+        </div>
+        ${already ? '<span class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex-shrink-0">Ya vinculado</span>' : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+async function confirmAddSelectedMembers() {
+  if (selectedMemberCandidateIds.size === 0) return;
+
+  const toAdd = [];
+  selectedMemberCandidateIds.forEach(id => {
+    const cand = availableSystemCandidates.find(c => String(c.id) === String(id));
+    if (cand) {
+      toAdd.push({
+        id: cand.id,
+        userId: cand.id,
+        name: cand.name || 'Usuario',
+        email: cand.email || '',
+        phone: cand.phone || '',
+        avatar: cand.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(cand.name || cand.id)}`,
+        roleName: cand.roleName || (cand.type === 'customer' ? 'Cliente' : 'Operador'),
+        type: cand.type || 'system_user',
+        communityRole: 'member',
+        addedAt: new Date().toISOString()
+      });
+    }
+  });
+
+  if (currentMemberPickerTarget === 'edit') {
+    editCommunityMembersList = [...editCommunityMembersList, ...toAdd];
+    renderEditCommunityMembers();
+    showToast(`${toAdd.length} usuario(s) añadido(s)`, 'success');
+    closeAddMemberModal();
+  } else if (currentMemberPickerTarget === 'new') {
+    newCommunityMembersList = [...newCommunityMembersList, ...toAdd];
+    renderNewCommunityMembers();
+    showToast(`${toAdd.length} usuario(s) añadido(s)`, 'success');
+    closeAddMemberModal();
+  } else if (currentMemberPickerTarget === 'direct') {
+    if (!activeCommunityId) return;
+    try {
+      const res = await fetch(`/api/messages/communities/${encodeURIComponent(activeCommunityId)}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ members: toAdd })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`${toAdd.length} usuario(s) vinculado(s) a la comunidad`, 'success');
+        closeAddMemberModal();
+        const comm = (currentCommunities || []).find(c => c.id === activeCommunityId);
+        if (comm) {
+          comm.members = data.data || [];
+          comm.memberCount = comm.members.length;
+          renderCommunitiesList(currentCommunities);
+          const detailEl = document.getElementById('chat-header-detail');
+          if (detailEl) detailEl.textContent = `${comm.memberCount} miembros en la comunidad`;
+        }
+        renderViewCommunityMembers(data.data || []);
+      } else {
+        showToast(data.message || 'Error al añadir usuarios', 'error');
+      }
+    } catch (err) {
+      showToast('Fallo al conectar con el servidor', 'error');
+    }
+  }
+}
+
+function renderEditCommunityMembers() {
+  const container = document.getElementById('ecomm-members-container');
+  const countEl = document.getElementById('ecomm-members-count');
+  if (countEl) countEl.textContent = `${editCommunityMembersList.length} usuario(s)`;
+  if (!container) return;
+
+  if (editCommunityMembersList.length === 0) {
+    container.innerHTML = `
+      <div class="p-3 text-center rounded-xl bg-white/[0.02] border border-dashed border-white/10 text-xs text-slate-400">
+        Sin usuarios vinculados todavía. Haz clic en "+ Añadir Usuario" para seleccionar operadores o clientes del sistema.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = editCommunityMembersList.map((m, idx) => `
+    <div class="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/10 group">
+      <div class="flex items-center space-x-2.5 min-w-0">
+        <img src="${m.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.name || idx)}`}" class="w-8 h-8 rounded-xl object-cover border border-white/20 flex-shrink-0">
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-xs font-semibold text-white truncate">${escapeHtml(m.name || 'Usuario')}</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded-full font-medium ${m.type === 'customer' ? 'bg-purple-500/15 text-purple-300 border border-purple-500/20' : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/20'}">
+              ${escapeHtml(m.roleName || (m.type === 'customer' ? 'Cliente' : 'Operador'))}
+            </span>
+          </div>
+          <p class="text-[10px] text-slate-400 truncate">${escapeHtml(m.email || m.phone || '')}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <select onchange="editCommunityMembersList[${idx}].communityRole = this.value" class="bg-black/40 text-[10px] text-slate-300 border border-white/10 rounded px-1.5 py-0.5 focus:outline-none cursor-pointer">
+          <option value="member" ${m.communityRole !== 'admin' ? 'selected' : ''}>👤 Miembro</option>
+          <option value="admin" ${m.communityRole === 'admin' ? 'selected' : ''}>👑 Admin</option>
+        </select>
+        <button type="button" onclick="removeEditCommunityMember(${idx})" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer" title="Quitar de la comunidad">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function removeEditCommunityMember(idx) {
+  editCommunityMembersList.splice(idx, 1);
+  renderEditCommunityMembers();
+}
+
+function renderNewCommunityMembers() {
+  const container = document.getElementById('ncomm-members-container');
+  const countEl = document.getElementById('ncomm-members-count');
+  if (countEl) countEl.textContent = `${newCommunityMembersList.length} usuario(s)`;
+  if (!container) return;
+
+  if (newCommunityMembersList.length === 0) {
+    container.innerHTML = `
+      <div class="p-3 text-center rounded-xl bg-white/[0.02] border border-dashed border-white/10 text-xs text-slate-400">
+        Sin usuarios vinculados todavía. Pulsa "+ Añadir Usuario" para seleccionar del sistema.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = newCommunityMembersList.map((m, idx) => `
+    <div class="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/10 group">
+      <div class="flex items-center space-x-2.5 min-w-0">
+        <img src="${m.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.name || idx)}`}" class="w-8 h-8 rounded-xl object-cover border border-white/20 flex-shrink-0">
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-xs font-semibold text-white truncate">${escapeHtml(m.name || 'Usuario')}</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded-full font-medium ${m.type === 'customer' ? 'bg-purple-500/15 text-purple-300 border border-purple-500/20' : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/20'}">
+              ${escapeHtml(m.roleName || (m.type === 'customer' ? 'Cliente' : 'Operador'))}
+            </span>
+          </div>
+          <p class="text-[10px] text-slate-400 truncate">${escapeHtml(m.email || m.phone || '')}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <select onchange="newCommunityMembersList[${idx}].communityRole = this.value" class="bg-black/40 text-[10px] text-slate-300 border border-white/10 rounded px-1.5 py-0.5 focus:outline-none cursor-pointer">
+          <option value="member" ${m.communityRole !== 'admin' ? 'selected' : ''}>👤 Miembro</option>
+          <option value="admin" ${m.communityRole === 'admin' ? 'selected' : ''}>👑 Admin</option>
+        </select>
+        <button type="button" onclick="removeNewCommunityMember(${idx})" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer" title="Quitar">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function removeNewCommunityMember(idx) {
+  newCommunityMembersList.splice(idx, 1);
+  renderNewCommunityMembers();
+}
+
+function openCommunityMembersModal(communityId) {
+  const targetId = communityId || activeCommunityId;
+  if (!targetId) return;
+  const comm = (currentCommunities || []).find(c => c.id === targetId);
+  if (!comm) return;
+
+  const modal = document.getElementById('view-community-members-modal');
+  const title = document.getElementById('view-members-title');
+  const subtitle = document.getElementById('view-members-subtitle');
+  if (title) title.textContent = `Miembros de ${comm.name}`;
+  if (subtitle) subtitle.textContent = `${(comm.members || []).length} usuario(s) asignados a esta comunidad`;
+
+  renderViewCommunityMembers(comm.members || []);
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeCommunityMembersModal() {
+  const modal = document.getElementById('view-community-members-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function filterViewMembers(query) {
+  const comm = (currentCommunities || []).find(c => c.id === activeCommunityId);
+  if (!comm) return;
+  const q = (query || '').trim().toLowerCase();
+  let list = comm.members || [];
+  if (q) {
+    list = list.filter(m => (m.name || '').toLowerCase().includes(q) || (m.email || '').toLowerCase().includes(q) || (m.roleName || '').toLowerCase().includes(q));
+  }
+  renderViewCommunityMembers(list);
+}
+
+function renderViewCommunityMembers(members) {
+  const container = document.getElementById('view-members-list');
+  if (!container) return;
+
+  if (!members || members.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-8 text-xs text-slate-400">
+        No hay miembros vinculados en esta comunidad.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = members.map(m => {
+    const isCustomer = m.type === 'customer';
+    const isAdmin = m.communityRole === 'admin';
+    const defaultAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.name || m.id)}`;
+
+    return `
+      <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] border border-white/10 group">
+        <div class="flex items-center space-x-3 min-w-0">
+          <img src="${m.avatar || defaultAvatar}" class="w-9 h-9 rounded-xl object-cover border border-white/20 flex-shrink-0" onerror="this.src='${defaultAvatar}'">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-xs font-bold text-white truncate">${escapeHtml(m.name || 'Usuario')}</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded-full font-semibold ${isCustomer ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
+                ${escapeHtml(m.roleName || (isCustomer ? 'Cliente' : 'Operador'))}
+              </span>
+              ${isAdmin ? '<span class="text-[9px] px-1.5 py-0.2 rounded-full font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">👑 Admin</span>' : ''}
+            </div>
+            <p class="text-[10px] text-slate-400 truncate">${escapeHtml(m.email || m.phone || '')}</p>
+          </div>
+        </div>
+        ${isCurrentUserAdmin() ? `
+          <button type="button" onclick="handleRemoveCommunityMemberDirect('${m.id || m.userId}')" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition opacity-0 group-hover:opacity-100" title="Quitar de la comunidad">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+async function handleRemoveCommunityMemberDirect(memberId) {
+  if (!activeCommunityId || !confirm('¿Deseas quitar a este usuario de la comunidad?')) return;
+  try {
+    const res = await fetch(`/api/messages/communities/${encodeURIComponent(activeCommunityId)}/members/${encodeURIComponent(memberId)}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Usuario removido de la comunidad', 'success');
+      const comm = (currentCommunities || []).find(c => c.id === activeCommunityId);
+      if (comm) {
+        comm.members = data.data || [];
+        comm.memberCount = comm.members.length;
+        renderCommunitiesList(currentCommunities);
+        const detailEl = document.getElementById('chat-header-detail');
+        if (detailEl) detailEl.textContent = `${comm.memberCount} miembros en la comunidad`;
+        renderViewCommunityMembers(comm.members);
+      }
+    } else {
+      showToast(data.message || 'Error al quitar usuario', 'error');
+    }
+  } catch (err) {
     showToast('Fallo al conectar con el servidor', 'error');
   }
 }
@@ -6289,7 +6881,12 @@ function openEditCommunityModal(communityId) {
   if (typeSelect) typeSelect.value = comm.type || 'building';
   if (napsInput) napsInput.value = Array.isArray(comm.linkedNaps) ? comm.linkedNaps.join(', ') : (comm.linkedNaps || '');
   if (avatarPreview) avatarPreview.src = comm.avatarUrl || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80';
-  if (subtitleEl) subtitleEl.textContent = `Editando "${comm.name}" (${(comm.groups || []).length} canales)`;
+
+  // Clonar profundamente los miembros de la comunidad para edición
+  editCommunityMembersList = Array.isArray(comm.members) ? comm.members.map(m => ({ ...m })) : [];
+  renderEditCommunityMembers();
+
+  if (subtitleEl) subtitleEl.textContent = `Editando "${comm.name}" (${(comm.groups || []).length} canales • ${editCommunityMembersList.length} miembros)`;
 
   // Clonar profundamente los grupos de la comunidad para edición y reordenamiento
   editCommunityGroupsList = (comm.groups || []).map(g => ({
@@ -6369,12 +6966,13 @@ async function handleUpdateCommunity(e) {
         type,
         avatarUrl,
         linkedNaps,
-        groups: editCommunityGroupsList
+        groups: editCommunityGroupsList,
+        members: editCommunityMembersList
       })
     });
     const data = await res.json();
     if (data.success && data.data) {
-      showToast('Comunidad y canales actualizados exitosamente', 'success');
+      showToast('Comunidad, canales y miembros actualizados exitosamente', 'success');
       closeEditCommunityModal();
 
       const idx = currentCommunities.findIndex(c => c.id === id);
@@ -6388,8 +6986,12 @@ async function handleUpdateCommunity(e) {
         const comm = currentCommunities[idx];
         const group = (comm?.groups || []).find(g => g.id === activeGroupId);
         const nameEl = document.getElementById('chat-header-name');
+        const detailEl = document.getElementById('chat-header-detail');
         if (nameEl && group) {
           nameEl.textContent = `${comm.name} • ${group.name}`;
+        }
+        if (detailEl && comm) {
+          detailEl.textContent = `${comm.memberCount || editCommunityMembersList.length} miembros en la comunidad`;
         }
       }
     } else {
@@ -9683,7 +10285,7 @@ async function sendCurrentLocation(isLive) {
         try { Notification.requestPermission(); } catch (_) {}
       }
       fetch('/api/auth/me').then(r => r.json()).then(d => { if (d.user) currentUser = d.user; }).catch(() => {});
-      fetch('/api/users').then(r => r.json()).then(d => { if (d.users) currentUsers = d.users; }).catch(() => {});
+      fetch('/api/users').then(r => r.json()).then(d => { if (d && d.data) currentUsers = d.data; else if (d && d.users) currentUsers = d.users; }).catch(() => {});
       loadTurboChatBranding();
       loadMessagesModule();
       fetchCommunities();

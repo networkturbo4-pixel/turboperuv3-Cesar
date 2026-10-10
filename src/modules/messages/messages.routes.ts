@@ -62,6 +62,19 @@ export interface CommunityGroup {
   updatedAt: string;
 }
 
+export interface CommunityMember {
+  id: string | number;
+  userId?: string | number;
+  name: string;
+  email?: string;
+  phone?: string;
+  avatar?: string;
+  roleName?: string;
+  type?: "system_user" | "customer";
+  communityRole?: "admin" | "member";
+  addedAt?: string;
+}
+
 export interface Community {
   id: string;
   tenantId: string;
@@ -73,6 +86,7 @@ export interface Community {
   linkedNaps?: string[];
   linkedZones?: string[];
   memberCount: number;
+  members?: CommunityMember[];
   groups: CommunityGroup[];
   createdAt: string;
   updatedAt: string;
@@ -1791,7 +1805,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       type: c.type,
       linkedNaps: c.linkedNaps || [],
       linkedZones: c.linkedZones || [],
-      memberCount: c.memberCount || 0,
+      memberCount: Array.isArray(c.members) ? c.members.length : (c.memberCount || 0),
+      members: c.members || [],
       createdAt: c.createdAt,
       groups: c.groups.map(g => ({
         id: g.id,
@@ -1823,6 +1838,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       linkedNaps?: string[];
       linkedZones?: string[];
       memberCount?: number;
+      members?: any[];
       groups?: Array<{
         name: string;
         avatarUrl?: string;
@@ -1938,6 +1954,22 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       ];
     }
 
+    let initialMembers: CommunityMember[] = [];
+    if (Array.isArray(body.members) && body.members.length > 0) {
+      initialMembers = body.members.map((m: any, idx: number) => ({
+        id: m.id || m.userId || `usr-${Date.now()}-${idx}`,
+        userId: m.userId || m.id,
+        name: (m.name || "Usuario").trim(),
+        email: m.email || "",
+        phone: m.phone || "",
+        avatar: m.avatar || m.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.name || idx)}`,
+        roleName: m.roleName || (m.type === "customer" ? "Cliente" : "Operador"),
+        type: m.type || "system_user",
+        communityRole: m.communityRole || "member",
+        addedAt: m.addedAt || now.toISOString(),
+      }));
+    }
+
     const newCommunity: Community = {
       id: commId,
       tenantId,
@@ -1948,7 +1980,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       type: body.type || "zone",
       linkedNaps: body.linkedNaps || [],
       linkedZones: body.linkedZones || [],
-      memberCount: body.memberCount || 1,
+      memberCount: initialMembers.length || body.memberCount || 1,
+      members: initialMembers,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
       groups: initialGroups
@@ -1979,6 +2012,22 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     if (body.type) comm.type = body.type;
     if (Array.isArray(body.linkedNaps)) comm.linkedNaps = body.linkedNaps;
     if (Array.isArray(body.linkedZones)) comm.linkedZones = body.linkedZones;
+
+    if (Array.isArray(body.members)) {
+      comm.members = body.members.map((m: any, idx: number) => ({
+        id: m.id || m.userId || `usr-${Date.now()}-${idx}`,
+        userId: m.userId || m.id,
+        name: (m.name || "Usuario").trim(),
+        email: m.email || "",
+        phone: m.phone || "",
+        avatar: m.avatar || m.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.name || idx)}`,
+        roleName: m.roleName || (m.type === "customer" ? "Cliente" : "Operador"),
+        type: m.type || "system_user",
+        communityRole: m.communityRole || "member",
+        addedAt: m.addedAt || new Date().toISOString(),
+      }));
+      comm.memberCount = comm.members.length;
+    }
 
     if (Array.isArray(body.groups)) {
       const existingGroupsMap = new Map((comm.groups || []).map(g => [g.id, g]));
@@ -2107,6 +2156,162 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     });
 
     return reply.send({ success: true, message: "Comunidad eliminada con éxito", data: deleted });
+  });
+
+  // 12.41 Obtener usuarios y clientes candidatos del sistema para añadir a comunidades
+  fastify.get("/messages/communities-candidate-users", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+
+    // 1. Usuarios del sistema / Operadores (data/users.json)
+    const usersFile = path.resolve(process.cwd(), "data", "users.json");
+    let systemUsers: any[] = [];
+    try {
+      if (fs.existsSync(usersFile)) {
+        const raw = fs.readFileSync(usersFile, "utf-8");
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          systemUsers = list.map(u => ({
+            id: u.id,
+            name: u.name || "Usuario",
+            email: u.email || "",
+            roleName: u.roleName || (u.isSuperAdmin ? "Superadministrador" : "Operador"),
+            roleId: u.roleId,
+            avatar: u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.name || u.id)}`,
+            type: "system_user",
+            isActive: u.isActive !== false
+          }));
+        }
+      }
+    } catch (err) {}
+
+    // 2. Clientes registrados en el sistema (data/tenants/{tenantId}/customers.json)
+    const custFile = getTenantFilePath(tenantId, "customers.json");
+    let customers: any[] = [];
+    try {
+      if (fs.existsSync(custFile)) {
+        const raw = fs.readFileSync(custFile, "utf-8");
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          customers = list.map(c => ({
+            id: c.id,
+            name: c.fullName || c.name || "Cliente",
+            email: c.email || "",
+            phone: c.phone || "",
+            roleName: c.planName ? `Cliente • ${c.planName}` : "Cliente Conectado",
+            address: c.address || "",
+            avatar: c.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(c.fullName || c.name || c.id)}`,
+            type: "customer",
+            status: c.status || "active"
+          }));
+        }
+      }
+    } catch (err) {}
+
+    return reply.send({
+      success: true,
+      users: systemUsers,
+      customers: customers,
+      total: systemUsers.length + customers.length
+    });
+  });
+
+  // 12.42 Añadir miembros a una comunidad existente
+  fastify.post("/messages/communities/:id/members", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const { members: newMembers, member } = (request.body as { members?: any[]; member?: any }) || {};
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) {
+      return reply.status(404).send({ success: false, message: "Comunidad no encontrada" });
+    }
+
+    if (!Array.isArray(comm.members)) {
+      comm.members = [];
+    }
+
+    const toAdd = Array.isArray(newMembers) ? newMembers : (member ? [member] : []);
+    const now = new Date();
+
+    for (let i = 0; i < toAdd.length; i++) {
+      const m = toAdd[i];
+      if (!m || (!m.id && !m.userId)) continue;
+      const memId = m.id || m.userId;
+      const existingIdx = comm.members.findIndex(existing => String(existing.id) === String(memId) || String(existing.userId) === String(memId));
+      const entry: CommunityMember = {
+        id: memId,
+        userId: m.userId || memId,
+        name: (m.name || "Usuario").trim(),
+        email: m.email || "",
+        phone: m.phone || "",
+        avatar: m.avatar || m.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.name || memId)}`,
+        roleName: m.roleName || (m.type === "customer" ? "Cliente" : "Operador"),
+        type: m.type || "system_user",
+        communityRole: m.communityRole || "member",
+        addedAt: m.addedAt || now.toISOString()
+      };
+      if (existingIdx !== -1) {
+        comm.members[existingIdx] = entry;
+      } else {
+        comm.members.push(entry);
+      }
+    }
+
+    comm.memberCount = comm.members.length;
+    comm.updatedAt = now.toISOString();
+    saveCommunitiesToDisk(tenantId, communities);
+
+    broadcastMessageEvent({
+      type: "community_members_updated",
+      tenantId,
+      communityId: id,
+      members: comm.members,
+      memberCount: comm.memberCount
+    });
+
+    return reply.send({
+      success: true,
+      message: `${toAdd.length} usuario(s) añadido(s) a la comunidad`,
+      data: comm.members,
+      memberCount: comm.memberCount
+    });
+  });
+
+  // 12.43 Eliminar miembro de la comunidad
+  fastify.delete("/messages/communities/:id/members/:memberId", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, memberId } = request.params as { id: string; memberId: string };
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) {
+      return reply.status(404).send({ success: false, message: "Comunidad no encontrada" });
+    }
+
+    if (!Array.isArray(comm.members)) {
+      comm.members = [];
+    }
+
+    comm.members = comm.members.filter(m => String(m.id) !== String(memberId) && String(m.userId) !== String(memberId));
+    comm.memberCount = comm.members.length;
+    comm.updatedAt = new Date().toISOString();
+    saveCommunitiesToDisk(tenantId, communities);
+
+    broadcastMessageEvent({
+      type: "community_members_updated",
+      tenantId,
+      communityId: id,
+      members: comm.members,
+      memberCount: comm.memberCount
+    });
+
+    return reply.send({
+      success: true,
+      message: "Miembro eliminado de la comunidad",
+      data: comm.members,
+      memberCount: comm.memberCount
+    });
   });
 
   // 12.5 Agregar nuevo canal/grupo a una comunidad
@@ -2302,7 +2507,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
         communityId: comm.id,
         communityName: comm.name,
         communityAvatar: comm.avatarUrl,
-        memberCount: comm.memberCount,
+        memberCount: Array.isArray(comm.members) ? comm.members.length : (comm.memberCount || 0),
+        members: comm.members || [],
         group: {
           ...group,
           messages: messagesToReturn,
