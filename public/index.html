@@ -13941,258 +13941,326 @@
   <!-- ======================================================== -->
   <!-- MODAL 11: REGISTRAR / EDITAR ACTIVO FIJO                  -->
   <!-- ======================================================== -->
+  <!-- ======================================================== -->
+  <!-- MODAL 11: REGISTRAR / EDITAR ACTIVO FIJO (TABULADO & PRO) -->
+  <!-- ======================================================== -->
   <div id="inventory-asset-modal" class="fixed inset-0 z-[290] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-3 sm:px-4 py-4 sm:py-6 overflow-y-auto">
-    <div class="pro-card max-w-4xl w-full p-5 sm:p-7 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col max-h-[90vh] my-auto overflow-hidden">
-      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10 flex-shrink-0">
-        <div>
-          <h3 id="inv-asset-modal-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Registrar Activo Fijo</h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Vehículos, tecnología, herramientas ópticas y mobiliario con documentación</p>
+    <div class="pro-card max-w-4xl w-full p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col max-h-[92vh] my-auto overflow-hidden">
+      <!-- Encabezado con Icono, Título y Badges -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div id="inv-asset-modal-icon" class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20 flex items-center justify-center text-xl font-bold">
+            🚗
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h3 id="inv-asset-modal-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Registrar Activo Fijo</h3>
+              <span id="inv-asset-modal-status-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Operativo</span>
+            </div>
+            <p id="inv-asset-modal-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Control de flota, equipamiento técnico de fibra óptica y mobiliario corporativo</p>
+          </div>
         </div>
         <button type="button" onclick="closeAssetModal()" class="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
-      <form id="inv-asset-form" onsubmit="handleSaveAsset(event)" class="flex-1 overflow-y-auto py-4 space-y-4 custom-palette-scroll">
+      <!-- Barra de Pestañas / Tabs Superiores -->
+      <div class="flex items-center space-x-1.5 border-b border-slate-200 dark:border-white/10 pt-3 pb-2 flex-shrink-0 overflow-x-auto scrollbar-none">
+        <button type="button" id="tab-btn-asset-general" onclick="switchAssetModalTab('general')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-blue-600 text-white shadow-2xs">
+          <span>📋</span>
+          <span>1. Ficha & Datos Generales</span>
+        </button>
+        <button type="button" id="tab-btn-asset-vehicle" onclick="switchAssetModalTab('vehicle')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition flex items-center gap-1.5">
+          <span>🚗</span>
+          <span>2. Documentación Vehicular</span>
+          <span id="tab-badge-asset-vehicle" class="px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-blue-500/20 text-blue-500">3 Módulos</span>
+        </button>
+        <button type="button" id="tab-btn-asset-multimedia" onclick="switchAssetModalTab('multimedia')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition flex items-center gap-1.5">
+          <span>📸</span>
+          <span>3. Fotos & Multimedia</span>
+          <span id="tab-badge-asset-photos-count" class="hidden px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-purple-500/20 text-purple-400">0</span>
+        </button>
+      </div>
+
+      <!-- Formulario Principal con Scroll Independiente -->
+      <form id="inv-asset-form" onsubmit="handleSaveAsset(event)" class="flex-1 overflow-y-auto py-3 space-y-4 custom-palette-scroll pr-1">
         <input type="hidden" id="inv-asset-id" value="">
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div class="sm:col-span-2">
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Nombre del Activo *</label>
-            <input type="text" id="inv-asset-name" required placeholder="Ej: Camioneta Toyota Hilux 4x4 Cuadrilla 1" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Categoría *</label>
-            <select id="inv-asset-category" required onchange="toggleAssetVehicleFields(this.value)" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-              <option value="vehiculo">🚗 Vehículo & Flota</option>
-              <option value="tecnologia">💻 Tecnología & Herramientas</option>
-              <option value="mobiliario">🪑 Mobiliario & Racks</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Código Interno *</label>
-            <input type="text" id="inv-asset-code" required placeholder="ACT-VEH-001" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono uppercase text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Marca</label>
-            <input type="text" id="inv-asset-brand" placeholder="Ej: Toyota / Fujikura" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Modelo</label>
-            <input type="text" id="inv-asset-model" placeholder="Ej: Hilux 2.4 TDI / 90S+" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Placa / N° Serie</label>
-            <input type="text" id="inv-asset-plate" placeholder="Ej: ABC-123 o Serie" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono uppercase text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Estado Operativo *</label>
-            <select id="inv-asset-status" required class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-              <option value="operativo">✅ Operativo</option>
-              <option value="en_mantenimiento">🛠️ En Mantenimiento</option>
-              <option value="en_reserva">📦 En Reserva</option>
-              <option value="baja">❌ Dado de Baja</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Fecha Adquisición</label>
-            <input type="date" id="inv-asset-date" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Costo Compra ($)</label>
-            <input type="number" step="0.01" min="0" id="inv-asset-cost" placeholder="0.00" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Asignado a</label>
-            <input type="text" id="inv-asset-assigned" placeholder="Ej: Técnico Juan Pérez" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Ubicación Física</label>
-          <input type="text" id="inv-asset-location" placeholder="Ej: Cochera Sede Principal / Data Center Piso 2" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-        </div>
-
-        <!-- Multimedia Fotos y Videos -->
-        <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 space-y-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">Documentación Multimedia (Fotos & Videos)</span>
-          
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">URL de Foto (o varias separadas por coma)</label>
-              <input type="text" id="inv-asset-photos" placeholder="https://ejemplo.com/foto1.jpg, https://..." class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+        <!-- TAB 1: FICHA & DATOS GENERALES -->
+        <div id="tab-content-asset-general" class="space-y-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Nombre del Activo *</label>
+              <input type="text" id="inv-asset-name" required placeholder="Ej: Camioneta Toyota Hilux 4x4 Cuadrilla 1" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold">
             </div>
             <div>
-              <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Enlace de Video (YouTube o MP4)</label>
-              <input type="url" id="inv-asset-video" placeholder="https://youtube.com/watch?v=... o mp4" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Categoría *</label>
+              <select id="inv-asset-category" required onchange="onAssetCategorySelectChange(this.value)" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium">
+                <option value="vehiculo">🚗 Vehículo & Flota</option>
+                <option value="tecnologia">💻 Tecnología & Herramientas</option>
+                <option value="mobiliario">🪑 Mobiliario & Racks</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Código Interno *</label>
+              <input type="text" id="inv-asset-code" required placeholder="ACT-VEH-001" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono uppercase text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-bold">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Marca</label>
+              <input type="text" id="inv-asset-brand" placeholder="Ej: Toyota / Fujikura / Anritsu" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Modelo</label>
+              <input type="text" id="inv-asset-model" placeholder="Ej: Hilux 2.4 TDI / 90S+ / MT9085C" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label id="inv-asset-plate-label" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Placa / N° Serie</label>
+              <input type="text" id="inv-asset-plate" placeholder="Ej: ABC-123 o S/N" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono uppercase text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Estado Operativo *</label>
+              <select id="inv-asset-status" required onchange="updateAssetModalStatusBadge(this.value)" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold">
+                <option value="operativo">✅ Operativo</option>
+                <option value="en_mantenimiento">🛠️ En Mantenimiento</option>
+                <option value="en_reserva">📦 En Reserva</option>
+                <option value="baja">❌ Dado de Baja</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Fecha Adquisición</label>
+              <input type="date" id="inv-asset-date" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Costo Compra ($)</label>
+              <input type="number" step="0.01" min="0" id="inv-asset-cost" placeholder="0.00" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Asignado a</label>
+              <input type="text" id="inv-asset-assigned" list="inv-asset-assigned-datalist" placeholder="Ej: Juan Pérez / Cuadrilla 1" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium">
+              <datalist id="inv-asset-assigned-datalist">
+                <!-- Se llena dinámicamente con colaboradores del sistema -->
+              </datalist>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Ubicación Física</label>
+            <input type="text" id="inv-asset-location" placeholder="Ej: Cochera Sede Principal / Laboratorio NOC Piso 2" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Descripción / Ficha Técnica</label>
+            <textarea id="inv-asset-desc" rows="3" placeholder="Detalles de equipamiento, accesorios incluidos, especificaciones técnicas y observaciones..." class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"></textarea>
+          </div>
+        </div>
+
+        <!-- TAB 2: DOCUMENTACIÓN VEHICULAR (TIV, SOAT, CITV) -->
+        <div id="tab-content-asset-vehicle" class="space-y-4 hidden">
+          <!-- Banner informativo cuando la categoría NO es vehículo -->
+          <div id="inv-asset-non-vehicle-notice" class="hidden p-6 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 text-center">
+            <span class="text-3xl block mb-2">🚗</span>
+            <h4 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Módulo Exclusivo para Vehículos & Flota</h4>
+            <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
+              La documentación reglamentaria (TIV SUNARP, SOAT y CITV MTC) solo aplica para activos de categoría <strong>Vehículo & Flota</strong>.
+            </p>
+            <button type="button" onclick="switchAssetModalTab('general')" class="mt-3 px-3 py-1.5 rounded-xl bg-blue-600/10 text-blue-500 hover:bg-blue-600/20 text-xs font-semibold transition">
+              Volver a Datos Generales
+            </button>
+          </div>
+
+          <!-- Módulos de documentación vehicular -->
+          <div id="inv-asset-vehicle-modules-container" class="space-y-4">
+            <!-- 1. TARJETA DE IDENTIFICACIÓN VEHICULAR (TIV / TIVE) -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-blue-500/20 space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+                  <span class="text-sm">🪪</span>
+                  <span>1. Tarjeta de Identificación Vehicular (TIV / TIVE - SUNARP)</span>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/10 text-blue-500">SUNARP</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">N° Tarjeta / TIVE</label>
+                  <input type="text" id="inv-veh-tiv-num" placeholder="TIV-09418290" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">N° Motor</label>
+                  <input type="text" id="inv-veh-tiv-engine" placeholder="2GD-7489210" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Color Carrocería</label>
+                  <input type="text" id="inv-veh-tiv-color" placeholder="Blanco Puro" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Combustible</label>
+                  <select id="inv-veh-tiv-fuel" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                    <option value="Diésel">Diésel</option>
+                    <option value="Gasolina">Gasolina</option>
+                    <option value="GNV">GNV (Gas Natural)</option>
+                    <option value="GLP">GLP (Gas Licuado)</option>
+                    <option value="Híbrido">Híbrido</option>
+                    <option value="Eléctrico">Eléctrico</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Año de Fabricación</label>
+                  <input type="number" id="inv-veh-tiv-year" placeholder="2024" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Titular Registral (Propietario)</label>
+                  <input type="text" id="inv-veh-tiv-owner" placeholder="TURBONETWORK S.A.C." class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Zona / Sede Registral</label>
+                  <input type="text" id="inv-veh-tiv-registry" placeholder="SUNARP - Lima Sede Central" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Enlace Documento / Verificación TIVE (URL)</label>
+                <input type="url" id="inv-veh-tiv-url" placeholder="https://sunarp.gob.pe/consulta o enlace al PDF..." class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+              </div>
+            </div>
+
+            <!-- 2. SOAT (Seguro Obligatorio de Accidentes de Tránsito) -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-emerald-500/20 space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                <div class="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                  <span class="text-sm">🛡️</span>
+                  <span>2. SOAT (Seguro Obligatorio de Accidentes de Tránsito)</span>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-500">APESEG</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">N° Póliza / Certificado</label>
+                  <input type="text" id="inv-veh-soat-policy" placeholder="SOAT-RIMAC-2026-884910" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Compañía Aseguradora</label>
+                  <input type="text" id="inv-veh-soat-insurer" placeholder="Rímac / Pacífico / La Positiva" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Tipo de Certificado</label>
+                  <select id="inv-veh-soat-type" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                    <option value="electronico">Electrónico (Digital)</option>
+                    <option value="fisico">Físico (Sticker / Cartón)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Inicio Vigencia</label>
+                  <input type="date" id="inv-veh-soat-start" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Término / Vencimiento</label>
+                  <input type="date" id="inv-veh-soat-end" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Enlace / Consulta APESEG (URL)</label>
+                <input type="url" id="inv-veh-soat-url" placeholder="https://www.apeseg.org.pe/consultas-soat/..." class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+              </div>
+            </div>
+
+            <!-- 3. CERTIFICADO DE INSPECCIÓN TÉCNICA VEHICULAR (CITV) -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-indigo-500/20 space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                <div class="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">
+                  <span class="text-sm">📋</span>
+                  <span>3. Certificado de Inspección Técnica Vehicular (CITV - MTC)</span>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-500">MTC</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">N° Certificado CITV</label>
+                  <input type="text" id="inv-veh-citv-cert" placeholder="CITV-2026-081923" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Centro Autorizado MTC</label>
+                  <input type="text" id="inv-veh-citv-center" placeholder="Farenet / Lidercon..." class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Resultado de Inspección</label>
+                  <select id="inv-veh-citv-result" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                    <option value="aprobado">Aprobado</option>
+                    <option value="desaprobado">Desaprobado</option>
+                    <option value="no_aplica">No Aplica (Vehículo Nuevo)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Emisión</label>
+                  <input type="date" id="inv-veh-citv-issued" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Vencimiento</label>
+                  <input type="date" id="inv-veh-citv-exp" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Kilometraje en Revisión</label>
+                  <input type="number" id="inv-veh-citv-km" placeholder="21500" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Enlace / Consulta MTC CITV (URL)</label>
+                <input type="url" id="inv-veh-citv-url" placeholder="https://portal.mtc.gob.pe/citv o archivo..." class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- ======================================================== -->
-        <!-- SECCIÓN DOCUMENTACIÓN VEHICULAR (Condicional 'vehiculo')  -->
-        <!-- ======================================================== -->
-        <div id="inv-asset-vehicle-docs-fields" class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-blue-500/30 dark:border-blue-500/20 space-y-4 hidden">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+        <!-- TAB 3: FOTOS & MULTIMEDIA -->
+        <div id="tab-content-asset-multimedia" class="space-y-4 hidden">
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 space-y-3">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Galería de Fotos del Activo (URLs separadas por coma)
+            </label>
+            <input type="text" id="inv-asset-photos" oninput="renderAssetModalPhotosPreview()" placeholder="https://ejemplo.com/foto1.jpg, https://..." class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+            
+            <!-- Vista Previa Dinámica de Fotos -->
+            <div id="inv-asset-photos-preview-grid" class="flex flex-wrap gap-2 pt-1 min-h-[60px]">
+              <!-- Miniaturas dinámicas -->
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 space-y-2">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Enlace de Video de Inspección / Operación (YouTube o MP4)
+            </label>
             <div class="flex items-center gap-2">
-              <span class="text-base">🚗</span>
-              <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 block">Documentación Vehicular Obligatoria</span>
-                <span class="text-[10px] text-slate-500 dark:text-slate-400">TIV/TIVE SUNARP, SOAT APESEG y Certificado CITV MTC</span>
-              </div>
-            </div>
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-blue-500/10 text-blue-500">3 MÓDULOS</span>
-          </div>
-
-          <!-- 1. TARJETA DE IDENTIFICACIÓN VEHICULAR (TIV / TIVE) -->
-          <div class="p-3.5 rounded-xl bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 space-y-3">
-            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
-              <span>🪪</span>
-              <span>1. Tarjeta de Identificación Vehicular (TIV / TIVE - SUNARP)</span>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">N° Tarjeta / TIVE</label>
-                <input type="text" id="inv-veh-tiv-num" placeholder="TIV-09418290" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">N° Motor</label>
-                <input type="text" id="inv-veh-tiv-engine" placeholder="2GD-7489210" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Color Carrocería</label>
-                <input type="text" id="inv-veh-tiv-color" placeholder="Blanco Puro" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Combustible</label>
-                <select id="inv-veh-tiv-fuel" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-                  <option value="Diésel">Diésel</option>
-                  <option value="Gasolina">Gasolina</option>
-                  <option value="GNV">GNV (Gas Natural)</option>
-                  <option value="GLP">GLP (Gas Licuado)</option>
-                  <option value="Híbrido">Híbrido</option>
-                  <option value="Eléctrico">Eléctrico</option>
-                </select>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Año de Fabricación</label>
-                <input type="number" id="inv-veh-tiv-year" placeholder="2024" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Titular Registral (Propietario)</label>
-                <input type="text" id="inv-veh-tiv-owner" placeholder="TURBONETWORK S.A.C." class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Zona / Sede Registral</label>
-                <input type="text" id="inv-veh-tiv-registry" placeholder="SUNARP - Lima Sede Central" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-              </div>
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Enlace Documento / Verificación TIVE (URL)</label>
-              <input type="url" id="inv-veh-tiv-url" placeholder="https://sunarp.gob.pe/consulta o enlace al PDF..." class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
-            </div>
-          </div>
-
-          <!-- 2. SOAT (Seguro Obligatorio de Accidentes de Tránsito) -->
-          <div class="p-3.5 rounded-xl bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 space-y-3">
-            <div class="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
-              <span>🛡️</span>
-              <span>2. SOAT (Seguro Obligatorio de Accidentes de Tránsito)</span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">N° Póliza / Certificado</label>
-                <input type="text" id="inv-veh-soat-policy" placeholder="SOAT-RIMAC-2026-884910" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Compañía Aseguradora</label>
-                <input type="text" id="inv-veh-soat-insurer" placeholder="Rímac / Pacífico / La Positiva" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Tipo de Certificado</label>
-                <select id="inv-veh-soat-type" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-                  <option value="electronico">Electrónico (Digital)</option>
-                  <option value="fisico">Físico (Sticker / Cartón)</option>
-                </select>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Inicio Vigencia</label>
-                <input type="date" id="inv-veh-soat-start" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Término / Vencimiento</label>
-                <input type="date" id="inv-veh-soat-end" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-              </div>
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Enlace / Consulta APESEG (URL)</label>
-              <input type="url" id="inv-veh-soat-url" placeholder="https://www.apeseg.org.pe/consultas-soat/..." class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
-            </div>
-          </div>
-
-          <!-- 3. CERTIFICADO DE INSPECCIÓN TÉCNICA VEHICULAR (CITV) -->
-          <div class="p-3.5 rounded-xl bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 space-y-3">
-            <div class="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">
-              <span>📋</span>
-              <span>3. Certificado de Inspección Técnica Vehicular (CITV - MTC)</span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">N° Certificado CITV</label>
-                <input type="text" id="inv-veh-citv-cert" placeholder="CITV-2026-081923" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Centro Autorizado MTC</label>
-                <input type="text" id="inv-veh-citv-center" placeholder="Farenet / Lidercon..." class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Resultado de Inspección</label>
-                <select id="inv-veh-citv-result" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-                  <option value="aprobado">Aprobado</option>
-                  <option value="desaprobado">Desaprobado</option>
-                  <option value="no_aplica">No Aplica (Vehículo Nuevo)</option>
-                </select>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Emisión</label>
-                <input type="date" id="inv-veh-citv-issued" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Vencimiento</label>
-                <input type="date" id="inv-veh-citv-exp" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Kilometraje en Revisión</label>
-                <input type="number" id="inv-veh-citv-km" placeholder="21500" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
-              </div>
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Enlace / Consulta MTC CITV (URL)</label>
-              <input type="url" id="inv-veh-citv-url" placeholder="https://portal.mtc.gob.pe/citv o archivo..." class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+              <input type="url" id="inv-asset-video" placeholder="https://youtube.com/watch?v=... o mp4" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+              <button type="button" onclick="previewAssetVideo()" class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white text-xs font-semibold transition flex-shrink-0">
+                Ver Video
+              </button>
             </div>
           </div>
         </div>
 
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Descripción / Ficha Técnica</label>
-          <textarea id="inv-asset-desc" rows="2" placeholder="Detalles de equipamiento, accesorios incluidos, estado físico..." class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"></textarea>
-        </div>
-
-        <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-end space-x-2">
-          <button type="button" onclick="closeAssetModal()" class="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 text-xs font-semibold transition">Cancelar</button>
-          <button type="submit" id="btn-save-asset" class="px-5 py-2 rounded-xl btn-brand-primary text-xs font-semibold transition shadow-sm">+ Guardar Activo</button>
+        <!-- Footer Fijo con Acciones -->
+        <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between flex-shrink-0">
+          <div class="flex items-center gap-1.5 text-xs text-slate-400">
+            <span id="inv-asset-tab-indicator" class="font-mono text-[11px]">Paso 1 de 3: Ficha General</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="closeAssetModal()" class="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 text-xs font-semibold transition">Cancelar</button>
+            <button type="submit" id="btn-save-asset" class="px-5 py-2.5 rounded-xl btn-brand-primary text-xs font-bold transition shadow-sm flex items-center gap-1.5">
+              <span>💾</span>
+              <span id="btn-save-asset-text">Guardar Activo</span>
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -29852,13 +29920,163 @@ function renderAssetsTable() {
   }).join('');
 }
 
-function toggleAssetVehicleFields(category) {
-  const container = document.getElementById('inv-asset-vehicle-docs-fields');
-  if (!container) return;
+let currentAssetModalActiveTab = 'general';
+
+function switchAssetModalTab(tabId) {
+  currentAssetModalActiveTab = tabId;
+  const tabs = ['general', 'vehicle', 'multimedia'];
+  const titles = {
+    general: 'Paso 1 de 3: Ficha & Datos Generales',
+    vehicle: 'Paso 2 de 3: Documentación Vehicular (TIV, SOAT, CITV)',
+    multimedia: 'Paso 3 de 3: Galería & Evidencias Multimedia'
+  };
+
+  tabs.forEach(t => {
+    const btn = document.getElementById(`tab-btn-asset-${t}`);
+    const content = document.getElementById(`tab-content-asset-${t}`);
+    if (btn) {
+      if (t === tabId) {
+        btn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-blue-600 text-white shadow-2xs';
+      } else {
+        btn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition flex items-center gap-1.5';
+      }
+    }
+    if (content) {
+      if (t === tabId) {
+        content.classList.remove('hidden');
+      } else {
+        content.classList.add('hidden');
+      }
+    }
+  });
+
+  const indicator = document.getElementById('inv-asset-tab-indicator');
+  if (indicator) {
+    indicator.textContent = titles[tabId] || 'Paso 1 de 3';
+  }
+}
+
+function onAssetCategorySelectChange(category) {
+  const icon = document.getElementById('inv-asset-modal-icon');
+  const plateLabel = document.getElementById('inv-asset-plate-label');
+  const plateInput = document.getElementById('inv-asset-plate');
+  const vehicleBadge = document.getElementById('tab-badge-asset-vehicle');
+  const nonVehicleNotice = document.getElementById('inv-asset-non-vehicle-notice');
+  const vehicleModules = document.getElementById('inv-asset-vehicle-modules-container');
+
   if (category === 'vehiculo') {
-    container.classList.remove('hidden');
+    if (icon) icon.textContent = '🚗';
+    if (plateLabel) plateLabel.textContent = 'Placa del Vehículo *';
+    if (plateInput) plateInput.placeholder = 'Ej: ABC-123';
+    if (vehicleBadge) {
+      vehicleBadge.textContent = '3 Módulos';
+      vehicleBadge.className = 'px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-blue-500/20 text-blue-500';
+    }
+    if (nonVehicleNotice) nonVehicleNotice.classList.add('hidden');
+    if (vehicleModules) vehicleModules.classList.remove('hidden');
+  } else if (category === 'tecnologia') {
+    if (icon) icon.textContent = '💻';
+    if (plateLabel) plateLabel.textContent = 'N° de Serie (S/N)';
+    if (plateInput) plateInput.placeholder = 'Ej: SN-984210';
+    if (vehicleBadge) {
+      vehicleBadge.textContent = 'No aplica';
+      vehicleBadge.className = 'px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-slate-500/10 text-slate-400';
+    }
+    if (nonVehicleNotice) nonVehicleNotice.classList.remove('hidden');
+    if (vehicleModules) vehicleModules.classList.add('hidden');
   } else {
-    container.classList.add('hidden');
+    // mobiliario
+    if (icon) icon.textContent = '🪑';
+    if (plateLabel) plateLabel.textContent = 'N° Serie / Código Barras';
+    if (plateInput) plateInput.placeholder = 'Ej: S/N o Placa Mobiliario';
+    if (vehicleBadge) {
+      vehicleBadge.textContent = 'No aplica';
+      vehicleBadge.className = 'px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-slate-500/10 text-slate-400';
+    }
+    if (nonVehicleNotice) nonVehicleNotice.classList.remove('hidden');
+    if (vehicleModules) vehicleModules.classList.add('hidden');
+  }
+}
+
+function updateAssetModalStatusBadge(status) {
+  const badge = document.getElementById('inv-asset-modal-status-badge');
+  if (!badge) return;
+
+  const map = {
+    operativo: { text: '✅ Operativo', cls: 'px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' },
+    en_mantenimiento: { text: '🛠️ En Mantenimiento', cls: 'px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono bg-amber-500/10 text-amber-500 border border-amber-500/20' },
+    en_reserva: { text: '📦 En Reserva', cls: 'px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono bg-blue-500/10 text-blue-500 border border-blue-500/20' },
+    baja: { text: '❌ Dado de Baja', cls: 'px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono bg-rose-500/10 text-rose-500 border border-rose-500/20' }
+  };
+
+  const item = map[status] || map.operativo;
+  badge.textContent = item.text;
+  badge.className = item.cls;
+}
+
+function populateAssetAssignedDatalist() {
+  const datalist = document.getElementById('inv-asset-assigned-datalist');
+  if (!datalist) return;
+
+  const users = (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers) && currentUsers.length > 0)
+    ? currentUsers
+    : (typeof allSystemUsers !== 'undefined' && Array.isArray(allSystemUsers) ? allSystemUsers : []);
+
+  const defaultPresets = [
+    'Cuadrilla 1 - Fibra Óptica Troncal',
+    'Cuadrilla 2 - Instalaciones Domiciliarias FTTH',
+    'Cuadrilla 3 - Mantenimiento & Averías',
+    'Laboratorio NOC / Data Center Central',
+    'Almacén Central'
+  ];
+
+  let opts = defaultPresets.map(p => `<option value="${escapeHtml(p)}"></option>`).join('');
+  if (users.length > 0) {
+    opts += users.map(u => `<option value="${escapeHtml(u.name)} (${escapeHtml(u.roleName || u.role || 'Personal')})"></option>`).join('');
+  }
+  datalist.innerHTML = opts;
+}
+
+function renderAssetModalPhotosPreview() {
+  const input = document.getElementById('inv-asset-photos');
+  const container = document.getElementById('inv-asset-photos-preview-grid');
+  const countBadge = document.getElementById('tab-badge-asset-photos-count');
+  if (!input || !container) return;
+
+  const val = input.value.trim();
+  const urls = val ? val.split(',').map(s => s.trim()).filter(s => s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:image')) : [];
+
+  if (countBadge) {
+    if (urls.length > 0) {
+      countBadge.textContent = `${urls.length}`;
+      countBadge.classList.remove('hidden');
+    } else {
+      countBadge.classList.add('hidden');
+    }
+  }
+
+  if (urls.length === 0) {
+    container.innerHTML = '<span class="text-[11px] text-slate-400 italic py-2">Ingresa una o más URLs de imagen arriba para ver la vista previa.</span>';
+    return;
+  }
+
+  container.innerHTML = urls.map((url, idx) => `
+    <div class="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 group bg-slate-900 flex items-center justify-center">
+      <img src="${escapeHtml(url)}" alt="Foto ${idx + 1}" class="w-full h-full object-cover group-hover:scale-105 transition" onerror="this.src=''; this.alt='Error';">
+      <a href="${escapeHtml(url)}" target="_blank" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition">
+        Ver ↗
+      </a>
+    </div>
+  `).join('');
+}
+
+function previewAssetVideo() {
+  const videoInput = document.getElementById('inv-asset-video');
+  const url = videoInput ? videoInput.value.trim() : '';
+  if (url) {
+    window.open(url, '_blank');
+  } else {
+    showToast('Ingresa primero un enlace de video válido', 'warning');
   }
 }
 
@@ -29896,7 +30114,12 @@ function openCreateAssetModal() {
 
   resetAssetVehicleFields();
   const cat = document.getElementById('inv-asset-category')?.value || 'vehiculo';
-  toggleAssetVehicleFields(cat);
+
+  switchAssetModalTab('general');
+  onAssetCategorySelectChange(cat);
+  updateAssetModalStatusBadge('operativo');
+  populateAssetAssignedDatalist();
+  renderAssetModalPhotosPreview();
 
   if (modal) modal.classList.remove('hidden');
 }
@@ -29926,8 +30149,13 @@ function openEditAssetModal(id) {
   document.getElementById('inv-asset-video').value = (asset.videos || [])[0] || '';
   document.getElementById('inv-asset-desc').value = asset.description || '';
 
-  // Visibilidad y poblado de campos de vehículos
-  toggleAssetVehicleFields(cat);
+  // Configuración de tabs y vistas
+  switchAssetModalTab('general');
+  onAssetCategorySelectChange(cat);
+  updateAssetModalStatusBadge(asset.status || 'operativo');
+  populateAssetAssignedDatalist();
+  renderAssetModalPhotosPreview();
+
   const vDocs = asset.vehicleDocs || {};
   const tiv = vDocs.tiv || {};
   const soat = vDocs.soat || {};
