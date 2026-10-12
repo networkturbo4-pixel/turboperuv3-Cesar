@@ -355,12 +355,57 @@ export function saveCategories(tenantId: string, categories: InventoryCategory[]
   fs.writeFileSync(filePath, JSON.stringify(categories, null, 2), "utf-8");
 }
 
+export function ensureItemUnits(product: InventoryProduct): boolean {
+  let changed = false;
+  const stockCount = Math.max(1, Number(product.stock) || 1);
+
+  if (!product.itemUnits || !Array.isArray(product.itemUnits) || product.itemUnits.length === 0) {
+    product.itemUnits = [];
+    for (let i = 1; i <= stockCount; i++) {
+      const suffix = String(i).padStart(3, "0");
+      const unitSku = `${product.sku}-${suffix}`;
+      product.itemUnits.push({
+        id: `unit_${product.id}_${i}_${Date.now()}`,
+        itemNumber: i,
+        sku: unitSku,
+        barcode: unitSku,
+        status: "disponible",
+        serialNumber: "",
+        notes: "",
+        barcodePrinted: Boolean(product.barcodePrinted),
+        barcodePrintedAt: product.barcodePrintedAt,
+        createdAt: product.entryDate || product.createdAt || new Date().toISOString(),
+      });
+    }
+    changed = true;
+  } else if (product.itemUnits.length < stockCount) {
+    const curLen = product.itemUnits.length;
+    for (let i = curLen + 1; i <= stockCount; i++) {
+      const suffix = String(i).padStart(3, "0");
+      const unitSku = `${product.sku}-${suffix}`;
+      product.itemUnits.push({
+        id: `unit_${product.id}_${i}_${Date.now()}`,
+        itemNumber: i,
+        sku: unitSku,
+        barcode: unitSku,
+        status: "disponible",
+        serialNumber: "",
+        notes: "",
+        barcodePrinted: false,
+        createdAt: new Date().toISOString(),
+      });
+    }
+    changed = true;
+  }
+  return changed;
+}
+
 export function loadProducts(tenantId: string): InventoryProduct[] {
   const filePath = getTenantFilePath(tenantId, "inventory_products.json");
   if (!fs.existsSync(filePath)) {
     const initialProducts: InventoryProduct[] = DEFAULT_PRODUCTS.map((p) => {
       const stock = p.type === "epp" && p.variants ? p.variants.reduce((acc, v) => acc + (v.quantity || 0), 0) : p.stock;
-      return {
+      const prod: InventoryProduct = {
         ...p,
         stock,
         tenantId,
@@ -369,6 +414,8 @@ export function loadProducts(tenantId: string): InventoryProduct[] {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+      ensureItemUnits(prod);
+      return prod;
     });
     fs.writeFileSync(filePath, JSON.stringify(initialProducts, null, 2), "utf-8");
     return initialProducts;
@@ -380,7 +427,16 @@ export function loadProducts(tenantId: string): InventoryProduct[] {
 
     // Depuración automática de papelera > 60 días
     const { products, purgedCount } = purgeOldTrash(rawProducts);
-    if (purgedCount > 0) {
+
+    // Asegurar que TODOS los elementos del sistema tengan sus unidades individuales serializadas
+    let anyUnitsChanged = false;
+    products.forEach((p) => {
+      if (ensureItemUnits(p)) {
+        anyUnitsChanged = true;
+      }
+    });
+
+    if (purgedCount > 0 || anyUnitsChanged) {
       saveProducts(tenantId, products);
     }
 
@@ -528,6 +584,8 @@ export function createProduct(
     updatedAt: now,
   };
 
+  ensureItemUnits(newProduct);
+
   products.unshift(newProduct);
   saveProducts(tenantId, products);
 
@@ -586,6 +644,8 @@ export function updateProduct(
     status: calculateStatus(totalStock, stockMin, stockCritical),
     updatedAt: new Date().toISOString(),
   };
+
+  ensureItemUnits(updated);
 
   products[index] = updated;
   saveProducts(tenantId, products);

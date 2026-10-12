@@ -27673,8 +27673,51 @@ function generateBarcodeSvg(rawText, options = {}) {
 
 let barcodeUnitSubFilter = {}; // { [productId]: 'pending' | 'printed' | 'all' }
 
+function ensureProductUnits(p) {
+  if (!p) return [];
+  const stockCount = Math.max(1, parseInt(p.stock, 10) || 1);
+  if (!p.itemUnits || !Array.isArray(p.itemUnits) || p.itemUnits.length === 0) {
+    p.itemUnits = [];
+    for (let i = 1; i <= stockCount; i++) {
+      const suffix = String(i).padStart(3, '0');
+      const unitSku = `${p.sku}-${suffix}`;
+      p.itemUnits.push({
+        id: `unit_${p.id}_${i}_${Date.now()}`,
+        itemNumber: i,
+        sku: unitSku,
+        barcode: unitSku,
+        status: 'disponible',
+        serialNumber: '',
+        notes: '',
+        barcodePrinted: Boolean(p.barcodePrinted),
+        barcodePrintedAt: p.barcodePrintedAt,
+        createdAt: p.entryDate || p.createdAt || new Date().toISOString()
+      });
+    }
+  } else if (p.itemUnits.length < stockCount) {
+    const curLen = p.itemUnits.length;
+    for (let i = curLen + 1; i <= stockCount; i++) {
+      const suffix = String(i).padStart(3, '0');
+      const unitSku = `${p.sku}-${suffix}`;
+      p.itemUnits.push({
+        id: `unit_${p.id}_${i}_${Date.now()}`,
+        itemNumber: i,
+        sku: unitSku,
+        barcode: unitSku,
+        status: 'disponible',
+        serialNumber: '',
+        notes: '',
+        barcodePrinted: false,
+        createdAt: new Date().toISOString()
+      });
+    }
+  }
+  return p.itemUnits;
+}
+
 function updateBarcodeCounters() {
   const prods = inventoryProducts || [];
+  prods.forEach(p => ensureProductUnits(p));
   const total = prods.length;
 
   let printedCount = 0;
@@ -27857,6 +27900,9 @@ function toggleExpandBarcodeUnits(productId) {
 function renderBarcodeSelectionTable(search = '') {
   const tbody = document.getElementById('barcode-selection-tbody');
   if (!tbody) return;
+
+  // Garantizar que todos los productos del inventario cuenten con su desglose de unidades serializadas
+  (inventoryProducts || []).forEach(p => ensureProductUnits(p));
 
   const normalize = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const q = normalize(search);
