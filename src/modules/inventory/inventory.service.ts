@@ -13,6 +13,7 @@ import {
   AssetCategory,
   AssetStatus,
   AssetMaintenance,
+  AssetAssignment,
   AssetHistoryEvent,
   ProductPurchase,
   ClientInstallation,
@@ -198,6 +199,40 @@ const DEFAULT_ASSETS: Omit<FixedAsset, "tenantId" | "createdAt" | "updatedAt">[]
         createdAt: "2026-08-10T15:00:00Z",
       },
     ],
+    assignmentHistory: [
+      {
+        id: "assign-501-1",
+        assetId: 501,
+        assignedTo: "Cuadrilla 1 - Técnico Juan Pérez",
+        previousAssignedTo: "Cuadrilla 3 - Técnico Roberto Quispe",
+        assignedDate: "2026-03-12",
+        assignedTime: "08:30",
+        status: "activa",
+        location: "Sede Principal - Cochera A / Sector Norte",
+        purpose: "Operaciones de Mantenimiento y Averías FTTH",
+        condition: "Operativo (20,000 km, 2 llaves y herramientas)",
+        assignedBy: "Ing. Marco Silva (Jefe de Operaciones)",
+        notes: "Asignación activa para trabajos en sector norte. Cuenta con botiquín, conos y escalera telescópica.",
+        createdAt: "2026-03-12T08:30:00Z",
+      },
+      {
+        id: "assign-501-0",
+        assetId: 501,
+        assignedTo: "Cuadrilla 3 - Técnico Roberto Quispe",
+        previousAssignedTo: "Almacén Central / Flota Nueva",
+        assignedDate: "2025-03-10",
+        assignedTime: "09:00",
+        status: "finalizada",
+        returnDate: "2026-03-11",
+        returnTime: "18:00",
+        location: "Sede Principal",
+        purpose: "Tendido de Red Dorsal y Conectividad Troncal",
+        condition: "Nuevo 0 km a 19,850 km",
+        assignedBy: "Admin Sistema",
+        notes: "Relevo programado por cambio de proyecto a zona norte.",
+        createdAt: "2025-03-10T09:00:00Z",
+      },
+    ],
     eventHistory: [
       {
         id: "evt-1",
@@ -252,6 +287,23 @@ const DEFAULT_ASSETS: Omit<FixedAsset, "tenantId" | "createdAt" | "updatedAt">[]
         createdAt: "2026-06-15T12:00:00Z",
       },
     ],
+    assignmentHistory: [
+      {
+        id: "assign-502-1",
+        assetId: 502,
+        assignedTo: "Técnico Especialista Carlos Gómez",
+        previousAssignedTo: "Almacén Central",
+        assignedDate: "2025-06-20",
+        assignedTime: "11:30",
+        status: "activa",
+        location: "Laboratorio NOC / Cuadrilla Fibra",
+        purpose: "Empalmes y Fusiones de Precisión en Red Troncal",
+        condition: "Excelente (Incluye cortadora CT-50 y electrodos de repuesto)",
+        assignedBy: "Jefe de Almacén",
+        notes: "Equipo de alta precisión bajo custodia directa del técnico especialista.",
+        createdAt: "2025-06-20T11:30:00Z",
+      },
+    ],
     eventHistory: [
       {
         id: "evt-3",
@@ -283,6 +335,23 @@ const DEFAULT_ASSETS: Omit<FixedAsset, "tenantId" | "createdAt" | "updatedAt">[]
     ],
     videos: [],
     maintenanceHistory: [],
+    assignmentHistory: [
+      {
+        id: "assign-503-1",
+        assetId: 503,
+        assignedTo: "NOC DataCenter Central",
+        previousAssignedTo: "Almacén Central",
+        assignedDate: "2024-11-05",
+        assignedTime: "09:30",
+        status: "activa",
+        location: "Data Center Piso 2 - Fila A",
+        purpose: "Infraestructura de Servidores y OLTs Core",
+        condition: "Instalado y Anclado",
+        assignedBy: "Admin",
+        notes: "Uso exclusivo del personal NOC.",
+        createdAt: "2024-11-05T09:30:00Z",
+      },
+    ],
     eventHistory: [
       {
         id: "evt-4",
@@ -1147,11 +1216,31 @@ export function getAssetById(tenantId: string, id: number): FixedAsset | null {
 
 export function createAsset(
   tenantId: string,
-  payload: Omit<FixedAsset, "id" | "tenantId" | "maintenanceHistory" | "eventHistory" | "createdAt" | "updatedAt">
+  payload: Omit<FixedAsset, "id" | "tenantId" | "maintenanceHistory" | "assignmentHistory" | "eventHistory" | "createdAt" | "updatedAt">
 ): FixedAsset {
   const assets = loadAssets(tenantId);
   const newId = assets.length > 0 ? Math.max(...assets.map((a) => a.id)) + 1 : 501;
   const now = new Date().toISOString();
+  const dateStr = now.split("T")[0];
+  const timeStr = new Date().toTimeString().split(" ")[0].slice(0, 5);
+
+  const initialAssignments: AssetAssignment[] = payload.assignedTo && payload.assignedTo.trim() !== "" ? [
+    {
+      id: "assign-" + crypto.randomBytes(3).toString("hex"),
+      assetId: newId,
+      assignedTo: payload.assignedTo.trim(),
+      previousAssignedTo: "Almacén Central / Registro Nuevo",
+      assignedDate: payload.acquisitionDate || dateStr,
+      assignedTime: timeStr,
+      status: "activa",
+      location: payload.location || "Sede Principal",
+      purpose: "Asignación inicial de activo",
+      condition: "Nuevo / Operativo",
+      assignedBy: "Sistema / Registro Patrimonial",
+      notes: "Asignación inicial configurada durante el alta del activo.",
+      createdAt: now,
+    }
+  ] : [];
 
   const newAsset: FixedAsset = {
     ...payload,
@@ -1160,6 +1249,7 @@ export function createAsset(
     photos: Array.isArray(payload.photos) ? payload.photos : [],
     videos: Array.isArray(payload.videos) ? payload.videos : [],
     maintenanceHistory: [],
+    assignmentHistory: initialAssignments,
     eventHistory: [
       {
         id: crypto.randomUUID(),
@@ -1170,6 +1260,15 @@ export function createAsset(
         operator: "Sistema",
         date: now,
       },
+      ...(payload.assignedTo && payload.assignedTo.trim() !== "" ? [{
+        id: crypto.randomUUID(),
+        assetId: newId,
+        type: "asignacion" as const,
+        title: `Asignación Inicial a ${payload.assignedTo.trim()}`,
+        description: `Entrega inicial a ${payload.assignedTo.trim()} en ${payload.location || "Sede Principal"}.`,
+        operator: "Sistema",
+        date: now,
+      }] : []),
     ],
     createdAt: now,
     updatedAt: now,
@@ -1189,10 +1288,60 @@ export function updateAsset(
   const index = assets.findIndex((a) => a.id === id);
   if (index === -1) return null;
 
+  const current = assets[index];
+  const now = new Date();
+  const nowIso = now.toISOString();
+
+  // Sincronizar historial de asignaciones si cambia el responsable desde el formulario principal
+  if (payload.assignedTo !== undefined && payload.assignedTo.trim() !== (current.assignedTo || "").trim()) {
+    if (!current.assignmentHistory) current.assignmentHistory = [];
+    const dateStr = nowIso.split("T")[0];
+    const timeStr = now.toTimeString().split(" ")[0].slice(0, 5);
+
+    // Finalizar asignación activa anterior
+    current.assignmentHistory.forEach((a) => {
+      if (a.status === "activa") {
+        a.status = "finalizada";
+        a.returnDate = dateStr;
+        a.returnTime = timeStr;
+      }
+    });
+
+    const prevHolder = current.assignedTo || "Almacén Central";
+    if (payload.assignedTo.trim() !== "") {
+      current.assignmentHistory.unshift({
+        id: "assign-" + crypto.randomBytes(3).toString("hex"),
+        assetId: id,
+        assignedTo: payload.assignedTo.trim(),
+        previousAssignedTo: prevHolder,
+        assignedDate: dateStr,
+        assignedTime: timeStr,
+        status: "activa",
+        location: payload.location || current.location || "Base Operativa",
+        purpose: "Reasignación desde Ficha General",
+        condition: "Operativo",
+        assignedBy: "Admin / Edición General",
+        notes: "Responsable actualizado directamente desde la edición de datos generales del activo.",
+        createdAt: nowIso,
+      });
+
+      if (!current.eventHistory) current.eventHistory = [];
+      current.eventHistory.unshift({
+        id: crypto.randomUUID(),
+        assetId: id,
+        type: "asignacion",
+        title: `Reasignado a ${payload.assignedTo.trim()}`,
+        description: `Cambio de asignación de "${prevHolder}" a "${payload.assignedTo.trim()}".`,
+        operator: "Admin",
+        date: nowIso,
+      });
+    }
+  }
+
   assets[index] = {
-    ...assets[index],
+    ...current,
     ...payload,
-    updatedAt: new Date().toISOString(),
+    updatedAt: nowIso,
   };
 
   saveAssets(tenantId, assets);
@@ -1265,6 +1414,84 @@ export function addAssetEvent(
   asset.updatedAt = new Date().toISOString();
   saveAssets(tenantId, assets);
   return event;
+}
+
+export function addAssetAssignment(
+  tenantId: string,
+  assetId: number,
+  payload: {
+    assignedTo: string;
+    previousAssignedTo?: string;
+    assignedDate: string;
+    assignedTime?: string;
+    location?: string;
+    purpose?: string;
+    condition?: string;
+    assignedBy?: string;
+    documentUrl?: string;
+    notes?: string;
+  }
+): AssetAssignment | null {
+  const assets = loadAssets(tenantId);
+  const asset = assets.find((a) => a.id === assetId);
+  if (!asset) return null;
+
+  const now = new Date();
+  const nowIso = now.toISOString();
+  if (!asset.assignmentHistory) {
+    asset.assignmentHistory = [];
+  }
+
+  const prevHolder = payload.previousAssignedTo || asset.assignedTo || "Almacén Central";
+
+  // Relevar / finalizar asignación activa previa
+  asset.assignmentHistory.forEach((item) => {
+    if (item.status === "activa") {
+      item.status = "finalizada";
+      item.returnDate = payload.assignedDate;
+      item.returnTime = payload.assignedTime || "";
+    }
+  });
+
+  const assignment: AssetAssignment = {
+    id: "assign-" + crypto.randomBytes(3).toString("hex"),
+    assetId,
+    assignedTo: payload.assignedTo.trim(),
+    previousAssignedTo: prevHolder,
+    assignedDate: payload.assignedDate,
+    assignedTime: payload.assignedTime || now.toTimeString().split(" ")[0].slice(0, 5),
+    status: "activa",
+    location: payload.location || asset.location || "",
+    purpose: payload.purpose || "",
+    condition: payload.condition || "Operativo",
+    assignedBy: payload.assignedBy || "Supervisor",
+    documentUrl: payload.documentUrl || "",
+    notes: payload.notes || "",
+    createdAt: nowIso,
+  };
+
+  asset.assignmentHistory.unshift(assignment);
+  asset.assignedTo = assignment.assignedTo;
+  if (assignment.location) {
+    asset.location = assignment.location;
+  }
+
+  if (!asset.eventHistory) {
+    asset.eventHistory = [];
+  }
+  asset.eventHistory.unshift({
+    id: crypto.randomUUID(),
+    assetId,
+    type: "asignacion",
+    title: `Asignación a ${assignment.assignedTo}`,
+    description: `Asignado el ${assignment.assignedDate}${assignment.assignedTime ? ` a las ${assignment.assignedTime}` : ""}. Venía de: ${prevHolder}. Motivo: ${assignment.purpose || "Operativo"}. Ubicación: ${assignment.location || "Sede"}. Condición: ${assignment.condition || "Operativo"}. Autorizado por: ${assignment.assignedBy || "Admin"}`,
+    operator: assignment.assignedBy || "Admin",
+    date: nowIso,
+  });
+
+  asset.updatedAt = nowIso;
+  saveAssets(tenantId, assets);
+  return assignment;
 }
 
 // ==========================================

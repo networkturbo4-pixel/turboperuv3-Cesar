@@ -14533,21 +14533,29 @@
           </div>
         </div>
 
-        <!-- Subpestañas del Activo: Mantenimientos vs Línea de Tiempo -->
+        <!-- Subpestañas del Activo: Mantenimientos vs Asignaciones vs Línea de Tiempo -->
         <div class="space-y-3 pt-2 border-t border-slate-200 dark:border-white/10">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2 p-1 bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-semibold">
-              <button type="button" id="tab-btn-asset-maint" onclick="switchAssetDetailTab('maint')" class="px-3 py-1.5 rounded-lg btn-brand-primary text-xs transition">
-                🛠️ Historial de Mantenimientos
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-semibold">
+              <button type="button" id="tab-btn-asset-maint" onclick="switchAssetDetailTab('maint')" class="px-3 py-1.5 rounded-lg btn-brand-primary text-xs transition flex items-center gap-1.5">
+                <span>🛠️ Historial de Mantenimientos</span>
+                <span id="tab-badge-asset-maint" class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-white/20 text-white">0</span>
               </button>
-              <button type="button" id="tab-btn-asset-events" onclick="switchAssetDetailTab('events')" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition">
-                📜 Línea de Vida & Eventos
+              <button type="button" id="tab-btn-asset-assignments" onclick="switchAssetDetailTab('assignments')" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                <span>👤 Historial de Asignaciones</span>
+                <span id="tab-badge-asset-assignments" class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-500">0</span>
+              </button>
+              <button type="button" id="tab-btn-asset-events" onclick="switchAssetDetailTab('events')" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                <span>📜 Línea de Vida & Eventos</span>
               </button>
             </div>
 
             <div id="dtl-asset-actions-bar">
               <button type="button" id="btn-add-asset-maint" onclick="openAddAssetMaintenanceModal()" class="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition shadow-2xs flex items-center gap-1">
                 <span>+ Registrar Mantenimiento</span>
+              </button>
+              <button type="button" id="btn-add-asset-assignment" onclick="openAddAssetAssignmentModal()" class="hidden px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-2xs flex items-center gap-1">
+                <span>+ Registrar Asignación</span>
               </button>
               <button type="button" id="btn-add-asset-event" onclick="openAddAssetEventModal()" class="hidden px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition shadow-2xs flex items-center gap-1">
                 <span>+ Registrar Evento</span>
@@ -14562,7 +14570,29 @@
             </div>
           </div>
 
-          <!-- Contenedor Tab 2: Línea de Vida del Activo -->
+          <!-- Contenedor Tab 2: Historial de Asignaciones Detalladas -->
+          <div id="dtl-asset-assignments-tab" class="space-y-3 hidden">
+            <!-- Banner de Asignación Activa Actual -->
+            <div id="dtl-asset-active-assignment-banner" class="p-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10">
+              <!-- Renderizado dinámico -->
+            </div>
+
+            <!-- Lista cronológica detallada -->
+            <div class="space-y-2 pt-1">
+              <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
+                <span class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Trazabilidad Cronológica de Entregas & Relevos
+                </span>
+                <span id="dtl-asset-assignments-count-label" class="font-mono text-[10px] text-slate-500">0 registros</span>
+              </div>
+              <div id="dtl-asset-assignments-list" class="space-y-2.5">
+                <!-- Renderizado dinámico -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Contenedor Tab 3: Línea de Vida del Activo -->
           <div id="dtl-asset-events-tab" class="space-y-2.5 hidden">
             <div id="dtl-asset-events-list" class="space-y-2.5">
               <!-- Renderizado dinámico -->
@@ -14709,6 +14739,89 @@
         <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-end space-x-2">
           <button type="button" onclick="closeAssetEventModal()" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition">Cancelar</button>
           <button type="submit" class="px-5 py-2 rounded-xl btn-brand-primary text-xs font-semibold transition shadow-sm">+ Guardar Evento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 15: REGISTRAR ASIGNACIÓN DE ACTIVO FIJO            -->
+  <!-- ======================================================== -->
+  <div id="inventory-asset-assignment-modal" class="fixed inset-0 z-[300] hidden flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+    <div class="pro-card max-w-lg w-full p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col my-auto overflow-hidden">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 text-sm font-bold">👤</span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Registrar Nueva Asignación</h3>
+          </div>
+          <p id="inv-assign-asset-title" class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 ml-7">Activo</p>
+        </div>
+        <button type="button" onclick="closeAssetAssignmentModal()" class="p-1 rounded-lg text-slate-400 hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="inv-asset-assign-form" onsubmit="handleSaveAssetAssignment(event)" class="space-y-3.5 pt-4">
+        <input type="hidden" id="inv-assign-asset-id" value="">
+
+        <!-- Banner informativo de asignación previa -->
+        <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between text-xs">
+          <span class="text-slate-500 dark:text-slate-400">Responsable Anterior / Actual:</span>
+          <span id="inv-assign-prev-assigned" class="font-bold text-slate-800 dark:text-slate-200 font-mono">-</span>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Nuevo Responsable o Cuadrilla *</label>
+          <input type="text" id="inv-assign-to" list="inv-asset-assigned-datalist" required placeholder="Selecciona o escribe el técnico o cuadrilla..." class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Fecha de Asignación *</label>
+            <input type="date" id="inv-assign-date" required class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Hora de Asignación *</label>
+            <input type="time" id="inv-assign-time" required class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Ubicación / Base Asignada</label>
+            <input type="text" id="inv-assign-location" placeholder="Ej: Sede Central / Sector Norte" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Motivo / Proyecto / Misión</label>
+            <input type="text" id="inv-assign-purpose" placeholder="Ej: Operaciones y Averías FTTH" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Condición / Kilometraje Entrega</label>
+            <input type="text" id="inv-assign-condition" placeholder="Ej: Operativo 22,000 km, 2 llaves" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Entregado / Autorizado por</label>
+            <input type="text" id="inv-assign-by" placeholder="Ej: Jefe de Operaciones / Almacén" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Acta Digital o Documento Firmado (URL opcional)</label>
+          <input type="url" id="inv-assign-doc" placeholder="https://... (Enlace al PDF o foto del acta de entrega)" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Observaciones Detalladas de la Entrega</label>
+          <textarea id="inv-assign-notes" rows="2" placeholder="Detalla accesorios entregados, herramientas, llaves, tarjeta de combustible, nivel de gasolina, etc..." class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeAssetAssignmentModal()" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shadow-sm">+ Guardar Asignación</button>
         </div>
       </form>
     </div>
@@ -30594,6 +30707,11 @@ function openAssetDetailModal(id) {
     }
   }
 
+  const maintBadge = document.getElementById('tab-badge-asset-maint');
+  if (maintBadge) maintBadge.textContent = (asset.maintenanceHistory || []).length;
+  const assignBadge = document.getElementById('tab-badge-asset-assignments');
+  if (assignBadge) assignBadge.textContent = (asset.assignmentHistory || []).length;
+
   switchAssetDetailTab('maint');
 
   const modal = document.getElementById('inventory-asset-detail-modal');
@@ -30608,26 +30726,45 @@ function closeAssetDetailModal() {
 function switchAssetDetailTab(tab) {
   activeAssetDetailTab = tab;
   const btnMaint = document.getElementById('tab-btn-asset-maint');
+  const btnAssign = document.getElementById('tab-btn-asset-assignments');
   const btnEvents = document.getElementById('tab-btn-asset-events');
+
   const tabMaint = document.getElementById('dtl-asset-maint-tab');
+  const tabAssign = document.getElementById('dtl-asset-assignments-tab');
   const tabEvents = document.getElementById('dtl-asset-events-tab');
+
   const btnAddMaint = document.getElementById('btn-add-asset-maint');
+  const btnAddAssign = document.getElementById('btn-add-asset-assignment');
   const btnAddEvent = document.getElementById('btn-add-asset-event');
+
+  if (tabMaint) tabMaint.classList.add('hidden');
+  if (tabAssign) tabAssign.classList.add('hidden');
+  if (tabEvents) tabEvents.classList.add('hidden');
+
+  const inactiveCls = "px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5";
+  const activeCls = "px-3 py-1.5 rounded-lg btn-brand-primary text-xs transition flex items-center gap-1.5";
+
+  if (btnMaint) btnMaint.className = inactiveCls;
+  if (btnAssign) btnAssign.className = inactiveCls;
+  if (btnEvents) btnEvents.className = inactiveCls;
+
+  if (btnAddMaint) btnAddMaint.classList.add('hidden');
+  if (btnAddAssign) btnAddAssign.classList.add('hidden');
+  if (btnAddEvent) btnAddEvent.classList.add('hidden');
 
   if (tab === 'maint') {
     if (tabMaint) tabMaint.classList.remove('hidden');
-    if (tabEvents) tabEvents.classList.add('hidden');
-    if (btnMaint) btnMaint.className = "px-3 py-1.5 rounded-lg btn-brand-primary text-xs transition";
-    if (btnEvents) btnEvents.className = "px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition";
+    if (btnMaint) btnMaint.className = activeCls;
     if (btnAddMaint) btnAddMaint.classList.remove('hidden');
-    if (btnAddEvent) btnAddEvent.classList.add('hidden');
     renderAssetMaintenanceList();
+  } else if (tab === 'assignments') {
+    if (tabAssign) tabAssign.classList.remove('hidden');
+    if (btnAssign) btnAssign.className = activeCls;
+    if (btnAddAssign) btnAddAssign.classList.remove('hidden');
+    renderAssetAssignmentsList();
   } else {
-    if (tabMaint) tabMaint.classList.add('hidden');
     if (tabEvents) tabEvents.classList.remove('hidden');
-    if (btnEvents) btnEvents.className = "px-3 py-1.5 rounded-lg btn-brand-primary text-xs transition";
-    if (btnMaint) btnMaint.className = "px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition";
-    if (btnAddMaint) btnAddMaint.classList.add('hidden');
+    if (btnEvents) btnEvents.className = activeCls;
     if (btnAddEvent) btnAddEvent.classList.remove('hidden');
     renderAssetEventsList();
   }
@@ -30815,6 +30952,220 @@ async function handleSaveAssetEvent(e) {
       }
     } else {
       showToast(data.message || 'Error al registrar evento', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión con el servidor', 'error');
+  }
+}
+
+function renderAssetAssignmentsList() {
+  const banner = document.getElementById('dtl-asset-active-assignment-banner');
+  const list = document.getElementById('dtl-asset-assignments-list');
+  const countLabel = document.getElementById('dtl-asset-assignments-count-label');
+  const tabBadge = document.getElementById('tab-badge-asset-assignments');
+  if (!currentDetailAsset) return;
+
+  const rawAssignments = Array.isArray(currentDetailAsset.assignmentHistory) ? currentDetailAsset.assignmentHistory : [];
+  if (tabBadge) tabBadge.textContent = rawAssignments.length;
+  if (countLabel) countLabel.textContent = `${rawAssignments.length} registro(s)`;
+
+  // Buscar asignación activa
+  const activeAssignment = rawAssignments.find(a => a.status === 'activa');
+
+  if (banner) {
+    if (activeAssignment) {
+      banner.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-lg flex-shrink-0 border border-emerald-500/30">
+              👷
+            </div>
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono border border-emerald-500/30 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Asignación Activa Vigente
+                </span>
+                <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">ID: ${activeAssignment.id}</span>
+              </div>
+              <h4 class="text-sm font-bold text-slate-900 dark:text-white">${escapeHtml(activeAssignment.assignedTo)}</h4>
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
+                <span>📅 <strong>Asignado el:</strong> ${activeAssignment.assignedDate} ${activeAssignment.assignedTime ? `• ⏰ ${activeAssignment.assignedTime} hrs` : ''}</span>
+                <span>📍 <strong>Ubicación:</strong> ${escapeHtml(activeAssignment.location || currentDetailAsset.location || 'Sede Central')}</span>
+                <span>🎯 <strong>Misión:</strong> ${escapeHtml(activeAssignment.purpose || 'Operaciones')}</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" onclick="openAddAssetAssignmentModal()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-2xs flex items-center justify-center gap-1.5 flex-shrink-0 self-start sm:self-center">
+            <span>🔄 Relevar / Reasignar</span>
+          </button>
+        </div>
+      `;
+    } else {
+      banner.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="text-amber-500 text-base">⚠️</span>
+            <span class="text-slate-600 dark:text-slate-300">No hay una asignación formal activa en el historial. Responsable actual en ficha: <strong class="text-slate-900 dark:text-white">${escapeHtml(currentDetailAsset.assignedTo || 'Sin asignar')}</strong></span>
+          </div>
+          <button type="button" onclick="openAddAssetAssignmentModal()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-2xs flex items-center gap-1 flex-shrink-0">
+            <span>+ Asignar Responsable</span>
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  if (list) {
+    if (rawAssignments.length === 0) {
+      list.innerHTML = '<span class="text-xs text-slate-400 italic block py-4 text-center">No hay registros en el historial de asignaciones de este activo. Haz clic en "+ Registrar Asignación" para documentar la entrega del activo.</span>';
+      return;
+    }
+
+    list.innerHTML = rawAssignments.map(a => {
+      const isActive = a.status === 'activa';
+      const statusBadge = isActive
+        ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono border border-emerald-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Vigente Actual</span>'
+        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-500 dark:text-slate-400 font-mono border border-slate-500/20">Relevada / Finalizada</span>';
+
+      return `
+        <div class="p-3.5 rounded-xl ${isActive ? 'bg-emerald-500/[0.04] border-emerald-500/30' : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/10'} border space-y-2.5 transition hover:border-slate-300 dark:hover:border-white/20">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-slate-200/60 dark:border-white/5">
+            <div class="flex items-center gap-2">
+              ${statusBadge}
+              <span class="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1">
+                👤 ${escapeHtml(a.assignedTo)}
+              </span>
+            </div>
+            <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <span class="font-semibold text-slate-700 dark:text-slate-200">📅 ${a.assignedDate || '-'}</span>
+              <span>⏰ ${a.assignedTime ? `${a.assignedTime} hrs` : '--:--'}</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+            <div class="p-2 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
+              <span class="block text-[10px] uppercase font-bold text-slate-400">Venía de / Relevado de</span>
+              <span class="font-medium text-slate-700 dark:text-slate-300 truncate block mt-0.5">${escapeHtml(a.previousAssignedTo || 'Almacén Central')}</span>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
+              <span class="block text-[10px] uppercase font-bold text-slate-400">Ubicación / Base</span>
+              <span class="font-medium text-slate-700 dark:text-slate-300 truncate block mt-0.5">📍 ${escapeHtml(a.location || 'Sede Central')}</span>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
+              <span class="block text-[10px] uppercase font-bold text-slate-400">Motivo / Proyecto</span>
+              <span class="font-medium text-slate-700 dark:text-slate-300 truncate block mt-0.5">🎯 ${escapeHtml(a.purpose || 'Operaciones')}</span>
+            </div>
+            <div class="p-2 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
+              <span class="block text-[10px] uppercase font-bold text-slate-400">Condición / Kilometraje</span>
+              <span class="font-medium text-slate-700 dark:text-slate-300 truncate block mt-0.5">🔍 ${escapeHtml(a.condition || 'Operativo')}</span>
+            </div>
+          </div>
+
+          ${a.notes ? `
+            <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-white/[0.03] text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2 border border-slate-200/40 dark:border-white/5">
+              <span class="text-amber-500 flex-shrink-0 mt-0.5">📝</span>
+              <span class="leading-relaxed"><strong>Observaciones de entrega:</strong> ${escapeHtml(a.notes)}</span>
+            </div>
+          ` : ''}
+
+          <div class="flex flex-wrap items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100 dark:border-white/5">
+            <span>Entregado / Autorizado por: <strong class="text-slate-700 dark:text-slate-300">${escapeHtml(a.assignedBy || 'Supervisor')}</strong></span>
+            <div class="flex items-center gap-3">
+              ${a.returnDate ? `
+                <span class="text-slate-500 font-mono">↩️ Relevado el: ${a.returnDate} ${a.returnTime ? `(${a.returnTime} hrs)` : ''}</span>
+              ` : ''}
+              ${a.documentUrl ? `
+                <a href="${escapeHtml(a.documentUrl)}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 dark:text-emerald-400 hover:underline font-bold flex items-center gap-1">
+                  <span>📄 Ver Acta Firmada ↗</span>
+                </a>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function openAddAssetAssignmentModal() {
+  if (!currentDetailAsset) return;
+  populateAssetAssignedDatalist();
+
+  document.getElementById('inv-assign-asset-id').value = currentDetailAsset.id;
+  document.getElementById('inv-assign-asset-title').textContent = `${currentDetailAsset.name} (${currentDetailAsset.code})`;
+  document.getElementById('inv-assign-prev-assigned').textContent = currentDetailAsset.assignedTo || 'Almacén Central / Sin Asignar';
+
+  const form = document.getElementById('inv-asset-assign-form');
+  if (form) form.reset();
+
+  const now = new Date();
+  document.getElementById('inv-assign-date').value = now.toISOString().split('T')[0];
+  document.getElementById('inv-assign-time').value = now.toTimeString().split(' ')[0].slice(0, 5);
+  document.getElementById('inv-assign-location').value = currentDetailAsset.location || 'Sede Principal';
+  document.getElementById('inv-assign-condition').value = currentDetailAsset.category === 'vehiculo' ? 'Operativo, llaves y documentos a bordo' : 'Operativo, en óptimas condiciones';
+
+  const currentUserName = (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : 'Jefatura de Operaciones';
+  document.getElementById('inv-assign-by').value = currentUserName;
+
+  const modal = document.getElementById('inventory-asset-assignment-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeAssetAssignmentModal() {
+  const modal = document.getElementById('inventory-asset-assignment-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleSaveAssetAssignment(e) {
+  e.preventDefault();
+  if (!currentDetailAsset) return;
+  const assetId = currentDetailAsset.id;
+
+  const to = document.getElementById('inv-assign-to').value.trim();
+  if (!to) {
+    showToast('Ingresa el nombre del responsable o cuadrilla', 'warning');
+    return;
+  }
+
+  const payload = {
+    assignedTo: to,
+    previousAssignedTo: currentDetailAsset.assignedTo || 'Almacén Central',
+    assignedDate: document.getElementById('inv-assign-date').value,
+    assignedTime: document.getElementById('inv-assign-time').value,
+    location: document.getElementById('inv-assign-location').value.trim(),
+    purpose: document.getElementById('inv-assign-purpose').value.trim(),
+    condition: document.getElementById('inv-assign-condition').value.trim(),
+    assignedBy: document.getElementById('inv-assign-by').value.trim(),
+    documentUrl: document.getElementById('inv-assign-doc').value.trim(),
+    notes: document.getElementById('inv-assign-notes').value.trim()
+  };
+
+  try {
+    const res = await fetch(`/api/inventory/assets/${assetId}/assignments`, {
+      method: 'POST',
+      headers: getInventoryHeaders(),
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('¡Asignación registrada exitosamente!', 'success');
+      closeAssetAssignmentModal();
+      await loadAssetsModule();
+      const updated = inventoryAssets.find(a => a.id === assetId);
+      if (updated) {
+        currentDetailAsset = updated;
+        const assignedLabel = document.getElementById('dtl-asset-assigned');
+        if (assignedLabel) assignedLabel.textContent = updated.assignedTo || 'Sin asignar';
+        const locationLabel = document.getElementById('dtl-asset-location');
+        if (locationLabel) locationLabel.textContent = updated.location || 'Sede Central';
+        const badgeAssign = document.getElementById('tab-badge-asset-assignments');
+        if (badgeAssign) badgeAssign.textContent = (updated.assignmentHistory || []).length;
+        renderAssetAssignmentsList();
+        renderAssetEventsList();
+      }
+    } else {
+      showToast(data.message || 'Error al guardar asignación', 'error');
     }
   } catch (err) {
     showToast('Error de conexión con el servidor', 'error');

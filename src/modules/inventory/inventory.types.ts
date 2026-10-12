@@ -181,6 +181,25 @@ export interface VehicleDocumentation {
   citv?: VehicleCITV;
 }
 
+export interface AssetAssignment {
+  id: string;
+  assetId: number;
+  assignedTo: string;          // Técnico, chofer o cuadrilla asignada
+  previousAssignedTo?: string; // Responsable anterior o Almacén Central
+  assignedDate: string;        // Fecha de entrega/asignación (YYYY-MM-DD)
+  assignedTime?: string;       // Hora de entrega/asignación (HH:mm)
+  status: "activa" | "finalizada" | "devuelto"; // Estado de la asignación
+  returnDate?: string;         // Fecha de relevo/devolución
+  returnTime?: string;         // Hora de relevo/devolución
+  location?: string;           // Base o sede operativa
+  purpose?: string;            // Motivo / Proyecto / Misión
+  condition?: string;          // Condición física / Kilometraje al entregar
+  assignedBy?: string;         // Supervisor o persona que realiza la entrega
+  documentUrl?: string;        // Enlace a acta de entrega o documento firmado
+  notes?: string;              // Observaciones detalladas (llaves, herramientas, combustible)
+  createdAt: string;
+}
+
 export interface FixedAsset {
   id: number;
   tenantId: string;
@@ -200,6 +219,7 @@ export interface FixedAsset {
   photos: string[];
   videos: string[];
   maintenanceHistory: AssetMaintenance[];
+  assignmentHistory?: AssetAssignment[];
   eventHistory: AssetHistoryEvent[];
   vehicleDocs?: VehicleDocumentation; // Tarjeta de Identificación Vehicular, SOAT y CITV
   createdAt: string;

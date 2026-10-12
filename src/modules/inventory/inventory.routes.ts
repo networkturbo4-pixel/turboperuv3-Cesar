@@ -27,6 +27,7 @@ import {
   deleteAsset,
   addAssetMaintenance,
   addAssetEvent,
+  addAssetAssignment,
   getProductTraceability,
   createPurchase,
   createClientInstallation,
@@ -628,6 +629,44 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     return reply.status(201).send({ success: true, message: "Evento registrado en historial", data: event });
+  });
+
+  fastify.post("/inventory/assets/:id/assignments", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+
+    const schema = z.object({
+      assignedTo: z.string().min(1, "El nuevo responsable o cuadrilla es requerido"),
+      previousAssignedTo: z.string().optional(),
+      assignedDate: z.string().min(1, "La fecha de asignación es requerida"),
+      assignedTime: z.string().optional(),
+      location: z.string().optional(),
+      purpose: z.string().optional(),
+      condition: z.string().optional(),
+      assignedBy: z.string().optional(),
+      documentUrl: z.string().optional(),
+      notes: z.string().optional(),
+    });
+
+    const parse = schema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ success: false, errors: parse.error.format() });
+    }
+
+    const assignment = addAssetAssignment(tenantId, numId, parse.data);
+    if (!assignment) {
+      return reply.status(404).send({ success: false, message: "Activo no encontrado" });
+    }
+
+    return reply.status(201).send({
+      success: true,
+      message: "Asignación registrada exitosamente en el historial",
+      data: assignment,
+    });
   });
 
   // ========================================================

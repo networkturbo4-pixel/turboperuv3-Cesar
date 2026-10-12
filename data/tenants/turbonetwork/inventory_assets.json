@@ -8,8 +8,8 @@
     "model": "Hilux Doble Cabina 2.4 TDI",
     "plateNumber": "ABC-123",
     "serialNumber": "8AJFA8920194821",
-    "assignedTo": "Cuadrilla 1 - Técnico Juan Pérez",
-    "location": "Sede Principal - Cochera A",
+    "assignedTo": "Cuadrilla 2 - Alex Rivera",
+    "location": "Sede Sur - Chorrillos",
     "acquisitionDate": "2025-03-10",
     "acquisitionCost": 32500,
     "status": "operativo",
@@ -35,7 +35,70 @@
         "createdAt": "2026-08-10T15:00:00Z"
       }
     ],
+    "assignmentHistory": [
+      {
+        "id": "assign-8d04dd",
+        "assetId": 501,
+        "assignedTo": "Cuadrilla 2 - Alex Rivera",
+        "previousAssignedTo": "Cuadrilla 1 - Técnico Juan Pérez",
+        "assignedDate": "2026-10-12",
+        "assignedTime": "18:15",
+        "status": "activa",
+        "location": "Sede Sur - Chorrillos",
+        "purpose": "Guardia Tecnica FTTH",
+        "condition": "Excelente 24800 km",
+        "assignedBy": "Ing. Marco Silva",
+        "documentUrl": "",
+        "notes": "Entrega con llaves originales y tarjeta de combustible.",
+        "createdAt": "2026-10-12T23:14:45.250Z"
+      },
+      {
+        "id": "assign-501-1",
+        "assetId": 501,
+        "assignedTo": "Cuadrilla 1 - Técnico Juan Pérez",
+        "previousAssignedTo": "Cuadrilla 3 - Técnico Roberto Quispe",
+        "assignedDate": "2026-03-12",
+        "assignedTime": "08:30",
+        "status": "finalizada",
+        "location": "Sede Principal - Cochera A / Sector Norte",
+        "purpose": "Operaciones de Mantenimiento y Averías FTTH",
+        "condition": "Operativo (20,000 km, 2 llaves y herramientas)",
+        "assignedBy": "Ing. Marco Silva (Jefe de Operaciones)",
+        "documentUrl": "",
+        "notes": "Asignación activa para trabajos en sector norte. Cuenta con botiquín, conos y escalera telescópica.",
+        "createdAt": "2026-03-12T08:30:00Z",
+        "returnDate": "2026-10-12",
+        "returnTime": "18:15"
+      },
+      {
+        "id": "assign-501-0",
+        "assetId": 501,
+        "assignedTo": "Cuadrilla 3 - Técnico Roberto Quispe",
+        "previousAssignedTo": "Almacén Central / Flota Nueva",
+        "assignedDate": "2025-03-10",
+        "assignedTime": "09:00",
+        "status": "finalizada",
+        "returnDate": "2026-03-11",
+        "returnTime": "18:00",
+        "location": "Sede Principal",
+        "purpose": "Tendido de Red Dorsal y Conectividad Troncal",
+        "condition": "Nuevo 0 km a 19,850 km",
+        "assignedBy": "Admin Sistema",
+        "documentUrl": "",
+        "notes": "Relevo programado por cambio de proyecto a zona norte.",
+        "createdAt": "2025-03-10T09:00:00Z"
+      }
+    ],
     "eventHistory": [
+      {
+        "id": "c3e69bf8-d79d-40d9-9773-c591368db10f",
+        "assetId": 501,
+        "type": "asignacion",
+        "title": "Asignación a Cuadrilla 2 - Alex Rivera",
+        "description": "Asignado el 2026-10-12 a las 18:15. Venía de: Cuadrilla 1 - Técnico Juan Pérez. Motivo: Guardia Tecnica FTTH. Ubicación: Sede Sur - Chorrillos. Condición: Excelente 24800 km. Autorizado por: Ing. Marco Silva",
+        "operator": "Ing. Marco Silva",
+        "date": "2026-10-12T23:14:45.250Z"
+      },
       {
         "id": "evt-1",
         "assetId": 501,
@@ -57,7 +120,7 @@
     ],
     "tenantId": "turbonetwork",
     "createdAt": "2026-09-30T15:19:09.885Z",
-    "updatedAt": "2026-09-30T15:19:09.885Z"
+    "updatedAt": "2026-10-12T23:14:45.250Z"
   },
   {
     "id": 502,
@@ -90,6 +153,24 @@
         "photos": [],
         "videos": [],
         "createdAt": "2026-06-15T12:00:00Z"
+      }
+    ],
+    "assignmentHistory": [
+      {
+        "id": "assign-502-1",
+        "assetId": 502,
+        "assignedTo": "Técnico Especialista Carlos Gómez",
+        "previousAssignedTo": "Almacén Central",
+        "assignedDate": "2025-06-20",
+        "assignedTime": "11:30",
+        "status": "activa",
+        "location": "Laboratorio NOC / Cuadrilla Fibra",
+        "purpose": "Empalmes y Fusiones de Precisión en Red Troncal",
+        "condition": "Excelente (Incluye cortadora CT-50 y electrodos de repuesto)",
+        "assignedBy": "Jefe de Almacén",
+        "documentUrl": "",
+        "notes": "Equipo de alta precisión bajo custodia directa del técnico especialista.",
+        "createdAt": "2025-06-20T11:30:00Z"
       }
     ],
     "eventHistory": [
@@ -126,6 +207,24 @@
     ],
     "videos": [],
     "maintenanceHistory": [],
+    "assignmentHistory": [
+      {
+        "id": "assign-503-1",
+        "assetId": 503,
+        "assignedTo": "NOC DataCenter Central",
+        "previousAssignedTo": "Almacén Central",
+        "assignedDate": "2024-11-05",
+        "assignedTime": "09:30",
+        "status": "activa",
+        "location": "Data Center Piso 2 - Fila A",
+        "purpose": "Infraestructura de Servidores y OLTs Core",
+        "condition": "Instalado y Anclado",
+        "assignedBy": "Admin",
+        "documentUrl": "",
+        "notes": "Uso exclusivo del personal NOC.",
+        "createdAt": "2024-11-05T09:30:00Z"
+      }
+    ],
     "eventHistory": [
       {
         "id": "evt-4",
@@ -160,6 +259,24 @@
     ],
     "videos": [],
     "maintenanceHistory": [],
+    "assignmentHistory": [
+      {
+        "id": "assign-504-1",
+        "assetId": 504,
+        "assignedTo": "Miguel Mendoza",
+        "previousAssignedTo": "Almacén Central / Registro Nuevo",
+        "assignedDate": "2026-09-15",
+        "assignedTime": "10:00",
+        "status": "activa",
+        "location": "Laboratorio NOC / Cuadrilla Fibra Óptica",
+        "purpose": "Certificación de enlaces PON y atención de cortes de fibra",
+        "condition": "Nuevo en maletín original con bobina de lanzamiento 500m",
+        "assignedBy": "Almacén Técnico",
+        "documentUrl": "",
+        "notes": "Asignado para mediciones OTDR y certificación de atenuación.",
+        "createdAt": "2026-09-15T10:00:00Z"
+      }
+    ],
     "eventHistory": [
       {
         "id": "867dbf23-6690-416d-9785-b3a0bfae52b2",
