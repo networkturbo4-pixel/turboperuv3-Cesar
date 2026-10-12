@@ -1,5 +1,15 @@
 [
   {
+    "id": "a9ba2dd2-db07-4aaa-97c5-e736fa79eaaa",
+    "tenantId": "turbonetwork",
+    "productId": 101,
+    "productName": "CINTA DOBLE CARA",
+    "type": "in",
+    "quantity": 50,
+    "reason": "Inventario Inicial",
+    "timestamp": "2026-10-09T23:18:00.748Z"
+  },
+  {
     "id": "d84a99e3-b196-4fe8-9fcb-efe9b97fed7d",
     "tenantId": "turbonetwork",
     "productId": 105,

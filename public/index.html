@@ -32284,6 +32284,8 @@ function getFilterTagBadge(tag) {
 // SISTEMA EN TIEMPO REAL & NOTIFICACIONES (SSE + AUDIO + PUSH)
 // ========================================================
 let messagesEventSource = null;
+let messagesSseReconnectTimer = null;
+let messagesSseRetryCount = 0;
 let isAudioNotificationEnabled = true;
 
 function toggleAudioNotifications() {
@@ -32569,6 +32571,12 @@ function initMessagesRealtime() {
   try {
     messagesEventSource = new EventSource('/api/messages/events');
 
+    messagesEventSource.onopen = () => {
+      messagesSseRetryCount = 0;
+      const statusDot = document.getElementById('messages-online-status');
+      if (statusDot) statusDot.textContent = 'En Línea';
+    };
+
     messagesEventSource.onmessage = (e) => {
       if (!e.data) return;
       try {
@@ -32594,7 +32602,7 @@ function initMessagesRealtime() {
           handleIncomingCommunityMessage(data);
         } else if (data.type === 'community_updated') {
           if (data.community) {
-            const idx = (currentCommunities || []).findIndex(c => c.id === data.community.id);
+            const idx = (currentCommunities || []).findIndex(c => c.id === data.communityId || c.id === data.community.id);
             if (idx !== -1) {
               currentCommunities[idx] = { ...currentCommunities[idx], ...data.community };
             } else {
@@ -32659,6 +32667,15 @@ function initMessagesRealtime() {
     messagesEventSource.onerror = () => {
       const statusDot = document.getElementById('messages-online-status');
       if (statusDot) statusDot.textContent = 'Reconectando...';
+
+      if (messagesEventSource) {
+        messagesEventSource.close();
+        messagesEventSource = null;
+      }
+      messagesSseRetryCount++;
+      const delay = Math.min(25000, 4000 + messagesSseRetryCount * 2000);
+      clearTimeout(messagesSseReconnectTimer);
+      messagesSseReconnectTimer = setTimeout(initMessagesRealtime, delay);
     };
   } catch (err) {
     console.error('Error iniciando EventSource:', err);

@@ -1,235 +1,526 @@
-﻿[
+[
   {
-    "type": "epp",
-    "name": "Chaleco Reflectivo de Alta Visibilidad Normado",
-    "alternativeNames": [
-      "Chaleco Seguridad",
-      "Chaleco Brigadista"
-    ],
-    "categoryId": "cat-epp",
-    "sku": "EPP-CHAL-REF",
-    "baseCost": 18,
-    "stock": 25,
+    "type": "simple",
+    "name": "CINTA DOBLE CARA",
+    "alternativeNames": [],
+    "categoryId": "cat-pasivos",
+    "sku": "PAS-UZQLCB",
+    "baseCost": 5,
+    "stock": 50,
     "stockMin": 5,
     "stockCritical": 2,
     "images": [],
-    "hasDifferentCostPerVariant": true,
-    "variants": [
-      {
-        "name": "Talla M / Naranja Fluor",
-        "sku": "EPP-CHAL-M-NAR",
-        "quantity": 10,
-        "costPrice": 18
-      },
-      {
-        "name": "Talla L / Naranja Fluor",
-        "sku": "EPP-CHAL-L-NAR",
-        "quantity": 10,
-        "costPrice": 18
-      },
-      {
-        "name": "Talla XL / Amarillo Neón",
-        "sku": "EPP-CHAL-XL-AM",
-        "quantity": 5,
-        "costPrice": 21.5
-      }
-    ],
-    "id": 107,
-    "tenantId": "turbonetwork",
-    "salePrice": 0,
-    "status": "optimal",
-    "createdAt": "2026-09-30T05:17:55.950Z",
-    "updatedAt": "2026-09-30T05:17:55.950Z"
-  },
-  {
-    "type": "bulk",
-    "name": "Cable UTP Cat6 Exterior Doble Chaqueta Puro Cobre",
-    "alternativeNames": [
-      "UTP Cat6 Exterior",
-      "Cable de Red Exterior"
-    ],
-    "categoryId": "cat-fibra",
-    "sku": "CAB-UTP-CAT6-EXT",
-    "baseCost": 0.55,
-    "stock": 1200,
-    "stockMin": 300,
-    "stockCritical": 100,
-    "images": [],
-    "unitOfMeasure": "Metros (m)",
-    "unitSku": "UTP-MTR-EXT",
-    "allowDecimals": true,
-    "id": 106,
-    "tenantId": "turbonetwork",
-    "salePrice": 0,
-    "variants": [],
-    "status": "optimal",
-    "createdAt": "2026-09-30T05:17:55.934Z",
-    "updatedAt": "2026-09-30T05:17:55.934Z"
-  },
-  {
-    "type": "simple",
-    "name": "ONU GPON Bridge 1GE XPON",
-    "alternativeNames": [
-      "ONU Bridge",
-      "Módem Fibra Óptica 1GE",
-      "ONT XPON"
-    ],
-    "categoryId": "cat-activos",
-    "sku": "EQ-ONU-1GE",
-    "baseCost": 14.5,
-    "salePrice": 22,
-    "stock": 89,
-    "stockMin": 15,
-    "stockCritical": 5,
-    "images": [
-      "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600"
-    ],
-    "description": "ONU ultra-compacta compatible con OLTs Huawei, ZTE y VSOL",
-    "id": 105,
-    "tenantId": "turbonetwork",
-    "variants": [],
-    "status": "optimal",
-    "createdAt": "2026-09-30T05:17:55.925Z",
-    "updatedAt": "2026-09-30T22:13:42.682Z"
-  },
-  {
     "id": 101,
-    "type": "simple",
-    "name": "Router Wi-Fi 6 Gigabit Dual Band AX1800",
-    "alternativeNames": [
-      "Router AX1800",
-      "Módem WiFi 6 Residencial",
-      "AP Gigabit Dual Band"
-    ],
-    "categoryId": "cat-activos",
-    "categoryName": "Equipos Activos & ONUs",
-    "sku": "EQ-RTR-AX1800",
-    "barcode": "775981029384",
-    "baseCost": 125,
-    "salePrice": 165,
-    "stock": 42,
-    "stockMin": 10,
-    "stockCritical": 3,
-    "images": [
-      "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?auto=format&fit=crop&w=600&q=80"
-    ],
-    "description": "Router de alto rendimiento para abonados FTTH con soporte EasyMesh y 4 puertos Gigabit Ethernet.",
-    "location": "Estante A-02",
-    "status": "optimal",
     "tenantId": "turbonetwork",
-    "createdAt": "2026-09-30T05:06:56.676Z",
-    "updatedAt": "2026-09-30T05:06:56.676Z"
-  },
-  {
-    "id": 102,
-    "type": "bulk",
-    "name": "Cable de Fibra Óptica Drop FTTH 1 Hilo G657A2",
-    "alternativeNames": [
-      "Cable Drop 1H",
-      "Fibra Drop Exterior Negro",
-      "Drop Flat 1 Core"
-    ],
-    "categoryId": "cat-fibra",
-    "categoryName": "Cables & Fibra Óptica",
-    "sku": "FBR-DROP-1H-MTR",
-    "unitOfMeasure": "Metros (m)",
-    "unitSku": "FBR-DROP-MTR",
-    "allowDecimals": true,
-    "baseCost": 0.38,
-    "salePrice": 0.65,
-    "stock": 3500,
-    "stockMin": 800,
-    "stockCritical": 250,
-    "images": [
-      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80"
-    ],
-    "description": "Cable de acometida exterior con mensajero de acero galvanizado y protección UV.",
-    "location": "Pasillo Central - Bobinas 04",
+    "salePrice": 0,
+    "variants": [],
+    "isDeleted": false,
+    "entryDate": "2026-10-09T23:18:00.748Z",
+    "barcodePrinted": false,
     "status": "optimal",
-    "tenantId": "turbonetwork",
-    "createdAt": "2026-09-30T05:06:56.676Z",
-    "updatedAt": "2026-09-30T16:25:37.667Z"
-  },
-  {
-    "id": 103,
-    "type": "epp",
-    "name": "Casco Dieléctrico con Barbiquejo de Seguridad",
-    "alternativeNames": [
-      "Casco Liniero Alturas",
-      "Casco Protección Dieléctrica Clase E",
-      "Casco de Faena"
-    ],
-    "categoryId": "cat-epp",
-    "categoryName": "EPP & Seguridad Industrial",
-    "sku": "EPP-CSK-GEN",
-    "baseCost": 48,
-    "salePrice": 65,
-    "stock": 38,
-    "stockMin": 12,
-    "stockCritical": 4,
-    "hasDifferentCostPerVariant": true,
-    "variants": [
+    "createdAt": "2026-10-09T23:18:00.748Z",
+    "updatedAt": "2026-10-09T23:18:14.358Z",
+    "itemUnits": [
       {
-        "id": "var-1",
-        "name": "Blanco / Talla Estándar (Liniero)",
-        "sku": "EPP-CSK-BL",
-        "quantity": 14,
-        "costPrice": 48,
-        "salePrice": 65
+        "id": "unit_101_1_1791587894342",
+        "itemNumber": 1,
+        "sku": "PAS-UZQLCB-001",
+        "barcode": "PAS-UZQLCB-001",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
       },
       {
-        "id": "var-2",
-        "name": "Azul Eléctrico / Talla Estándar (Técnico)",
-        "sku": "EPP-CSK-AZ",
-        "quantity": 12,
-        "costPrice": 50,
-        "salePrice": 68
+        "id": "unit_101_2_1791587894342",
+        "itemNumber": 2,
+        "sku": "PAS-UZQLCB-002",
+        "barcode": "PAS-UZQLCB-002",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
       },
       {
-        "id": "var-3",
-        "name": "Amarillo Alta Visibilidad c/ Barbiquejo 4 Puntas",
-        "sku": "EPP-CSK-AM-BAR",
-        "quantity": 12,
-        "costPrice": 56,
-        "salePrice": 75
+        "id": "unit_101_3_1791587894342",
+        "itemNumber": 3,
+        "sku": "PAS-UZQLCB-003",
+        "barcode": "PAS-UZQLCB-003",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_4_1791587894342",
+        "itemNumber": 4,
+        "sku": "PAS-UZQLCB-004",
+        "barcode": "PAS-UZQLCB-004",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_5_1791587894342",
+        "itemNumber": 5,
+        "sku": "PAS-UZQLCB-005",
+        "barcode": "PAS-UZQLCB-005",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_6_1791587894342",
+        "itemNumber": 6,
+        "sku": "PAS-UZQLCB-006",
+        "barcode": "PAS-UZQLCB-006",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_7_1791587894342",
+        "itemNumber": 7,
+        "sku": "PAS-UZQLCB-007",
+        "barcode": "PAS-UZQLCB-007",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_8_1791587894342",
+        "itemNumber": 8,
+        "sku": "PAS-UZQLCB-008",
+        "barcode": "PAS-UZQLCB-008",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_9_1791587894342",
+        "itemNumber": 9,
+        "sku": "PAS-UZQLCB-009",
+        "barcode": "PAS-UZQLCB-009",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_10_1791587894342",
+        "itemNumber": 10,
+        "sku": "PAS-UZQLCB-010",
+        "barcode": "PAS-UZQLCB-010",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_11_1791587894342",
+        "itemNumber": 11,
+        "sku": "PAS-UZQLCB-011",
+        "barcode": "PAS-UZQLCB-011",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_12_1791587894342",
+        "itemNumber": 12,
+        "sku": "PAS-UZQLCB-012",
+        "barcode": "PAS-UZQLCB-012",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_13_1791587894342",
+        "itemNumber": 13,
+        "sku": "PAS-UZQLCB-013",
+        "barcode": "PAS-UZQLCB-013",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_14_1791587894342",
+        "itemNumber": 14,
+        "sku": "PAS-UZQLCB-014",
+        "barcode": "PAS-UZQLCB-014",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_15_1791587894342",
+        "itemNumber": 15,
+        "sku": "PAS-UZQLCB-015",
+        "barcode": "PAS-UZQLCB-015",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_16_1791587894342",
+        "itemNumber": 16,
+        "sku": "PAS-UZQLCB-016",
+        "barcode": "PAS-UZQLCB-016",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_17_1791587894342",
+        "itemNumber": 17,
+        "sku": "PAS-UZQLCB-017",
+        "barcode": "PAS-UZQLCB-017",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_18_1791587894342",
+        "itemNumber": 18,
+        "sku": "PAS-UZQLCB-018",
+        "barcode": "PAS-UZQLCB-018",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_19_1791587894342",
+        "itemNumber": 19,
+        "sku": "PAS-UZQLCB-019",
+        "barcode": "PAS-UZQLCB-019",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_20_1791587894342",
+        "itemNumber": 20,
+        "sku": "PAS-UZQLCB-020",
+        "barcode": "PAS-UZQLCB-020",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_21_1791587894342",
+        "itemNumber": 21,
+        "sku": "PAS-UZQLCB-021",
+        "barcode": "PAS-UZQLCB-021",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_22_1791587894342",
+        "itemNumber": 22,
+        "sku": "PAS-UZQLCB-022",
+        "barcode": "PAS-UZQLCB-022",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_23_1791587894342",
+        "itemNumber": 23,
+        "sku": "PAS-UZQLCB-023",
+        "barcode": "PAS-UZQLCB-023",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_24_1791587894342",
+        "itemNumber": 24,
+        "sku": "PAS-UZQLCB-024",
+        "barcode": "PAS-UZQLCB-024",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_25_1791587894342",
+        "itemNumber": 25,
+        "sku": "PAS-UZQLCB-025",
+        "barcode": "PAS-UZQLCB-025",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_26_1791587894342",
+        "itemNumber": 26,
+        "sku": "PAS-UZQLCB-026",
+        "barcode": "PAS-UZQLCB-026",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_27_1791587894342",
+        "itemNumber": 27,
+        "sku": "PAS-UZQLCB-027",
+        "barcode": "PAS-UZQLCB-027",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_28_1791587894342",
+        "itemNumber": 28,
+        "sku": "PAS-UZQLCB-028",
+        "barcode": "PAS-UZQLCB-028",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_29_1791587894342",
+        "itemNumber": 29,
+        "sku": "PAS-UZQLCB-029",
+        "barcode": "PAS-UZQLCB-029",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_30_1791587894342",
+        "itemNumber": 30,
+        "sku": "PAS-UZQLCB-030",
+        "barcode": "PAS-UZQLCB-030",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_31_1791587894342",
+        "itemNumber": 31,
+        "sku": "PAS-UZQLCB-031",
+        "barcode": "PAS-UZQLCB-031",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_32_1791587894342",
+        "itemNumber": 32,
+        "sku": "PAS-UZQLCB-032",
+        "barcode": "PAS-UZQLCB-032",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_33_1791587894342",
+        "itemNumber": 33,
+        "sku": "PAS-UZQLCB-033",
+        "barcode": "PAS-UZQLCB-033",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_34_1791587894342",
+        "itemNumber": 34,
+        "sku": "PAS-UZQLCB-034",
+        "barcode": "PAS-UZQLCB-034",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_35_1791587894342",
+        "itemNumber": 35,
+        "sku": "PAS-UZQLCB-035",
+        "barcode": "PAS-UZQLCB-035",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_36_1791587894342",
+        "itemNumber": 36,
+        "sku": "PAS-UZQLCB-036",
+        "barcode": "PAS-UZQLCB-036",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_37_1791587894342",
+        "itemNumber": 37,
+        "sku": "PAS-UZQLCB-037",
+        "barcode": "PAS-UZQLCB-037",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_38_1791587894342",
+        "itemNumber": 38,
+        "sku": "PAS-UZQLCB-038",
+        "barcode": "PAS-UZQLCB-038",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_39_1791587894342",
+        "itemNumber": 39,
+        "sku": "PAS-UZQLCB-039",
+        "barcode": "PAS-UZQLCB-039",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_40_1791587894342",
+        "itemNumber": 40,
+        "sku": "PAS-UZQLCB-040",
+        "barcode": "PAS-UZQLCB-040",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_41_1791587894342",
+        "itemNumber": 41,
+        "sku": "PAS-UZQLCB-041",
+        "barcode": "PAS-UZQLCB-041",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_42_1791587894342",
+        "itemNumber": 42,
+        "sku": "PAS-UZQLCB-042",
+        "barcode": "PAS-UZQLCB-042",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_43_1791587894342",
+        "itemNumber": 43,
+        "sku": "PAS-UZQLCB-043",
+        "barcode": "PAS-UZQLCB-043",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_44_1791587894342",
+        "itemNumber": 44,
+        "sku": "PAS-UZQLCB-044",
+        "barcode": "PAS-UZQLCB-044",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_45_1791587894342",
+        "itemNumber": 45,
+        "sku": "PAS-UZQLCB-045",
+        "barcode": "PAS-UZQLCB-045",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_46_1791587894342",
+        "itemNumber": 46,
+        "sku": "PAS-UZQLCB-046",
+        "barcode": "PAS-UZQLCB-046",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_47_1791587894342",
+        "itemNumber": 47,
+        "sku": "PAS-UZQLCB-047",
+        "barcode": "PAS-UZQLCB-047",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_48_1791587894342",
+        "itemNumber": 48,
+        "sku": "PAS-UZQLCB-048",
+        "barcode": "PAS-UZQLCB-048",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_49_1791587894342",
+        "itemNumber": 49,
+        "sku": "PAS-UZQLCB-049",
+        "barcode": "PAS-UZQLCB-049",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
+      },
+      {
+        "id": "unit_101_50_1791587894342",
+        "itemNumber": 50,
+        "sku": "PAS-UZQLCB-050",
+        "barcode": "PAS-UZQLCB-050",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "",
+        "createdAt": "2026-10-09T23:18:00.748Z"
       }
-    ],
-    "images": [
-      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80"
-    ],
-    "description": "Casco certificado ANSI Z89.1 Clase E para trabajos en postes y líneas eléctricas.",
-    "location": "Armario de Seguridad EPP-01",
-    "status": "optimal",
-    "tenantId": "turbonetwork",
-    "createdAt": "2026-09-30T05:06:56.676Z",
-    "updatedAt": "2026-09-30T05:06:56.676Z"
-  },
-  {
-    "id": 104,
-    "type": "simple",
-    "name": "Conector Rápido SC/APC Monomodo Ensamblado Manual",
-    "alternativeNames": [
-      "Fast Connector SC/APC",
-      "Conector Verde Fibra",
-      "Conector Mecánico FTTH"
-    ],
-    "categoryId": "cat-pasivos",
-    "categoryName": "Ferretería & Pasivos",
-    "sku": "PAS-CON-SCAPC",
-    "baseCost": 0.85,
-    "salePrice": 1.5,
-    "stock": 8,
-    "stockMin": 50,
-    "stockCritical": 15,
-    "images": [
-      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80"
-    ],
-    "description": "Conector pre-pulido para terminación rápida en rosetas de cliente sin fusionadora.",
-    "location": "Cajón B-12",
-    "status": "critical",
-    "tenantId": "turbonetwork",
-    "createdAt": "2026-09-30T05:06:56.676Z",
-    "updatedAt": "2026-09-30T05:06:56.676Z"
+    ]
   }
 ]
