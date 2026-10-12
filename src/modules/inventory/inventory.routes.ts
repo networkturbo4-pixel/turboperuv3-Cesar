@@ -350,10 +350,12 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
 
     const schema = z.object({
       type: z.enum(["in", "out", "adjustment"]),
-      quantity: z.number().positive("La cantidad debe ser mayor a 0"),
+      quantity: z.number().min(0, "La cantidad no puede ser negativa"),
       variantId: z.string().optional(),
       reason: z.string().min(1, "El motivo es requerido"),
       operatorName: z.string().optional(),
+      technicianName: z.string().optional(),
+      selectedUnitSkus: z.array(z.string()).optional(),
     });
 
     const parse = schema.safeParse(request.body);
@@ -374,6 +376,7 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       success: true,
       message: "Movimiento de stock registrado exitosamente",
       data: updated,
+      unitsAffected: (updated as any).lastUnitsAffected || [],
     };
   });
 

@@ -857,15 +857,23 @@ export function adjustStock(
     variantId?: string;
     reason: string;
     operatorName?: string;
+    technicianName?: string;
+    selectedUnitSkus?: string[];
   }
-): InventoryProduct | null {
+): (InventoryProduct & { lastUnitsAffected?: string[] }) | null {
   const products = loadProducts(tenantId);
   const p = products.find((item) => item.id === productId);
   if (!p) return null;
 
   const qty = Number(params.quantity);
-  if (isNaN(qty) || qty <= 0) return null;
+  if (isNaN(qty) || (params.type !== "adjustment" && qty <= 0) || (params.type === "adjustment" && qty < 0)) {
+    return null;
+  }
 
+  ensureItemUnits(p);
+  const previousStock = p.stock;
+  const unitsAffected: string[] = [];
+  const now = new Date().toISOString();
   let variantName = "";
 
   if (p.type === "epp" && params.variantId && p.variants) {
@@ -884,15 +892,120 @@ export function adjustStock(
   } else {
     if (params.type === "in") {
       p.stock += qty;
+      if (!p.itemUnits) p.itemUnits = [];
+      const maxNum = p.itemUnits.reduce((max, u) => Math.max(max, u.itemNumber || 0), 0);
+      for (let i = 1; i <= qty; i++) {
+        const nextNum = maxNum + i;
+        const suffix = String(nextNum).padStart(3, "0");
+        const unitSku = `${p.sku}-${suffix}`;
+        const newUnit: ProductItemUnit = {
+          id: `unit_${p.id}_${nextNum}_${Date.now() + i}`,
+          itemNumber: nextNum,
+          sku: unitSku,
+          barcode: unitSku,
+          status: "disponible",
+          serialNumber: "",
+          notes: params.reason || "Ingreso de stock",
+          barcodePrinted: false,
+          createdAt: now,
+        };
+        p.itemUnits.push(newUnit);
+        unitsAffected.push(unitSku);
+      }
     } else if (params.type === "out") {
-      p.stock = Math.max(0, p.stock - qty);
+      let targetStatus: ProductItemUnit["status"] = "entregado";
+      const lowerReason = (params.reason || "").toLowerCase();
+      if (/merma|dañado|baja|quemado|roto|fallado/i.test(lowerReason)) {
+        targetStatus = "baja";
+      } else if (/garantia|rma/i.test(lowerReason)) {
+        targetStatus = "en_garantia";
+      } else if (/cliente|instalacion/i.test(lowerReason)) {
+        targetStatus = "instalado";
+      }
+
+      if (p.itemUnits && p.itemUnits.length > 0) {
+        if (params.selectedUnitSkus && params.selectedUnitSkus.length > 0) {
+          const skuSet = new Set(params.selectedUnitSkus);
+          p.itemUnits.forEach((u) => {
+            if (skuSet.has(u.sku)) {
+              u.status = targetStatus;
+              u.assignedTo = params.technicianName || params.operatorName || "Despacho";
+              u.assignedAt = now;
+              u.notes = params.reason;
+              unitsAffected.push(u.sku);
+            }
+          });
+        } else {
+          let count = 0;
+          for (const u of p.itemUnits) {
+            if (u.status === "disponible") {
+              u.status = targetStatus;
+              u.assignedTo = params.technicianName || params.operatorName || "Despacho";
+              u.assignedAt = now;
+              u.notes = params.reason;
+              unitsAffected.push(u.sku);
+              count++;
+              if (count >= qty) break;
+            }
+          }
+        }
+      }
+      const actualDeduction = unitsAffected.length > 0 ? unitsAffected.length : qty;
+      p.stock = Math.max(0, p.stock - actualDeduction);
     } else if (params.type === "adjustment") {
+      if (p.itemUnits && p.itemUnits.length > 0) {
+        if (qty < p.stock) {
+          const diff = p.stock - qty;
+          if (params.selectedUnitSkus && params.selectedUnitSkus.length > 0) {
+            const skuSet = new Set(params.selectedUnitSkus);
+            p.itemUnits.forEach((u) => {
+              if (skuSet.has(u.sku)) {
+                u.status = "baja";
+                u.notes = params.reason;
+                unitsAffected.push(u.sku);
+              }
+            });
+          } else {
+            let count = 0;
+            for (let i = p.itemUnits.length - 1; i >= 0; i--) {
+              const u = p.itemUnits[i];
+              if (u.status === "disponible") {
+                u.status = "baja";
+                u.notes = params.reason;
+                unitsAffected.push(u.sku);
+                count++;
+                if (count >= diff) break;
+              }
+            }
+          }
+        } else if (qty > p.stock) {
+          const diff = qty - p.stock;
+          const maxNum = p.itemUnits.reduce((max, u) => Math.max(max, u.itemNumber || 0), 0);
+          for (let i = 1; i <= diff; i++) {
+            const nextNum = maxNum + i;
+            const suffix = String(nextNum).padStart(3, "0");
+            const unitSku = `${p.sku}-${suffix}`;
+            p.itemUnits.push({
+              id: `unit_${p.id}_${nextNum}_${Date.now() + i}`,
+              itemNumber: nextNum,
+              sku: unitSku,
+              barcode: unitSku,
+              status: "disponible",
+              serialNumber: "",
+              notes: params.reason || "Ajuste de inventario",
+              barcodePrinted: false,
+              createdAt: now,
+            });
+            unitsAffected.push(unitSku);
+          }
+        }
+      }
       p.stock = qty;
     }
   }
 
   p.status = calculateStatus(p.stock, p.stockMin, p.stockCritical);
-  p.updatedAt = new Date().toISOString();
+  p.updatedAt = now;
 
   saveProducts(tenantId, products);
 
@@ -907,9 +1020,14 @@ export function adjustStock(
     variantName,
     reason: params.reason || "Ajuste de stock",
     operatorName: params.operatorName || "Operador",
-    timestamp: new Date().toISOString(),
+    technicianName: params.technicianName,
+    unitsAffected: unitsAffected.length > 0 ? unitsAffected : undefined,
+    previousStock,
+    newStock: p.stock,
+    timestamp: now,
   });
 
+  (p as any).lastUnitsAffected = unitsAffected;
   return p;
 }
 

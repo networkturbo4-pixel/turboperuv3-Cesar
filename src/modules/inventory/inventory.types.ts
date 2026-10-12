@@ -91,6 +91,10 @@ export interface StockMovement {
   variantName?: string;
   reason: string;
   operatorName?: string;
+  technicianName?: string;
+  unitsAffected?: string[];
+  previousStock?: number;
+  newStock?: number;
   timestamp: string;
 }
 

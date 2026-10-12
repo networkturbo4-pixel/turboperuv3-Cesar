@@ -12649,44 +12649,56 @@
     </div>
   </div>
 
-  <!-- MODAL 3: AJUSTE RÁPIDO DE STOCK (KARDEX) -->
+  <!-- MODAL 3: AJUSTE INTELIGENTE DE STOCK & KARDEX 360° -->
   <div id="inventory-stock-adjust-modal" class="fixed inset-0 z-[285] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-3 sm:px-4 py-4 sm:py-6 overflow-y-auto">
-    <div class="pro-card max-w-md w-full p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col my-auto overflow-hidden">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white">Ajuste de Stock / Kardex</h3>
-          <p id="inv-adj-prod-name" class="text-xs text-blue-600 dark:text-blue-400 font-semibold truncate mt-0.5">Producto</p>
+    <div class="pro-card max-w-2xl w-full max-h-[92vh] p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col my-auto overflow-hidden">
+      <!-- Encabezado con estado -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div id="inv-adj-header-icon" class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20 flex items-center justify-center font-bold text-lg">
+            ⚡
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Ajuste de Stock & Kardex Inteligente</h3>
+              <span id="inv-adj-prod-type-pill" class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">Simple</span>
+            </div>
+            <p id="inv-adj-prod-name" class="text-xs text-blue-600 dark:text-blue-400 font-semibold truncate mt-0.5">Producto</p>
+          </div>
         </div>
         <button type="button" onclick="closeAdjustStockModal()" class="p-1 rounded-lg text-slate-400 hover:text-white transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
-      <form onsubmit="handleSaveStockAdjustment(event)" class="space-y-4 pt-3">
+      <!-- Formulario con scroll independiente -->
+      <form id="inv-adj-form" onsubmit="handleSaveStockAdjustment(event)" class="space-y-4 pt-3 flex-1 overflow-y-auto custom-palette-scroll pr-1">
         <input type="hidden" id="inv-adj-prod-id" value="">
 
-        <div class="p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between">
-          <span class="text-xs text-slate-500 dark:text-slate-400">Stock Actual en Sistema:</span>
-          <span id="inv-adj-current-stock" class="text-sm font-bold font-mono text-slate-900 dark:text-white">0</span>
-        </div>
-
+        <!-- Selector de Tipo de Movimiento con estilo Pro -->
         <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Tipo de Movimiento *</label>
-          <div class="grid grid-cols-3 gap-2">
-            <label class="p-2 rounded-xl border border-slate-200 dark:border-white/10 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 flex flex-col items-center">
-              <input type="radio" name="inv-adj-type" value="in" checked class="sr-only peer">
-              <span class="text-xs font-bold text-emerald-600 peer-checked:text-emerald-500">Ingreso (+)</span>
-              <span class="text-[9.5px] text-slate-400">Compra/Alta</span>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">1. Tipo de Movimiento *</label>
+          <div class="grid grid-cols-3 gap-2 sm:gap-2.5">
+            <label id="inv-adj-label-in" onclick="onStockAdjustTypeChange('in')" class="p-2.5 sm:p-3 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-center cursor-pointer transition flex flex-col items-center">
+              <input type="radio" name="inv-adj-type" value="in" checked class="sr-only">
+              <span class="text-xs font-bold text-emerald-500 flex items-center gap-1">
+                <span>➕</span> Ingreso (+)
+              </span>
+              <span class="text-[9.5px] text-slate-400 mt-0.5 font-medium">Compra / Devolución</span>
             </label>
-            <label class="p-2 rounded-xl border border-slate-200 dark:border-white/10 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 flex flex-col items-center">
-              <input type="radio" name="inv-adj-type" value="out" class="sr-only peer">
-              <span class="text-xs font-bold text-amber-600 peer-checked:text-amber-500">Salida (-)</span>
-              <span class="text-[9.5px] text-slate-400">Instalación</span>
+            <label id="inv-adj-label-out" onclick="onStockAdjustTypeChange('out')" class="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-white/10 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition flex flex-col items-center">
+              <input type="radio" name="inv-adj-type" value="out" class="sr-only">
+              <span class="text-xs font-bold text-amber-500 flex items-center gap-1">
+                <span>➖</span> Salida (-)
+              </span>
+              <span class="text-[9.5px] text-slate-400 mt-0.5 font-medium">Despacho / Instalación</span>
             </label>
-            <label class="p-2 rounded-xl border border-slate-200 dark:border-white/10 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 flex flex-col items-center">
-              <input type="radio" name="inv-adj-type" value="adjustment" class="sr-only peer">
-              <span class="text-xs font-bold text-blue-600 peer-checked:text-blue-500">Ajuste (=)</span>
-              <span class="text-[9.5px] text-slate-400">Físico/Merma</span>
+            <label id="inv-adj-label-adj" onclick="onStockAdjustTypeChange('adjustment')" class="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-white/10 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition flex flex-col items-center">
+              <input type="radio" name="inv-adj-type" value="adjustment" class="sr-only">
+              <span class="text-xs font-bold text-blue-500 flex items-center gap-1">
+                <span>⚖️</span> Ajuste (=)
+              </span>
+              <span class="text-[9.5px] text-slate-400 mt-0.5 font-medium">Conteo / Auditoría</span>
             </label>
           </div>
         </div>
@@ -12694,24 +12706,142 @@
         <!-- Selector de Variante (para EPP) -->
         <div id="inv-adj-variant-box" class="hidden">
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Variante a Modificar *</label>
-          <select id="inv-adj-variant-select" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-            <!-- Opciones generadas dinámicamente -->
+          <select id="inv-adj-variant-select" onchange="onStockAdjustVariantChange()" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold">
+            <!-- Opciones dinámicas -->
           </select>
         </div>
 
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Cantidad *</label>
-          <input type="number" step="any" min="0.01" id="inv-adj-quantity" required placeholder="Ej: 10" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+        <!-- Panel Dual: Cantidad + Proyección en Tiempo Real -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
+          <!-- Columna Cantidad -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                2. Cantidad *
+              </label>
+              <!-- Botones rápidos de cantidad -->
+              <div class="flex items-center gap-1">
+                <button type="button" onclick="quickSetAdjustQty(1)" class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white transition">+1</button>
+                <button type="button" onclick="quickSetAdjustQty(5)" class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white transition">+5</button>
+                <button type="button" onclick="quickSetAdjustQty(10)" class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white transition">+10</button>
+                <button type="button" onclick="quickSetAdjustQty('all')" class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white transition">Todo</button>
+              </div>
+            </div>
+            <div class="relative">
+              <input type="number" step="any" min="0" id="inv-adj-quantity" required placeholder="Ej: 10" oninput="updateStockAdjustPreview()" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-base font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 pr-16">
+              <span class="absolute right-3 top-2.5 text-xs font-semibold text-slate-400 pointer-events-none">unidades</span>
+            </div>
+          </div>
+
+          <!-- Columna Proyección Dinámica -->
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-400">Stock Actual:</span>
+              <span id="inv-adj-current-stock" class="font-bold font-mono text-slate-900 dark:text-white">50 unidades</span>
+            </div>
+            <div class="flex items-center justify-between text-xs py-1 border-t border-b border-slate-200 dark:border-white/5 my-1">
+              <span id="inv-adj-preview-label" class="text-slate-400">Variación proyectada:</span>
+              <span id="inv-adj-preview-delta" class="font-bold font-mono text-emerald-500">+0</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Stock Resultante:</span>
+              <span id="inv-adj-preview-result" class="text-base font-extrabold font-mono text-emerald-500">50</span>
+            </div>
+            <div id="inv-adj-warning-box" class="hidden mt-1.5 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-500 text-[10px] font-semibold flex items-center gap-1">
+              <span>⚠️</span> <span id="inv-adj-warning-text">Stock insuficiente</span>
+            </div>
+          </div>
         </div>
 
+        <!-- SECCIÓN 3: GESTOR DE UNIDADES SERIALIZADAS -->
+        <div id="inv-adj-units-section" class="p-3.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-500/20 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                <span>🏷️</span> Unidades Serializadas Individuales
+              </span>
+              <span id="inv-adj-units-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/20 text-blue-600 dark:text-blue-300">50 en almacén</span>
+            </div>
+            <div id="inv-adj-units-mode-toggle" class="flex items-center gap-1 text-[11px]">
+              <button type="button" id="inv-adj-mode-fifo-btn" onclick="setStockAdjustUnitsMode('fifo')" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-semibold transition shadow-2xs">
+                ⚡ Automático (FIFO)
+              </button>
+              <button type="button" id="inv-adj-mode-manual-btn" onclick="setStockAdjustUnitsMode('manual')" class="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-300 dark:hover:bg-white/20 transition">
+                🎯 Seleccionar / Escanear
+              </button>
+            </div>
+          </div>
+
+          <!-- MODO INGRESO: Preview de nuevas unidades y checkbox de impresión -->
+          <div id="inv-adj-incoming-units-box" class="space-y-2">
+            <p id="inv-adj-incoming-text" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Al confirmar, el sistema generará automáticamente las nuevas unidades serializadas correlativas con sus códigos únicos listos para etiquetar.
+            </p>
+            <label class="flex items-center space-x-2.5 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition">
+              <input type="checkbox" id="inv-adj-auto-print" checked class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
+              <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                <span>🖨️</span> Mandar a imprimir etiquetas térmicas de estas nuevas unidades inmediatamente (50x25mm)
+              </span>
+            </label>
+          </div>
+
+          <!-- MODO SALIDA / MANUAL: Buscador, lector de código de barras y selector de unidades -->
+          <div id="inv-adj-manual-units-box" class="hidden space-y-2.5">
+            <div class="relative">
+              <input type="text" id="inv-adj-unit-search-input" placeholder="📷 Escanear con lector o escribir código SKU (ej: -001, EQ-VR9UD5-005)..." onkeydown="handleBarcodeScannerScan(event)" class="w-full bg-white dark:bg-black/40 border border-blue-300 dark:border-blue-500/30 rounded-xl pl-9 pr-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <span class="absolute left-3 top-2 text-blue-500 text-sm">🔍</span>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+              <span>Haz clic en las unidades para seleccionarlas o usa el escáner:</span>
+              <span id="inv-adj-selected-units-count" class="font-bold text-blue-600 dark:text-blue-400 font-mono">0 seleccionadas</span>
+            </div>
+
+            <!-- Grid scrollable con chips de unidades disponibles -->
+            <div id="inv-adj-units-grid" class="max-h-36 overflow-y-auto p-2 rounded-xl bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 grid grid-cols-2 sm:grid-cols-3 gap-1.5 custom-palette-scroll">
+              <!-- Unidades generadas dinámicamente -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Responsable / Técnico / Destinatario -->
         <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Motivo / Justificación *</label>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+            4. Responsable / Técnico Asignado (Opcional)
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <select id="inv-adj-technician-select" onchange="onStockAdjustTechnicianChange()" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium">
+              <option value="">-- Seleccionar Técnico / Colaborador --</option>
+              <!-- Técnicos del sistema -->
+            </select>
+            <input type="text" id="inv-adj-technician-custom" placeholder="O escribir nombre / cliente / destino..." oninput="onStockAdjustCustomTechInput()" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+
+        <!-- 5. Motivo / Justificación con Chips Inteligentes -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              5. Motivo / Justificación *
+            </label>
+            <span class="text-[10px] text-slate-400 italic">Clic en un botón rápido para autocompletar</span>
+          </div>
+
+          <!-- Chips de Motivos dinámicos según el tipo de movimiento -->
+          <div id="inv-adj-reason-chips" class="flex flex-wrap gap-1.5 mb-2">
+            <!-- Chips inyectados por JS -->
+          </div>
+
           <input type="text" id="inv-adj-reason" required placeholder="Ej: Despacho a técnico Juan para sector norte" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
         </div>
 
-        <div class="pt-2 flex items-center justify-end space-x-2">
-          <button type="button" onclick="closeAdjustStockModal()" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition">Cancelar</button>
-          <button type="submit" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold transition shadow-sm">Aplicar Movimiento</button>
+        <!-- Footer fijo -->
+        <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-end space-x-2 flex-shrink-0">
+          <button type="button" onclick="closeAdjustStockModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition">Cancelar</button>
+          <button type="submit" id="inv-adj-submit-btn" class="px-5 py-2.5 rounded-xl btn-brand-primary text-xs font-bold transition shadow-md flex items-center gap-1.5">
+            <span id="inv-adj-btn-icon">⚡</span>
+            <span id="inv-adj-btn-text">Aplicar Movimiento</span>
+          </button>
         </div>
       </form>
     </div>
@@ -26802,30 +26932,86 @@ function renderCategoriesList() {
   }).join('');
 }
 
-// 10. AJUSTE RÁPIDO DE STOCK (KARDEX)
+// ========================================================
+// 10. AJUSTE INTELIGENTE DE STOCK & KARDEX 360°
+// ========================================================
+let currentAdjustProduct = null;
+let currentAdjustSelectedSkus = new Set();
+let currentAdjustUnitsMode = 'fifo'; // 'fifo' | 'manual'
+let currentAdjustType = 'in';
+
+const STOCK_ADJUST_REASON_PRESETS = {
+  in: [
+    { label: '📦 Recepción de Compra', text: 'Recepción de compra según factura/guía' },
+    { label: '🔄 Devolución Técnico', text: 'Devolución de equipo/material por técnico' },
+    { label: '📥 Recuperación Cliente', text: 'Recuperación de equipo por retiro de servicio' },
+    { label: '➕ Stock Inicial', text: 'Carga inicial de stock' },
+    { label: '🔧 Reingreso Reparado', text: 'Reingreso tras reparación o laboratorio' }
+  ],
+  out: [
+    { label: '🚚 Despacho a Técnico', text: 'Despacho de material para cuadrilla técnica' },
+    { label: '🏠 Instalación Cliente', text: 'Instalación de servicio en cliente' },
+    { label: '🔧 Mantenimiento / Reemplazo', text: 'Reemplazo correctivo por avería en campo' },
+    { label: '⚠️ Merma / Dañado', text: 'Baja por equipo dañado o quemado' },
+    { label: '🔄 Garantía / RMA', text: 'Envío a garantía / RMA con proveedor' },
+    { label: '🏢 Traspaso Sucursal', text: 'Traspaso a otra sede o almacén secundario' }
+  ],
+  adjustment: [
+    { label: '📋 Conteo Físico', text: 'Ajuste tras conteo físico general de inventario' },
+    { label: '🔍 Auditoría Almacén', text: 'Corrección de stock por auditoría periódica' },
+    { label: '📉 Ajuste por Merma', text: 'Ajuste directo por diferencia no justificada' }
+  ]
+};
+
 function openAdjustStockModal(id) {
-  const product = inventoryProducts.find(p => p.id === id);
+  const product = (inventoryProducts || []).find(p => p.id === id);
   if (!product) return;
+
+  ensureProductUnits(product);
+  currentAdjustProduct = product;
+  currentAdjustSelectedSkus.clear();
+  currentAdjustUnitsMode = 'fifo';
+
+  // Si tiene stock > 0, por defecto sugerir 'out' (despacho), si tiene 0 stock, sugerir 'in' (ingreso)
+  currentAdjustType = Number(product.stock) > 0 ? 'out' : 'in';
 
   document.getElementById('inv-adj-prod-id').value = product.id;
   document.getElementById('inv-adj-prod-name').textContent = `${product.name} (${product.sku})`;
-  document.getElementById('inv-adj-current-stock').textContent = `${product.stock} unidades`;
-  document.getElementById('inv-adj-quantity').value = '';
-  document.getElementById('inv-adj-reason').value = '';
-
-  const varBox = document.getElementById('inv-adj-variant-box');
-  const varSel = document.getElementById('inv-adj-variant-select');
+  
+  const typePill = document.getElementById('inv-adj-prod-type-pill');
+  if (typePill) {
+    typePill.textContent = (product.type || 'simple').toUpperCase();
+  }
 
   const pType = product.type || product.productType;
+  const varBox = document.getElementById('inv-adj-variant-box');
+  const varSel = document.getElementById('inv-adj-variant-select');
   if (pType === 'epp' && product.variants && product.variants.length > 0) {
     varBox.classList.remove('hidden');
     varSel.innerHTML = product.variants.map(v => `
-      <option value="${v.id}">${escapeHtml(v.name)} (Stock actual: ${v.quantity})</option>
+      <option value="${v.id}" data-qty="${v.quantity}">${escapeHtml(v.name)} (Stock actual: ${v.quantity})</option>
     `).join('');
   } else {
     varBox.classList.add('hidden');
     varSel.innerHTML = '';
   }
+
+  // Cargar técnicos del sistema
+  populateStockAdjustTechnicians();
+
+  // Reset inputs
+  document.getElementById('inv-adj-quantity').value = '1';
+  document.getElementById('inv-adj-reason').value = '';
+  document.getElementById('inv-adj-technician-custom').value = '';
+  if (document.getElementById('inv-adj-unit-search-input')) {
+    document.getElementById('inv-adj-unit-search-input').value = '';
+  }
+
+  // Activar tipo
+  onStockAdjustTypeChange(currentAdjustType);
+
+  // Renderizar unidades si corresponde
+  renderStockAdjustUnitsGrid();
 
   const modal = document.getElementById('inventory-stock-adjust-modal');
   if (modal) modal.classList.remove('hidden');
@@ -26834,20 +27020,404 @@ function openAdjustStockModal(id) {
 function closeAdjustStockModal() {
   const modal = document.getElementById('inventory-stock-adjust-modal');
   if (modal) modal.classList.add('hidden');
+  currentAdjustProduct = null;
+  currentAdjustSelectedSkus.clear();
+}
+
+function populateStockAdjustTechnicians() {
+  const select = document.getElementById('inv-adj-technician-select');
+  if (!select) return;
+
+  const users = (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers) && currentUsers.length > 0)
+    ? currentUsers
+    : (typeof allSystemUsers !== 'undefined' && Array.isArray(allSystemUsers) ? allSystemUsers : []);
+
+  let opts = '<option value="">-- Seleccionar Técnico / Colaborador --</option>';
+  if (users.length > 0) {
+    opts += users.map(u => `
+      <option value="${escapeHtml(u.name)}">${escapeHtml(u.name)} (${escapeHtml(u.roleName || u.role || 'Personal')})</option>
+    `).join('');
+  }
+  select.innerHTML = opts;
+}
+
+function onStockAdjustTechnicianChange() {
+  const select = document.getElementById('inv-adj-technician-select');
+  const techName = select.value;
+  const reasonInput = document.getElementById('inv-adj-reason');
+  if (techName && reasonInput && (!reasonInput.value || reasonInput.value.includes('Despacho') || reasonInput.value.includes('Devolución'))) {
+    if (currentAdjustType === 'out') {
+      reasonInput.value = `Despacho a técnico ${techName}`;
+    } else if (currentAdjustType === 'in') {
+      reasonInput.value = `Devolución de técnico ${techName}`;
+    }
+  }
+}
+
+function onStockAdjustCustomTechInput() {
+  const custom = document.getElementById('inv-adj-technician-custom').value.trim();
+  const select = document.getElementById('inv-adj-technician-select');
+  if (custom && select) {
+    select.value = '';
+  }
+}
+
+function onStockAdjustVariantChange() {
+  updateStockAdjustPreview();
+}
+
+function onStockAdjustTypeChange(type) {
+  currentAdjustType = type;
+
+  // Actualizar radio
+  const radios = document.querySelectorAll('input[name="inv-adj-type"]');
+  radios.forEach(r => { r.checked = (r.value === type); });
+
+  // Actualizar estilos de labels
+  const inLbl = document.getElementById('inv-adj-label-in');
+  const outLbl = document.getElementById('inv-adj-label-out');
+  const adjLbl = document.getElementById('inv-adj-label-adj');
+
+  const baseInactive = 'p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-white/10 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition flex flex-col items-center';
+  if (inLbl) inLbl.className = type === 'in' ? 'p-2.5 sm:p-3 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-center cursor-pointer transition flex flex-col items-center' : baseInactive;
+  if (outLbl) outLbl.className = type === 'out' ? 'p-2.5 sm:p-3 rounded-xl border border-amber-500/50 bg-amber-500/10 text-center cursor-pointer transition flex flex-col items-center' : baseInactive;
+  if (adjLbl) adjLbl.className = type === 'adjustment' ? 'p-2.5 sm:p-3 rounded-xl border border-blue-500/50 bg-blue-500/10 text-center cursor-pointer transition flex flex-col items-center' : baseInactive;
+
+  // Chips de motivos
+  renderStockAdjustReasonChips(type);
+
+  // Visibilidad de cajas de unidades
+  const incomingBox = document.getElementById('inv-adj-incoming-units-box');
+  const manualBox = document.getElementById('inv-adj-manual-units-box');
+  const modeToggle = document.getElementById('inv-adj-units-mode-toggle');
+
+  if (type === 'in') {
+    if (incomingBox) incomingBox.classList.remove('hidden');
+    if (manualBox) manualBox.classList.add('hidden');
+    if (modeToggle) modeToggle.classList.add('hidden');
+  } else {
+    if (incomingBox) incomingBox.classList.add('hidden');
+    if (modeToggle) modeToggle.classList.remove('hidden');
+    if (currentAdjustUnitsMode === 'manual') {
+      if (manualBox) manualBox.classList.remove('hidden');
+    } else {
+      if (manualBox) manualBox.classList.add('hidden');
+    }
+  }
+
+  updateStockAdjustPreview();
+}
+
+function renderStockAdjustReasonChips(type) {
+  const container = document.getElementById('inv-adj-reason-chips');
+  if (!container) return;
+
+  const presets = STOCK_ADJUST_REASON_PRESETS[type] || STOCK_ADJUST_REASON_PRESETS.in;
+  container.innerHTML = presets.map(p => `
+    <button type="button" onclick="applyStockAdjustReasonChip('${escapeHtml(p.text).replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 transition shadow-2xs">
+      ${escapeHtml(p.label)}
+    </button>
+  `).join('');
+}
+
+function applyStockAdjustReasonChip(text) {
+  const techSelect = document.getElementById('inv-adj-technician-select');
+  const customTech = document.getElementById('inv-adj-technician-custom').value.trim();
+  const techName = customTech || (techSelect ? techSelect.value : '');
+
+  let fullReason = text;
+  if (techName && (text.includes('técnico') || text.includes('Despacho') || text.includes('Devolución'))) {
+    fullReason = `${text}: ${techName}`;
+  }
+
+  const reasonInput = document.getElementById('inv-adj-reason');
+  if (reasonInput) {
+    reasonInput.value = fullReason;
+    reasonInput.focus();
+  }
+}
+
+function getCurrentAdjustProductStock() {
+  if (!currentAdjustProduct) return 0;
+  const varBox = document.getElementById('inv-adj-variant-box');
+  const varSel = document.getElementById('inv-adj-variant-select');
+  if (varBox && !varBox.classList.contains('hidden') && varSel && varSel.value) {
+    const selectedOpt = varSel.options[varSel.selectedIndex];
+    if (selectedOpt && selectedOpt.dataset.qty !== undefined) {
+      return parseFloat(selectedOpt.dataset.qty) || 0;
+    }
+  }
+  return parseFloat(currentAdjustProduct.stock) || 0;
+}
+
+function quickSetAdjustQty(val) {
+  const currentStock = getCurrentAdjustProductStock();
+  const input = document.getElementById('inv-adj-quantity');
+  if (!input) return;
+
+  if (val === 'all') {
+    input.value = currentStock > 0 ? currentStock : 1;
+  } else {
+    const curVal = parseFloat(input.value) || 0;
+    input.value = curVal > 0 ? curVal + val : val;
+  }
+  updateStockAdjustPreview();
+
+  if (currentAdjustUnitsMode === 'manual' && currentAdjustType === 'out') {
+    syncManualSelectedFromQuantity();
+  }
+}
+
+function updateStockAdjustPreview() {
+  const currentStock = getCurrentAdjustProductStock();
+  const qty = parseFloat(document.getElementById('inv-adj-quantity')?.value) || 0;
+
+  const curStockEl = document.getElementById('inv-adj-current-stock');
+  const deltaEl = document.getElementById('inv-adj-preview-delta');
+  const labelEl = document.getElementById('inv-adj-preview-label');
+  const resEl = document.getElementById('inv-adj-preview-result');
+  const warnBox = document.getElementById('inv-adj-warning-box');
+  const warnText = document.getElementById('inv-adj-warning-text');
+  const submitBtn = document.getElementById('inv-adj-submit-btn');
+  const btnText = document.getElementById('inv-adj-btn-text');
+  const btnIcon = document.getElementById('inv-adj-btn-icon');
+  const incomingText = document.getElementById('inv-adj-incoming-text');
+  const unitsBadge = document.getElementById('inv-adj-units-badge');
+
+  if (curStockEl) curStockEl.textContent = `${currentStock} unidades`;
+  if (unitsBadge) unitsBadge.textContent = `${currentStock} en almacén`;
+
+  let newStock = currentStock;
+
+  if (currentAdjustType === 'in') {
+    newStock = currentStock + qty;
+    if (labelEl) labelEl.textContent = 'Variación proyectada:';
+    if (deltaEl) {
+      deltaEl.textContent = `+${qty}`;
+      deltaEl.className = 'font-bold font-mono text-emerald-500';
+    }
+    if (resEl) {
+      resEl.textContent = `${newStock} unidades`;
+      resEl.className = 'text-base font-extrabold font-mono text-emerald-500';
+    }
+    if (warnBox) warnBox.classList.add('hidden');
+
+    if (btnText) btnText.textContent = `Registrar Ingreso (+${qty})`;
+    if (btnIcon) btnIcon.textContent = '➕';
+    if (submitBtn) {
+      submitBtn.disabled = qty <= 0;
+      submitBtn.className = 'px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-md flex items-center gap-1.5 ' + (qty <= 0 ? 'opacity-50 cursor-not-allowed' : '');
+    }
+
+    if (incomingText && currentAdjustProduct) {
+      const startNum = (currentAdjustProduct.itemUnits?.length || currentStock) + 1;
+      const endNum = startNum + Math.max(0, qty - 1);
+      incomingText.innerHTML = `✨ Al confirmar, se generarán <strong>${qty} nuevas unidades correlativas</strong> (desde <code>${currentAdjustProduct.sku}-${String(startNum).padStart(3, '0')}</code> hasta <code>${currentAdjustProduct.sku}-${String(endNum).padStart(3, '0')}</code>).`;
+    }
+  } else if (currentAdjustType === 'out') {
+    newStock = currentStock - qty;
+    if (labelEl) labelEl.textContent = 'Salida proyectada:';
+    if (deltaEl) {
+      deltaEl.textContent = `-${qty}`;
+      deltaEl.className = 'font-bold font-mono text-amber-500';
+    }
+    if (resEl) {
+      resEl.textContent = `${Math.max(0, newStock)} unidades`;
+    }
+
+    if (qty > currentStock) {
+      if (warnBox) warnBox.classList.remove('hidden');
+      if (warnText) warnText.textContent = `Stock insuficiente: Solo dispones de ${currentStock} unidades.`;
+      if (resEl) resEl.className = 'text-base font-extrabold font-mono text-rose-500';
+      if (btnText) btnText.textContent = 'Stock Insuficiente';
+      if (btnIcon) btnIcon.textContent = '⚠️';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.className = 'px-5 py-2.5 rounded-xl bg-slate-300 dark:bg-white/10 text-slate-400 text-xs font-bold transition shadow-none cursor-not-allowed flex items-center gap-1.5';
+      }
+    } else {
+      if (warnBox) warnBox.classList.add('hidden');
+      if (resEl) resEl.className = 'text-base font-extrabold font-mono text-amber-500';
+      if (btnText) btnText.textContent = `Confirmar Salida (-${qty})`;
+      if (btnIcon) btnIcon.textContent = '➖';
+      if (submitBtn) {
+        submitBtn.disabled = qty <= 0;
+        submitBtn.className = 'px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-md flex items-center gap-1.5 ' + (qty <= 0 ? 'opacity-50 cursor-not-allowed' : '');
+      }
+    }
+  } else if (currentAdjustType === 'adjustment') {
+    const diff = qty - currentStock;
+    newStock = qty;
+    if (labelEl) labelEl.textContent = 'Diferencia neta:';
+    if (deltaEl) {
+      deltaEl.textContent = `${diff >= 0 ? '+' : ''}${diff}`;
+      deltaEl.className = diff >= 0 ? 'font-bold font-mono text-emerald-500' : 'font-bold font-mono text-rose-500';
+    }
+    if (resEl) {
+      resEl.textContent = `${newStock} unidades`;
+      resEl.className = 'text-base font-extrabold font-mono text-blue-500';
+    }
+    if (warnBox) warnBox.classList.add('hidden');
+
+    if (btnText) btnText.textContent = `Fijar Ajuste (= ${qty})`;
+    if (btnIcon) btnIcon.textContent = '⚖️';
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.className = 'px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-md flex items-center gap-1.5';
+    }
+  }
+}
+
+function setStockAdjustUnitsMode(mode) {
+  currentAdjustUnitsMode = mode;
+  const fifoBtn = document.getElementById('inv-adj-mode-fifo-btn');
+  const manualBtn = document.getElementById('inv-adj-mode-manual-btn');
+  const manualBox = document.getElementById('inv-adj-manual-units-box');
+
+  if (mode === 'fifo') {
+    if (fifoBtn) fifoBtn.className = 'px-2.5 py-1 rounded-lg bg-blue-600 text-white font-semibold transition shadow-2xs';
+    if (manualBtn) manualBtn.className = 'px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-300 dark:hover:bg-white/20 transition';
+    if (manualBox) manualBox.classList.add('hidden');
+    currentAdjustSelectedSkus.clear();
+  } else {
+    if (manualBtn) manualBtn.className = 'px-2.5 py-1 rounded-lg bg-blue-600 text-white font-semibold transition shadow-2xs';
+    if (fifoBtn) fifoBtn.className = 'px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-300 dark:hover:bg-white/20 transition';
+    if (manualBox) manualBox.classList.remove('hidden');
+    syncManualSelectedFromQuantity();
+  }
+}
+
+function syncManualSelectedFromQuantity() {
+  if (!currentAdjustProduct || !currentAdjustProduct.itemUnits) return;
+  const qty = parseInt(document.getElementById('inv-adj-quantity')?.value, 10) || 0;
+  const available = currentAdjustProduct.itemUnits.filter(u => u.status === 'disponible');
+
+  currentAdjustSelectedSkus.clear();
+  for (let i = 0; i < Math.min(qty, available.length); i++) {
+    currentAdjustSelectedSkus.add(available[i].sku);
+  }
+  renderStockAdjustUnitsGrid();
+}
+
+function renderStockAdjustUnitsGrid() {
+  const grid = document.getElementById('inv-adj-units-grid');
+  const countEl = document.getElementById('inv-adj-selected-units-count');
+  if (!grid || !currentAdjustProduct) return;
+
+  const units = currentAdjustProduct.itemUnits || [];
+  const availableUnits = units.filter(u => u.status === 'disponible');
+
+  if (countEl) {
+    countEl.textContent = `${currentAdjustSelectedSkus.size} seleccionada${currentAdjustSelectedSkus.size === 1 ? '' : 's'}`;
+  }
+
+  if (availableUnits.length === 0) {
+    grid.innerHTML = '<span class="col-span-3 text-xs text-slate-400 italic py-3 text-center">No hay unidades disponibles en almacén.</span>';
+    return;
+  }
+
+  grid.innerHTML = availableUnits.map(u => {
+    const isSel = currentAdjustSelectedSkus.has(u.sku);
+    return `
+      <div onclick="toggleStockAdjustUnitSelection('${escapeHtml(u.sku)}')" class="p-2 rounded-lg border text-left cursor-pointer transition flex items-center justify-between ${
+        isSel
+          ? 'bg-blue-600/20 border-blue-500 text-blue-400 font-bold shadow-2xs'
+          : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-blue-400'
+      }">
+        <div class="truncate pr-1">
+          <span class="text-[10px] font-mono text-slate-400 block leading-tight">#${String(u.itemNumber || 1).padStart(2, '0')}</span>
+          <span class="text-[11px] font-mono font-semibold truncate block">${escapeHtml(u.sku)}</span>
+        </div>
+        <div class="w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0 ${
+          isSel ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 dark:border-white/20'
+        }">
+          ${isSel ? '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleStockAdjustUnitSelection(sku) {
+  if (currentAdjustSelectedSkus.has(sku)) {
+    currentAdjustSelectedSkus.delete(sku);
+  } else {
+    currentAdjustSelectedSkus.add(sku);
+  }
+
+  const qtyInput = document.getElementById('inv-adj-quantity');
+  if (qtyInput) {
+    qtyInput.value = currentAdjustSelectedSkus.size || 1;
+  }
+
+  renderStockAdjustUnitsGrid();
+  updateStockAdjustPreview();
+}
+
+function handleBarcodeScannerScan(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const input = document.getElementById('inv-adj-unit-search-input');
+    if (!input) return;
+    const query = input.value.trim().toLowerCase();
+    if (!query) return;
+
+    if (!currentAdjustProduct || !currentAdjustProduct.itemUnits) return;
+
+    const cleanNeedle = query.replace(/[\s\-_./]/g, '');
+    const matched = currentAdjustProduct.itemUnits.find(u => {
+      if (u.status !== 'disponible') return false;
+      const cSku = (u.sku || '').toLowerCase().replace(/[\s\-_./]/g, '');
+      const cBarcode = (u.barcode || '').toLowerCase().replace(/[\s\-_./]/g, '');
+      const cNum = String(u.itemNumber || '');
+      return cSku === cleanNeedle || cBarcode === cleanNeedle || cSku.endsWith(cleanNeedle) || cNum === cleanNeedle;
+    });
+
+    if (matched) {
+      currentAdjustSelectedSkus.add(matched.sku);
+      showToast(`¡Unidad #${matched.itemNumber} (${matched.sku}) escaneada!`, 'success');
+      input.value = '';
+
+      const qtyInput = document.getElementById('inv-adj-quantity');
+      if (qtyInput) {
+        qtyInput.value = currentAdjustSelectedSkus.size;
+      }
+      renderStockAdjustUnitsGrid();
+      updateStockAdjustPreview();
+    } else {
+      showToast(`Código "${query}" no encontrado o no disponible en este producto`, 'warning');
+    }
+  }
 }
 
 async function handleSaveStockAdjustment(e) {
   e.preventDefault();
   const id = document.getElementById('inv-adj-prod-id').value;
-  const typeRadio = document.querySelector('input[name="inv-adj-type"]:checked');
-  const type = typeRadio ? typeRadio.value : 'in';
+  const type = currentAdjustType || 'in';
   const quantity = parseFloat(document.getElementById('inv-adj-quantity').value);
   const reason = document.getElementById('inv-adj-reason').value.trim();
   const variantId = document.getElementById('inv-adj-variant-select').value || undefined;
 
-  if (!quantity || quantity <= 0 || !reason) {
-    showToast('Ingresa una cantidad mayor a 0 y el motivo del ajuste', 'error');
+  const techSelect = document.getElementById('inv-adj-technician-select');
+  const customTech = document.getElementById('inv-adj-technician-custom').value.trim();
+  const technicianName = customTech || (techSelect ? techSelect.value : '') || undefined;
+
+  const autoPrint = document.getElementById('inv-adj-auto-print')?.checked;
+
+  if (isNaN(quantity) || (type !== 'adjustment' && quantity <= 0) || (type === 'adjustment' && quantity < 0) || !reason) {
+    showToast('Ingresa una cantidad válida y el motivo del movimiento', 'error');
     return;
+  }
+
+  let selectedUnitSkus = undefined;
+  if (type === 'out' && currentAdjustUnitsMode === 'manual' && currentAdjustSelectedSkus.size > 0) {
+    selectedUnitSkus = Array.from(currentAdjustSelectedSkus);
+  }
+
+  const submitBtn = document.getElementById('inv-adj-submit-btn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="inline-block animate-spin mr-1">↻</span> Registrando...';
   }
 
   try {
@@ -26859,21 +27429,111 @@ async function handleSaveStockAdjustment(e) {
         quantity,
         reason,
         variantId,
-        operatorName: currentUser ? currentUser.name : 'Administrador'
+        operatorName: (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : 'Administrador',
+        technicianName,
+        selectedUnitSkus
       })
     });
 
     const data = await res.json();
     if (data.success) {
-      showToast(`¡Movimiento de stock registrado! Nuevo stock: ${data.data.stock}`, 'success');
+      showToast(`¡Movimiento registrado exitosamente! Nuevo stock: ${data.data.stock}`, 'success');
       closeAdjustStockModal();
       await loadInventoryModule();
+
+      // Si fue ingreso y pidió imprimir etiquetas
+      if (type === 'in' && autoPrint && data.unitsAffected && data.unitsAffected.length > 0) {
+        showToast(`Abriendo impresión de ${data.unitsAffected.length} etiquetas térmicas...`, 'info');
+        setTimeout(() => {
+          printSpecificUnitsLabels(data.data, data.unitsAffected);
+        }, 500);
+      }
     } else {
       showToast(data.message || 'Error al aplicar movimiento', 'error');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>⚡</span><span>Reintentar</span>';
+      }
     }
   } catch (err) {
-    showToast('Error de conexión al ajustar stock', 'error');
+    showToast('Error de conexión al registrar movimiento', 'error');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>⚡</span><span>Reintentar</span>';
+    }
   }
+}
+
+// Impresión térmica de unidades específicas recién ingresadas
+function printSpecificUnitsLabels(product, unitSkus) {
+  if (!product || !unitSkus || unitSkus.length === 0) return;
+
+  const skuSet = new Set(unitSkus);
+  const unitsToPrint = (product.itemUnits || []).filter(u => skuSet.has(u.sku));
+  if (unitsToPrint.length === 0) return;
+
+  const sheet = document.getElementById('barcode-print-sheet');
+  if (!sheet) return;
+
+  const labelWidthMm = barcodeSettings.width || 50;
+  const labelHeightMm = barcodeSettings.height || 25;
+  const cols = barcodeSettings.columns || 2;
+  const gapXMm = barcodeSettings.gapX !== undefined ? barcodeSettings.gapX : 2;
+  const sheetWidthMm = (labelWidthMm * cols) + (gapXMm * (cols - 1));
+
+  const flatLabels = unitsToPrint.map(u => {
+    const barcodeSvg = typeof generateBarcodeSvg === 'function'
+      ? generateBarcodeSvg(u.sku, { height: 32, showText: false })
+      : '';
+    const dateFormatted = new Date().toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+    return `
+      <div class="barcode-print-label" style="width: ${labelWidthMm}mm; height: ${labelHeightMm}mm; min-width: ${labelWidthMm}mm; max-width: ${labelWidthMm}mm; min-height: ${labelHeightMm}mm; max-height: ${labelHeightMm}mm; box-sizing: border-box; padding: 1.2mm 2.2mm; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; background: #ffffff; color: #000000; border: none; font-family: system-ui, -apple-system, sans-serif;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; border-bottom: 0.5px solid #000; padding-bottom: 0.4mm;">
+          <span style="font-size: 7pt; font-weight: 900; letter-spacing: -0.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;">
+            ${escapeHtml(product.name)}
+          </span>
+          <span style="font-size: 6.5pt; font-family: monospace; font-weight: bold; color: #000;">
+            #${String(u.itemNumber || 1).padStart(2, '0')}
+          </span>
+        </div>
+
+        <div style="width: 100%; height: 11mm; display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 0.3mm 0;">
+          ${barcodeSvg}
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; border-top: 0.5px solid #000; padding-top: 0.3mm; font-size: 6.5pt; font-family: monospace; font-weight: 700;">
+          <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%;">${escapeHtml(u.sku)}</span>
+          <span style="color: #333;">${dateFormatted}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  let sheetHtml = '<div class="barcode-print-sheet">';
+  for (let i = 0; i < flatLabels.length; i += cols) {
+    sheetHtml += `<div class="barcode-print-row" style="display: flex; flex-direction: row; justify-content: center; align-items: center; gap: ${gapXMm}mm; width: ${sheetWidthMm}mm; max-width: ${sheetWidthMm}mm; height: ${labelHeightMm}mm; max-height: ${labelHeightMm}mm; page-break-after: always; break-after: page; page-break-inside: avoid; break-inside: avoid; box-sizing: border-box; margin: 0 auto; padding: 0;">`;
+    for (let col = 0; col < cols; col++) {
+      const idx = i + col;
+      if (idx < flatLabels.length) {
+        sheetHtml += flatLabels[idx];
+      } else {
+        sheetHtml += `<div class="barcode-print-label placeholder" style="width: ${labelWidthMm}mm; height: ${labelHeightMm}mm; min-width: ${labelWidthMm}mm; max-width: ${labelWidthMm}mm; flex-shrink: 0; visibility: hidden; border: none; background: transparent;"></div>`;
+      }
+    }
+    sheetHtml += '</div>';
+  }
+  sheetHtml += '</div>';
+
+  sheet.innerHTML = sheetHtml;
+  document.body.classList.add('printing-barcodes');
+
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove('printing-barcodes');
+    }, 1000);
+  }, 300);
 }
 
 // ========================================================
@@ -30276,15 +30936,26 @@ function renderTraceabilitySubTabContent() {
           else typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-600">Ajuste</span>';
 
           return `
-            <div class="relative pl-8 text-xs space-y-0.5">
+            <div class="relative pl-8 text-xs space-y-1">
               <div class="absolute left-2 top-1.5 w-3 h-3 rounded-full bg-blue-500 ring-4 ring-white dark:ring-slate-900"></div>
               <div class="flex items-center space-x-2">
                 ${typeBadge}
                 <span class="font-bold font-mono text-slate-900 dark:text-white">${m.quantity > 0 ? '+' : ''}${m.quantity} unidades</span>
-                <span class="text-[10px] text-slate-400 font-mono">${new Date(m.date).toLocaleString()}</span>
+                <span class="text-[10px] text-slate-400 font-mono">${new Date(m.timestamp || m.date || Date.now()).toLocaleString()}</span>
               </div>
-              <p class="text-slate-600 dark:text-slate-300">${escapeHtml(m.reason)}</p>
-              <span class="text-[10px] text-slate-400">Operador: <strong class="text-slate-700 dark:text-slate-200">${escapeHtml(m.operatorName || 'Admin')}</strong> • Stock Resultante: <strong class="font-mono text-slate-900 dark:text-white">${m.stockAfter}</strong></span>
+              <p class="text-slate-600 dark:text-slate-300 font-medium">${escapeHtml(m.reason || '-')}</p>
+              <div class="text-[10px] text-slate-400 flex flex-wrap items-center gap-x-2">
+                <span>Operador: <strong class="text-slate-700 dark:text-slate-200">${escapeHtml(m.operatorName || 'Admin')}</strong></span>
+                ${m.technicianName ? `<span>• Responsable: <strong class="text-blue-600 dark:text-blue-400">${escapeHtml(m.technicianName)}</strong></span>` : ''}
+                <span>• Stock Resultante: <strong class="font-mono text-slate-900 dark:text-white">${m.newStock !== undefined ? m.newStock : (m.stockAfter !== undefined ? m.stockAfter : '-')}</strong></span>
+              </div>
+              ${m.unitsAffected && Array.isArray(m.unitsAffected) && m.unitsAffected.length > 0 ? `
+                <div class="mt-1 flex flex-wrap items-center gap-1">
+                  <span class="text-[9.5px] font-bold text-slate-400">🏷️ Unidades:</span>
+                  ${m.unitsAffected.slice(0, 10).map(u => `<span class="px-1.5 py-0.2 rounded text-[9px] font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-bold">${escapeHtml(u)}</span>`).join('')}
+                  ${m.unitsAffected.length > 10 ? `<span class="text-[9px] text-slate-400 font-mono">+${m.unitsAffected.length - 10} más</span>` : ''}
+                </div>
+              ` : ''}
             </div>
           `;
         }).join('')}
