@@ -229,18 +229,32 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
     return { success: true, message: "Producto enviado a la papelera de reciclaje (máx. 60 días)" };
   });
 
-  // Marcación de códigos de barras impresos
+  // Marcación de códigos de barras impresos (a nivel producto y unidad)
   fastify.post("/inventory/products/mark-barcodes-printed", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const schema = z.object({
       productIds: z.array(z.number()),
+      unitSkus: z.record(z.string(), z.array(z.string())).optional(),
+      printed: z.boolean().optional(),
     });
     const parse = schema.safeParse(request.body);
     if (!parse.success) {
-      return reply.status(400).send({ success: false, message: "Lista de IDs inválida" });
+      return reply.status(400).send({ success: false, message: "Parámetros inválidos" });
     }
-    const result = markBarcodesPrinted(tenantId, parse.data.productIds);
-    return { success: true, message: "Productos marcados como impresos", ...result };
+    const formattedUnitSkus: Record<number, string[]> = {};
+    if (parse.data.unitSkus) {
+      for (const [k, v] of Object.entries(parse.data.unitSkus)) {
+        const pId = parseInt(k, 10);
+        if (!isNaN(pId)) formattedUnitSkus[pId] = v;
+      }
+    }
+    const result = markBarcodesPrinted(
+      tenantId,
+      parse.data.productIds,
+      Object.keys(formattedUnitSkus).length > 0 ? formattedUnitSkus : undefined,
+      parse.data.printed !== undefined ? parse.data.printed : true
+    );
+    return { success: true, message: "Marcación actualizada correctamente", ...result };
   });
 
   // Eliminación masiva hacia la papelera

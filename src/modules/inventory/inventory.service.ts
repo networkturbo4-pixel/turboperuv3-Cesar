@@ -1,4 +1,4 @@
-﻿import fs from "fs";
+import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { getTenantFilePath } from "../tenants/tenants.service";
@@ -728,23 +728,60 @@ export function emptyTrash(tenantId: string): number {
 // MARCACIÓN DE CÓDIGOS DE BARRA IMPRESOS
 // ==========================================
 
-export function markBarcodesPrinted(tenantId: string, productIds: number[]): { updatedCount: number } {
+export function markBarcodesPrinted(
+  tenantId: string,
+  productIds: number[],
+  unitSkus?: Record<number, string[]>,
+  printed: boolean = true
+): { updatedCount: number; updatedUnitsCount: number } {
   const products = loadProducts(tenantId);
   const now = new Date().toISOString();
   let count = 0;
+  let unitsCount = 0;
 
   products.forEach((p) => {
     if (productIds.includes(p.id)) {
-      p.barcodePrinted = true;
-      p.barcodePrintedAt = now;
+      const targetUnitSkus = unitSkus?.[p.id];
+
+      if (Array.isArray(p.itemUnits) && p.itemUnits.length > 0) {
+        p.itemUnits.forEach((u) => {
+          if (!targetUnitSkus || targetUnitSkus.includes(u.sku)) {
+            u.barcodePrinted = printed;
+            if (printed) {
+              u.barcodePrintedAt = now;
+            } else {
+              delete u.barcodePrintedAt;
+            }
+            unitsCount++;
+          }
+        });
+
+        // Calcular si todas las unidades están impresas
+        const allPrinted = p.itemUnits.every((u) => Boolean(u.barcodePrinted));
+        p.barcodePrinted = allPrinted;
+        if (allPrinted && printed) {
+          p.barcodePrintedAt = now;
+        } else if (!allPrinted) {
+          if (!p.itemUnits.some((u) => Boolean(u.barcodePrinted))) {
+            delete p.barcodePrintedAt;
+          }
+        }
+      } else {
+        p.barcodePrinted = printed;
+        if (printed) {
+          p.barcodePrintedAt = now;
+        } else {
+          delete p.barcodePrintedAt;
+        }
+      }
       count++;
     }
   });
 
-  if (count > 0) {
+  if (count > 0 || unitsCount > 0) {
     saveProducts(tenantId, products);
   }
-  return { updatedCount: count };
+  return { updatedCount: count, updatedUnitsCount: unitsCount };
 }
 
 // ==========================================

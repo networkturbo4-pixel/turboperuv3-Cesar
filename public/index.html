@@ -6799,10 +6799,10 @@
                     <span class="text-[9px] text-blue-500 font-semibold mt-0.5 block">Ver todo el catálogo</span>
                   </div>
 
-                  <!-- 2. Sin Imprimir / Pendientes -->
+                  <!-- 2. Falta Imprimir / Pendientes -->
                   <div onclick="filterBarcodesByStatus('pending')" class="pro-card p-3 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xs cursor-pointer hover:border-amber-500 transition group">
                     <div class="flex items-center justify-between">
-                      <span class="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider block truncate">Sin Imprimir</span>
+                      <span class="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider block truncate">Falta Imprimir</span>
                       <span class="text-xs text-amber-500 opacity-60 group-hover:opacity-100">⏳</span>
                     </div>
                     <div id="kpi-barcode-pending" class="text-xl font-bold font-mono text-amber-600 dark:text-amber-400 mt-1">0</div>
@@ -6842,12 +6842,12 @@
                       <span class="text-slate-300 dark:text-slate-700">|</span>
                       <div class="inline-flex p-0.5 rounded-lg bg-slate-200 dark:bg-white/5 text-[11px]">
                         <button type="button" id="bf-status-all" onclick="filterBarcodesByStatus('all')" class="px-2 py-0.5 rounded-md font-semibold transition btn-brand-primary text-white">Todos</button>
-                        <button type="button" id="bf-status-pending" onclick="filterBarcodesByStatus('pending')" class="px-2 py-0.5 rounded-md font-semibold transition text-slate-600 dark:text-slate-400">Sin Imprimir</button>
+                        <button type="button" id="bf-status-pending" onclick="filterBarcodesByStatus('pending')" class="px-2 py-0.5 rounded-md font-semibold transition text-slate-600 dark:text-slate-400">Falta Imprimir</button>
                         <button type="button" id="bf-status-printed" onclick="filterBarcodesByStatus('printed')" class="px-2 py-0.5 rounded-md font-semibold transition text-slate-600 dark:text-slate-400">Impresos</button>
                       </div>
                       <span class="text-slate-300 dark:text-slate-700">|</span>
                       <button type="button" onclick="filterBarcodesSelectAllPending()" class="text-[11px] text-purple-600 dark:text-purple-400 hover:underline font-semibold flex items-center gap-1">
-                        <span>⚡ Seleccionar pendientes</span>
+                        <span>⚡ Seleccionar que faltan imprimir</span>
                       </button>
                     </div>
 
@@ -27339,8 +27339,31 @@ function printSingleUnitLabel(productId, unitSku) {
 
   document.body.classList.add('printing-barcodes');
 
-  setTimeout(() => {
+  setTimeout(async () => {
     window.print();
+    try {
+      await fetch('/api/inventory/products/mark-barcodes-printed', {
+        method: 'POST',
+        headers: getInventoryHeaders(),
+        body: JSON.stringify({
+          productIds: [p.id],
+          unitSkus: { [p.id]: [unit.sku] },
+          printed: true
+        })
+      });
+      const now = new Date().toISOString();
+      unit.barcodePrinted = true;
+      unit.barcodePrintedAt = now;
+      if (p.itemUnits && p.itemUnits.every(u => u.barcodePrinted)) {
+        p.barcodePrinted = true;
+        p.barcodePrintedAt = now;
+      }
+      updateBarcodeCounters();
+      renderBarcodeSelectionTable(document.getElementById('barcode-search-inp')?.value || '');
+      updateBarcodePreviewGrid();
+    } catch (err) {
+      console.error('Error al actualizar marca de impresión de unidad:', err);
+    }
     setTimeout(() => {
       document.body.classList.remove('printing-barcodes');
     }, 1000);
@@ -27648,11 +27671,33 @@ function generateBarcodeSvg(rawText, options = {}) {
   `;
 }
 
+let barcodeUnitSubFilter = {}; // { [productId]: 'pending' | 'printed' | 'all' }
+
 function updateBarcodeCounters() {
   const prods = inventoryProducts || [];
   const total = prods.length;
-  const printed = prods.filter(p => Boolean(p.barcodePrinted || p.isBarcodePrinted)).length;
-  const pending = Math.max(0, total - printed);
+
+  let printedCount = 0;
+  let pendingCount = 0;
+
+  prods.forEach(p => {
+    const hasUnits = Boolean(p.itemUnits && p.itemUnits.length > 0);
+    if (hasUnits) {
+      const pPrinted = p.itemUnits.filter(u => Boolean(u.barcodePrinted)).length;
+      if (pPrinted === p.itemUnits.length && p.itemUnits.length > 0) {
+        printedCount++;
+      } else {
+        pendingCount++;
+      }
+    } else {
+      if (Boolean(p.barcodePrinted || p.isBarcodePrinted)) {
+        printedCount++;
+      } else {
+        pendingCount++;
+      }
+    }
+  });
+
   const selectedCount = barcodeSelectedProductIds.size;
 
   let totalLabels = 0;
@@ -27678,10 +27723,10 @@ function updateBarcodeCounters() {
   if (kpiTotal) kpiTotal.textContent = total;
 
   const kpiPrinted = document.getElementById('kpi-barcode-printed');
-  if (kpiPrinted) kpiPrinted.textContent = printed;
+  if (kpiPrinted) kpiPrinted.textContent = printedCount;
 
   const kpiPending = document.getElementById('kpi-barcode-pending');
-  if (kpiPending) kpiPending.textContent = pending;
+  if (kpiPending) kpiPending.textContent = pendingCount;
 
   const kpiSelected = document.getElementById('kpi-barcode-selected');
   if (kpiSelected) kpiSelected.textContent = selectedCount;
@@ -27704,7 +27749,7 @@ function updateBarcodeCounters() {
 
   const btnPending = document.getElementById('bf-status-pending');
   if (btnPending) {
-    btnPending.textContent = `Sin Imprimir (${pending})`;
+    btnPending.textContent = `Falta Imprimir (${pendingCount})`;
     if (barcodeFilterStatus === 'pending') {
       btnPending.className = 'px-2 py-0.5 rounded-md font-semibold transition bg-amber-500 text-white shadow-2xs';
     } else {
@@ -27714,7 +27759,7 @@ function updateBarcodeCounters() {
 
   const btnPrinted = document.getElementById('bf-status-printed');
   if (btnPrinted) {
-    btnPrinted.textContent = `Impresos (${printed})`;
+    btnPrinted.textContent = `Impresos (${printedCount})`;
     if (barcodeFilterStatus === 'printed') {
       btnPrinted.className = 'px-2 py-0.5 rounded-md font-semibold transition bg-emerald-600 text-white shadow-2xs';
     } else {
@@ -27754,25 +27799,40 @@ function filterBarcodesByStatus(status) {
   renderBarcodeSelectionTable(searchVal);
 }
 
+function setProductUnitSubFilter(productId, status) {
+  barcodeUnitSubFilter[productId] = status;
+  const searchVal = document.getElementById('barcode-search-inp')?.value || '';
+  renderBarcodeSelectionTable(searchVal);
+}
+
 function filterBarcodesSelectAllPending() {
-  const prods = (inventoryProducts || []).filter(p => !p.barcodePrinted && !p.isBarcodePrinted);
+  const prods = (inventoryProducts || []).filter(p => {
+    if (p.itemUnits && p.itemUnits.length > 0) {
+      return p.itemUnits.some(u => !u.barcodePrinted);
+    }
+    return !p.barcodePrinted && !p.isBarcodePrinted;
+  });
+
   if (prods.length === 0) {
-    showToast('No hay productos pendientes de imprimir', 'info');
+    showToast('No hay productos ni etiquetas pendientes por imprimir', 'info');
     return;
   }
+
   prods.forEach(p => {
     barcodeSelectedProductIds.add(p.id);
     if (p.itemUnits && p.itemUnits.length > 0) {
-      barcodeSelectedUnits[p.id] = new Set(p.itemUnits.map(u => u.sku));
-      barcodeLabelQuantities[p.id] = p.itemUnits.length;
+      const pendingUnits = p.itemUnits.filter(u => !u.barcodePrinted);
+      barcodeSelectedUnits[p.id] = new Set(pendingUnits.map(u => u.sku));
+      barcodeLabelQuantities[p.id] = pendingUnits.length;
     } else {
       barcodeLabelQuantities[p.id] = Math.max(1, p.stock || 1);
     }
   });
+
   updateBarcodeCounters();
   renderBarcodeSelectionTable(document.getElementById('barcode-search-inp')?.value || '');
   updateBarcodePreviewGrid();
-  showToast(`Se seleccionaron ${prods.length} productos pendientes`, 'success');
+  showToast(`Se seleccionaron ${prods.length} productos con etiquetas pendientes`, 'success');
 }
 
 function clearBarcodeSelection() {
@@ -27802,9 +27862,17 @@ function renderBarcodeSelectionTable(search = '') {
   const q = normalize(search);
 
   const filtered = (inventoryProducts || []).filter(p => {
-    const isPrinted = Boolean(p.barcodePrinted || p.isBarcodePrinted);
-    if (barcodeFilterStatus === 'pending' && isPrinted) return false;
-    if (barcodeFilterStatus === 'printed' && !isPrinted) return false;
+    const hasUnits = Boolean(p.itemUnits && p.itemUnits.length > 0);
+    const printedUnitsCount = hasUnits ? p.itemUnits.filter(u => Boolean(u.barcodePrinted)).length : 0;
+    const pendingUnitsCount = hasUnits ? (p.itemUnits.length - printedUnitsCount) : 0;
+    const isFullyPrinted = hasUnits ? (printedUnitsCount === p.itemUnits.length && p.itemUnits.length > 0) : Boolean(p.barcodePrinted || p.isBarcodePrinted);
+    const hasPending = hasUnits ? (pendingUnitsCount > 0) : (!p.barcodePrinted && !p.isBarcodePrinted);
+
+    if (barcodeFilterStatus === 'pending') {
+      if (!hasPending) return false;
+    } else if (barcodeFilterStatus === 'printed') {
+      if (hasUnits ? (printedUnitsCount === 0) : !isFullyPrinted) return false;
+    }
 
     if (!q) return true;
     const matchName = normalize(p.name).includes(q);
@@ -27841,31 +27909,63 @@ function renderBarcodeSelectionTable(search = '') {
     const code = p.barcode || p.sku;
     const batch = p.batchNumber || 'LOTE-2026-01';
     const entryFormatted = p.entryDate ? new Date(p.entryDate).toLocaleDateString() : new Date().toLocaleDateString();
-    const isPrinted = Boolean(p.barcodePrinted || p.isBarcodePrinted);
+
+    const totalUnits = hasUnits ? p.itemUnits.length : 0;
+    const printedUnits = hasUnits ? p.itemUnits.filter(u => Boolean(u.barcodePrinted)).length : 0;
+    const pendingUnits = totalUnits - printedUnits;
 
     let printStatusBadge = '';
-    if (isPrinted) {
-      const dateStr = p.barcodePrintedAt ? new Date(p.barcodePrintedAt).toLocaleDateString() : 'Impreso';
-      printStatusBadge = `
-        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-          <svg class="w-3 h-3 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          <span>Impreso (${escapeHtml(dateStr)})</span>
-        </span>
-      `;
+    if (hasUnits) {
+      if (printedUnits === totalUnits && totalUnits > 0) {
+        printStatusBadge = `
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <svg class="w-3 h-3 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span>Impreso (${printedUnits}/${totalUnits})</span>
+          </span>
+        `;
+      } else if (printedUnits > 0) {
+        printStatusBadge = `
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+            <svg class="w-3 h-3 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <span>Parcial (${printedUnits} de ${totalUnits})</span>
+          </span>
+        `;
+      } else {
+        printStatusBadge = `
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <svg class="w-3 h-3 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Falta Imprimir (${pendingUnits}/${totalUnits})</span>
+          </span>
+        `;
+      }
     } else {
-      printStatusBadge = `
-        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-          <svg class="w-3 h-3 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span>Sin Imprimir</span>
-        </span>
-      `;
+      if (Boolean(p.barcodePrinted || p.isBarcodePrinted)) {
+        const dateStr = p.barcodePrintedAt ? new Date(p.barcodePrintedAt).toLocaleDateString() : 'Impreso';
+        printStatusBadge = `
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <svg class="w-3 h-3 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span>Impreso (${escapeHtml(dateStr)})</span>
+          </span>
+        `;
+      } else {
+        printStatusBadge = `
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <svg class="w-3 h-3 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Falta Imprimir</span>
+          </span>
+        `;
+      }
     }
 
     let qtyColHtml = '';
     let selectedUnitsCount = 0;
     if (hasUnits) {
       if (!barcodeSelectedUnits[p.id]) {
-        barcodeSelectedUnits[p.id] = new Set(p.itemUnits.map(u => u.sku));
+        const pendingUnitsList = p.itemUnits.filter(u => !u.barcodePrinted);
+        const initialUnits = (barcodeFilterStatus === 'pending' && pendingUnitsList.length > 0)
+          ? pendingUnitsList
+          : p.itemUnits;
+        barcodeSelectedUnits[p.id] = new Set(initialUnits.map(u => u.sku));
       }
       selectedUnitsCount = isSelected ? (barcodeSelectedUnits[p.id]?.size || 0) : 0;
       qtyColHtml = `
@@ -27945,8 +28045,19 @@ function renderBarcodeSelectionTable(search = '') {
     // Fila expandible con las unidades individuales serializadas
     let subRowHtml = '';
     if (hasUnits && isExpanded) {
-      const units = p.itemUnits || [];
+      const allUnits = p.itemUnits || [];
       const selectedUnits = barcodeSelectedUnits[p.id] || new Set();
+
+      const currentSubFilter = barcodeUnitSubFilter[p.id] || (barcodeFilterStatus === 'all' ? 'all' : barcodeFilterStatus);
+      const pendingUnitsList = allUnits.filter(u => !u.barcodePrinted);
+      const printedUnitsList = allUnits.filter(u => Boolean(u.barcodePrinted));
+
+      let visibleUnits = allUnits;
+      if (currentSubFilter === 'pending') {
+        visibleUnits = pendingUnitsList;
+      } else if (currentSubFilter === 'printed') {
+        visibleUnits = printedUnitsList;
+      }
 
       subRowHtml = `
         <tr class="bg-purple-50/40 dark:bg-purple-950/20 border-b border-purple-200/40 dark:border-purple-500/20">
@@ -27956,12 +28067,26 @@ function renderBarcodeSelectionTable(search = '') {
                 <div class="flex items-center space-x-2">
                   <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Desglose de Unidades Serializadas</span>
                   <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 font-mono font-bold">
-                    ${selectedUnits.size} de ${units.length} seleccionadas
+                    ${selectedUnits.size} de ${allUnits.length} seleccionadas
                   </span>
                 </div>
+
+                <!-- Mini-Filtros Inteligentes para Unidades -->
+                <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-white/5 text-[10px] font-semibold border border-slate-200 dark:border-white/10">
+                  <button type="button" onclick="setProductUnitSubFilter(${p.id}, 'pending')" class="px-2 py-0.5 rounded-md transition ${currentSubFilter === 'pending' ? 'bg-amber-500 text-white shadow-2xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">
+                    Falta Imprimir (${pendingUnitsList.length})
+                  </button>
+                  <button type="button" onclick="setProductUnitSubFilter(${p.id}, 'printed')" class="px-2 py-0.5 rounded-md transition ${currentSubFilter === 'printed' ? 'bg-emerald-600 text-white shadow-2xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">
+                    Impresos (${printedUnitsList.length})
+                  </button>
+                  <button type="button" onclick="setProductUnitSubFilter(${p.id}, 'all')" class="px-2 py-0.5 rounded-md transition ${currentSubFilter === 'all' ? 'bg-purple-600 text-white shadow-2xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">
+                    Todas (${allUnits.length})
+                  </button>
+                </div>
+
                 <div class="flex items-center gap-1.5 text-xs">
                   <button type="button" onclick="selectAllUnitsOfProduct(${p.id}, true)" class="px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 text-purple-700 dark:text-purple-300 text-[11px] font-semibold transition border border-purple-200 dark:border-purple-500/30">
-                    Seleccionar Todas
+                    Seleccionar ${currentSubFilter === 'pending' ? 'Pendientes' : (currentSubFilter === 'printed' ? 'Impresas' : 'Todas')}
                   </button>
                   <button type="button" onclick="selectAllUnitsOfProduct(${p.id}, false)" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-600 dark:text-slate-400 text-[11px] font-semibold transition border border-slate-200 dark:border-white/10">
                     Deseleccionar
@@ -27970,11 +28095,22 @@ function renderBarcodeSelectionTable(search = '') {
               </div>
 
               <!-- Cuadrícula compacta de unidades individuales -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-56 overflow-y-auto scrollbar-thin pr-1">
-                ${units.map((u, i) => {
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto scrollbar-thin pr-1">
+                ${visibleUnits.length === 0 ? `
+                  <div class="col-span-full py-6 text-center text-xs text-slate-400">
+                    No hay unidades en esta categoría (${currentSubFilter === 'pending' ? '¡Todas las etiquetas de este producto ya fueron impresas!' : 'Ninguna unidad ha sido impresa aún'}).
+                  </div>
+                ` : visibleUnits.map((u, i) => {
                   const isUnitSelected = selectedUnits.has(u.sku);
+                  const isPrinted = Boolean(u.barcodePrinted);
                   return `
-                    <label class="flex items-center justify-between p-2 rounded-lg border transition cursor-pointer ${isUnitSelected ? 'bg-purple-50 dark:bg-purple-500/10 border-purple-300 dark:border-purple-500/30 shadow-2xs' : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 opacity-70 hover:opacity-100'}">
+                    <label class="flex items-center justify-between p-2 rounded-lg border transition cursor-pointer ${
+                      isUnitSelected 
+                        ? 'bg-purple-50 dark:bg-purple-500/10 border-purple-300 dark:border-purple-500/30 shadow-2xs' 
+                        : isPrinted 
+                          ? 'bg-emerald-500/[0.04] dark:bg-emerald-500/[0.02] border-emerald-300/40 dark:border-emerald-500/20' 
+                          : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 hover:border-amber-400/40'
+                    }">
                       <div class="flex items-center space-x-2 min-w-0">
                         <input 
                           type="checkbox" 
@@ -27987,10 +28123,22 @@ function renderBarcodeSelectionTable(search = '') {
                             <span class="text-[10px] font-mono font-bold text-slate-400">#${String(u.itemNumber || (i + 1)).padStart(2, '0')}</span>
                             <span class="text-xs font-mono font-bold text-slate-900 dark:text-white truncate">${escapeHtml(u.sku)}</span>
                           </div>
-                          <span class="text-[9px] text-slate-400 block truncate">${escapeHtml(u.status || 'disponible')}</span>
+                          <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="text-[9px] text-slate-400 truncate">${escapeHtml(u.status || 'disponible')}</span>
+                            ${isPrinted 
+                              ? `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                                  <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                  <span>Impreso</span>
+                                 </span>` 
+                              : `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold text-amber-600 dark:text-amber-400">
+                                  <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                  <span>Falta Imprimir</span>
+                                 </span>`
+                            }
+                          </div>
                         </div>
                       </div>
-                      <button type="button" onclick="event.preventDefault(); printSingleUnitLabel(${p.id}, '${escapeHtml(u.sku)}');" title="Imprimir solo esta etiqueta" class="p-1 rounded hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 hover:text-purple-600 transition flex-shrink-0">
+                      <button type="button" onclick="event.preventDefault(); printSingleUnitLabel(${p.id}, '${escapeHtml(u.sku)}');" title="${isPrinted ? 'Reimprimir esta etiqueta' : 'Imprimir etiqueta'}" class="p-1 rounded hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 hover:text-purple-600 transition flex-shrink-0">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                       </button>
                     </label>
@@ -28012,8 +28160,16 @@ function toggleBarcodeSelect(productId, checked) {
   if (checked) {
     barcodeSelectedProductIds.add(productId);
     if (p && p.itemUnits && p.itemUnits.length > 0) {
-      barcodeSelectedUnits[productId] = new Set(p.itemUnits.map(u => u.sku));
-      barcodeLabelQuantities[productId] = p.itemUnits.length;
+      let targetUnits = p.itemUnits;
+      if (barcodeFilterStatus === 'pending') {
+        const pendingUnits = p.itemUnits.filter(u => !u.barcodePrinted);
+        targetUnits = pendingUnits.length > 0 ? pendingUnits : p.itemUnits;
+      } else if (barcodeFilterStatus === 'printed') {
+        const printedUnits = p.itemUnits.filter(u => Boolean(u.barcodePrinted));
+        targetUnits = printedUnits.length > 0 ? printedUnits : p.itemUnits;
+      }
+      barcodeSelectedUnits[productId] = new Set(targetUnits.map(u => u.sku));
+      barcodeLabelQuantities[productId] = targetUnits.length;
     } else {
       barcodeLabelQuantities[productId] = barcodeLabelQuantities[productId] || Math.max(1, p?.stock || 1);
     }
@@ -28055,9 +28211,20 @@ function selectAllUnitsOfProduct(productId, selectAll) {
   if (!p || !p.itemUnits) return;
 
   if (selectAll) {
-    barcodeSelectedUnits[productId] = new Set(p.itemUnits.map(u => u.sku));
+    const currentSubFilter = barcodeUnitSubFilter[productId] || (barcodeFilterStatus === 'all' ? 'all' : barcodeFilterStatus);
+    let targetUnits = p.itemUnits;
+    if (currentSubFilter === 'pending') {
+      targetUnits = p.itemUnits.filter(u => !u.barcodePrinted);
+    } else if (currentSubFilter === 'printed') {
+      targetUnits = p.itemUnits.filter(u => Boolean(u.barcodePrinted));
+    }
+
+    if (!barcodeSelectedUnits[productId]) {
+      barcodeSelectedUnits[productId] = new Set();
+    }
+    targetUnits.forEach(u => barcodeSelectedUnits[productId].add(u.sku));
     barcodeSelectedProductIds.add(productId);
-    barcodeLabelQuantities[productId] = p.itemUnits.length;
+    barcodeLabelQuantities[productId] = barcodeSelectedUnits[productId].size;
   } else {
     barcodeSelectedUnits[productId] = new Set();
     barcodeSelectedProductIds.delete(productId);
@@ -28361,31 +28528,59 @@ function handleSaveBarcodeSettings(e) {
   showToast(`Ajustes guardados: ${barcodeSettings.width}x${barcodeSettings.height}mm (${barcodeSettings.columns} columnas)`, 'success');
 }
 
-// Marcar como impresos en servidor
-async function handleMarkSelectedBarcodesPrinted() {
+// Marcar como impresos en servidor (soporte inteligente producto y unidades)
+async function handleMarkSelectedBarcodesPrinted(silent = false) {
   if (barcodeSelectedProductIds.size === 0) {
-    showToast('Selecciona al menos un producto para marcar como impreso', 'error');
+    if (!silent) showToast('Selecciona al menos un producto para marcar como impreso', 'error');
     return;
   }
 
   const ids = Array.from(barcodeSelectedProductIds);
+  const unitSkus = {};
+  ids.forEach(id => {
+    if (barcodeSelectedUnits[id] && barcodeSelectedUnits[id].size > 0) {
+      unitSkus[id] = Array.from(barcodeSelectedUnits[id]);
+    }
+  });
+
   try {
     const res = await fetch('/api/inventory/products/mark-barcodes-printed', {
       method: 'POST',
       headers: getInventoryHeaders(),
-      body: JSON.stringify({ productIds: ids })
+      body: JSON.stringify({ productIds: ids, unitSkus, printed: true })
     });
     const data = await res.json();
     if (data.success) {
-      showToast(`¡${ids.length} productos marcados como impresos exitosamente!`, 'success');
-      await loadInventoryModule();
+      const now = new Date().toISOString();
+      ids.forEach(id => {
+        const prod = (inventoryProducts || []).find(p => p.id === id);
+        if (prod) {
+          const selected = barcodeSelectedUnits[id];
+          if (prod.itemUnits && prod.itemUnits.length > 0) {
+            prod.itemUnits.forEach(u => {
+              if (!selected || selected.has(u.sku)) {
+                u.barcodePrinted = true;
+                u.barcodePrintedAt = now;
+              }
+            });
+            prod.barcodePrinted = prod.itemUnits.every(u => Boolean(u.barcodePrinted));
+            if (prod.barcodePrinted) prod.barcodePrintedAt = now;
+          } else {
+            prod.barcodePrinted = true;
+            prod.barcodePrintedAt = now;
+          }
+        }
+      });
+      if (!silent) showToast(`¡Etiquetas marcadas como impresas exitosamente!`, 'success');
+      clearBarcodeSelection();
+      updateBarcodeCounters();
       renderBarcodeSelectionTable(document.getElementById('barcode-search-inp')?.value || '');
       updateBarcodePreviewGrid();
     } else {
-      showToast(data.message || 'Error al actualizar estado de impresión', 'error');
+      if (!silent) showToast(data.message || 'Error al actualizar estado de impresión', 'error');
     }
   } catch (err) {
-    showToast('Error de conexión con el servidor', 'error');
+    if (!silent) showToast('Error de conexión con el servidor', 'error');
   }
 }
 
@@ -28604,7 +28799,7 @@ function triggerBarcodePrint() {
 
   setTimeout(() => {
     window.print();
-    handleMarkSelectedBarcodesPrinted();
+    handleMarkSelectedBarcodesPrinted(true);
     setTimeout(() => {
       document.body.classList.remove('printing-barcodes');
     }, 1000);

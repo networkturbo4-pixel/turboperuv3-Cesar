@@ -75,6 +75,8 @@ export interface ProductItemUnit {
   assignedAt?: string;
   serialNumber?: string;
   notes?: string;
+  barcodePrinted?: boolean;
+  barcodePrintedAt?: string;
   createdAt?: string;
 }
 

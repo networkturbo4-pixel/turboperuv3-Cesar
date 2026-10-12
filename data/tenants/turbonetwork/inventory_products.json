@@ -29,7 +29,8 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "createdAt": "2026-10-09T23:18:00.748Z"
+        "createdAt": "2026-10-09T23:18:00.748Z",
+        "barcodePrinted": false
       },
       {
         "id": "unit_101_2_1791587894342",
