@@ -10,7 +10,11 @@
     "start": "node dist/server.js",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "desktop:install": "npm --prefix desktop install",
+    "desktop:start": "npm --prefix desktop run start",
+    "desktop:build": "npm --prefix desktop run dist",
+    "desktop:portable": "npm --prefix desktop run dist:portable"
   },
   "keywords": [
     "isp",

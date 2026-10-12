@@ -5,10 +5,41 @@ import path from "path";
 import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
 import { WhatsAppService } from "./whatsapp.service";
 
+export interface TaskChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface TaskItem {
+  id: string;
+  title: string;
+  description?: string;
+  assignedTo?: {
+    id: string | number;
+    name: string;
+    avatar?: string;
+    role?: string;
+  };
+  priority: "low" | "medium" | "high" | "urgent";
+  status: "pending" | "in_progress" | "completed" | "cancelled";
+  dueDate?: string;
+  checklist?: TaskChecklistItem[];
+  createdBy?: {
+    id: string | number;
+    name: string;
+    avatar?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MessageItem {
   id: string;
   sender: "client" | "agent" | "system";
+  senderId?: number | string;
   senderName: string;
+  senderAvatar?: string;
   text: string;
   timestamp: string;
   timeFormatted: string;
@@ -25,7 +56,7 @@ export interface MessageItem {
   deletedFor?: string[];
   forwarded?: boolean;
   attachment?: {
-    type: "image" | "file" | "audio" | "location" | "video";
+    type: "image" | "file" | "audio" | "location" | "video" | "task";
     url?: string;
     name?: string;
     size?: string;
@@ -39,6 +70,7 @@ export interface MessageItem {
     thumbnailUrl?: string;
     width?: number;
     height?: number;
+    task?: TaskItem;
   };
 }
 
@@ -49,6 +81,8 @@ export interface CommunityGroup {
   description?: string;
   type: "announcements" | "support" | "billing" | "general";
   isReadOnly: boolean;
+  permission?: "everyone" | "admin_only";
+  avatarUrl?: string;
   icon?: string;
   unreadCount?: number;
   lastMessage?: string;
@@ -56,6 +90,19 @@ export interface CommunityGroup {
   messages: MessageItem[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CommunityMember {
+  id: string | number;
+  userId?: string | number;
+  name: string;
+  email?: string;
+  phone?: string;
+  avatar?: string;
+  roleName?: string;
+  type?: "system_user" | "customer";
+  communityRole?: "admin" | "member";
+  addedAt?: string;
 }
 
 export interface Community {
@@ -66,9 +113,13 @@ export interface Community {
   avatarUrl?: string;
   coverImage?: string;
   type: "zone" | "building" | "custom";
+  privacy?: "public" | "private";
+  isPublic?: boolean;
   linkedNaps?: string[];
   linkedZones?: string[];
   memberCount: number;
+  members?: CommunityMember[];
+  removedMemberIds?: (string | number)[];
   groups: CommunityGroup[];
   createdAt: string;
   updatedAt: string;
@@ -85,6 +136,8 @@ export interface Conversation {
   status: "online" | "offline" | "busy" | "away";
   tags: string[]; // e.g. ["clientes", "corte"], ["personal"], ["clientes", "pendiente"]
   isArchived?: boolean;
+  isPinned?: boolean;
+  pinnedAt?: string;
   pinnedMessageId?: string;
   planOrRole?: string;
   serviceStatus?: "active" | "suspended" | "pending";
@@ -93,6 +146,7 @@ export interface Conversation {
   lastMessage: string;
   lastMessageTime: string;
   lastMessageDate: string;
+  lastMessageAt?: string;
   messages: MessageItem[];
   createdAt: string;
   updatedAt: string;
@@ -101,6 +155,66 @@ export interface Conversation {
   ratingLabel?: string;
   address?: string;
   backpackItems?: string[];
+  creatorId?: number | string;
+  creatorName?: string;
+  creatorRole?: string;
+  creatorAvatar?: string;
+  creatorPhone?: string;
+  creatorEmail?: string;
+  participants?: (number | string)[];
+}
+
+export function getFormattedTime(date: Date = new Date()): string {
+  const tz = process.env.TIMEZONE || process.env.TZ || "America/Lima";
+  try {
+    return date.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", timeZone: tz });
+  } catch {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+}
+
+export function enrichConversationAvatars(tenantId: string, conversations: Conversation[]): Conversation[] {
+  let users: any[] = [];
+  try {
+    const usersPath = path.resolve(process.cwd(), "data", "users.json");
+    if (fs.existsSync(usersPath)) {
+      users = JSON.parse(fs.readFileSync(usersPath, "utf-8"));
+    }
+  } catch {}
+
+  let customers: any[] = [];
+  try {
+    const custPath = getTenantFilePath(tenantId, "customers.json");
+    if (fs.existsSync(custPath)) {
+      customers = JSON.parse(fs.readFileSync(custPath, "utf-8"));
+    }
+  } catch {}
+
+  return conversations.map(c => {
+    // 1. Staff / Cuadrilla user
+    if (c.type === "personal" || (c.tags && c.tags.includes("personal")) || c.contactId) {
+      const matchedUser = users.find(u =>
+        (c.contactId && String(u.id) === String(c.contactId)) ||
+        (u.email && c.phone && (u.email === c.phone || c.email === u.email)) ||
+        (u.name && c.name && u.name.trim().toLowerCase() === c.name.trim().toLowerCase())
+      );
+      if (matchedUser && matchedUser.avatar) {
+        return { ...c, avatar: matchedUser.avatar };
+      }
+    }
+    // 2. Cliente
+    if (c.type === "cliente" || (c.tags && c.tags.includes("clientes"))) {
+      const matchedCust = customers.find(cust =>
+        (c.contactId && String(cust.id) === String(c.contactId)) ||
+        (cust.phone && c.phone && (cust.phone === c.phone || cust.phone.endsWith(c.phone) || c.phone.endsWith(cust.phone))) ||
+        (cust.fullName && c.name && cust.fullName.trim().toLowerCase() === c.name.trim().toLowerCase())
+      );
+      if (matchedCust && (matchedCust.avatar || matchedCust.photo)) {
+        return { ...c, avatar: matchedCust.avatar || matchedCust.photo };
+      }
+    }
+    return c;
+  });
 }
 
 export interface MessageFilter {
@@ -125,7 +239,7 @@ function loadFiltersFromDisk(tenantId: string): MessageFilter[] {
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf-8");
       const data = JSON.parse(raw);
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     }
   } catch (err) {}
   saveFiltersToDisk(tenantId, DEFAULT_FILTERS);
@@ -219,7 +333,7 @@ function loadQuickRepliesFromDisk(tenantId: string): QuickReply[] {
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf-8");
       const data = JSON.parse(raw);
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     }
   } catch (err) {}
 
@@ -443,7 +557,7 @@ function loadCommunitiesFromDisk(tenantId: string): Community[] {
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf-8");
       const data = JSON.parse(raw);
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     }
   } catch (err) {}
 
@@ -502,14 +616,16 @@ const updateQuickReplySchema = z.object({
 const sendMessageSchema = z.object({
   text: z.string().optional().default(""),
   sender: z.enum(["agent", "client", "system"]).optional().default("agent"),
+  senderId: z.union([z.string(), z.number()]).optional(),
   senderName: z.string().optional(),
+  senderAvatar: z.string().optional(),
   replyTo: z.object({
     id: z.string(),
     senderName: z.string(),
     text: z.string(),
   }).optional(),
   attachment: z.object({
-    type: z.enum(["image", "file", "audio", "location", "video"]),
+    type: z.enum(["image", "file", "audio", "location", "video", "task"]),
     url: z.string().optional(),
     name: z.string().optional(),
     size: z.string().optional(),
@@ -562,12 +678,14 @@ type MessageListener = (data: any) => void;
 const messageListeners = new Set<MessageListener>();
 
 export function broadcastMessageEvent(event: {
-  type: "new_message" | "community_message" | "conversation_read" | "reaction";
+  type: "new_message" | "community_message" | "conversation_read" | "reaction" | "task_updated";
   tenantId: string;
   conversationId?: string;
   communityId?: string;
   groupId?: string;
+  messageId?: string;
   message?: MessageItem;
+  task?: TaskItem;
   unreadCount?: number;
   lastMessage?: string;
   lastMessageTime?: string;
@@ -824,8 +942,56 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   // 5. Listar conversaciones
   fastify.get("/messages/conversations", async (request, reply) => {
     const tenantId = resolveTenantId(request);
-    const query = request.query as { category?: string; q?: string; includeArchived?: string } | undefined;
+    const query = request.query as { category?: string; q?: string; includeArchived?: string; userId?: string; currentUserId?: string } | undefined;
+    const currentUserId = query?.userId || query?.currentUserId || (request.headers["x-user-id"] as string);
     let list = loadConversationsFromDisk(tenantId);
+
+    // Enriquecer avatares con fotos de perfil actualizadas del sistema (usuarios y clientes)
+    list = enrichConversationAvatars(tenantId, list);
+
+    // Adaptar perspectiva de conversaciones entre colaboradores (personal) según el usuario logueado
+    if (currentUserId) {
+      const uId = String(currentUserId);
+      let systemUsers: any[] = [];
+      try {
+        const uPath = path.resolve(process.cwd(), "data", "users.json");
+        if (fs.existsSync(uPath)) systemUsers = JSON.parse(fs.readFileSync(uPath, "utf-8"));
+      } catch {}
+
+      list = list.map(c => {
+        if (c.type === "personal" || (c.tags && c.tags.includes("personal"))) {
+          const cContact = String(c.contactId || "");
+          const cCreator = String(c.creatorId || "");
+
+          // Si yo soy el contactId de este chat de personal, la contraparte que veo es el creador/otro participante
+          if (cContact === uId && cCreator && cCreator !== uId) {
+            const partner = systemUsers.find(u => String(u.id) === cCreator);
+            return {
+              ...c,
+              name: partner ? partner.name : (c.creatorName || "Colaborador"),
+              avatar: partner ? (partner.avatar || partner.avatarUrl) : (c.creatorAvatar || c.avatar),
+              planOrRole: partner ? (partner.roleName || partner.role) : (c.creatorRole || "Personal"),
+              phone: partner ? (partner.phone || partner.email) : (c.creatorPhone || c.creatorEmail || c.phone),
+              email: partner ? partner.email : (c.creatorEmail || c.email),
+              contactId: cCreator
+            };
+          }
+        }
+        return c;
+      });
+
+      // Filtrar chats consigo mismo (donde contactId y creatorId son el mismo usuario)
+      list = list.filter(c => {
+        if (c.type === "personal" || (c.tags && c.tags.includes("personal"))) {
+          const cContact = String(c.contactId || "");
+          const cCreator = String(c.creatorId || "");
+          if (cContact === uId && (!cCreator || cCreator === uId)) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
 
     // Filtro por archivados o categoría
     const isArchivedFilter = query?.category === "archived";
@@ -854,6 +1020,15 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       );
     }
 
+    // Ordenar: primero los fijados (isPinned: true) por pinnedAt o actividad, luego los demás por última actividad (updatedAt / lastMessageAt)
+    list.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
     // Devolver lista ligera sin los mensajes internos completos para máxima velocidad en móviles
     const lightList = list.map(c => ({
       ...c,
@@ -868,12 +1043,40 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get("/messages/conversations/:id", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const { id } = request.params as { id: string };
-    const query = (request.query as { limit?: string; before?: string; all?: string }) || {};
+    const query = (request.query as { limit?: string; before?: string; all?: string; userId?: string; currentUserId?: string }) || {};
 
     const list = loadConversationsFromDisk(tenantId);
-    const conv = list.find(c => c.id === id);
+    let conv = list.find(c => c.id === id);
     if (!conv) {
       return reply.status(404).send({ success: false, message: "Conversación no encontrada" });
+    }
+
+    // Enriquecer avatar si el usuario o cliente actualizó su foto de perfil
+    const enrichedList = enrichConversationAvatars(tenantId, [conv]);
+    conv = enrichedList[0] || conv;
+
+    const currentUserId = query.userId || query.currentUserId || (request.headers["x-user-id"] as string);
+    if (currentUserId && (conv.type === "personal" || (conv.tags && conv.tags.includes("personal")))) {
+      const uId = String(currentUserId);
+      const cContact = String(conv.contactId || "");
+      const cCreator = String(conv.creatorId || "");
+      if (cContact === uId && cCreator && cCreator !== uId) {
+        let systemUsers: any[] = [];
+        try {
+          const uPath = path.resolve(process.cwd(), "data", "users.json");
+          if (fs.existsSync(uPath)) systemUsers = JSON.parse(fs.readFileSync(uPath, "utf-8"));
+        } catch {}
+        const partner = systemUsers.find(u => String(u.id) === cCreator);
+        conv = {
+          ...conv,
+          name: partner ? partner.name : (conv.creatorName || "Colaborador"),
+          avatar: partner ? (partner.avatar || partner.avatarUrl) : (conv.creatorAvatar || conv.avatar),
+          planOrRole: partner ? (partner.roleName || partner.role) : (conv.creatorRole || "Personal"),
+          phone: partner ? (partner.phone || partner.email) : (conv.creatorPhone || conv.creatorEmail || conv.phone),
+          email: partner ? partner.email : (conv.creatorEmail || conv.email),
+          contactId: cCreator
+        };
+      }
     }
 
     // Marcar como leída
@@ -916,6 +1119,50 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
+  // 6.1 Obtener exclusivamente la lista de mensajes de una conversación (sync / polling / paginación)
+  fastify.get("/messages/conversations/:id/messages", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const query = (request.query as { limit?: string; before?: string; all?: string; userId?: string; currentUserId?: string }) || {};
+
+    const list = loadConversationsFromDisk(tenantId);
+    let conv = list.find(c => c.id === id);
+    if (!conv) {
+      return reply.send({ success: false, data: [], totalMessages: 0, hasMore: false, message: "Conversación no encontrada" });
+    }
+
+    const totalMessages = conv.messages.length;
+    const limitNum = query.limit ? parseInt(query.limit, 10) : (query.all === "true" ? 0 : 50);
+
+    let messagesToReturn = conv.messages;
+    let hasMore = false;
+
+    if (limitNum > 0 && totalMessages > limitNum) {
+      if (query.before) {
+        const idx = conv.messages.findIndex(m => m.id === query.before);
+        if (idx > 0) {
+          const startIdx = Math.max(0, idx - limitNum);
+          messagesToReturn = conv.messages.slice(startIdx, idx);
+          hasMore = startIdx > 0;
+        } else {
+          messagesToReturn = [];
+          hasMore = false;
+        }
+      } else {
+        const startIdx = Math.max(0, totalMessages - limitNum);
+        messagesToReturn = conv.messages.slice(startIdx);
+        hasMore = startIdx > 0;
+      }
+    }
+
+    return reply.send({
+      success: true,
+      data: messagesToReturn,
+      totalMessages,
+      hasMore
+    });
+  });
+
   // 7. Enviar mensaje a una conversación
   fastify.post("/messages/conversations/:id/messages", async (request, reply) => {
     const tenantId = resolveTenantId(request);
@@ -932,7 +1179,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const now = new Date();
-    const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeFormatted = getFormattedTime(now);
 
     const attachment = parse.data.attachment;
     let fallbackText = parse.data.text || "";
@@ -950,7 +1197,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     const newMsg: MessageItem = {
       id: "m-" + Date.now(),
       sender,
+      senderId: parse.data.senderId,
       senderName,
+      senderAvatar: parse.data.senderAvatar,
       text: fallbackText,
       timestamp: now.toISOString(),
       timeFormatted,
@@ -960,13 +1209,24 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     };
 
     conv.messages.push(newMsg);
-    if (sender === "client") {
+    const isPersonalChat = conv.type === "personal" || (conv.tags && conv.tags.includes("personal"));
+    if (sender === "client" || isPersonalChat) {
       conv.unreadCount = (conv.unreadCount || 0) + 1;
     }
     conv.lastMessage = fallbackText;
     conv.lastMessageTime = timeFormatted;
     conv.lastMessageDate = now.toISOString().split("T")[0];
+    conv.lastMessageAt = now.toISOString();
     conv.updatedAt = now.toISOString();
+
+    // Mover la conversación al inicio respetando chats fijados
+    list.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
 
     saveConversationsToDisk(tenantId, list);
 
@@ -975,6 +1235,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       tenantId,
       conversationId: id,
       message: newMsg,
+      senderId: newMsg.senderId,
+      senderName: newMsg.senderName,
       unreadCount: conv.unreadCount,
       lastMessage: conv.lastMessage,
       lastMessageTime: conv.lastMessageTime
@@ -1023,7 +1285,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post("/messages/conversations/:id/incoming", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const { id } = request.params as { id: string };
-    const body = (request.body || {}) as { text?: string; senderName?: string; attachment?: any };
+    const body = (request.body || {}) as { text?: string; senderName?: string; senderId?: string | number; senderAvatar?: string; attachment?: any };
 
     const list = loadConversationsFromDisk(tenantId);
     const conv = list.find(c => c.id === id);
@@ -1032,14 +1294,16 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const now = new Date();
-    const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeFormatted = getFormattedTime(now);
     const text = body.text || "Hola, quisiera consultar sobre el estado de mi conexión y velocidad.";
     const senderName = body.senderName || conv.name || "Cliente";
 
     const newMsg: MessageItem = {
       id: "m-" + Date.now(),
       sender: "client",
+      senderId: body.senderId,
       senderName,
+      senderAvatar: body.senderAvatar,
       text,
       timestamp: now.toISOString(),
       timeFormatted,
@@ -1052,7 +1316,16 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     conv.lastMessage = text;
     conv.lastMessageTime = timeFormatted;
     conv.lastMessageDate = now.toISOString().split("T")[0];
+    conv.lastMessageAt = now.toISOString();
     conv.updatedAt = now.toISOString();
+
+    list.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
 
     saveConversationsToDisk(tenantId, list);
 
@@ -1067,6 +1340,64 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     });
 
     return reply.status(201).send({ success: true, message: "Mensaje entrante simulado", data: newMsg });
+  });
+
+  // 7.03 Fijar / Desfijar Conversación (hasta 25 chats fijados)
+  fastify.post("/messages/conversations/:id/pin", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const body = (request.body as { pinned?: boolean }) || {};
+
+    const list = loadConversationsFromDisk(tenantId);
+    const conv = list.find(c => c.id === id);
+    if (!conv) {
+      return reply.status(404).send({ success: false, message: "Conversación no encontrada" });
+    }
+
+    const targetPinned = typeof body.pinned === "boolean" ? body.pinned : !conv.isPinned;
+
+    if (targetPinned) {
+      const currentPinnedCount = list.filter(c => c.isPinned && c.id !== id).length;
+      if (currentPinnedCount >= 25) {
+        return reply.status(400).send({
+          success: false,
+          message: "Límite alcanzado: solo puedes fijar hasta 25 chats principales",
+          pinnedCount: currentPinnedCount
+        });
+      }
+      conv.isPinned = true;
+      conv.pinnedAt = new Date().toISOString();
+    } else {
+      conv.isPinned = false;
+      delete conv.pinnedAt;
+    }
+
+    conv.updatedAt = new Date().toISOString();
+
+    list.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+    saveConversationsToDisk(tenantId, list);
+
+    broadcastMessageEvent({
+      type: "conversation_pinned",
+      tenantId,
+      conversationId: id,
+      isPinned: conv.isPinned,
+      pinnedAt: conv.pinnedAt
+    });
+
+    return reply.send({
+      success: true,
+      message: conv.isPinned ? "Chat fijado al inicio (máximo 25)" : "Chat desfijado",
+      isPinned: conv.isPinned,
+      data: conv
+    });
   });
 
   // 7.1. Reaccionar a un mensaje
@@ -1167,6 +1498,57 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     saveConversationsToDisk(tenantId, list);
 
     return reply.send({ success: true, isStarred, message: isStarred ? "Mensaje destacado" : "Destacado eliminado" });
+  });
+
+  // 7.3.1. Actualizar o editar una tarea dentro de una conversación
+  fastify.put("/messages/conversations/:id/messages/:msgId/task", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, msgId } = request.params as { id: string; msgId: string };
+    const taskUpdates = (request.body as Partial<TaskItem>) || {};
+
+    const list = loadConversationsFromDisk(tenantId);
+    const conv = list.find(c => c.id === id);
+    if (!conv) {
+      return reply.status(404).send({ success: false, message: "Conversación no encontrada" });
+    }
+
+    const msg = conv.messages.find(m => m.id === msgId);
+    if (!msg) {
+      return reply.status(404).send({ success: false, message: "Mensaje no encontrado" });
+    }
+
+    if (!msg.attachment || msg.attachment.type !== "task") {
+      msg.attachment = { type: "task" };
+    }
+
+    const existingTask: TaskItem = msg.attachment.task || {
+      id: "task-" + Date.now(),
+      title: "Tarea",
+      priority: "medium",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedTask: TaskItem = {
+      ...existingTask,
+      ...taskUpdates,
+      updatedAt: new Date().toISOString()
+    };
+
+    msg.attachment.task = updatedTask;
+    conv.updatedAt = new Date().toISOString();
+    saveConversationsToDisk(tenantId, list);
+
+    broadcastMessageEvent({
+      type: "task_updated",
+      tenantId,
+      conversationId: id,
+      messageId: msgId,
+      task: updatedTask
+    });
+
+    return reply.send({ success: true, task: updatedTask, message: "Tarea actualizada correctamente" });
   });
 
   // 7.4. Eliminar mensaje (Para todos o Para mí)
@@ -1351,11 +1733,42 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     if (!phone) phone = "+51 (Interno)";
 
     const list = loadConversationsFromDisk(tenantId);
+    const contactId = body.contactId || body.userId;
+    const creatorId = body.creatorId || (request.headers["x-user-id"] as string);
+
+    // Si es un chat de personal, verificar si ya existe un chat directo entre estos dos usuarios
+    if ((type === "personal" || (body.tags && body.tags.includes("personal"))) && contactId) {
+      const targetId = String(contactId);
+      const myId = creatorId ? String(creatorId) : "";
+      const existing = list.find(c => {
+        if (c.type !== "personal" && !(c.tags && c.tags.includes("personal"))) return false;
+        const cContact = String(c.contactId || "");
+        const cCreator = String(c.creatorId || "");
+        if (myId && ((cContact === targetId && cCreator === myId) || (cContact === myId && cCreator === targetId))) {
+          return true;
+        }
+        if (Array.isArray(c.participants) && myId && c.participants.map(String).includes(targetId) && c.participants.map(String).includes(myId)) {
+          return true;
+        }
+        if (cContact === targetId) return true;
+        return false;
+      });
+
+      if (existing) {
+        if (!existing.participants || existing.participants.length < 2) {
+          existing.participants = [creatorId || 1, contactId].filter(Boolean);
+        }
+        if (!existing.creatorId && creatorId) existing.creatorId = creatorId;
+        saveConversationsToDisk(tenantId, list);
+        return reply.send({ success: true, message: "Chat existente recuperado", data: existing });
+      }
+    }
+
     const now = new Date();
     const newConv: Conversation = {
       id: "conv-" + Date.now(),
       type: type as ("cliente" | "personal"),
-      contactId: body.contactId || body.userId,
+      contactId: contactId,
       name,
       phone,
       email: body.email,
@@ -1387,6 +1800,13 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       ratingLabel: body.ratingLabel,
       address: body.address,
       backpackItems: body.backpackItems,
+      creatorId: creatorId || undefined,
+      creatorName: body.creatorName || undefined,
+      creatorRole: body.creatorRole || undefined,
+      creatorAvatar: body.creatorAvatar || undefined,
+      creatorEmail: body.creatorEmail || undefined,
+      creatorPhone: body.creatorPhone || undefined,
+      participants: [creatorId, contactId].filter(Boolean),
     };
 
     list.unshift(newConv);
@@ -1618,36 +2038,68 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   // ==========================================
 
   // 12.1 Listar todas las comunidades con resumen de grupos
+  // 12.1 Listar todas las comunidades con resumen de grupos y filtrado de privacidad
   fastify.get("/messages/communities", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const communities = loadCommunitiesFromDisk(tenantId);
+    const query = (request.query as Record<string, any>) || {};
+    const currentUserId = query.userId || query.currentUserId || (request.headers["x-user-id"] as string);
+
+    // Filtrar comunidades según privacidad y usuarios eliminados
+    const visibleCommunities = communities.filter(c => {
+      if (!currentUserId) return true;
+      const uId = String(currentUserId);
+
+      // Si el usuario fue explícitamente eliminado de la comunidad, NO le aparece
+      if (Array.isArray(c.removedMemberIds) && c.removedMemberIds.some(rmId => String(rmId) === uId)) {
+        return false;
+      }
+
+      // Si la comunidad es privada (isPublic === false o privacy === "private"), solo se muestra si es miembro asignado
+      const isPrivate = c.privacy === "private" || c.isPublic === false;
+      if (isPrivate) {
+        const isMember = Array.isArray(c.members) && c.members.some(m => String(m.id) === uId || String(m.userId) === uId);
+        if (!isMember) {
+          return false;
+        }
+      }
+
+      return true;
+    });
 
     // Mapeo ligero sin arrays de mensajes pesados para listar al instante
-    const lightList = communities.map(c => ({
-      id: c.id,
-      name: c.name,
-      description: c.description,
-      avatarUrl: c.avatarUrl,
-      coverImage: c.coverImage,
-      type: c.type,
-      linkedNaps: c.linkedNaps || [],
-      linkedZones: c.linkedZones || [],
-      memberCount: c.memberCount || 0,
-      createdAt: c.createdAt,
-      groups: c.groups.map(g => ({
-        id: g.id,
-        communityId: g.communityId,
-        name: g.name,
-        description: g.description,
-        type: g.type,
-        isReadOnly: g.isReadOnly,
-        icon: g.icon,
-        unreadCount: g.unreadCount || 0,
-        lastMessage: g.lastMessage || "Sin mensajes",
-        lastMessageTime: g.lastMessageTime || "",
-        messageCount: g.messages.length,
-      })),
-    }));
+    const lightList = visibleCommunities.map(c => {
+      const isPrivate = c.privacy === "private" || c.isPublic === false;
+      return {
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        avatarUrl: c.avatarUrl,
+        coverImage: c.coverImage,
+        type: c.type,
+        privacy: isPrivate ? "private" : "public",
+        isPublic: !isPrivate,
+        linkedNaps: c.linkedNaps || [],
+        linkedZones: c.linkedZones || [],
+        memberCount: Array.isArray(c.members) ? c.members.length : (c.memberCount || 0),
+        members: c.members || [],
+        createdAt: c.createdAt,
+        groups: c.groups.map(g => ({
+          id: g.id,
+          communityId: g.communityId,
+          name: g.name,
+          description: g.description,
+          type: g.type,
+          isReadOnly: g.isReadOnly,
+          permission: g.permission || (g.isReadOnly ? "admin_only" : "everyone"),
+          icon: g.icon,
+          unreadCount: g.unreadCount || 0,
+          lastMessage: g.lastMessage || "Sin mensajes",
+          lastMessageTime: g.lastMessageTime || "",
+          messageCount: g.messages.length,
+        })),
+      };
+    });
 
     return reply.send({ success: true, tenantId, count: lightList.length, data: lightList });
   });
@@ -1664,6 +2116,15 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       linkedNaps?: string[];
       linkedZones?: string[];
       memberCount?: number;
+      members?: any[];
+      groups?: Array<{
+        name: string;
+        avatarUrl?: string;
+        description?: string;
+        isReadOnly?: boolean;
+        permission?: "everyone" | "admin_only";
+        type?: "announcements" | "support" | "billing" | "general";
+      }>;
     }) || {};
 
     if (!body.name || !body.name.trim()) {
@@ -1673,22 +2134,43 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     const communities = loadCommunitiesFromDisk(tenantId);
     const commId = "comm-" + Date.now();
     const now = new Date();
-    const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeFormatted = getFormattedTime(now);
 
-    const newCommunity: Community = {
-      id: commId,
-      tenantId,
-      name: body.name.trim(),
-      description: body.description?.trim() || "Comunidad de telecomunicaciones TurboNetwork",
-      avatarUrl: body.avatarUrl || `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80`,
-      coverImage: body.coverImage || `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80`,
-      type: body.type || "zone",
-      linkedNaps: body.linkedNaps || [],
-      linkedZones: body.linkedZones || [],
-      memberCount: body.memberCount || 1,
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-      groups: [
+    let initialGroups: CommunityGroup[] = [];
+    if (Array.isArray(body.groups) && body.groups.length > 0) {
+      initialGroups = body.groups.map((g, idx) => {
+        const permission: "everyone" | "admin_only" = g.permission === "admin_only" || g.isReadOnly === true ? "admin_only" : "everyone";
+        const isReadOnly = permission === "admin_only";
+        const grpType = g.type || (isReadOnly ? "announcements" : "general");
+        return {
+          id: `grp-${commId}-${idx + 1}`,
+          communityId: commId,
+          name: g.name.trim(),
+          description: g.description?.trim() || "",
+          type: grpType,
+          isReadOnly,
+          permission,
+          avatarUrl: g.avatarUrl || "",
+          unreadCount: 0,
+          lastMessage: `Canal ${g.name.trim()} activado`,
+          lastMessageTime: timeFormatted,
+          messages: [
+            {
+              id: "gm-" + Date.now() + "-" + idx,
+              sender: "system",
+              senderName: "Sistema TurboNetwork",
+              text: `Canal ${g.name.trim()} activado en la comunidad ${body.name.trim()}.`,
+              timestamp: now.toISOString(),
+              timeFormatted,
+              status: "read",
+            }
+          ],
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        };
+      });
+    } else {
+      initialGroups = [
         {
           id: `grp-${commId}-1`,
           communityId: commId,
@@ -1696,6 +2178,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
           description: "Canal de difusión exclusiva del ISP para avisos y mantenimiento.",
           type: "announcements",
           isReadOnly: true,
+          permission: "admin_only",
+          avatarUrl: "",
           unreadCount: 0,
           lastMessage: "Canal de avisos inaugurado",
           lastMessageTime: timeFormatted,
@@ -1720,6 +2204,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
           description: "Canal bidireccional para reportes y ayuda de servicio.",
           type: "support",
           isReadOnly: false,
+          permission: "everyone",
+          avatarUrl: "",
           unreadCount: 0,
           lastMessage: "Canal de soporte disponible",
           lastMessageTime: timeFormatted,
@@ -1734,6 +2220,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
           description: "Espacio de conversación para los miembros del sector.",
           type: "general",
           isReadOnly: false,
+          permission: "everyone",
+          avatarUrl: "",
           unreadCount: 0,
           lastMessage: "Bienvenidos a la comunidad",
           lastMessageTime: timeFormatted,
@@ -1741,7 +2229,44 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
         }
-      ]
+      ];
+    }
+
+    let initialMembers: CommunityMember[] = [];
+    if (Array.isArray(body.members) && body.members.length > 0) {
+      initialMembers = body.members.map((m: any, idx: number) => ({
+        id: m.id || m.userId || `usr-${Date.now()}-${idx}`,
+        userId: m.userId || m.id,
+        name: (m.name || "Usuario").trim(),
+        email: m.email || "",
+        phone: m.phone || "",
+        avatar: m.avatar || m.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.name || idx)}`,
+        roleName: m.roleName || (m.type === "customer" ? "Cliente" : "Operador"),
+        type: m.type || "system_user",
+        communityRole: m.communityRole || "member",
+        addedAt: m.addedAt || now.toISOString(),
+      }));
+    }
+
+    const isPrivate = (body as any).privacy === "private" || (body as any).isPublic === false;
+    const newCommunity: Community = {
+      id: commId,
+      tenantId,
+      name: body.name.trim(),
+      description: body.description?.trim() || "Comunidad de telecomunicaciones TurboNetwork",
+      avatarUrl: body.avatarUrl || `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&auto=format&fit=crop&q=80`,
+      coverImage: body.coverImage || `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80`,
+      type: body.type || "zone",
+      privacy: isPrivate ? "private" : "public",
+      isPublic: !isPrivate,
+      linkedNaps: body.linkedNaps || [],
+      linkedZones: body.linkedZones || [],
+      memberCount: initialMembers.length || body.memberCount || 1,
+      members: initialMembers,
+      removedMemberIds: [],
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      groups: initialGroups
     };
 
     communities.unshift(newCommunity);
@@ -1763,17 +2288,140 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     if (body.name) comm.name = body.name.trim();
-    if (body.description) comm.description = body.description.trim();
+    if (body.description !== undefined) comm.description = body.description.trim();
     if (body.avatarUrl) comm.avatarUrl = body.avatarUrl;
     if (body.coverImage) comm.coverImage = body.coverImage;
     if (body.type) comm.type = body.type;
+    if (body.privacy !== undefined) {
+      comm.privacy = body.privacy;
+      comm.isPublic = body.privacy === "public";
+    } else if (body.isPublic !== undefined) {
+      comm.isPublic = body.isPublic;
+      comm.privacy = body.isPublic ? "public" : "private";
+    }
     if (Array.isArray(body.linkedNaps)) comm.linkedNaps = body.linkedNaps;
     if (Array.isArray(body.linkedZones)) comm.linkedZones = body.linkedZones;
-    if (typeof body.memberCount === "number") comm.memberCount = body.memberCount;
+
+    if (Array.isArray(body.members)) {
+      comm.members = body.members.map((m: any, idx: number) => ({
+        id: m.id || m.userId || `usr-${Date.now()}-${idx}`,
+        userId: m.userId || m.id,
+        name: (m.name || "Usuario").trim(),
+        email: m.email || "",
+        phone: m.phone || "",
+        avatar: m.avatar || m.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.name || idx)}`,
+        roleName: m.roleName || (m.type === "customer" ? "Cliente" : "Operador"),
+        type: m.type || "system_user",
+        communityRole: m.communityRole || "member",
+        addedAt: m.addedAt || new Date().toISOString(),
+      }));
+      comm.memberCount = comm.members.length;
+    }
+
+    if (Array.isArray(body.groups)) {
+      const existingGroupsMap = new Map((comm.groups || []).map(g => [g.id, g]));
+      const now = new Date();
+      const timeFormatted = getFormattedTime(now);
+
+      comm.groups = body.groups.map((g: any, idx: number) => {
+        const existing = g.id ? existingGroupsMap.get(g.id) : null;
+        const permission: "everyone" | "admin_only" = g.permission === "admin_only" || g.isReadOnly === true ? "admin_only" : "everyone";
+        const isReadOnly = permission === "admin_only";
+        const grpType = g.type || (isReadOnly ? "announcements" : "general");
+
+        if (existing) {
+          return {
+            ...existing,
+            name: (g.name || existing.name).trim(),
+            description: g.description !== undefined ? g.description.trim() : existing.description,
+            permission,
+            isReadOnly,
+            type: grpType,
+            avatarUrl: g.avatarUrl !== undefined ? g.avatarUrl : existing.avatarUrl,
+            updatedAt: now.toISOString()
+          };
+        } else {
+          const newGrpId = g.id || `grp-${comm.id}-${Date.now().toString().slice(-4)}-${idx}`;
+          return {
+            id: newGrpId,
+            communityId: comm.id,
+            name: (g.name || `Canal ${idx + 1}`).trim(),
+            description: g.description?.trim() || "",
+            type: grpType,
+            isReadOnly,
+            permission,
+            avatarUrl: g.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(g.name || newGrpId)}`,
+            unreadCount: 0,
+            lastMessage: `Canal ${(g.name || '').trim()} activado`,
+            lastMessageTime: timeFormatted,
+            messages: [
+              {
+                id: "gm-" + Date.now() + "-" + idx,
+                sender: "system",
+                senderName: "Sistema TurboNetwork",
+                text: `Canal ${(g.name || '').trim()} activado en la comunidad ${comm.name}.`,
+                timestamp: now.toISOString(),
+                timeFormatted,
+                status: "read",
+              }
+            ],
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString()
+          };
+        }
+      });
+    }
+
     comm.updatedAt = new Date().toISOString();
 
     saveCommunitiesToDisk(tenantId, communities);
-    return reply.send({ success: true, message: "Comunidad actualizada", data: comm });
+
+    broadcastMessageEvent({
+      type: "community_updated",
+      tenantId,
+      community: comm
+    });
+
+    return reply.send({ success: true, message: "Comunidad actualizada con éxito", data: comm });
+  });
+
+  // 12.35 Reordenar canales/grupos de una comunidad (arrastrar y soltar)
+  fastify.put("/messages/communities/:id/reorder-groups", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const { groupIds } = (request.body as { groupIds?: string[] }) || {};
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) {
+      return reply.status(404).send({ success: false, message: "Comunidad no encontrada" });
+    }
+
+    if (Array.isArray(groupIds) && comm.groups) {
+      const groupMap = new Map(comm.groups.map(g => [g.id, g]));
+      const reordered: CommunityGroup[] = [];
+      for (const gid of groupIds) {
+        const found = groupMap.get(gid);
+        if (found) {
+          reordered.push(found);
+          groupMap.delete(gid);
+        }
+      }
+      for (const remaining of groupMap.values()) {
+        reordered.push(remaining);
+      }
+      comm.groups = reordered;
+      comm.updatedAt = new Date().toISOString();
+      saveCommunitiesToDisk(tenantId, communities);
+
+      broadcastMessageEvent({
+        type: "community_updated",
+        tenantId,
+        community: comm
+      });
+    }
+
+    return reply.send({ success: true, message: "Posiciones de canales actualizadas", data: comm });
   });
 
   // 12.4 Eliminar comunidad
@@ -1789,7 +2437,185 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
 
     const deleted = communities.splice(idx, 1)[0];
     saveCommunitiesToDisk(tenantId, communities);
+
+    broadcastMessageEvent({
+      type: "community_deleted",
+      tenantId,
+      communityId: id
+    });
+
     return reply.send({ success: true, message: "Comunidad eliminada con éxito", data: deleted });
+  });
+
+  // 12.41 Obtener usuarios y clientes candidatos del sistema para añadir a comunidades
+  fastify.get("/messages/communities-candidate-users", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+
+    // 1. Usuarios del sistema / Operadores (data/users.json)
+    const usersFile = path.resolve(process.cwd(), "data", "users.json");
+    let systemUsers: any[] = [];
+    try {
+      if (fs.existsSync(usersFile)) {
+        const raw = fs.readFileSync(usersFile, "utf-8");
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          systemUsers = list.map(u => ({
+            id: u.id,
+            name: u.name || "Usuario",
+            email: u.email || "",
+            roleName: u.roleName || (u.isSuperAdmin ? "Superadministrador" : "Operador"),
+            roleId: u.roleId,
+            avatar: u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.name || u.id)}`,
+            type: "system_user",
+            isActive: u.isActive !== false
+          }));
+        }
+      }
+    } catch (err) {}
+
+    // 2. Clientes registrados en el sistema (data/tenants/{tenantId}/customers.json)
+    const custFile = getTenantFilePath(tenantId, "customers.json");
+    let customers: any[] = [];
+    try {
+      if (fs.existsSync(custFile)) {
+        const raw = fs.readFileSync(custFile, "utf-8");
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          customers = list.map(c => ({
+            id: c.id,
+            name: c.fullName || c.name || "Cliente",
+            email: c.email || "",
+            phone: c.phone || "",
+            roleName: c.planName ? `Cliente • ${c.planName}` : "Cliente Conectado",
+            address: c.address || "",
+            avatar: c.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(c.fullName || c.name || c.id)}`,
+            type: "customer",
+            status: c.status || "active"
+          }));
+        }
+      }
+    } catch (err) {}
+
+    return reply.send({
+      success: true,
+      users: systemUsers,
+      customers: customers,
+      total: systemUsers.length + customers.length
+    });
+  });
+
+  // 12.42 Añadir miembros a una comunidad existente
+  fastify.post("/messages/communities/:id/members", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const { members: newMembers, member } = (request.body as { members?: any[]; member?: any }) || {};
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) {
+      return reply.status(404).send({ success: false, message: "Comunidad no encontrada" });
+    }
+
+    if (!Array.isArray(comm.members)) {
+      comm.members = [];
+    }
+
+    const toAdd = Array.isArray(newMembers) ? newMembers : (member ? [member] : []);
+    const now = new Date();
+
+    for (let i = 0; i < toAdd.length; i++) {
+      const m = toAdd[i];
+      if (!m || (!m.id && !m.userId)) continue;
+      const memId = m.id || m.userId;
+      const existingIdx = comm.members.findIndex(existing => String(existing.id) === String(memId) || String(existing.userId) === String(memId));
+      const entry: CommunityMember = {
+        id: memId,
+        userId: m.userId || memId,
+        name: (m.name || "Usuario").trim(),
+        email: m.email || "",
+        phone: m.phone || "",
+        avatar: m.avatar || m.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.name || memId)}`,
+        roleName: m.roleName || (m.type === "customer" ? "Cliente" : "Operador"),
+        type: m.type || "system_user",
+        communityRole: m.communityRole || "member",
+        addedAt: m.addedAt || now.toISOString()
+      };
+      if (existingIdx !== -1) {
+        comm.members[existingIdx] = entry;
+      } else {
+        comm.members.push(entry);
+      }
+
+      // Si había sido eliminado anteriormente, limpiarlo de la lista de expulsados
+      if (Array.isArray(comm.removedMemberIds)) {
+        comm.removedMemberIds = comm.removedMemberIds.filter(rmId => String(rmId) !== String(memId));
+      }
+    }
+
+    comm.memberCount = comm.members.length;
+    comm.updatedAt = now.toISOString();
+    saveCommunitiesToDisk(tenantId, communities);
+
+    broadcastMessageEvent({
+      type: "community_members_updated",
+      tenantId,
+      communityId: id,
+      members: comm.members,
+      memberCount: comm.memberCount
+    });
+
+    return reply.send({
+      success: true,
+      message: `${toAdd.length} usuario(s) añadido(s) a la comunidad`,
+      data: comm.members,
+      memberCount: comm.memberCount
+    });
+  });
+
+  // 12.43 Eliminar miembro de la comunidad
+  fastify.delete("/messages/communities/:id/members/:memberId", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, memberId } = request.params as { id: string; memberId: string };
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) {
+      return reply.status(404).send({ success: false, message: "Comunidad no encontrada" });
+    }
+
+    if (!Array.isArray(comm.members)) {
+      comm.members = [];
+    }
+
+    // Registrar como expulsado/removido para que no vuelva a ver la comunidad
+    if (!Array.isArray(comm.removedMemberIds)) {
+      comm.removedMemberIds = [];
+    }
+    const memStr = String(memberId);
+    if (!comm.removedMemberIds.includes(memStr)) {
+      comm.removedMemberIds.push(memStr);
+    }
+
+    comm.members = comm.members.filter(m => String(m.id) !== memStr && String(m.userId) !== memStr);
+    comm.memberCount = comm.members.length;
+    comm.updatedAt = new Date().toISOString();
+    saveCommunitiesToDisk(tenantId, communities);
+
+    broadcastMessageEvent({
+      type: "community_members_updated",
+      tenantId,
+      communityId: id,
+      removedMemberId: memberId,
+      members: comm.members,
+      memberCount: comm.memberCount
+    });
+
+    return reply.send({
+      success: true,
+      message: "Miembro eliminado de la comunidad",
+      data: comm.members,
+      memberCount: comm.memberCount
+    });
   });
 
   // 12.5 Agregar nuevo canal/grupo a una comunidad
@@ -1799,6 +2625,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     const body = (request.body as {
       name: string;
       description?: string;
+      avatarUrl?: string;
+      icon?: string;
+      permission?: "everyone" | "admin_only";
       type?: "announcements" | "support" | "billing" | "general";
       isReadOnly?: boolean;
     }) || {};
@@ -1814,8 +2643,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const now = new Date();
-    const type = body.type || "general";
-    const isReadOnly = type === "announcements" ? true : (body.isReadOnly ?? false);
+    const permission: "everyone" | "admin_only" = body.permission === "admin_only" || body.isReadOnly === true ? "admin_only" : "everyone";
+    const isReadOnly = permission === "admin_only";
+    const type = body.type || (isReadOnly ? "announcements" : "general");
 
     const newGroup: CommunityGroup = {
       id: `grp-${id}-${Date.now().toString().slice(-4)}`,
@@ -1824,9 +2654,12 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       description: body.description?.trim() || "",
       type,
       isReadOnly,
+      permission,
+      avatarUrl: body.avatarUrl || "",
+      icon: body.icon || "",
       unreadCount: 0,
       lastMessage: "Canal creado",
-      lastMessageTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      lastMessageTime: getFormattedTime(now),
       messages: [],
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
@@ -1836,7 +2669,66 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     comm.updatedAt = now.toISOString();
     saveCommunitiesToDisk(tenantId, communities);
 
+    broadcastMessageEvent({
+      type: "community_group_created",
+      tenantId,
+      communityId: id,
+      group: newGroup
+    });
+
     return reply.status(201).send({ success: true, message: "Canal creado exitosamente", data: newGroup });
+  });
+
+  // 12.55 Editar/Actualizar canal/grupo de una comunidad
+  fastify.put("/messages/communities/:id/groups/:groupId", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, groupId } = request.params as { id: string; groupId: string };
+    const body = (request.body as {
+      name?: string;
+      description?: string;
+      avatarUrl?: string;
+      icon?: string;
+      type?: "announcements" | "support" | "billing" | "general";
+      isReadOnly?: boolean;
+      permission?: "everyone" | "admin_only";
+    }) || {};
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) {
+      return reply.status(404).send({ success: false, message: "Comunidad no encontrada" });
+    }
+
+    const group = comm.groups.find(g => g.id === groupId);
+    if (!group) {
+      return reply.status(404).send({ success: false, message: "Canal no encontrado" });
+    }
+
+    if (body.name !== undefined) group.name = body.name.trim();
+    if (body.description !== undefined) group.description = body.description.trim();
+    if (body.avatarUrl !== undefined) group.avatarUrl = body.avatarUrl;
+    if (body.icon !== undefined) group.icon = body.icon;
+    if (body.type !== undefined) group.type = body.type;
+    if (body.permission !== undefined) {
+      group.permission = body.permission;
+      group.isReadOnly = body.permission === "admin_only";
+    } else if (body.isReadOnly !== undefined) {
+      group.isReadOnly = body.isReadOnly;
+      group.permission = body.isReadOnly ? "admin_only" : "everyone";
+    }
+
+    group.updatedAt = new Date().toISOString();
+    comm.updatedAt = new Date().toISOString();
+    saveCommunitiesToDisk(tenantId, communities);
+
+    broadcastMessageEvent({
+      type: "community_group_updated",
+      tenantId,
+      communityId: id,
+      group
+    });
+
+    return reply.send({ success: true, message: "Canal actualizado con éxito", data: group });
   });
 
   // 12.6 Eliminar canal/grupo de una comunidad
@@ -1859,7 +2751,14 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     comm.updatedAt = new Date().toISOString();
     saveCommunitiesToDisk(tenantId, communities);
 
-    return reply.send({ success: true, message: "Canal eliminado", data: deleted });
+    broadcastMessageEvent({
+      type: "community_group_deleted",
+      tenantId,
+      communityId: id,
+      groupId
+    });
+
+    return reply.send({ success: true, message: "Canal eliminado con éxito", data: deleted });
   });
 
   // 12.7 Obtener historial paginado de un canal/grupo
@@ -1912,7 +2811,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
         communityId: comm.id,
         communityName: comm.name,
         communityAvatar: comm.avatarUrl,
-        memberCount: comm.memberCount,
+        memberCount: Array.isArray(comm.members) ? comm.members.length : (comm.memberCount || 0),
+        members: comm.members || [],
         group: {
           ...group,
           messages: messagesToReturn,
@@ -1920,6 +2820,55 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
           hasMore,
         }
       }
+    });
+  });
+
+  // 12.7.1 Obtener exclusivamente los mensajes de un canal de comunidad (sync / polling / paginación)
+  fastify.get("/messages/communities/:id/groups/:groupId/messages", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, groupId } = request.params as { id: string; groupId: string };
+    const query = (request.query as { limit?: string; before?: string; all?: string }) || {};
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) {
+      return reply.send({ success: false, data: [], totalMessages: 0, hasMore: false, message: "Comunidad no encontrada" });
+    }
+
+    const group = comm.groups.find(g => g.id === groupId);
+    if (!group) {
+      return reply.send({ success: false, data: [], totalMessages: 0, hasMore: false, message: "Canal no encontrado" });
+    }
+
+    const totalMessages = group.messages.length;
+    const limitNum = query.limit ? parseInt(query.limit, 10) : (query.all === "true" ? 0 : 50);
+
+    let messagesToReturn = group.messages;
+    let hasMore = false;
+
+    if (limitNum > 0 && totalMessages > limitNum) {
+      if (query.before) {
+        const idx = group.messages.findIndex(m => m.id === query.before);
+        if (idx > 0) {
+          const startIdx = Math.max(0, idx - limitNum);
+          messagesToReturn = group.messages.slice(startIdx, idx);
+          hasMore = startIdx > 0;
+        } else {
+          messagesToReturn = [];
+          hasMore = false;
+        }
+      } else {
+        const startIdx = Math.max(0, totalMessages - limitNum);
+        messagesToReturn = group.messages.slice(startIdx);
+        hasMore = startIdx > 0;
+      }
+    }
+
+    return reply.send({
+      success: true,
+      data: messagesToReturn,
+      totalMessages,
+      hasMore
     });
   });
 
@@ -1944,7 +2893,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const now = new Date();
-    const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeFormatted = getFormattedTime(now);
 
     const attachment = parse.data.attachment;
     let fallbackText = parse.data.text || "";
@@ -1956,10 +2905,15 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       else fallbackText = attachment.name || 'Archivo adjunto';
     }
 
+    const sender = parse.data.sender || "agent";
+    const senderName = parse.data.senderName || (group.type === "announcements" ? "NOC TurboNetwork Oficial" : "Operador TurboNetwork");
+
     const newMsg: MessageItem = {
       id: "gm-" + Date.now(),
-      sender: "agent",
-      senderName: group.type === "announcements" ? "NOC TurboNetwork Oficial" : "Operador TurboNetwork",
+      sender,
+      senderId: parse.data.senderId,
+      senderName,
+      senderAvatar: parse.data.senderAvatar,
       text: fallbackText,
       timestamp: now.toISOString(),
       timeFormatted,
@@ -1969,6 +2923,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     };
 
     group.messages.push(newMsg);
+    if (sender === "client") {
+      group.unreadCount = (group.unreadCount || 0) + 1;
+    }
     group.lastMessage = fallbackText;
     group.lastMessageTime = timeFormatted;
     group.updatedAt = now.toISOString();
@@ -2025,6 +2982,58 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     saveCommunitiesToDisk(tenantId, communities);
 
     return reply.send({ success: true, reactions: msg.reactions, message: "Reacción guardada" });
+  });
+
+  // 12.10 Actualizar o editar una tarea dentro de un canal de comunidad
+  fastify.put("/messages/communities/:id/groups/:groupId/messages/:msgId/task", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, groupId, msgId } = request.params as { id: string; groupId: string; msgId: string };
+    const taskUpdates = (request.body as Partial<TaskItem>) || {};
+
+    const communities = loadCommunitiesFromDisk(tenantId);
+    const comm = communities.find(c => c.id === id);
+    if (!comm) return reply.status(404).send({ success: false, message: "Comunidad no encontrada" });
+
+    const group = comm.groups.find(g => g.id === groupId);
+    if (!group) return reply.status(404).send({ success: false, message: "Canal no encontrado" });
+
+    const msg = group.messages.find(m => m.id === msgId);
+    if (!msg) return reply.status(404).send({ success: false, message: "Mensaje no encontrado" });
+
+    if (!msg.attachment || msg.attachment.type !== "task") {
+      msg.attachment = { type: "task" };
+    }
+
+    const existingTask: TaskItem = msg.attachment.task || {
+      id: "task-" + Date.now(),
+      title: "Tarea",
+      priority: "medium",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedTask: TaskItem = {
+      ...existingTask,
+      ...taskUpdates,
+      updatedAt: new Date().toISOString()
+    };
+
+    msg.attachment.task = updatedTask;
+    group.updatedAt = new Date().toISOString();
+    comm.updatedAt = new Date().toISOString();
+    saveCommunitiesToDisk(tenantId, communities);
+
+    broadcastMessageEvent({
+      type: "task_updated",
+      tenantId,
+      communityId: id,
+      groupId,
+      messageId: msgId,
+      task: updatedTask
+    });
+
+    return reply.send({ success: true, task: updatedTask, message: "Tarea de comunidad actualizada" });
   });
 };
 

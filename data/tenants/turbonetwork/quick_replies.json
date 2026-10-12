@@ -1,0 +1,52 @@
+[
+  {
+    "id": "qr_saludo",
+    "shortcut": "saludo",
+    "title": "Saludo de Bienvenida",
+    "text": "¡Hola! Gracias por comunicarte con nuestro servicio de atención al cliente. ¿En qué podemos ayudarte el día de hoy?",
+    "category": "general",
+    "createdAt": "2026-10-01T08:00:00.000Z",
+    "updatedAt": "2026-10-01T08:00:00.000Z",
+    "tenantId": "turbonetwork"
+  },
+  {
+    "id": "qr_banco",
+    "shortcut": "banco",
+    "title": "Cuentas Bancarias & Pagos",
+    "text": "Estimado cliente, compartimos nuestras cuentas bancarias autorizadas para el abono de su servicio mensual:\n• BCP Soles: 191-98765432-0-12 (CCI: 002-191-0098765432012-55)\n• BBVA Soles: 0011-0123-0200456789 (CCI: 011-123-000200456789-14)\n• Yape / Plin: 987-654-321\nPor favor envíenos la foto o captura del comprobante por este medio para validar su pago de inmediato.",
+    "category": "billing",
+    "createdAt": "2026-10-01T08:00:00.000Z",
+    "updatedAt": "2026-10-01T08:00:00.000Z",
+    "tenantId": "turbonetwork"
+  },
+  {
+    "id": "qr_mantenimiento",
+    "shortcut": "mantenimiento",
+    "title": "Mantenimiento Preventivo",
+    "text": "Nuestro equipo técnico se encuentra realizando trabajos de mantenimiento preventivo y optimización de fibra óptica en su zona. Estimamos el restablecimiento completo en breve. Agradecemos su comprensión.",
+    "category": "support",
+    "createdAt": "2026-10-01T08:00:00.000Z",
+    "updatedAt": "2026-10-01T08:00:00.000Z",
+    "tenantId": "turbonetwork"
+  },
+  {
+    "id": "qr_corte",
+    "shortcut": "corte",
+    "title": "Aviso de Suspensión Preventiva",
+    "text": "Estimado cliente, le informamos que su servicio presenta saldo vencido pendiente. Para evitar la suspensión preventiva automática del servicio de Internet, le solicitamos regularizar su pago o compartirnos su voucher de abono.",
+    "category": "billing",
+    "createdAt": "2026-10-01T08:00:00.000Z",
+    "updatedAt": "2026-10-01T08:00:00.000Z",
+    "tenantId": "turbonetwork"
+  },
+  {
+    "id": "qr_wifi",
+    "shortcut": "wifi",
+    "title": "Guía de Wi-Fi y Reinicio ONT",
+    "text": "Estimado cliente, para optimizar la velocidad de su red Wi-Fi, le recomendamos no obstruir su router y realizar un reinicio desconectándolo de la corriente durante 30 segundos. Si el problema persiste, indíquenos qué luces observa encendidas en el módem.",
+    "category": "support",
+    "createdAt": "2026-10-01T08:00:00.000Z",
+    "updatedAt": "2026-10-01T08:00:00.000Z",
+    "tenantId": "turbonetwork"
+  }
+]
