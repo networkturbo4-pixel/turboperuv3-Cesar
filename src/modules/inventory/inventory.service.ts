@@ -1119,7 +1119,7 @@ export function loadAssets(tenantId: string): FixedAsset[] {
   }
 
   try {
-    const raw = fs.readFileSync(filePath, "utf-8");
+    const raw = fs.readFileSync(filePath, "utf-8").replace(/^\uFEFF/, "").trim();
     return JSON.parse(raw);
   } catch (err) {
     console.error(`Error loading fixed assets for tenant ${tenantId}:`, err);

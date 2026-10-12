@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "id": 501,
     "code": "ACT-VEH-001",
@@ -140,5 +140,39 @@
     "tenantId": "turbonetwork",
     "createdAt": "2026-09-30T15:19:09.885Z",
     "updatedAt": "2026-09-30T15:19:09.885Z"
+  },
+  {
+    "id": 504,
+    "code": "ACT-TEC-002",
+    "name": "Reflectómetro Óptico OTDR Anritsu MT9085C Access Master",
+    "category": "tecnologia",
+    "brand": "Anritsu",
+    "model": "MT9085C Access Master",
+    "serialNumber": "ANR-9085-782194",
+    "assignedTo": "Miguel Mendoza",
+    "location": "Laboratorio NOC / Cuadrilla Fibra Óptica",
+    "acquisitionDate": "2026-09-15",
+    "acquisitionCost": 4850,
+    "status": "operativo",
+    "description": "Equipo de medición y certificación de fibra óptica OTDR 1310/1550/1625 nm con puerto PON para enlaces FTTH activos.",
+    "photos": [
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80"
+    ],
+    "videos": [],
+    "maintenanceHistory": [],
+    "eventHistory": [
+      {
+        "id": "867dbf23-6690-416d-9785-b3a0bfae52b2",
+        "assetId": 504,
+        "type": "creacion",
+        "title": "Alta de Activo Fijo",
+        "description": "Registro inicial de Reflectómetro Óptico OTDR Anritsu MT9085C Access Master (tecnologia)",
+        "operator": "Sistema",
+        "date": "2026-10-12T22:53:21.367Z"
+      }
+    ],
+    "tenantId": "turbonetwork",
+    "createdAt": "2026-10-12T22:53:21.367Z",
+    "updatedAt": "2026-10-12T22:53:21.367Z"
   }
 ]
