@@ -14271,341 +14271,409 @@
   <!-- ======================================================== -->
   <div id="inventory-asset-detail-modal" class="fixed inset-0 z-[285] hidden flex items-center justify-center bg-black/85 backdrop-blur-md px-3 sm:px-4 py-4 sm:py-6 overflow-y-auto">
     <div class="pro-card max-w-4xl w-full p-5 sm:p-7 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col max-h-[92vh] my-auto overflow-hidden">
-      <!-- Header -->
+      <!-- Header del Modal -->
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10 flex-shrink-0">
         <div class="flex items-center space-x-2.5">
           <span id="dtl-asset-cat-badge" class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">🚗 Vehículo</span>
           <span id="dtl-asset-status-badge" class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Operativo</span>
           <span id="dtl-asset-code-badge" class="px-2 py-0.5 rounded text-xs font-mono font-bold text-slate-400 bg-slate-100 dark:bg-white/5">ACT-001</span>
         </div>
-        <button type="button" onclick="closeAssetDetailModal()" class="p-1 rounded-lg text-slate-400 hover:text-white transition">
+        <button type="button" onclick="closeAssetDetailModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto py-4 space-y-5 custom-palette-scroll">
-        <!-- Título e Información Resumen -->
-        <div>
-          <h2 id="dtl-asset-name" class="text-xl font-bold text-slate-900 dark:text-white">Nombre del Activo</h2>
-          <p id="dtl-asset-specs" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Marca • Modelo • Placa/Serie</p>
+      <!-- Título Resumen del Activo -->
+      <div class="pt-3 pb-2 flex-shrink-0">
+        <h2 id="dtl-asset-name" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-tight">Nombre del Activo</h2>
+        <p id="dtl-asset-specs" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Marca • Modelo • Placa/Serie</p>
+      </div>
+
+      <!-- Barra de Navegación Modular por Pestañas -->
+      <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-semibold overflow-x-auto flex-shrink-0">
+        <button type="button" id="tab-btn-detail-overview" onclick="switchAssetDetailMainTab('overview')" class="px-3.5 py-1.5 rounded-lg btn-brand-primary text-xs transition flex items-center gap-1.5">
+          <span>📋 Ficha & Multimedia</span>
+        </button>
+        <button type="button" id="tab-btn-detail-vehicle" onclick="switchAssetDetailMainTab('vehicle')" class="px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5">
+          <span>🚗 Documentación Vehicular</span>
+          <span id="tab-badge-detail-vehicle-status" class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-blue-500/20 text-blue-500">TIV • SOAT • CITV</span>
+        </button>
+        <button type="button" id="tab-btn-detail-assignments" onclick="switchAssetDetailMainTab('assignments')" class="px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5">
+          <span>👤 Historial Asignaciones</span>
+          <span id="tab-badge-detail-assignments-count" class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-500">0</span>
+        </button>
+        <button type="button" id="tab-btn-detail-maintenance" onclick="switchAssetDetailMainTab('maintenance')" class="px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5">
+          <span>🛠️ Mantenimientos</span>
+          <span id="tab-badge-detail-maintenance-count" class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-amber-500/20 text-amber-500">0</span>
+        </button>
+        <button type="button" id="tab-btn-detail-timeline" onclick="switchAssetDetailMainTab('timeline')" class="px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5">
+          <span>📜 Línea de Vida</span>
+        </button>
+      </div>
+
+      <!-- Contenedor con Scroll de cada pestaña -->
+      <div class="flex-1 overflow-y-auto py-3.5 space-y-4 custom-palette-scroll">
+        
+        <!-- ========================================== -->
+        <!-- PESTAÑA 1: FICHA & MULTIMEDIA              -->
+        <!-- ========================================== -->
+        <div id="tab-content-detail-overview" class="space-y-4">
+          <!-- Métricas Clave Rápidas -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 text-xs">
+            <div>
+              <span class="text-[10px] text-slate-400 uppercase font-bold block">Responsable Actual:</span>
+              <span id="dtl-asset-assigned" class="font-semibold text-slate-800 dark:text-slate-200 truncate block mt-0.5">Personal</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 uppercase font-bold block">Ubicación / Sede:</span>
+              <span id="dtl-asset-location" class="font-semibold text-slate-800 dark:text-slate-200 truncate block mt-0.5">Sede Central</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 uppercase font-bold block">Fecha Adquisición:</span>
+              <span id="dtl-asset-date" class="font-mono text-slate-800 dark:text-slate-200 block mt-0.5">-</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 uppercase font-bold block">Valor / Costo:</span>
+              <span id="dtl-asset-cost" class="font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">$0.00</span>
+            </div>
+          </div>
+
+          <!-- Galería Multimedia: Fotos y Video -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Foto Principal -->
+            <div class="space-y-1.5">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Fotografía Principal</span>
+              <div class="relative w-full h-56 rounded-xl bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden flex items-center justify-center group shadow-2xs">
+                <img id="dtl-asset-photo" src="" alt="Foto Activo" class="w-full h-full object-cover">
+              </div>
+            </div>
+            <!-- Video Player Embed -->
+            <div class="space-y-1.5">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Video de Inspección / Evidencia</span>
+              <div id="dtl-asset-video-box" class="relative w-full h-56 rounded-xl bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden flex items-center justify-center shadow-2xs">
+                <div id="dtl-asset-video-content" class="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+                  Sin video registrado
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Descripción & Observaciones -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 space-y-1">
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Ficha Técnica & Observaciones</span>
+            <p id="dtl-asset-desc" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed"></p>
+          </div>
         </div>
 
-        <!-- Galería Multimedia: Fotos y Video -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- Foto Principal -->
-          <div class="relative w-full h-52 rounded-xl bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden flex items-center justify-center group">
-            <img id="dtl-asset-photo" src="" alt="Foto Activo" class="w-full h-full object-cover">
+        <!-- ========================================== -->
+        <!-- PESTAÑA 2: DOCUMENTACIÓN VEHICULAR (TIV, SOAT, CITV) -->
+        <!-- ========================================== -->
+        <div id="tab-content-detail-vehicle" class="space-y-3.5 hidden">
+          <!-- Si no es vehículo: mensaje informativo -->
+          <div id="dtl-veh-non-vehicle-notice" class="hidden p-8 text-center rounded-2xl border border-dashed border-slate-300 dark:border-white/10 text-slate-400">
+            <span class="text-3xl block mb-2">🚗ℹ️</span>
+            <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200">Activo no clasificado como Vehículo</h4>
+            <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">La documentación vehicular obligatoria (TIV/TIVE, SOAT y CITV) aplica exclusivamente a vehículos registrados en la categoría "Vehículos".</p>
           </div>
-          <!-- Video Player Embed -->
-          <div id="dtl-asset-video-box" class="relative w-full h-52 rounded-xl bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden flex items-center justify-center">
-            <div id="dtl-asset-video-content" class="w-full h-full flex items-center justify-center text-slate-400 text-xs">
-              Sin video registrado
+
+          <div id="dtl-asset-vehicle-docs-container" class="space-y-3.5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent p-3.5 rounded-xl border border-blue-500/20">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-500 dark:text-blue-400 flex-shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Documentación Vehicular Obligatoria</h3>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 font-semibold">TIV • SOAT • CITV</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">Control estricto de vigencias, registros SUNARP y revisiones técnicas</p>
+                </div>
+              </div>
+              <button type="button" onclick="editAssetFromDetail()" class="self-start sm:self-center px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center gap-1.5 border border-blue-500/30 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                <span>Actualizar Documentos</span>
+              </button>
+            </div>
+
+            <!-- Grid de 3 Apartados Individuales -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              <!-- APARTADO 1: Tarjeta de Identificación Vehicular (TIV / TIVE) -->
+              <div class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 flex flex-col justify-between hover:border-blue-500/30 transition space-y-3 shadow-2xs">
+                <div>
+                  <div class="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-white/10">
+                    <div class="flex items-center gap-2">
+                      <span class="p-1 rounded bg-blue-500/10 text-blue-500 text-xs">🪪</span>
+                      <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">TIV / TIVE</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-500 border border-blue-500/20">SUNARP</span>
+                  </div>
+
+                  <!-- Placa y TIV Hero -->
+                  <div class="mt-2.5 flex items-center justify-between">
+                    <div>
+                      <span class="text-[9px] uppercase font-bold text-slate-400 block">Placa Registral</span>
+                      <div class="mt-0.5 inline-flex items-center px-2.5 py-0.5 rounded border-2 border-slate-800 bg-amber-400 text-slate-950 font-black font-mono text-sm tracking-wider shadow-2xs">
+                        <span id="dtl-veh-tiv-plate">ABC-123</span>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-[9px] uppercase font-bold text-slate-400 block">N° Tarjeta</span>
+                      <span id="dtl-veh-tiv-number" class="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200 block">-</span>
+                    </div>
+                  </div>
+
+                  <!-- Lista de Especificaciones TIV -->
+                  <div class="mt-3 space-y-1.5 text-xs">
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">N° Serie / VIN:</span>
+                      <span id="dtl-veh-tiv-vin" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">N° Motor:</span>
+                      <span id="dtl-veh-tiv-engine" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">Color / Combustible:</span>
+                      <span id="dtl-veh-tiv-color-fuel" class="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">Año Fab. / Sede:</span>
+                      <span id="dtl-veh-tiv-year-office" class="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
+                    </div>
+                    <div class="py-1">
+                      <span class="text-slate-400 text-[10px] uppercase font-bold block">Titular Registral:</span>
+                      <span id="dtl-veh-tiv-owner" class="text-slate-800 dark:text-slate-200 text-[11px] font-medium block truncate">-</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Botón Ver TIV -->
+                <div class="pt-2 border-t border-slate-200 dark:border-white/10">
+                  <a id="dtl-veh-tiv-link" href="#" target="_blank" rel="noopener noreferrer" class="w-full py-1.5 px-3 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    <span>Ver TIVE Digital</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- APARTADO 2: SOAT (Seguro Obligatorio de Accidentes de Tránsito) -->
+              <div class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 flex flex-col justify-between hover:border-emerald-500/30 transition space-y-3 shadow-2xs">
+                <div>
+                  <div class="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-white/10">
+                    <div class="flex items-center gap-2">
+                      <span class="p-1 rounded bg-emerald-500/10 text-emerald-500 text-xs">🛡️</span>
+                      <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">SOAT</span>
+                    </div>
+                    <span id="dtl-veh-soat-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Vigente</span>
+                  </div>
+
+                  <!-- SOAT Countdown Hero -->
+                  <div class="mt-2.5 p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-2">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="min-w-0">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Vigencia SOAT</span>
+                        <span id="dtl-veh-soat-countdown" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">Calculando...</span>
+                      </div>
+                      <div class="text-right flex-shrink-0">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Aseguradora</span>
+                        <span id="dtl-veh-soat-insurer" class="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate max-w-[110px] mt-0.5">-</span>
+                      </div>
+                    </div>
+                    <div class="pt-1.5 border-t border-slate-100 dark:border-white/5 text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate" id="dtl-veh-soat-range">
+                      -
+                    </div>
+                  </div>
+
+                  <!-- Lista de Especificaciones SOAT -->
+                  <div class="mt-3 space-y-1.5 text-xs">
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">N° Póliza:</span>
+                      <span id="dtl-veh-soat-policy" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] font-semibold text-right">-</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">Tipo Certificado:</span>
+                      <span id="dtl-veh-soat-type" class="text-slate-700 dark:text-slate-300 text-[11px] capitalize text-right">Electrónico</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">Fecha de Inicio:</span>
+                      <span id="dtl-veh-soat-start" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] text-right">-</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 py-1">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">Fecha de Término:</span>
+                      <span id="dtl-veh-soat-end" class="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px] text-right">-</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Botón Ver SOAT -->
+                <div class="pt-2 border-t border-slate-200 dark:border-white/10">
+                  <a id="dtl-veh-soat-link" href="#" target="_blank" rel="noopener noreferrer" class="w-full py-1.5 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <span>Ver Póliza / APESEG</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- APARTADO 3: Certificado de Inspección Técnica Vehicular (CITV) -->
+              <div class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 flex flex-col justify-between hover:border-indigo-500/30 transition space-y-3 shadow-2xs">
+                <div>
+                  <div class="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-white/10">
+                    <div class="flex items-center gap-2">
+                      <span class="p-1 rounded bg-indigo-500/10 text-indigo-500 text-xs">📋</span>
+                      <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">CITV Técnica</span>
+                    </div>
+                    <span id="dtl-veh-citv-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Aprobado</span>
+                  </div>
+
+                  <!-- CITV Countdown Hero -->
+                  <div class="mt-2.5 p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-2">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="min-w-0">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Vigencia CITV</span>
+                        <span id="dtl-veh-citv-countdown" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">Calculando...</span>
+                      </div>
+                      <div class="text-right flex-shrink-0">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Resultado</span>
+                        <span id="dtl-veh-citv-result-label" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">Aprobado</span>
+                      </div>
+                    </div>
+                    <div class="pt-1.5 border-t border-slate-100 dark:border-white/5 text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate" id="dtl-veh-citv-range">
+                      -
+                    </div>
+                  </div>
+
+                  <!-- Lista de Especificaciones CITV -->
+                  <div class="mt-3 space-y-1.5 text-xs">
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">N° Certificado:</span>
+                      <span id="dtl-veh-citv-cert" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] font-semibold text-right">-</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">Centro MTC:</span>
+                      <span id="dtl-veh-citv-center" class="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">Km en Inspección:</span>
+                      <span id="dtl-veh-citv-km" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] text-right">-</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 py-1">
+                      <span class="text-slate-400 text-[11px] flex-shrink-0">Vencimiento:</span>
+                      <span id="dtl-veh-citv-exp" class="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px] text-right">-</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Botón Ver CITV -->
+                <div class="pt-2 border-t border-slate-200 dark:border-white/10">
+                  <a id="dtl-veh-citv-link" href="#" target="_blank" rel="noopener noreferrer" class="w-full py-1.5 px-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    <span>Ver Certificado / MTC</span>
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Métricas Rápidas del Activo -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 text-xs">
-          <div>
-            <span class="text-[10px] text-slate-400 uppercase font-bold block">Asignado a:</span>
-            <span id="dtl-asset-assigned" class="font-semibold text-slate-800 dark:text-slate-200 truncate block">Personal</span>
-          </div>
-          <div>
-            <span class="text-[10px] text-slate-400 uppercase font-bold block">Ubicación:</span>
-            <span id="dtl-asset-location" class="font-semibold text-slate-800 dark:text-slate-200 truncate block">Sede Central</span>
-          </div>
-          <div>
-            <span class="text-[10px] text-slate-400 uppercase font-bold block">Fecha Adquisición:</span>
-            <span id="dtl-asset-date" class="font-mono text-slate-800 dark:text-slate-200 block">-</span>
-          </div>
-          <div>
-            <span class="text-[10px] text-slate-400 uppercase font-bold block">Costo / Valor:</span>
-            <span id="dtl-asset-cost" class="font-mono font-bold text-emerald-600 dark:text-emerald-400 block">$0.00</span>
-          </div>
-        </div>
-
-        <!-- Descripción -->
-        <div>
-          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Descripción & Notas</span>
-          <p id="dtl-asset-desc" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed"></p>
-        </div>
-
-        <!-- ======================================================== -->
-        <!-- SECCIÓN DE DOCUMENTACIÓN VEHICULAR (TIV, SOAT, CITV)     -->
-        <!-- Exclusivo para vehículos (categoría 'vehiculo')         -->
-        <!-- ======================================================== -->
-        <div id="dtl-asset-vehicle-docs-container" class="space-y-3 pt-3 border-t border-slate-200 dark:border-white/10 hidden">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent p-3 rounded-xl border border-blue-500/20">
+        <!-- ========================================== -->
+        <!-- PESTAÑA 3: HISTORIAL DE ASIGNACIONES       -->
+        <!-- ========================================== -->
+        <div id="tab-content-detail-assignments" class="space-y-3.5 hidden">
+          <!-- Banner Superior con Acción Rápida -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent p-3.5 rounded-xl border border-emerald-500/20">
             <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-500 dark:text-blue-400">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <div class="w-9 h-9 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-500 dark:text-emerald-400 flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
               </div>
               <div>
-                <div class="flex items-center gap-2 flex-wrap">
-                  <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Documentación Vehicular Obligatoria</h3>
-                  <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 font-semibold">TIV • SOAT • CITV</span>
-                </div>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">Control de vigencias, registros SUNARP y revisiones autorizadas</p>
+                <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Trazabilidad de Custodia y Asignaciones</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Historial completo de entregas, relevos de conductor o cuadrilla y devolución</p>
               </div>
             </div>
-            <button type="button" onclick="editAssetFromDetail()" class="self-start sm:self-center px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center gap-1.5 border border-blue-500/30 transition">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-              <span>Actualizar Documentos</span>
+            <button type="button" onclick="openAddAssetAssignmentModal()" class="self-start sm:self-center px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-2xs flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              <span>+ Registrar Asignación / Relevo</span>
             </button>
           </div>
 
-          <!-- Grid de 3 Apartados Individuales -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            <!-- APARTADO 1: Tarjeta de Identificación Vehicular (TIV / TIVE) -->
-            <div class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 flex flex-col justify-between hover:border-blue-500/30 transition space-y-3 shadow-2xs">
-              <div>
-                <div class="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-white/10">
-                  <div class="flex items-center gap-2">
-                    <span class="p-1 rounded bg-blue-500/10 text-blue-500 text-xs">🪪</span>
-                    <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">TIV / TIVE</span>
-                  </div>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-500 border border-blue-500/20">SUNARP</span>
-                </div>
+          <!-- Banner de Asignación Activa Actual (Hero Único) -->
+          <div id="dtl-asset-active-assignment-banner" class="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10 shadow-2xs">
+            <!-- Renderizado dinámico -->
+          </div>
 
-                <!-- Placa y TIV Hero -->
-                <div class="mt-2.5 flex items-center justify-between">
-                  <div>
-                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Placa Registral</span>
-                    <div class="mt-0.5 inline-flex items-center px-2.5 py-0.5 rounded border-2 border-slate-800 bg-amber-400 text-slate-950 font-black font-mono text-sm tracking-wider shadow-2xs">
-                      <span id="dtl-veh-tiv-plate">ABC-123</span>
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <span class="text-[9px] uppercase font-bold text-slate-400 block">N° Tarjeta</span>
-                    <span id="dtl-veh-tiv-number" class="text-xs font-mono font-semibold text-slate-800 dark:text-slate-200 block">-</span>
-                  </div>
-                </div>
-
-                <!-- Lista de Especificaciones TIV -->
-                <div class="mt-3 space-y-1.5 text-xs">
-                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">N° Serie / VIN:</span>
-                    <span id="dtl-veh-tiv-vin" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">N° Motor:</span>
-                    <span id="dtl-veh-tiv-engine" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">Color / Combustible:</span>
-                    <span id="dtl-veh-tiv-color-fuel" class="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">Año Fab. / Sede:</span>
-                    <span id="dtl-veh-tiv-year-office" class="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
-                  </div>
-                  <div class="py-1">
-                    <span class="text-slate-400 text-[10px] uppercase font-bold block">Titular Registral:</span>
-                    <span id="dtl-veh-tiv-owner" class="text-slate-800 dark:text-slate-200 text-[11px] font-medium block truncate">-</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Botón Ver TIV -->
-              <div class="pt-2 border-t border-slate-200 dark:border-white/10">
-                <a id="dtl-veh-tiv-link" href="#" target="_blank" rel="noopener noreferrer" class="w-full py-1.5 px-3 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                  <span>Ver TIVE Digital</span>
-                </a>
-              </div>
+          <!-- Lista Cronológica de Relevos Anteriores (Excluye la Activa para evitar duplicidad) -->
+          <div class="space-y-2.5 pt-1">
+            <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
+              <span class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Relevos & Entregas Anteriores</span>
+              </span>
+              <span id="dtl-asset-assignments-count-label" class="font-mono text-[10px] text-slate-500">0 registros</span>
             </div>
-
-            <!-- APARTADO 2: SOAT (Seguro Obligatorio de Accidentes de Tránsito) -->
-            <div class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 flex flex-col justify-between hover:border-emerald-500/30 transition space-y-3 shadow-2xs">
-              <div>
-                <div class="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-white/10">
-                  <div class="flex items-center gap-2">
-                    <span class="p-1 rounded bg-emerald-500/10 text-emerald-500 text-xs">🛡️</span>
-                    <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">SOAT</span>
-                  </div>
-                  <span id="dtl-veh-soat-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Vigente</span>
-                </div>
-
-                <!-- SOAT Countdown Hero -->
-                <div class="mt-2.5 p-2.5 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <span class="text-[9px] uppercase font-bold text-slate-400 block">Vigencia SOAT</span>
-                      <span id="dtl-veh-soat-countdown" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 block">Calculando...</span>
-                    </div>
-                    <div class="text-right">
-                      <span class="text-[9px] uppercase font-bold text-slate-400 block">Aseguradora</span>
-                      <span id="dtl-veh-soat-insurer" class="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate max-w-[120px]">-</span>
-                    </div>
-                  </div>
-                  <div class="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400" id="dtl-veh-soat-range">
-                    -
-                  </div>
-                </div>
-
-                <!-- Lista de Especificaciones SOAT -->
-                <div class="mt-3 space-y-1.5 text-xs">
-                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">N° Póliza:</span>
-                    <span id="dtl-veh-soat-policy" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] font-semibold text-right">-</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">Tipo Certificado:</span>
-                    <span id="dtl-veh-soat-type" class="text-slate-700 dark:text-slate-300 text-[11px] capitalize text-right">Electrónico</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">Fecha de Inicio:</span>
-                    <span id="dtl-veh-soat-start" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] text-right">-</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-2 py-1">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">Fecha de Término:</span>
-                    <span id="dtl-veh-soat-end" class="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px] text-right">-</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Botón Ver SOAT -->
-              <div class="pt-2 border-t border-slate-200 dark:border-white/10">
-                <a id="dtl-veh-soat-link" href="#" target="_blank" rel="noopener noreferrer" class="w-full py-1.5 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                  <span>Ver Póliza / APESEG</span>
-                </a>
-              </div>
-            </div>
-
-            <!-- APARTADO 3: Certificado de Inspección Técnica Vehicular (CITV) -->
-            <div class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 flex flex-col justify-between hover:border-indigo-500/30 transition space-y-3 shadow-2xs">
-              <div>
-                <div class="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-white/10">
-                  <div class="flex items-center gap-2">
-                    <span class="p-1 rounded bg-indigo-500/10 text-indigo-500 text-xs">📋</span>
-                    <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">CITV Técnica</span>
-                  </div>
-                  <span id="dtl-veh-citv-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Aprobado</span>
-                </div>
-
-                <!-- CITV Countdown Hero -->
-                <div class="mt-2.5 p-2.5 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <span class="text-[9px] uppercase font-bold text-slate-400 block">Vigencia CITV</span>
-                      <span id="dtl-veh-citv-countdown" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 block">Calculando...</span>
-                    </div>
-                    <div class="text-right">
-                      <span class="text-[9px] uppercase font-bold text-slate-400 block">Resultado</span>
-                      <span id="dtl-veh-citv-result-label" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 block">Aprobado</span>
-                    </div>
-                  </div>
-                  <div class="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400" id="dtl-veh-citv-range">
-                    -
-                  </div>
-                </div>
-
-                <!-- Lista de Especificaciones CITV -->
-                <div class="mt-3 space-y-1.5 text-xs">
-                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">N° Certificado:</span>
-                    <span id="dtl-veh-citv-cert" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] font-semibold text-right">-</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">Centro MTC:</span>
-                    <span id="dtl-veh-citv-center" class="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">Km en Inspección:</span>
-                    <span id="dtl-veh-citv-km" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] text-right">-</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-2 py-1">
-                    <span class="text-slate-400 text-[11px] flex-shrink-0">Vencimiento:</span>
-                    <span id="dtl-veh-citv-exp" class="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px] text-right">-</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Botón Ver CITV -->
-              <div class="pt-2 border-t border-slate-200 dark:border-white/10">
-                <a id="dtl-veh-citv-link" href="#" target="_blank" rel="noopener noreferrer" class="w-full py-1.5 px-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                  <span>Ver Certificado / MTC</span>
-                </a>
-              </div>
+            <div id="dtl-asset-assignments-list" class="space-y-2.5">
+              <!-- Renderizado dinámico -->
             </div>
           </div>
         </div>
 
-        <!-- Subpestañas del Activo: Mantenimientos vs Asignaciones vs Línea de Tiempo -->
-        <div class="space-y-3 pt-2 border-t border-slate-200 dark:border-white/10">
-          <div class="flex items-center justify-between flex-wrap gap-2">
-            <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-semibold">
-              <button type="button" id="tab-btn-asset-maint" onclick="switchAssetDetailTab('maint')" class="px-3 py-1.5 rounded-lg btn-brand-primary text-xs transition flex items-center gap-1.5">
-                <span>🛠️ Historial de Mantenimientos</span>
-                <span id="tab-badge-asset-maint" class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-white/20 text-white">0</span>
-              </button>
-              <button type="button" id="tab-btn-asset-assignments" onclick="switchAssetDetailTab('assignments')" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5">
-                <span>👤 Historial de Asignaciones</span>
-                <span id="tab-badge-asset-assignments" class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-500">0</span>
-              </button>
-              <button type="button" id="tab-btn-asset-events" onclick="switchAssetDetailTab('events')" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5">
-                <span>📜 Línea de Vida & Eventos</span>
-              </button>
-            </div>
-
-            <div id="dtl-asset-actions-bar">
-              <button type="button" id="btn-add-asset-maint" onclick="openAddAssetMaintenanceModal()" class="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition shadow-2xs flex items-center gap-1">
-                <span>+ Registrar Mantenimiento</span>
-              </button>
-              <button type="button" id="btn-add-asset-assignment" onclick="openAddAssetAssignmentModal()" class="hidden px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-2xs flex items-center gap-1">
-                <span>+ Registrar Asignación</span>
-              </button>
-              <button type="button" id="btn-add-asset-event" onclick="openAddAssetEventModal()" class="hidden px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition shadow-2xs flex items-center gap-1">
-                <span>+ Registrar Evento</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Contenedor Tab 1: Mantenimientos Documentados con Fotos y Video -->
-          <div id="dtl-asset-maint-tab" class="space-y-2.5">
-            <div id="dtl-asset-maint-list" class="space-y-2.5">
-              <!-- Renderizado dinámico -->
-            </div>
-          </div>
-
-          <!-- Contenedor Tab 2: Historial de Asignaciones Detalladas -->
-          <div id="dtl-asset-assignments-tab" class="space-y-3 hidden">
-            <!-- Banner de Asignación Activa Actual -->
-            <div id="dtl-asset-active-assignment-banner" class="p-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10">
-              <!-- Renderizado dinámico -->
-            </div>
-
-            <!-- Lista cronológica detallada -->
-            <div class="space-y-2 pt-1">
-              <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
-                <span class="flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  Trazabilidad Cronológica de Entregas & Relevos
-                </span>
-                <span id="dtl-asset-assignments-count-label" class="font-mono text-[10px] text-slate-500">0 registros</span>
+        <!-- ========================================== -->
+        <!-- PESTAÑA 4: HISTORIAL DE MANTENIMIENTOS     -->
+        <!-- ========================================== -->
+        <div id="tab-content-detail-maintenance" class="space-y-3.5 hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent p-3.5 rounded-xl border border-amber-500/20">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
               </div>
-              <div id="dtl-asset-assignments-list" class="space-y-2.5">
-                <!-- Renderizado dinámico -->
+              <div>
+                <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Historial de Mantenimientos & Servicios</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Control de intervenciones preventivas, correctivas y calibraciones técnicas</p>
               </div>
             </div>
+            <button type="button" onclick="openAddAssetMaintenanceModal()" class="self-start sm:self-center px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition shadow-2xs flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              <span>+ Registrar Mantenimiento</span>
+            </button>
           </div>
 
-          <!-- Contenedor Tab 3: Línea de Vida del Activo -->
-          <div id="dtl-asset-events-tab" class="space-y-2.5 hidden">
-            <div id="dtl-asset-events-list" class="space-y-2.5">
-              <!-- Renderizado dinámico -->
+          <div id="dtl-asset-maint-list" class="space-y-2.5">
+            <!-- Renderizado dinámico -->
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PESTAÑA 5: LÍNEA DE VIDA & EVENTOS         -->
+        <!-- ========================================== -->
+        <div id="tab-content-detail-timeline" class="space-y-3.5 hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent p-3.5 rounded-xl border border-blue-500/20">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-500 dark:text-blue-400 flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Línea de Vida & Trazabilidad de Eventos</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Bitácora cronológica inmutable de cambios de estado, compras y auditoría</p>
+              </div>
             </div>
+            <button type="button" onclick="openAddAssetEventModal()" class="self-start sm:self-center px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition shadow-2xs flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              <span>+ Registrar Evento</span>
+            </button>
+          </div>
+
+          <div id="dtl-asset-events-list" class="space-y-2.5">
+            <!-- Renderizado dinámico -->
           </div>
         </div>
       </div>
 
       <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between">
-        <button type="button" onclick="editAssetFromDetail()" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold transition shadow-sm">
-          Editar Activo
+        <button type="button" onclick="editAssetFromDetail()" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold transition shadow-sm flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          <span>Editar Activo</span>
         </button>
-        <button type="button" onclick="closeAssetDetailModal()" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/10 text-xs font-semibold transition">
+        <button type="button" onclick="closeAssetDetailModal()" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/15 text-xs font-semibold transition">
           Cerrar
         </button>
       </div>
@@ -30539,9 +30607,9 @@ function renderAssetVehicleDocs(asset) {
     }
     if (elSoatCountdown) {
       elSoatCountdown.className = 'text-xs font-semibold text-slate-400 block';
-      elSoatCountdown.textContent = 'Fecha no registrada';
+      elSoatCountdown.textContent = 'Pendiente de registro';
     }
-    if (elSoatRange) elSoatRange.textContent = 'Sin vigencia registrada';
+    if (elSoatRange) elSoatRange.textContent = 'Vigencia: No registrada';
   }
 
   if (elSoatLink) {
@@ -30638,9 +30706,9 @@ function renderAssetVehicleDocs(asset) {
     }
     if (elCitvCountdown) {
       elCitvCountdown.className = 'text-xs font-semibold text-slate-400 block';
-      elCitvCountdown.textContent = 'Fecha no registrada';
+      elCitvCountdown.textContent = 'Pendiente de inspección';
     }
-    if (elCitvRange) elCitvRange.textContent = 'Sin vigencia registrada';
+    if (elCitvRange) elCitvRange.textContent = 'Vigencia: No registrada';
   }
 
   if (elCitvLink) {
@@ -30648,12 +30716,72 @@ function renderAssetVehicleDocs(asset) {
   }
 }
 
+let currentAssetDetailMainTab = 'overview';
+
+function switchAssetDetailMainTab(tab) {
+  currentAssetDetailMainTab = tab || 'overview';
+
+  const tabs = ['overview', 'vehicle', 'assignments', 'maintenance', 'timeline'];
+  const activeClass = "px-3.5 py-1.5 rounded-lg btn-brand-primary text-xs transition flex items-center gap-1.5 shadow-2xs font-semibold";
+  const inactiveClass = "px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/5 transition flex items-center gap-1.5 text-xs font-semibold";
+
+  tabs.forEach(t => {
+    const btn = document.getElementById(`tab-btn-detail-${t}`);
+    const content = document.getElementById(`tab-content-detail-${t}`);
+    if (btn) {
+      btn.className = (t === currentAssetDetailMainTab) ? activeClass : inactiveClass;
+    }
+    if (content) {
+      if (t === currentAssetDetailMainTab) {
+        content.classList.remove('hidden');
+      } else {
+        content.classList.add('hidden');
+      }
+    }
+  });
+
+  if (!currentDetailAsset) return;
+
+  if (currentAssetDetailMainTab === 'vehicle') {
+    const isVehicle = currentDetailAsset.category === 'vehiculo';
+    const vehContainer = document.getElementById('dtl-asset-vehicle-docs-container');
+    const notice = document.getElementById('dtl-veh-non-vehicle-notice');
+    if (vehContainer) {
+      if (isVehicle) {
+        vehContainer.classList.remove('hidden');
+        renderAssetVehicleDocs(currentDetailAsset);
+      } else {
+        vehContainer.classList.add('hidden');
+      }
+    }
+    if (notice) {
+      if (isVehicle) {
+        notice.classList.add('hidden');
+      } else {
+        notice.classList.remove('hidden');
+      }
+    }
+  } else if (currentAssetDetailMainTab === 'assignments') {
+    renderAssetAssignmentsList();
+  } else if (currentAssetDetailMainTab === 'maintenance') {
+    renderAssetMaintenanceList();
+  } else if (currentAssetDetailMainTab === 'timeline') {
+    renderAssetEventsList();
+  }
+}
+
+function switchAssetDetailTab(tab) {
+  if (tab === 'maint') switchAssetDetailMainTab('maintenance');
+  else if (tab === 'assignments') switchAssetDetailMainTab('assignments');
+  else if (tab === 'events') switchAssetDetailMainTab('timeline');
+  else switchAssetDetailMainTab(tab);
+}
+
 function openAssetDetailModal(id) {
   const asset = inventoryAssets.find(a => a.id === id);
   if (!asset) return;
 
   currentDetailAsset = asset;
-  activeAssetDetailTab = 'maint';
 
   const catBadge = document.getElementById('dtl-asset-cat-badge');
   if (catBadge) {
@@ -30663,18 +30791,31 @@ function openAssetDetailModal(id) {
   }
 
   const statusBadge = document.getElementById('dtl-asset-status-badge');
-  if (statusBadge) statusBadge.textContent = asset.status.toUpperCase();
+  if (statusBadge) statusBadge.textContent = (asset.status || 'operativo').toUpperCase();
 
   const codeBadge = document.getElementById('dtl-asset-code-badge');
-  if (codeBadge) codeBadge.textContent = asset.code;
+  if (codeBadge) codeBadge.textContent = asset.code || '';
 
-  document.getElementById('dtl-asset-name').textContent = asset.name;
-  document.getElementById('dtl-asset-specs').textContent = `${asset.brand || ''} ${asset.model || ''} • Placa/Serie: ${asset.plateNumber || asset.serialNumber || 'N/A'}`;
-  document.getElementById('dtl-asset-assigned').textContent = asset.assignedTo || 'Sin asignar';
-  document.getElementById('dtl-asset-location').textContent = asset.location || 'Sede Central';
-  document.getElementById('dtl-asset-date').textContent = asset.acquisitionDate || '-';
-  document.getElementById('dtl-asset-cost').textContent = `${getSystemCurrencySymbol()} ${Number(asset.acquisitionCost || 0).toFixed(2)}`;
-  document.getElementById('dtl-asset-desc').textContent = asset.description || 'Sin ficha técnica o especificaciones adicionales.';
+  const nameEl = document.getElementById('dtl-asset-name');
+  if (nameEl) nameEl.textContent = asset.name || '';
+
+  const specsEl = document.getElementById('dtl-asset-specs');
+  if (specsEl) specsEl.textContent = `${asset.brand || ''} ${asset.model || ''} • Placa/Serie: ${asset.plateNumber || asset.serialNumber || 'N/A'}`;
+
+  const assignedEl = document.getElementById('dtl-asset-assigned');
+  if (assignedEl) assignedEl.textContent = asset.assignedTo || 'Sin asignar';
+
+  const locEl = document.getElementById('dtl-asset-location');
+  if (locEl) locEl.textContent = asset.location || 'Sede Central';
+
+  const dateEl = document.getElementById('dtl-asset-date');
+  if (dateEl) dateEl.textContent = asset.acquisitionDate || '-';
+
+  const costEl = document.getElementById('dtl-asset-cost');
+  if (costEl) costEl.textContent = `${getSystemCurrencySymbol()} ${Number(asset.acquisitionCost || 0).toFixed(2)}`;
+
+  const descEl = document.getElementById('dtl-asset-desc');
+  if (descEl) descEl.textContent = asset.description || 'Sin ficha técnica o observaciones adicionales registradas.';
 
   // Foto y Video
   const photoImg = document.getElementById('dtl-asset-photo');
@@ -30696,23 +30837,25 @@ function openAssetDetailModal(id) {
     }
   }
 
-  // Sección de Documentación Vehicular (TIV, SOAT, CITV)
-  const vehDocsContainer = document.getElementById('dtl-asset-vehicle-docs-container');
-  if (vehDocsContainer) {
+  // Badges en las pestañas principales
+  const vehBadge = document.getElementById('tab-badge-detail-vehicle-status');
+  if (vehBadge) {
     if (asset.category === 'vehiculo') {
-      vehDocsContainer.classList.remove('hidden');
-      renderAssetVehicleDocs(asset);
+      vehBadge.textContent = 'TIV • SOAT • CITV';
+      vehBadge.className = 'px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-blue-500/20 text-blue-500';
     } else {
-      vehDocsContainer.classList.add('hidden');
+      vehBadge.textContent = 'No aplica';
+      vehBadge.className = 'px-1.5 py-0.2 rounded-full text-[9px] font-mono font-semibold bg-slate-500/10 text-slate-400';
     }
   }
 
-  const maintBadge = document.getElementById('tab-badge-asset-maint');
-  if (maintBadge) maintBadge.textContent = (asset.maintenanceHistory || []).length;
-  const assignBadge = document.getElementById('tab-badge-asset-assignments');
+  const assignBadge = document.getElementById('tab-badge-detail-assignments-count');
   if (assignBadge) assignBadge.textContent = (asset.assignmentHistory || []).length;
+  const maintBadge = document.getElementById('tab-badge-detail-maintenance-count');
+  if (maintBadge) maintBadge.textContent = (asset.maintenanceHistory || []).length;
 
-  switchAssetDetailTab('maint');
+  // Abrir pestaña inicial limpia
+  switchAssetDetailMainTab('overview');
 
   const modal = document.getElementById('inventory-asset-detail-modal');
   if (modal) modal.classList.remove('hidden');
@@ -30721,53 +30864,6 @@ function openAssetDetailModal(id) {
 function closeAssetDetailModal() {
   const modal = document.getElementById('inventory-asset-detail-modal');
   if (modal) modal.classList.add('hidden');
-}
-
-function switchAssetDetailTab(tab) {
-  activeAssetDetailTab = tab;
-  const btnMaint = document.getElementById('tab-btn-asset-maint');
-  const btnAssign = document.getElementById('tab-btn-asset-assignments');
-  const btnEvents = document.getElementById('tab-btn-asset-events');
-
-  const tabMaint = document.getElementById('dtl-asset-maint-tab');
-  const tabAssign = document.getElementById('dtl-asset-assignments-tab');
-  const tabEvents = document.getElementById('dtl-asset-events-tab');
-
-  const btnAddMaint = document.getElementById('btn-add-asset-maint');
-  const btnAddAssign = document.getElementById('btn-add-asset-assignment');
-  const btnAddEvent = document.getElementById('btn-add-asset-event');
-
-  if (tabMaint) tabMaint.classList.add('hidden');
-  if (tabAssign) tabAssign.classList.add('hidden');
-  if (tabEvents) tabEvents.classList.add('hidden');
-
-  const inactiveCls = "px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5";
-  const activeCls = "px-3 py-1.5 rounded-lg btn-brand-primary text-xs transition flex items-center gap-1.5";
-
-  if (btnMaint) btnMaint.className = inactiveCls;
-  if (btnAssign) btnAssign.className = inactiveCls;
-  if (btnEvents) btnEvents.className = inactiveCls;
-
-  if (btnAddMaint) btnAddMaint.classList.add('hidden');
-  if (btnAddAssign) btnAddAssign.classList.add('hidden');
-  if (btnAddEvent) btnAddEvent.classList.add('hidden');
-
-  if (tab === 'maint') {
-    if (tabMaint) tabMaint.classList.remove('hidden');
-    if (btnMaint) btnMaint.className = activeCls;
-    if (btnAddMaint) btnAddMaint.classList.remove('hidden');
-    renderAssetMaintenanceList();
-  } else if (tab === 'assignments') {
-    if (tabAssign) tabAssign.classList.remove('hidden');
-    if (btnAssign) btnAssign.className = activeCls;
-    if (btnAddAssign) btnAddAssign.classList.remove('hidden');
-    renderAssetAssignmentsList();
-  } else {
-    if (tabEvents) tabEvents.classList.remove('hidden');
-    if (btnEvents) btnEvents.className = activeCls;
-    if (btnAddEvent) btnAddEvent.classList.remove('hidden');
-    renderAssetEventsList();
-  }
 }
 
 function renderAssetMaintenanceList() {
@@ -30896,6 +30992,8 @@ async function handleSaveAssetMaintenance(e) {
       const updated = inventoryAssets.find(a => a.id === assetId);
       if (updated) {
         currentDetailAsset = updated;
+        const maintBadge = document.getElementById('tab-badge-detail-maintenance-count');
+        if (maintBadge) maintBadge.textContent = (updated.maintenanceHistory || []).length;
         renderAssetMaintenanceList();
       }
     } else {
@@ -30963,14 +31061,19 @@ function renderAssetAssignmentsList() {
   const list = document.getElementById('dtl-asset-assignments-list');
   const countLabel = document.getElementById('dtl-asset-assignments-count-label');
   const tabBadge = document.getElementById('tab-badge-asset-assignments');
+  const detailAssignBadge = document.getElementById('tab-badge-detail-assignments-count');
   if (!currentDetailAsset) return;
 
   const rawAssignments = Array.isArray(currentDetailAsset.assignmentHistory) ? currentDetailAsset.assignmentHistory : [];
   if (tabBadge) tabBadge.textContent = rawAssignments.length;
-  if (countLabel) countLabel.textContent = `${rawAssignments.length} registro(s)`;
+  if (detailAssignBadge) detailAssignBadge.textContent = rawAssignments.length;
 
   // Buscar asignación activa
   const activeAssignment = rawAssignments.find(a => a.status === 'activa');
+
+  // Solo relevos / asignaciones anteriores (excluye la activa para evitar duplicidad)
+  const pastAssignments = rawAssignments.filter(a => a.status !== 'activa');
+  if (countLabel) countLabel.textContent = `${pastAssignments.length} relevo(s) anterior(es)`;
 
   if (banner) {
     if (activeAssignment) {
@@ -30984,20 +31087,21 @@ function renderAssetAssignmentsList() {
               <div class="flex items-center gap-2">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono border border-emerald-500/30 flex items-center gap-1">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Asignación Activa Vigente
+                  Custodia / Asignación Activa Vigente
                 </span>
                 <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">ID: ${activeAssignment.id}</span>
               </div>
               <h4 class="text-sm font-bold text-slate-900 dark:text-white">${escapeHtml(activeAssignment.assignedTo)}</h4>
-              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
-                <span>📅 <strong>Asignado el:</strong> ${activeAssignment.assignedDate} ${activeAssignment.assignedTime ? `• ⏰ ${activeAssignment.assignedTime} hrs` : ''}</span>
-                <span>📍 <strong>Ubicación:</strong> ${escapeHtml(activeAssignment.location || currentDetailAsset.location || 'Sede Central')}</span>
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
+                <span>📅 <strong>Desde:</strong> ${activeAssignment.assignedDate} ${activeAssignment.assignedTime ? `(${activeAssignment.assignedTime} hrs)` : ''}</span>
+                <span>📍 <strong>Base:</strong> ${escapeHtml(activeAssignment.location || currentDetailAsset.location || 'Sede Central')}</span>
                 <span>🎯 <strong>Misión:</strong> ${escapeHtml(activeAssignment.purpose || 'Operaciones')}</span>
               </div>
             </div>
           </div>
           <button type="button" onclick="openAddAssetAssignmentModal()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-2xs flex items-center justify-center gap-1.5 flex-shrink-0 self-start sm:self-center">
-            <span>🔄 Relevar / Reasignar</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            <span>Relevar a Otro Personal / Cuadrilla</span>
           </button>
         </div>
       `;
@@ -31017,19 +31121,22 @@ function renderAssetAssignmentsList() {
   }
 
   if (list) {
-    if (rawAssignments.length === 0) {
-      list.innerHTML = '<span class="text-xs text-slate-400 italic block py-4 text-center">No hay registros en el historial de asignaciones de este activo. Haz clic en "+ Registrar Asignación" para documentar la entrega del activo.</span>';
+    if (pastAssignments.length === 0) {
+      list.innerHTML = `
+        <div class="p-6 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 text-center space-y-1.5">
+          <span class="text-2xl block">🤝✨</span>
+          <p class="text-xs font-bold text-slate-700 dark:text-slate-300">Sin relevos históricos anteriores</p>
+          <p class="text-[11px] text-slate-400 max-w-md mx-auto">Este activo cuenta únicamente con su custodia activa vigente arriba. Cuando se registre un relevo o entrega a otro personal, el historial quedará documentado aquí cronológicamente con sus actas.</p>
+        </div>
+      `;
       return;
     }
 
-    list.innerHTML = rawAssignments.map(a => {
-      const isActive = a.status === 'activa';
-      const statusBadge = isActive
-        ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono border border-emerald-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Vigente Actual</span>'
-        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-500 dark:text-slate-400 font-mono border border-slate-500/20">Relevada / Finalizada</span>';
+    list.innerHTML = pastAssignments.map(a => {
+      const statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-500 dark:text-slate-400 font-mono border border-slate-500/20">Relevada / Finalizada</span>';
 
       return `
-        <div class="p-3.5 rounded-xl ${isActive ? 'bg-emerald-500/[0.04] border-emerald-500/30' : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/10'} border space-y-2.5 transition hover:border-slate-300 dark:hover:border-white/20">
+        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 space-y-2.5 transition hover:border-slate-300 dark:hover:border-white/20">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-slate-200/60 dark:border-white/5">
             <div class="flex items-center gap-2">
               ${statusBadge}
@@ -31043,22 +31150,22 @@ function renderAssetAssignmentsList() {
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-            <div class="p-2 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
-              <span class="block text-[10px] uppercase font-bold text-slate-400">Venía de / Relevado de</span>
-              <span class="font-medium text-slate-700 dark:text-slate-300 truncate block mt-0.5">${escapeHtml(a.previousAssignedTo || 'Almacén Central')}</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div class="p-2.5 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5 space-y-0.5">
+              <span class="block text-[10px] uppercase font-bold text-slate-400">Relevado de:</span>
+              <span class="font-medium text-slate-700 dark:text-slate-300 block break-words">${escapeHtml(a.previousAssignedTo || 'Almacén Central')}</span>
             </div>
-            <div class="p-2 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
-              <span class="block text-[10px] uppercase font-bold text-slate-400">Ubicación / Base</span>
-              <span class="font-medium text-slate-700 dark:text-slate-300 truncate block mt-0.5">📍 ${escapeHtml(a.location || 'Sede Central')}</span>
+            <div class="p-2.5 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5 space-y-0.5">
+              <span class="block text-[10px] uppercase font-bold text-slate-400">Ubicación / Sede:</span>
+              <span class="font-medium text-slate-700 dark:text-slate-300 block break-words">📍 ${escapeHtml(a.location || 'Sede Central')}</span>
             </div>
-            <div class="p-2 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
-              <span class="block text-[10px] uppercase font-bold text-slate-400">Motivo / Proyecto</span>
-              <span class="font-medium text-slate-700 dark:text-slate-300 truncate block mt-0.5">🎯 ${escapeHtml(a.purpose || 'Operaciones')}</span>
+            <div class="p-2.5 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5 space-y-0.5">
+              <span class="block text-[10px] uppercase font-bold text-slate-400">Motivo / Cuadrilla / Proyecto:</span>
+              <span class="font-medium text-slate-700 dark:text-slate-300 block break-words">🎯 ${escapeHtml(a.purpose || 'Operaciones')}</span>
             </div>
-            <div class="p-2 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
-              <span class="block text-[10px] uppercase font-bold text-slate-400">Condición / Kilometraje</span>
-              <span class="font-medium text-slate-700 dark:text-slate-300 truncate block mt-0.5">🔍 ${escapeHtml(a.condition || 'Operativo')}</span>
+            <div class="p-2.5 rounded-lg bg-white dark:bg-black/20 border border-slate-200/50 dark:border-white/5 space-y-0.5">
+              <span class="block text-[10px] uppercase font-bold text-slate-400">Condición / Estado de Entrega:</span>
+              <span class="font-medium text-slate-700 dark:text-slate-300 block break-words">🔍 ${escapeHtml(a.condition || 'Operativo')}</span>
             </div>
           </div>
 
@@ -31161,6 +31268,8 @@ async function handleSaveAssetAssignment(e) {
         if (locationLabel) locationLabel.textContent = updated.location || 'Sede Central';
         const badgeAssign = document.getElementById('tab-badge-asset-assignments');
         if (badgeAssign) badgeAssign.textContent = (updated.assignmentHistory || []).length;
+        const mainBadgeAssign = document.getElementById('tab-badge-detail-assignments-count');
+        if (mainBadgeAssign) mainBadgeAssign.textContent = (updated.assignmentHistory || []).length;
         renderAssetAssignmentsList();
         renderAssetEventsList();
       }
