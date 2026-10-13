@@ -60,6 +60,19 @@ export interface InventoryProduct {
   // Unidades individuales físicas con SKU / Código de barras propio
   itemUnits?: ProductItemUnit[];
 
+  // Control de Caducidad y Vida Útil (Consumibles químicos, EPPs y herramientas)
+  hasLifespan?: boolean;
+  lifespanType?: "caducidad" | "vida_util";
+  expiryDate?: string;
+  lifespanValue?: number;
+  lifespanUnit?: "meses" | "anos" | "dias";
+  manufactureDate?: string;
+  estimatedLifespanExpiryDate?: string;
+  requiresInspection?: boolean;
+  inspectionIntervalMonths?: number;
+  lifespanAction?: "reemplazo" | "inspeccion" | "mantenimiento";
+  alertDaysBefore?: number;
+
   status: "optimal" | "low" | "critical" | "out_of_stock";
   createdAt: string;
   updatedAt: string;

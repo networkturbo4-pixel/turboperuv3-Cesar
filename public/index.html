@@ -12509,6 +12509,119 @@
                 </div>
               </div>
             </div>
+
+            <!-- SECCIÓN MODULAR: CONTROL DE CADUCIDAD Y VIDA ÚTIL -->
+            <div class="p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <span class="text-base">⏳</span>
+                  <div>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white block">Control de Caducidad / Vida Útil</span>
+                    <span class="text-[10px] text-slate-400">Para insumos perecibles, herramientas y EPPs con tiempo de uso o inspección</span>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="inv-prod-has-lifespan" onchange="toggleProductLifespanSection(this.checked)" class="sr-only peer">
+                  <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+
+              <!-- Contenedor desplegable cuando está activado el switch -->
+              <div id="inv-prod-lifespan-container" class="space-y-3 pt-2.5 border-t border-slate-200/60 dark:border-white/5 hidden">
+                <!-- Selector de Modalidad: Caducidad Fija vs Vida Útil -->
+                <div>
+                  <label class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    Modalidad de Control *
+                  </label>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label id="lbl-lifespan-caducidad" class="flex items-center gap-2 p-2 rounded-xl border border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 cursor-pointer transition">
+                      <input type="radio" name="inv-prod-lifespan-type" id="radio-lifespan-caducidad" value="caducidad" checked onchange="onProductLifespanTypeChange('caducidad')" class="text-blue-600 focus:ring-blue-500">
+                      <div>
+                        <span class="text-xs font-bold text-slate-900 dark:text-white block">📅 Fecha de Caducidad</span>
+                        <span class="text-[10px] text-slate-400">Consumibles químicos, adhesivos, baterías</span>
+                      </div>
+                    </label>
+                    <label id="lbl-lifespan-vidautil" class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-slate-900/40 cursor-pointer transition">
+                      <input type="radio" name="inv-prod-lifespan-type" id="radio-lifespan-vidautil" value="vida_util" onchange="onProductLifespanTypeChange('vida_util')" class="text-blue-600 focus:ring-blue-500">
+                      <div>
+                        <span class="text-xs font-bold text-slate-900 dark:text-white block">🔄 Tiempo de Vida Útil</span>
+                        <span class="text-[10px] text-slate-400">EPPs, herramientas, renovación e inspección</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- PANEL A: FECHA DE CADUCIDAD -->
+                <div id="inv-panel-lifespan-caducidad" class="space-y-2.5">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label class="block text-[10.5px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Fecha de Caducidad *</label>
+                      <input type="date" id="inv-prod-expiry-date" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                      <label class="block text-[10.5px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Lote de Fabricación</label>
+                      <input type="text" id="inv-prod-batch-number" placeholder="Ej: LOT-2026-B" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                      <label class="block text-[10.5px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Alerta Preventiva (Días)</label>
+                      <input type="number" id="inv-prod-alert-days" value="30" min="1" placeholder="30" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                  </div>
+                  <p class="text-[10px] text-slate-400 flex items-center gap-1">
+                    <span>💡</span>
+                    <span>El sistema avisará al llegar a la fecha o durante los días previos para evitar despachar insumos vencidos.</span>
+                  </p>
+                </div>
+
+                <!-- PANEL B: TIEMPO DE VIDA ÚTIL & INSPECCIÓN -->
+                <div id="inv-panel-lifespan-vidautil" class="space-y-2.5 hidden">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label class="block text-[10.5px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Vida Útil Estimada *</label>
+                      <div class="flex items-center gap-1">
+                        <input type="number" id="inv-prod-lifespan-val" min="1" placeholder="12" oninput="calculateEstimatedLifespanExpiry()" class="w-20 bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+                        <select id="inv-prod-lifespan-unit" onchange="calculateEstimatedLifespanExpiry()" class="flex-1 bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-2 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+                          <option value="meses">Meses</option>
+                          <option value="anos">Años</option>
+                          <option value="dias">Días</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-[10.5px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Fecha Fabricación / Inicio</label>
+                      <input type="date" id="inv-prod-manufacture-date" onchange="calculateEstimatedLifespanExpiry()" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                      <label class="block text-[10.5px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Fecha Límite Estimada</label>
+                      <input type="date" id="inv-prod-lifespan-expiry" class="w-full bg-slate-100 dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-mono">
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    <div class="p-2.5 rounded-xl bg-white dark:bg-black/20 border border-slate-200/60 dark:border-white/5 space-y-1.5">
+                      <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="inv-prod-requires-inspection" onchange="toggleInspectionInputs(this.checked)" checked class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">🔍 Requiere inspección de buen estado</span>
+                      </label>
+                      <div id="inv-inspection-interval-box" class="flex items-center gap-2 pl-6">
+                        <span class="text-[10.5px] text-slate-500 dark:text-slate-400">Revisar cada:</span>
+                        <input type="number" id="inv-prod-inspection-interval" value="6" min="1" class="w-16 bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1 text-xs font-mono text-slate-900 dark:text-white">
+                        <span class="text-[10.5px] text-slate-500 dark:text-slate-400">meses</span>
+                      </div>
+                    </div>
+
+                    <div class="p-2.5 rounded-xl bg-white dark:bg-black/20 border border-slate-200/60 dark:border-white/5 space-y-1">
+                      <label class="block text-[10.5px] font-bold text-slate-700 dark:text-slate-300">Acción al cumplir vida útil:</label>
+                      <select id="inv-prod-lifespan-action" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+                        <option value="reemplazo">🛑 Reemplazo / Cambio obligatorio</option>
+                        <option value="inspeccion">🔍 Inspección técnica y recertificación</option>
+                        <option value="mantenimiento">🛠️ Calibración / Mantenimiento preventivo</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- COLUMNA DERECHA (5 COLS): FOTOS, DESCRIPCIÓN Y UBICACIÓN -->
@@ -12895,6 +13008,18 @@
             <span class="text-[10px] text-slate-400 uppercase font-bold block">SKU</span>
             <span id="dtl-prod-sku" class="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 block mt-0.5">SKU</span>
           </div>
+        </div>
+
+        <!-- Control de Caducidad / Vida Útil -->
+        <div id="dtl-prod-lifespan-section" class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 space-y-2 hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>⏳</span>
+              <span id="dtl-prod-lifespan-title">Vigencia & Vida Útil</span>
+            </span>
+            <span id="dtl-prod-lifespan-badge"></span>
+          </div>
+          <div id="dtl-prod-lifespan-body" class="text-xs text-slate-600 dark:text-slate-300"></div>
         </div>
 
         <!-- Desglose de Variantes (si es EPP) -->
@@ -25754,7 +25879,30 @@ function filterAndRenderInventory() {
     if (effectiveType === 'alerts') {
       const isCritical = p.stock <= (p.stockCritical || 2);
       const isLow = p.stock <= (p.stockMin || 5);
-      if (!isCritical && !isLow && p.status !== 'critical' && p.status !== 'low' && p.status !== 'out_of_stock') {
+      const hasStockAlert = isCritical || isLow || p.status === 'critical' || p.status === 'low' || p.status === 'out_of_stock';
+
+      let hasLifespanAlert = false;
+      if (p.hasLifespan) {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        let targetStr = null;
+        if (p.lifespanType === 'caducidad' && p.expiryDate) {
+          targetStr = p.expiryDate;
+        } else if (p.lifespanType === 'vida_util' && p.estimatedLifespanExpiryDate) {
+          targetStr = p.estimatedLifespanExpiryDate;
+        }
+
+        if (targetStr) {
+          const exp = new Date(targetStr + 'T00:00:00');
+          const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          const alertDays = Number(p.alertDaysBefore) || 30;
+          if (diffDays <= alertDays) {
+            hasLifespanAlert = true;
+          }
+        }
+      }
+
+      if (!hasStockAlert && !hasLifespanAlert) {
         return false;
       }
     } else if (effectiveType !== 'all') {
@@ -25895,6 +26043,7 @@ function renderInventoryTable(products) {
               <div>
                 <span onclick="openProductDetailModal(${p.id})" class="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer block">${escapeHtml(p.name)}</span>
                 <span class="text-[10px] text-slate-400">${escapeHtml(p.location || 'Almacén Central')}</span>
+                ${renderProductLifespanBadge(p) ? `<div class="mt-1">${renderProductLifespanBadge(p)}</div>` : ''}
               </div>
             </div>
           </td>
@@ -26002,6 +26151,8 @@ function renderInventoryTable(products) {
               ${statusBadge}
             </div>
           </div>
+
+          ${renderProductLifespanBadge(p) ? `<div class="pt-0.5">${renderProductLifespanBadge(p)}</div>` : ''}
 
           <!-- Datos Rápidos: Stock, Costo y Tipo -->
           <div class="grid grid-cols-3 gap-2 p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-center text-xs">
@@ -26832,14 +26983,133 @@ function handleProductCategoryChange(catValue) {
   if (isAutoGenerated) {
     generateAndSetRandomSku(false);
   }
+// 7.8 CONTROL DE CADUCIDAD Y VIDA ÚTIL (INSUMOS, HERRAMIENTAS Y EPPS)
+function toggleProductLifespanSection(enabled) {
+  const container = document.getElementById('inv-prod-lifespan-container');
+  if (container) {
+    if (enabled) container.classList.remove('hidden');
+    else container.classList.add('hidden');
+  }
+}
+
+function onProductLifespanTypeChange(type) {
+  const panelCad = document.getElementById('inv-panel-lifespan-caducidad');
+  const panelVida = document.getElementById('inv-panel-lifespan-vidautil');
+  const lblCad = document.getElementById('lbl-lifespan-caducidad');
+  const lblVida = document.getElementById('lbl-lifespan-vidautil');
+  const radioCad = document.getElementById('radio-lifespan-caducidad');
+  const radioVida = document.getElementById('radio-lifespan-vidautil');
+
+  if (type === 'caducidad') {
+    if (radioCad) radioCad.checked = true;
+    if (panelCad) panelCad.classList.remove('hidden');
+    if (panelVida) panelVida.classList.add('hidden');
+    if (lblCad) lblCad.className = "flex items-center gap-2 p-2 rounded-xl border border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 cursor-pointer transition";
+    if (lblVida) lblVida.className = "flex items-center gap-2 p-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-slate-900/40 cursor-pointer transition";
+  } else {
+    if (radioVida) radioVida.checked = true;
+    if (panelVida) panelVida.classList.remove('hidden');
+    if (panelCad) panelCad.classList.add('hidden');
+    if (lblVida) lblVida.className = "flex items-center gap-2 p-2 rounded-xl border border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 cursor-pointer transition";
+    if (lblCad) lblCad.className = "flex items-center gap-2 p-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-slate-900/40 cursor-pointer transition";
+  }
+}
+
+function calculateEstimatedLifespanExpiry() {
+  const val = parseFloat(document.getElementById('inv-prod-lifespan-val')?.value);
+  const unit = document.getElementById('inv-prod-lifespan-unit')?.value || 'meses';
+  const startStr = document.getElementById('inv-prod-manufacture-date')?.value;
+  const targetInput = document.getElementById('inv-prod-lifespan-expiry');
+
+  if (!val || isNaN(val) || val <= 0) return;
+  const baseDate = startStr ? new Date(startStr + 'T00:00:00') : new Date();
+
+  const d = new Date(baseDate.getTime());
+  if (unit === 'anos') {
+    d.setFullYear(d.getFullYear() + Math.round(val));
+  } else if (unit === 'dias') {
+    d.setDate(d.getDate() + Math.round(val));
+  } else {
+    // meses
+    d.setMonth(d.getMonth() + Math.round(val));
+  }
+
+  if (targetInput) {
+    targetInput.value = d.toISOString().split('T')[0];
+  }
+}
+
+function toggleInspectionInputs(checked) {
+  const box = document.getElementById('inv-inspection-interval-box');
+  if (box) {
+    if (checked) box.classList.remove('hidden');
+    else box.classList.add('hidden');
+  }
+}
+
+function renderProductLifespanBadge(p) {
+  if (!p || !p.hasLifespan) return '';
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  if (p.lifespanType === 'caducidad') {
+    if (!p.expiryDate) return '';
+    const exp = new Date(p.expiryDate + 'T00:00:00');
+    const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const alertDays = Number(p.alertDaysBefore) || 30;
+
+    if (diffDays < 0) {
+      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+        ⚠️ Caducado (${p.expiryDate})
+      </span>`;
+    } else if (diffDays <= alertDays) {
+      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+        ⏳ Caduca en ${diffDays}d
+      </span>`;
+    } else {
+      return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-500 dark:text-slate-400 border border-slate-500/20">
+        📅 Caduca: ${p.expiryDate}
+      </span>`;
+    }
+  } else if (p.lifespanType === 'vida_util') {
+    const actionMap = {
+      reemplazo: 'Cambio req.',
+      inspeccion: 'Revisar estado',
+      mantenimiento: 'Mantenimiento'
+    };
+    const actionLabel = actionMap[p.lifespanAction] || 'Inspección';
+
+    let diffDays = null;
+    if (p.estimatedLifespanExpiryDate) {
+      const exp = new Date(p.estimatedLifespanExpiryDate + 'T00:00:00');
+      diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    if (diffDays !== null && diffDays < 0) {
+      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+        🔄 Vida Útil Vencida (${actionLabel})
+      </span>`;
+    } else if (diffDays !== null && diffDays <= 45) {
+      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+        ⏳ Vida útil: ${diffDays}d restantes
+      </span>`;
+    } else {
+      return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+        🛠️ Vida Útil: ${p.lifespanValue || '-'} ${p.lifespanUnit || 'meses'}${p.requiresInspection ? ' • Inspección' : ''}
+      </span>`;
+    }
+  }
+  return '';
 }
 
 // 8. CRUD DE PRODUCTOS (CREAR, EDITAR, GUARDAR, ELIMINAR)
 function openCreateProductModal() {
-      if (!hasPermission('inventory:manage')) {
-        showToast("Acceso denegado: No tienes permiso para crear productos en el inventario.", "error");
-        return;
-      }
+  if (!hasPermission('inventory:manage')) {
+    showToast("Acceso denegado: No tienes permiso para crear productos en el inventario.", "error");
+    return;
+  }
   const modal = document.getElementById('inventory-product-modal');
   const title = document.getElementById('inv-prod-modal-title');
   const form = document.getElementById('inv-product-form');
@@ -26865,6 +27135,25 @@ function openCreateProductModal() {
   document.getElementById('inv-prod-stock-critical').value = '2';
   document.getElementById('inv-prod-stock').value = '0';
   generateAndSetRandomSku(false);
+
+  // Reiniciar sección de caducidad y vida útil
+  const chkLife = document.getElementById('inv-prod-has-lifespan');
+  if (chkLife) chkLife.checked = false;
+  toggleProductLifespanSection(false);
+  onProductLifespanTypeChange('caducidad');
+  const setV = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  setV('inv-prod-expiry-date', '');
+  setV('inv-prod-batch-number', '');
+  setV('inv-prod-alert-days', '30');
+  setV('inv-prod-lifespan-val', '');
+  setV('inv-prod-lifespan-unit', 'meses');
+  setV('inv-prod-manufacture-date', new Date().toISOString().split('T')[0]);
+  setV('inv-prod-lifespan-expiry', '');
+  const chkInsp = document.getElementById('inv-prod-requires-inspection');
+  if (chkInsp) chkInsp.checked = true;
+  toggleInspectionInputs(true);
+  setV('inv-prod-inspection-interval', '6');
+  setV('inv-prod-lifespan-action', 'reemplazo');
 
   if (modal) modal.classList.remove('hidden');
 }
@@ -26915,6 +27204,29 @@ function openEditProductModal(id) {
     calculateEppTotalStock();
   }
 
+  // Cargar configuración de Caducidad y Vida Útil
+  const hasLife = !!product.hasLifespan;
+  const chkLife = document.getElementById('inv-prod-has-lifespan');
+  if (chkLife) chkLife.checked = hasLife;
+  toggleProductLifespanSection(hasLife);
+
+  const lifeType = product.lifespanType || 'caducidad';
+  onProductLifespanTypeChange(lifeType);
+
+  const setV = (elemId, v) => { const el = document.getElementById(elemId); if (el) el.value = (v !== undefined && v !== null) ? v : ''; };
+  setV('inv-prod-expiry-date', product.expiryDate);
+  setV('inv-prod-batch-number', product.batchNumber);
+  setV('inv-prod-alert-days', product.alertDaysBefore || 30);
+  setV('inv-prod-lifespan-val', product.lifespanValue);
+  setV('inv-prod-lifespan-unit', product.lifespanUnit || 'meses');
+  setV('inv-prod-manufacture-date', product.manufactureDate || (product.entryDate ? product.entryDate.split('T')[0] : ''));
+  setV('inv-prod-lifespan-expiry', product.estimatedLifespanExpiryDate);
+  const chkInsp = document.getElementById('inv-prod-requires-inspection');
+  if (chkInsp) chkInsp.checked = product.requiresInspection !== false;
+  toggleInspectionInputs(chkInsp ? chkInsp.checked : true);
+  setV('inv-prod-inspection-interval', product.inspectionIntervalMonths || 6);
+  setV('inv-prod-lifespan-action', product.lifespanAction || 'reemplazo');
+
   tempProductAlternativeNames = product.alternativeNames ? [...product.alternativeNames] : [];
   tempProductImages = product.images ? [...product.images] : [];
 
@@ -26950,6 +27262,39 @@ async function handleSaveProduct(e) {
     return;
   }
 
+  const hasLifespan = document.getElementById('inv-prod-has-lifespan')?.checked || false;
+  let lifespanPayload = { hasLifespan };
+  if (hasLifespan) {
+    const lifespanType = document.querySelector('input[name="inv-prod-lifespan-type"]:checked')?.value || 'caducidad';
+    lifespanPayload.lifespanType = lifespanType;
+    lifespanPayload.alertDaysBefore = parseInt(document.getElementById('inv-prod-alert-days')?.value, 10) || 30;
+
+    if (lifespanType === 'caducidad') {
+      lifespanPayload.expiryDate = document.getElementById('inv-prod-expiry-date')?.value || undefined;
+      const batch = document.getElementById('inv-prod-batch-number')?.value.trim();
+      if (batch) lifespanPayload.batchNumber = batch;
+    } else {
+      lifespanPayload.lifespanValue = parseFloat(document.getElementById('inv-prod-lifespan-val')?.value) || undefined;
+      lifespanPayload.lifespanUnit = document.getElementById('inv-prod-lifespan-unit')?.value || 'meses';
+      lifespanPayload.manufactureDate = document.getElementById('inv-prod-manufacture-date')?.value || undefined;
+      lifespanPayload.estimatedLifespanExpiryDate = document.getElementById('inv-prod-lifespan-expiry')?.value || undefined;
+      lifespanPayload.requiresInspection = document.getElementById('inv-prod-requires-inspection')?.checked ?? true;
+      lifespanPayload.inspectionIntervalMonths = parseInt(document.getElementById('inv-prod-inspection-interval')?.value, 10) || 6;
+      lifespanPayload.lifespanAction = document.getElementById('inv-prod-lifespan-action')?.value || 'reemplazo';
+    }
+  } else {
+    lifespanPayload.lifespanType = undefined;
+    lifespanPayload.expiryDate = undefined;
+    lifespanPayload.lifespanValue = undefined;
+    lifespanPayload.lifespanUnit = undefined;
+    lifespanPayload.manufactureDate = undefined;
+    lifespanPayload.estimatedLifespanExpiryDate = undefined;
+    lifespanPayload.requiresInspection = undefined;
+    lifespanPayload.inspectionIntervalMonths = undefined;
+    lifespanPayload.lifespanAction = undefined;
+    lifespanPayload.alertDaysBefore = undefined;
+  }
+
   const payload = {
     type: currentSelectedProductType,
     name,
@@ -26964,7 +27309,8 @@ async function handleSaveProduct(e) {
     stockCritical,
     location: document.getElementById('inv-prod-location').value.trim() || undefined,
     description: document.getElementById('inv-prod-desc').value.trim() || undefined,
-    images: tempProductImages
+    images: tempProductImages,
+    ...lifespanPayload
   };
 
   if (currentSelectedProductType === 'bulk') {
@@ -28365,6 +28711,80 @@ function openProductDetailModal(id) {
     } else {
       varSec.classList.add('hidden');
       varList.innerHTML = '';
+    }
+  }
+
+  const lifespanSec = document.getElementById('dtl-prod-lifespan-section');
+  const lifespanTitle = document.getElementById('dtl-prod-lifespan-title');
+  const lifespanBadge = document.getElementById('dtl-prod-lifespan-badge');
+  const lifespanBody = document.getElementById('dtl-prod-lifespan-body');
+
+  if (lifespanSec) {
+    if (product.hasLifespan) {
+      lifespanSec.classList.remove('hidden');
+      if (lifespanBadge) lifespanBadge.innerHTML = renderProductLifespanBadge(product);
+
+      if (product.lifespanType === 'caducidad') {
+        if (lifespanTitle) lifespanTitle.textContent = 'Fecha de Caducidad / Vencimiento';
+        const batchHtml = product.batchNumber ? `<div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5"><span class="text-slate-500 dark:text-slate-400">Lote / Batch:</span><span class="font-mono font-medium text-slate-800 dark:text-slate-200">${escapeHtml(product.batchNumber)}</span></div>` : '';
+        const alertHtml = product.alertDaysBefore ? `<div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5"><span class="text-slate-500 dark:text-slate-400">Alerta preventiva:</span><span class="text-slate-700 dark:text-slate-300">${escapeHtml(product.alertDaysBefore)} días antes</span></div>` : '';
+
+        if (lifespanBody) {
+          lifespanBody.innerHTML = `
+            <div class="space-y-1">
+              <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                <span class="text-slate-500 dark:text-slate-400">Fecha de Caducidad:</span>
+                <span class="font-semibold text-rose-600 dark:text-rose-400 font-mono">${escapeHtml(product.expiryDate || 'No definida')}</span>
+              </div>
+              ${batchHtml}
+              ${alertHtml}
+              <div class="mt-2 text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <span>ℹ️</span>
+                <span>Los artículos caducados o próximos a caducar son destacados en el filtro de "Alertas".</span>
+              </div>
+            </div>
+          `;
+        }
+      } else {
+        if (lifespanTitle) lifespanTitle.textContent = 'Tiempo de Vida Útil & Estado Operativo';
+        const actionMap = {
+          reemplazo: '🔄 Reemplazo requerido / Renovación',
+          inspeccion: '🔍 Inspección de estado físico / Buen estado',
+          mantenimiento: '🛠️ Mantenimiento preventivo / Calibración'
+        };
+        const actionText = actionMap[product.lifespanAction] || 'Inspección técnica';
+        const mfgHtml = product.manufactureDate ? `<div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5"><span class="text-slate-500 dark:text-slate-400">Fecha Fabricación / Inicio:</span><span class="font-mono text-slate-700 dark:text-slate-300">${escapeHtml(product.manufactureDate)}</span></div>` : '';
+        const limitHtml = product.estimatedLifespanExpiryDate ? `<div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5"><span class="text-slate-500 dark:text-slate-400">Límite Vida Útil:</span><span class="font-mono font-semibold text-amber-600 dark:text-amber-400">${escapeHtml(product.estimatedLifespanExpiryDate)}</span></div>` : '';
+        const inspHtml = product.requiresInspection
+          ? `<div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5"><span class="text-slate-500 dark:text-slate-400">Inspección de Buen Estado:</span><span class="text-blue-600 dark:text-blue-400 font-medium">Cada ${product.inspectionIntervalMonths || 6} meses</span></div>`
+          : '';
+
+        if (lifespanBody) {
+          lifespanBody.innerHTML = `
+            <div class="space-y-1">
+              <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                <span class="text-slate-500 dark:text-slate-400">Duración estimada:</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200">${escapeHtml(product.lifespanValue || 0)} ${escapeHtml(product.lifespanUnit || 'meses')}</span>
+              </div>
+              ${mfgHtml}
+              ${limitHtml}
+              ${inspHtml}
+              <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                <span class="text-slate-500 dark:text-slate-400">Acción al cumplir tiempo:</span>
+                <span class="font-semibold text-slate-700 dark:text-slate-300 text-[11px]">${actionText}</span>
+              </div>
+              <div class="mt-2 text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <span>🛡️</span>
+                <span>Herramientas y EPP con vida útil requieren revisión periódica para asegurar su buen estado.</span>
+              </div>
+            </div>
+          `;
+        }
+      }
+    } else {
+      lifespanSec.classList.add('hidden');
+      if (lifespanBody) lifespanBody.innerHTML = '';
+      if (lifespanBadge) lifespanBadge.innerHTML = '';
     }
   }
 

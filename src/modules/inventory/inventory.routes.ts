@@ -87,6 +87,18 @@ const productSchema = z.object({
   variants: z.array(variantSchema).optional(),
   // Unidades individuales
   itemUnits: z.array(itemUnitSchema).optional(),
+  // Control de Caducidad y Vida Útil
+  hasLifespan: z.boolean().optional(),
+  lifespanType: z.enum(["caducidad", "vida_util"]).optional(),
+  expiryDate: z.string().optional(),
+  lifespanValue: z.number().min(0).optional(),
+  lifespanUnit: z.enum(["meses", "anos", "dias"]).optional(),
+  manufactureDate: z.string().optional(),
+  estimatedLifespanExpiryDate: z.string().optional(),
+  requiresInspection: z.boolean().optional(),
+  inspectionIntervalMonths: z.number().min(1).optional(),
+  lifespanAction: z.enum(["reemplazo", "inspeccion", "mantenimiento"]).optional(),
+  alertDaysBefore: z.number().min(1).optional(),
 });
 
 export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
