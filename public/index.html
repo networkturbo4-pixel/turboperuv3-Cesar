@@ -13978,7 +13978,7 @@
         </button>
         <button type="button" id="tab-btn-asset-multimedia" onclick="switchAssetModalTab('multimedia')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition flex items-center gap-1.5">
           <span>📸</span>
-          <span>3. Fotos & Multimedia</span>
+          <span id="tab-label-asset-multimedia">3. Fotos & Multimedia</span>
           <span id="tab-badge-asset-photos-count" class="hidden px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-purple-500/20 text-purple-400">0</span>
         </button>
       </div>
@@ -30104,14 +30104,30 @@ function renderAssetsTable() {
 let currentAssetModalActiveTab = 'general';
 
 function switchAssetModalTab(tabId) {
+  const currentCat = document.getElementById('inv-asset-category')?.value || 'vehiculo';
+  const isVeh = currentCat === 'vehiculo';
+
+  if (!isVeh && tabId === 'vehicle') {
+    tabId = 'general';
+  }
   currentAssetModalActiveTab = tabId;
-  const tabs = ['general', 'vehicle', 'multimedia'];
-  const titles = {
+
+  const titlesVeh = {
     general: 'Paso 1 de 3: Ficha & Datos Generales',
     vehicle: 'Paso 2 de 3: Documentación Vehicular (TIV, SOAT, CITV)',
     multimedia: 'Paso 3 de 3: Galería & Evidencias Multimedia'
   };
+  const titlesNonVeh = {
+    general: 'Paso 1 de 2: Ficha & Datos Generales',
+    multimedia: 'Paso 2 de 2: Galería & Evidencias Multimedia'
+  };
 
+  const indicator = document.getElementById('inv-asset-tab-indicator');
+  if (indicator) {
+    indicator.textContent = isVeh ? (titlesVeh[tabId] || 'Paso 1 de 3') : (titlesNonVeh[tabId] || 'Paso 1 de 2');
+  }
+
+  const tabs = ['general', 'vehicle', 'multimedia'];
   tabs.forEach(t => {
     const btn = document.getElementById(`tab-btn-asset-${t}`);
     const content = document.getElementById(`tab-content-asset-${t}`);
@@ -30130,18 +30146,14 @@ function switchAssetModalTab(tabId) {
       }
     }
   });
-
-  const indicator = document.getElementById('inv-asset-tab-indicator');
-  if (indicator) {
-    indicator.textContent = titles[tabId] || 'Paso 1 de 3';
-  }
 }
 
 function onAssetCategorySelectChange(category) {
   const icon = document.getElementById('inv-asset-modal-icon');
   const plateLabel = document.getElementById('inv-asset-plate-label');
   const plateInput = document.getElementById('inv-asset-plate');
-  const vehicleBadge = document.getElementById('tab-badge-asset-vehicle');
+  const vehicleTabBtn = document.getElementById('tab-btn-asset-vehicle');
+  const multiLabel = document.getElementById('tab-label-asset-multimedia');
   const nonVehicleNotice = document.getElementById('inv-asset-non-vehicle-notice');
   const vehicleModules = document.getElementById('inv-asset-vehicle-modules-container');
 
@@ -30149,34 +30161,31 @@ function onAssetCategorySelectChange(category) {
     if (icon) icon.textContent = '🚗';
     if (plateLabel) plateLabel.textContent = 'Placa del Vehículo *';
     if (plateInput) plateInput.placeholder = 'Ej: ABC-123';
-    if (vehicleBadge) {
-      vehicleBadge.textContent = '3 Módulos';
-      vehicleBadge.className = 'px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-blue-500/20 text-blue-500';
-    }
+    if (vehicleTabBtn) vehicleTabBtn.classList.remove('hidden');
+    if (multiLabel) multiLabel.textContent = '3. Fotos & Multimedia';
     if (nonVehicleNotice) nonVehicleNotice.classList.add('hidden');
     if (vehicleModules) vehicleModules.classList.remove('hidden');
-  } else if (category === 'tecnologia') {
-    if (icon) icon.textContent = '💻';
-    if (plateLabel) plateLabel.textContent = 'N° de Serie (S/N)';
-    if (plateInput) plateInput.placeholder = 'Ej: SN-984210';
-    if (vehicleBadge) {
-      vehicleBadge.textContent = 'No aplica';
-      vehicleBadge.className = 'px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-slate-500/10 text-slate-400';
-    }
-    if (nonVehicleNotice) nonVehicleNotice.classList.remove('hidden');
-    if (vehicleModules) vehicleModules.classList.add('hidden');
   } else {
-    // mobiliario
-    if (icon) icon.textContent = '🪑';
-    if (plateLabel) plateLabel.textContent = 'N° Serie / Código Barras';
-    if (plateInput) plateInput.placeholder = 'Ej: S/N o Placa Mobiliario';
-    if (vehicleBadge) {
-      vehicleBadge.textContent = 'No aplica';
-      vehicleBadge.className = 'px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-slate-500/10 text-slate-400';
+    // Exclusivo de vehículos: ocultar completamente pestaña de documentación vehicular
+    if (vehicleTabBtn) vehicleTabBtn.classList.add('hidden');
+    if (multiLabel) multiLabel.textContent = '2. Fotos & Multimedia';
+    if (category === 'tecnologia') {
+      if (icon) icon.textContent = '💻';
+      if (plateLabel) plateLabel.textContent = 'N° de Serie (S/N)';
+      if (plateInput) plateInput.placeholder = 'Ej: SN-984210';
+    } else {
+      // mobiliario
+      if (icon) icon.textContent = '🪑';
+      if (plateLabel) plateLabel.textContent = 'N° Serie / Código Barras';
+      if (plateInput) plateInput.placeholder = 'Ej: S/N o Placa Mobiliario';
     }
-    if (nonVehicleNotice) nonVehicleNotice.classList.remove('hidden');
-    if (vehicleModules) vehicleModules.classList.add('hidden');
+    if (currentAssetModalActiveTab === 'vehicle') {
+      switchAssetModalTab('general');
+    }
   }
+
+  // Refrescar indicadores del paso actual
+  switchAssetModalTab(currentAssetModalActiveTab);
 }
 
 function updateAssetModalStatusBadge(status) {
@@ -30428,6 +30437,8 @@ async function handleSaveAsset(e) {
         documentUrl: document.getElementById('inv-veh-citv-url')?.value.trim() || undefined
       }
     };
+  } else {
+    vehicleDocs = null;
   }
 
   const payload = {
@@ -30719,6 +30730,9 @@ function renderAssetVehicleDocs(asset) {
 let currentAssetDetailMainTab = 'overview';
 
 function switchAssetDetailMainTab(tab) {
+  if (tab === 'vehicle' && currentDetailAsset && currentDetailAsset.category !== 'vehiculo') {
+    tab = 'overview';
+  }
   currentAssetDetailMainTab = tab || 'overview';
 
   const tabs = ['overview', 'vehicle', 'assignments', 'maintenance', 'timeline'];
@@ -30837,16 +30851,21 @@ function openAssetDetailModal(id) {
     }
   }
 
-  // Badges en las pestañas principales
+  // Visibilidad de pestañas según categoría (La documentación vehicular sólo aplica a vehículos)
+  const isVeh = asset.category === 'vehiculo';
+  const tabBtnVeh = document.getElementById('tab-btn-detail-vehicle');
+  if (tabBtnVeh) {
+    if (isVeh) {
+      tabBtnVeh.classList.remove('hidden');
+    } else {
+      tabBtnVeh.classList.add('hidden');
+    }
+  }
+
   const vehBadge = document.getElementById('tab-badge-detail-vehicle-status');
   if (vehBadge) {
-    if (asset.category === 'vehiculo') {
-      vehBadge.textContent = 'TIV • SOAT • CITV';
-      vehBadge.className = 'px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-blue-500/20 text-blue-500';
-    } else {
-      vehBadge.textContent = 'No aplica';
-      vehBadge.className = 'px-1.5 py-0.2 rounded-full text-[9px] font-mono font-semibold bg-slate-500/10 text-slate-400';
-    }
+    vehBadge.textContent = 'TIV • SOAT • CITV';
+    vehBadge.className = 'px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-blue-500/20 text-blue-500';
   }
 
   const assignBadge = document.getElementById('tab-badge-detail-assignments-count');
@@ -31101,7 +31120,7 @@ function renderAssetAssignmentsList() {
           </div>
           <button type="button" onclick="openAddAssetAssignmentModal()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-2xs flex items-center justify-center gap-1.5 flex-shrink-0 self-start sm:self-center">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-            <span>Relevar a Otro Personal / Cuadrilla</span>
+            <span>${currentDetailAsset.category === 'vehiculo' ? 'Relevar Conductor / Cuadrilla' : 'Reasignar a Otro Colaborador'}</span>
           </button>
         </div>
       `;

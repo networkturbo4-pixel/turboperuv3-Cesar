@@ -1274,6 +1274,9 @@ export function createAsset(
     updatedAt: now,
   };
 
+  if (payload.category !== "vehiculo") {
+    delete (newAsset as any).vehicleDocs;
+  }
   assets.unshift(newAsset);
   saveAssets(tenantId, assets);
   return newAsset;
@@ -1343,6 +1346,10 @@ export function updateAsset(
     ...payload,
     updatedAt: nowIso,
   };
+
+  if (assets[index].category !== "vehiculo") {
+    delete (assets[index] as any).vehicleDocs;
+  }
 
   saveAssets(tenantId, assets);
   return assets[index];
