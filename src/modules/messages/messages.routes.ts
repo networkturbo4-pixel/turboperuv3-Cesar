@@ -678,18 +678,33 @@ type MessageListener = (data: any) => void;
 const messageListeners = new Set<MessageListener>();
 
 export function broadcastMessageEvent(event: {
-  type: "new_message" | "community_message" | "conversation_read" | "reaction" | "task_updated";
+  type:
+    | "new_message"
+    | "community_message"
+    | "conversation_read"
+    | "reaction"
+    | "task_updated"
+    | "conversation_pinned"
+    | "community_updated"
+    | "community_deleted"
+    | "community_members_updated"
+    | "community_group_created"
+    | "community_group_updated"
+    | "community_group_deleted"
+    | string;
   tenantId: string;
   conversationId?: string;
   communityId?: string;
   groupId?: string;
   messageId?: string;
+  senderId?: string | number;
   message?: MessageItem;
   task?: TaskItem;
   unreadCount?: number;
   lastMessage?: string;
   lastMessageTime?: string;
   isRealtime?: boolean;
+  [key: string]: any;
 }) {
   const payload = { ...event, isRealtime: true };
   for (const listener of messageListeners) {

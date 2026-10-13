@@ -47,6 +47,17 @@ export interface InventoryProduct {
   hasDifferentCostPerVariant?: boolean; // Switcher moderno para activar costo distinto por variante
   variants?: ProductVariant[];
 
+  // Control de Caducidad / Vida Útil / Inspección (Perecibles, Herramientas, EPP)
+  hasLifespanControl?: boolean;
+  lifespanType?: "expiration_date" | "lifespan" | "both" | "none";
+  expirationDate?: string | null; // Fecha fija de caducidad (YYYY-MM-DD)
+  lifespanValue?: number | null; // Duración de vida útil
+  lifespanUnit?: "dias" | "meses" | "anios" | "horas" | null; // Unidad de vida útil
+  alertBeforeDays?: number | null; // Días previos para alertar antes del vencimiento (default 30)
+  requiresInspection?: boolean; // Requiere inspección física periódica para verificar estado
+  inspectionFrequencyDays?: number | null; // Frecuencia de revisión periódica en días (ej. 30, 90)
+  replacementCriteria?: string | null; // Criterios o motivos de cambio / descarte
+
   // Impresión de Código de Barras y Lotes
   barcodePrinted?: boolean;
   barcodePrintedAt?: string;
@@ -60,19 +71,6 @@ export interface InventoryProduct {
   // Unidades individuales físicas con SKU / Código de barras propio
   itemUnits?: ProductItemUnit[];
 
-  // Control de Caducidad y Vida Útil (Consumibles químicos, EPPs y herramientas)
-  hasLifespan?: boolean;
-  lifespanType?: "caducidad" | "vida_util";
-  expiryDate?: string;
-  lifespanValue?: number;
-  lifespanUnit?: "meses" | "anos" | "dias";
-  manufactureDate?: string;
-  estimatedLifespanExpiryDate?: string;
-  requiresInspection?: boolean;
-  inspectionIntervalMonths?: number;
-  lifespanAction?: "reemplazo" | "inspeccion" | "mantenimiento";
-  alertDaysBefore?: number;
-
   status: "optimal" | "low" | "critical" | "out_of_stock";
   createdAt: string;
   updatedAt: string;
@@ -83,7 +81,7 @@ export interface ProductItemUnit {
   itemNumber: number;
   sku: string;
   barcode?: string;
-  status: "disponible" | "asignado" | "en_uso" | "baja";
+  status: "disponible" | "asignado" | "en_uso" | "baja" | "entregado" | "en_garantia" | "instalado";
   assignedTo?: string;
   assignedAt?: string;
   serialNumber?: string;
@@ -91,6 +89,13 @@ export interface ProductItemUnit {
   barcodePrinted?: boolean;
   barcodePrintedAt?: string;
   createdAt?: string;
+
+  // Seguimiento específico de unidad para caducidad / vida útil / condición
+  expirationDate?: string | null;
+  manufactureDate?: string | null;
+  conditionStatus?: "optimo" | "bueno" | "regular" | "requiere_cambio" | "baja";
+  lastInspectionDate?: string | null;
+  nextInspectionDate?: string | null;
 }
 
 export interface StockMovement {
@@ -121,6 +126,7 @@ export interface InventoryMetrics {
   categoriesCount: number;
   trashCount?: number;
   assetsCount?: number;
+  expiringProductsCount?: number;
 }
 
 // ==========================================

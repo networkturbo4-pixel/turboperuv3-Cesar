@@ -1363,7 +1363,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const userOrEmp = resolveEmployeeOrUser(employeeId);
     const individualSecret = userOrEmp?.totpSecret || "JBSWY3DPEHPK3PXP";
     const masterSecret = getSystemMasterTotpSecret();
-    const { getMasterTotpSecret, getMasterSupervisorPin } = await import("../settings/connections.service");
+    const { getMasterTotpSecret, getMasterSupervisorPin } = await import("../settings/connections.service.js");
     const tenantMasterSecret = getMasterTotpSecret(activeTenant);
     const supervisorPin = getMasterSupervisorPin(activeTenant);
 
@@ -1441,7 +1441,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const userOrEmp = resolveEmployeeOrUser(employeeId);
     const individualSecret = userOrEmp.totpSecret || "JBSWY3DPEHPK3PXP";
     const masterSecret = getSystemMasterTotpSecret();
-    const { getMasterTotpSecret, getMasterSupervisorPin } = await import("../settings/connections.service");
+    const { getMasterTotpSecret, getMasterSupervisorPin } = await import("../settings/connections.service.js");
     const tenantMasterSecret = getMasterTotpSecret(activeTenant);
     const supervisorPin = getMasterSupervisorPin(activeTenant);
 

@@ -683,7 +683,7 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       );
       clearTimeout(timeoutId);
 
-      const json = await res.json().catch(() => ({}));
+      const json: any = await res.json().catch(() => ({}));
 
       if (res.ok) {
         return reply.send({

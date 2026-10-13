@@ -136,16 +136,6 @@ const DEFAULT_PRODUCTS: Omit<InventoryProduct, "tenantId" | "createdAt" | "updat
     description: "Casco certificado ANSI Z89.1 Clase E para trabajos en postes y líneas eléctricas.",
     location: "Armario de Seguridad EPP-01",
     status: "optimal",
-    hasLifespan: true,
-    lifespanType: "vida_util",
-    lifespanValue: 36,
-    lifespanUnit: "meses",
-    manufactureDate: "2025-01-10",
-    estimatedLifespanExpiryDate: "2028-01-10",
-    requiresInspection: true,
-    inspectionIntervalMonths: 6,
-    lifespanAction: "reemplazo",
-    alertDaysBefore: 60,
   },
   // 4. PRODUCTO EN STOCK CRÍTICO
   {
@@ -170,68 +160,6 @@ const DEFAULT_PRODUCTS: Omit<InventoryProduct, "tenantId" | "createdAt" | "updat
     description: "Conector pre-pulido para terminación rápida en rosetas de cliente sin fusionadora.",
     location: "Cajón B-12",
     status: "critical",
-  },
-  // 5. PRODUCTO CON FECHA DE CADUCIDAD (Insumo Químico)
-  {
-    id: 105,
-    type: "simple",
-    name: "Alcohol Isopropílico 99.8% de Alta Pureza 1 Litro",
-    alternativeNames: ["Alcohol Limpieza Fibra", "IPA 99%", "Isopropanol Óptico"],
-    categoryId: "cat-herramientas",
-    categoryName: "Herramientas & Medición",
-    sku: "INS-IPA-1000ML",
-    batchNumber: "LOTE-2026-08A",
-    entryDate: "2026-08-01T10:00:00Z",
-    barcodePrinted: true,
-    baseCost: 18.5,
-    salePrice: 28.0,
-    stock: 24,
-    stockMin: 6,
-    stockCritical: 2,
-    hasLifespan: true,
-    lifespanType: "caducidad",
-    expiryDate: "2027-08-01",
-    alertDaysBefore: 30,
-    images: [
-      "https://images.unsplash.com/photo-1584744982491-665216d95f8b?auto=format&fit=crop&w=600&q=80",
-    ],
-    description: "Solvente de alta pureza para limpieza de fibras desnudas antes del corte y fusión.",
-    location: "Estante Químicos Q-01",
-    status: "optimal",
-  },
-  // 6. EPP CON VIDA ÚTIL Y REQUERIMIENTO DE INSPECCIÓN
-  {
-    id: 106,
-    type: "simple",
-    name: "Arnés de Seguridad 4 Anillos con Línea de Vida Dieléctrica",
-    alternativeNames: ["Arnés Alturas", "Arnés Dieléctrico Liniero", "Arnés 4 Argollas"],
-    categoryId: "cat-epp",
-    categoryName: "EPP & Seguridad Industrial",
-    sku: "EPP-ARN-4AN-DIE",
-    batchNumber: "LOTE-2025-11X",
-    entryDate: "2025-11-15T09:30:00Z",
-    barcodePrinted: true,
-    baseCost: 145.0,
-    salePrice: 195.0,
-    stock: 15,
-    stockMin: 4,
-    stockCritical: 2,
-    hasLifespan: true,
-    lifespanType: "vida_util",
-    lifespanValue: 24,
-    lifespanUnit: "meses",
-    manufactureDate: "2025-11-01",
-    estimatedLifespanExpiryDate: "2027-11-01",
-    requiresInspection: true,
-    inspectionIntervalMonths: 6,
-    lifespanAction: "reemplazo",
-    alertDaysBefore: 45,
-    images: [
-      "https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=600&q=80",
-    ],
-    description: "Arnés certificado para trabajos en altura con herrajes dieléctricos y eslinga con absorbedor de impacto.",
-    location: "Armario Alturas EPP-03",
-    status: "optimal",
   },
 ];
 
@@ -516,6 +444,8 @@ export function ensureItemUnits(product: InventoryProduct): boolean {
         barcodePrinted: Boolean(product.barcodePrinted),
         barcodePrintedAt: product.barcodePrintedAt,
         createdAt: product.entryDate || product.createdAt || new Date().toISOString(),
+        expirationDate: product.expirationDate || undefined,
+        conditionStatus: "optimo",
       });
     }
     changed = true;
@@ -534,6 +464,8 @@ export function ensureItemUnits(product: InventoryProduct): boolean {
         notes: "",
         barcodePrinted: false,
         createdAt: new Date().toISOString(),
+        expirationDate: product.expirationDate || undefined,
+        conditionStatus: "optimo",
       });
     }
     changed = true;
@@ -717,6 +649,16 @@ export function createProduct(
     alternativeNames: Array.isArray(payload.alternativeNames) ? payload.alternativeNames : [],
     images: Array.isArray(payload.images) ? payload.images : [],
     variants: Array.isArray(payload.variants) ? payload.variants : [],
+    // Control de Caducidad y Vida Útil
+    hasLifespanControl: Boolean(payload.hasLifespanControl),
+    lifespanType: payload.lifespanType || (payload.hasLifespanControl ? "expiration_date" : undefined),
+    expirationDate: payload.expirationDate || undefined,
+    lifespanValue: payload.lifespanValue !== undefined && payload.lifespanValue !== null ? Number(payload.lifespanValue) : undefined,
+    lifespanUnit: payload.lifespanUnit || undefined,
+    alertBeforeDays: payload.alertBeforeDays !== undefined && payload.alertBeforeDays !== null ? Number(payload.alertBeforeDays) : 30,
+    requiresInspection: Boolean(payload.requiresInspection),
+    inspectionFrequencyDays: payload.inspectionFrequencyDays !== undefined && payload.inspectionFrequencyDays !== null ? Number(payload.inspectionFrequencyDays) : undefined,
+    replacementCriteria: payload.replacementCriteria || undefined,
     isDeleted: false,
     entryDate: payload.entryDate || now,
     barcodePrinted: false,
@@ -782,6 +724,16 @@ export function updateProduct(
     images: payload.images || current.images,
     variants: payload.variants || current.variants,
     itemUnits: payload.itemUnits !== undefined ? payload.itemUnits : current.itemUnits,
+    // Control de Caducidad y Vida Útil
+    hasLifespanControl: payload.hasLifespanControl !== undefined ? Boolean(payload.hasLifespanControl) : current.hasLifespanControl,
+    lifespanType: payload.lifespanType !== undefined ? payload.lifespanType : current.lifespanType,
+    expirationDate: payload.expirationDate !== undefined ? (payload.expirationDate || undefined) : current.expirationDate,
+    lifespanValue: payload.lifespanValue !== undefined ? (payload.lifespanValue !== null && payload.lifespanValue !== undefined ? Number(payload.lifespanValue) : undefined) : current.lifespanValue,
+    lifespanUnit: payload.lifespanUnit !== undefined ? (payload.lifespanUnit || undefined) : current.lifespanUnit,
+    alertBeforeDays: payload.alertBeforeDays !== undefined ? (payload.alertBeforeDays !== null ? Number(payload.alertBeforeDays) : 30) : current.alertBeforeDays,
+    requiresInspection: payload.requiresInspection !== undefined ? Boolean(payload.requiresInspection) : current.requiresInspection,
+    inspectionFrequencyDays: payload.inspectionFrequencyDays !== undefined ? (payload.inspectionFrequencyDays !== null ? Number(payload.inspectionFrequencyDays) : undefined) : current.inspectionFrequencyDays,
+    replacementCriteria: payload.replacementCriteria !== undefined ? (payload.replacementCriteria || undefined) : current.replacementCriteria,
     status: calculateStatus(totalStock, stockMin, stockCritical),
     updatedAt: new Date().toISOString(),
   };
@@ -2077,6 +2029,9 @@ export function getInventoryMetrics(tenantId: string): InventoryMetrics {
   let lowCount = 0;
   let optimalCount = 0;
   let outOfStockCount = 0;
+  let expiringCount = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   activeProducts.forEach((p) => {
     if (p.type === "epp" && p.hasDifferentCostPerVariant && p.variants && p.variants.length > 0) {
@@ -2092,6 +2047,17 @@ export function getInventoryMetrics(tenantId: string): InventoryMetrics {
     else if (p.status === "critical") criticalCount++;
     else if (p.status === "low") lowCount++;
     else optimalCount++;
+
+    if (p.hasLifespanControl && p.expirationDate) {
+      const expDate = new Date(p.expirationDate + "T00:00:00");
+      if (!isNaN(expDate.getTime())) {
+        const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        const alertThreshold = p.alertBeforeDays !== undefined && p.alertBeforeDays !== null ? p.alertBeforeDays : 30;
+        if (diffDays <= alertThreshold) {
+          expiringCount++;
+        }
+      }
+    }
   });
 
   return {
@@ -2104,6 +2070,7 @@ export function getInventoryMetrics(tenantId: string): InventoryMetrics {
     categoriesCount: categories.length,
     trashCount: trashProducts.length,
     assetsCount: assets.length,
+    expiringProductsCount: expiringCount,
   };
 }
 

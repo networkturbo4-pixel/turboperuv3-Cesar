@@ -231,6 +231,11 @@ export type CustomerRecord = {
   balance: string;
   createdAt: string;
   updatedAt?: string;
+  name?: string;
+  ip?: string;
+  pppoeUsername?: string;
+  avatar?: string;
+  photo?: string;
 };
 
 const defaultCustomers: CustomerRecord[] = [

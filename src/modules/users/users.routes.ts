@@ -13,7 +13,7 @@ const USERS_FILE = path.join(DATA_DIR, "users.json");
 export interface PermissionDefinition {
   id: string;
   name: string;
-  category: "customers" | "billing" | "network" | "plans" | "inventory" | "backpack" | "rrhh" | "messages" | "users" | "roles" | "system";
+  category: "customers" | "billing" | "network" | "plans" | "inventory" | "backpack" | "rrhh" | "messages" | "users" | "roles" | "system" | "maps";
   description: string;
 }
 
@@ -705,23 +705,23 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       if (role) user.roleName = role.name;
     }
     if (data.isActive !== undefined) user.isActive = data.isActive;
-    if (data.workSchedule !== undefined) user.workSchedule = data.workSchedule;
-    if (data.expectedCheckInTime !== undefined) user.expectedCheckInTime = data.expectedCheckInTime;
+    if (data.workSchedule !== undefined) user.workSchedule = data.workSchedule || undefined;
+    if (data.expectedCheckInTime !== undefined) user.expectedCheckInTime = data.expectedCheckInTime || undefined;
     else if (data.workSchedule) {
       const m = data.workSchedule.match(/(\d{1,2}:\d{2})/);
       if (m) user.expectedCheckInTime = m[1];
     }
-    if (data.expectedCheckOutTime !== undefined) user.expectedCheckOutTime = data.expectedCheckOutTime;
+    if (data.expectedCheckOutTime !== undefined) user.expectedCheckOutTime = data.expectedCheckOutTime || undefined;
     else if (data.workSchedule) {
       const m2 = data.workSchedule.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/);
       if (m2) user.expectedCheckOutTime = m2[1];
     }
-    if (data.scheduleStartDate !== undefined) user.scheduleStartDate = data.scheduleStartDate;
-    if (data.scheduleEndDate !== undefined) user.scheduleEndDate = data.scheduleEndDate;
-    if (data.hireDate !== undefined) user.hireDate = data.hireDate;
-    if (data.birthDate !== undefined) user.birthDate = data.birthDate;
+    if (data.scheduleStartDate !== undefined) user.scheduleStartDate = data.scheduleStartDate || undefined;
+    if (data.scheduleEndDate !== undefined) user.scheduleEndDate = data.scheduleEndDate || undefined;
+    if (data.hireDate !== undefined) user.hireDate = data.hireDate || undefined;
+    if (data.birthDate !== undefined) user.birthDate = data.birthDate || undefined;
     if (data.assignedTenantId !== undefined) {
-      user.assignedTenantId = data.assignedTenantId;
+      user.assignedTenantId = data.assignedTenantId || undefined;
       if (!user.allowedTenants) user.allowedTenants = [];
       if (data.assignedTenantId && !user.allowedTenants.includes(data.assignedTenantId) && !user.allowedTenants.includes("*")) {
         user.allowedTenants.push(data.assignedTenantId);

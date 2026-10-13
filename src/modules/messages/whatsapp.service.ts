@@ -136,7 +136,7 @@ export class WhatsAppService {
       });
 
       clearTimeout(timeoutId);
-      const data = await res.json().catch(() => ({}));
+      const data: any = await res.json().catch(() => ({}));
 
       if (res.ok) {
         return {
@@ -214,7 +214,7 @@ export class WhatsAppService {
       });
 
       clearTimeout(timeoutId);
-      const data = await res.json().catch(() => ({}));
+      const data: any = await res.json().catch(() => ({}));
 
       if (res.ok && data?.messages?.[0]?.id) {
         return {
@@ -343,7 +343,7 @@ export class WhatsAppService {
       clearTimeout(stateTimer);
 
       if (stateRes && stateRes.ok) {
-        const stateData = await stateRes.json().catch(() => ({}));
+        const stateData: any = await stateRes.json().catch(() => ({}));
         const state = stateData?.instance?.state || stateData?.state;
         if (state === "open" || state === "connected") {
           return {
@@ -380,7 +380,7 @@ export class WhatsAppService {
           clearTimeout(createTimer);
 
           if (createRes.ok) {
-            const createData = await createRes.json().catch(() => ({}));
+            const createData: any = await createRes.json().catch(() => ({}));
             const rawQr = createData?.qrcode?.base64 || createData?.base64 || createData?.qrcode?.code || createData?.code;
             const pairingCode = createData?.pairingCode;
 
@@ -421,7 +421,7 @@ export class WhatsAppService {
       clearTimeout(qrTimer);
 
       if (qrRes && qrRes.ok) {
-        const qrData = await qrRes.json().catch(() => ({}));
+        const qrData: any = await qrRes.json().catch(() => ({}));
         const rawQr = qrData?.base64 || qrData?.qrcode?.base64 || qrData?.code || qrData?.qrcode?.code;
         const pairingCode = qrData?.pairingCode;
 
@@ -514,7 +514,7 @@ export class WhatsAppService {
       });
 
       clearTimeout(timeoutId);
-      const data = await res.json().catch(() => ({}));
+      const data: any = await res.json().catch(() => ({}));
 
       if (res.ok && (data.display_phone_number || data.verified_name)) {
         return {

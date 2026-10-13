@@ -272,7 +272,7 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
       );
       clearTimeout(timeoutId);
 
-      const data = await res.json().catch(() => ({}));
+      const data: any = await res.json().catch(() => ({}));
 
       if (res.ok) {
         return reply.send({
@@ -389,7 +389,7 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
       });
 
       clearTimeout(timeoutId);
-      const data = await res.json().catch(() => null);
+      const data: any = await res.json().catch(() => null);
 
       if (res.ok && data) {
         return reply.send({
@@ -443,7 +443,7 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
         },
       });
 
-      const data = await res.json().catch(() => null);
+      const data: any = await res.json().catch(() => null);
 
       if (res.ok && data) {
         return reply.send({
@@ -499,7 +499,7 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
         },
       });
 
-      const data = await res.json().catch(() => null);
+      const data: any = await res.json().catch(() => null);
 
       if (res.ok && data) {
         return reply.send({
