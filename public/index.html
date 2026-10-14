@@ -37053,7 +37053,9 @@ function initMessagesRealtime() {
   if (messagesEventSource) return;
 
   try {
-    messagesEventSource = new EventSource('/api/messages/events');
+    const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? (currentUser.id || currentUser.username) : '';
+    const sseUrl = myId ? `/api/messages/events?userId=${encodeURIComponent(myId)}` : '/api/messages/events';
+    messagesEventSource = new EventSource(sseUrl);
 
     messagesEventSource.onopen = () => {
       messagesSseRetryCount = 0;
@@ -37170,6 +37172,16 @@ function handleIncomingRealtimeMessage(data) {
   const { conversationId, message } = data;
   if (!conversationId || !message) return;
 
+  const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+
+  // 1. FILTRADO DE DESTINATARIOS PARA CHATS PRIVADOS DE PERSONAL:
+  // Si el evento viene con destinatarios explícitos (chat 1-a-1 de personal) y yo NO soy destinatario ni remitente, ignorar completamente.
+  if (data.targetUserIds && Array.isArray(data.targetUserIds) && data.targetUserIds.length > 0) {
+    if (myId && !data.targetUserIds.map(String).includes(myId)) {
+      return; // Este mensaje no es para mí -> Ignorar en absoluto
+    }
+  }
+
   const isCurrentChatOpen = activeChannelMode === 'direct' && activeConversationId === conversationId;
   const isFromMe = checkIfMessageIsMe(message);
 
@@ -37178,8 +37190,23 @@ function handleIncomingRealtimeMessage(data) {
   const msgTime = new Date(message.timestamp).getTime();
   const isFresh = !isNaN(msgTime) ? (Date.now() - msgTime < 300000) : true;
 
-  // 1. Sonido y notificación si viene de un cliente o usuario y es en tiempo real
-  if (!isFromMe && isFresh) {
+  // REGLAS ESTRICTAS DE NOTIFICACIÓN:
+  // A. Si el mensaje fue enviado por mí -> NO notificar.
+  // B. Si es un chat con clientes y el remitente es un operador ('agent') -> NO notificar a otros operadores (es respuesta saliente).
+  // C. Si es un chat de personal ('isPersonal') -> Solo notificar si yo soy el destinatario directo.
+  let shouldNotify = !isFromMe && isFresh;
+  if (shouldNotify) {
+    if (data.isPersonal) {
+      if (data.recipientId && myId && String(data.recipientId) !== myId) {
+        shouldNotify = false;
+      }
+    } else if (message.sender === 'agent' || message.from === 'agent' || message.from === 'operator') {
+      shouldNotify = false;
+    }
+  }
+
+  // 1. Sonido y notificación si corresponde
+  if (shouldNotify) {
     playMessageNotificationSound();
     if (!isCurrentChatOpen || document.hidden) {
       const convForAvatar = (currentConversations || []).find(c => c.id === conversationId);
@@ -37225,7 +37252,7 @@ function handleIncomingRealtimeMessage(data) {
     conv.lastMessageTime = message.timestamp ? formatMessageTime(message.timestamp) : (message.timeFormatted || formatMessageTime(new Date()));
     if (isCurrentChatOpen) {
       conv.unreadCount = 0;
-    } else if (!isFromMe) {
+    } else if (shouldNotify) {
       if (typeof data.unreadCount === 'number' && data.unreadCount > 0) {
         conv.unreadCount = data.unreadCount;
       } else {
@@ -37237,13 +37264,19 @@ function handleIncomingRealtimeMessage(data) {
     renderConversationsList(currentConversations);
     updateGlobalUnreadBadges();
   } else {
-    fetch('/api/messages/conversations').then(r => r.json()).then(res => {
-      if (res.success && Array.isArray(res.data)) {
-        currentConversations = sortConversationsList(res.data);
-        renderConversationsList(currentConversations);
-        updateGlobalUnreadBadges();
-      }
-    }).catch(() => {});
+    // Solo recargar conversaciones si soy parte de los destinatarios
+    if (!data.targetUserIds || (myId && data.targetUserIds.map(String).includes(myId))) {
+      const qCat = (typeof activeMessageFilter !== 'undefined' && activeMessageFilter) ? `category=${encodeURIComponent(activeMessageFilter)}` : '';
+      const qUid = myId ? `currentUserId=${encodeURIComponent(myId)}` : '';
+      const queryParams = [qCat, qUid].filter(Boolean).join('&');
+      fetch(`/api/messages/conversations${queryParams ? `?${queryParams}` : ''}`, { headers: myId ? { 'x-user-id': myId } : {} }).then(r => r.json()).then(res => {
+        if (res.success && Array.isArray(res.data)) {
+          currentConversations = sortConversationsList(res.data);
+          renderConversationsList(currentConversations);
+          updateGlobalUnreadBadges();
+        }
+      }).catch(() => {});
+    }
   }
 }
 
@@ -46005,7 +46038,9 @@ async function syncMessagesInProduction() {
     }
     if (Date.now() - lastProdSyncTimestamp > 12000) {
       lastProdSyncTimestamp = Date.now();
-      const r = await fetch('/api/messages/conversations');
+      const myUid = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+      const convUrl = myUid ? `/api/messages/conversations?category=${encodeURIComponent(activeMessageFilter || 'all')}&currentUserId=${encodeURIComponent(myUid)}` : '/api/messages/conversations';
+      const r = await fetch(convUrl, { headers: myUid ? { 'x-user-id': myUid } : {} });
       const d = await r.json();
       if (d.success && Array.isArray(d.data)) {
         currentConversations = sortConversationsList(d.data);
