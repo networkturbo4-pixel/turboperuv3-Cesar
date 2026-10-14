@@ -469,6 +469,62 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
+  // 1.1 Obtener sesión del usuario actual (GET /auth/me)
+  fastify.get("/auth/me", async (request, reply) => {
+    usersStore = loadUsersFromDisk();
+    const query = request.query as { userId?: string } | undefined;
+    const userIdParam = (request.headers["x-user-id"] as string) || query?.userId;
+    const authHeader = request.headers.authorization;
+
+    let targetUserId = userIdParam ? String(userIdParam).trim() : "";
+
+    if (!targetUserId && authHeader && authHeader.startsWith("Bearer mock_jwt_session_")) {
+      const parts = authHeader.replace("Bearer mock_jwt_session_", "").split("_");
+      if (parts[0]) targetUserId = parts[0];
+    }
+
+    let user = targetUserId ? usersStore.find((u) => String(u.id) === targetUserId && u.isActive) : null;
+    if (!user) {
+      user = usersStore.find((u) => u.isActive && (u.isSuperAdmin || u.roleId === 1)) || usersStore[0];
+    }
+
+    if (!user) {
+      return reply.send({ success: true, user: null });
+    }
+
+    const assignedTenant = user.assignedTenantId || (user.allowedTenants && user.allowedTenants[0] !== "*" ? user.allowedTenants[0] : "turbonetwork");
+    const tenantRoles = loadRolesForTenant(assignedTenant);
+    const role = tenantRoles.find((r) => r.id === user.roleId) || rolesStore.find((r) => r.id === user.roleId);
+
+    const userPermissions = user.isSuperAdmin ? ALL_PERMISSIONS.map((p) => p.id) : (role?.permissions || []);
+    const userAllowedModules = user.isSuperAdmin ? [...ALL_MODULE_IDS] : (role?.allowedModules || [...ALL_MODULE_IDS]);
+
+    return reply.send({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        roleId: user.roleId,
+        roleName: user.roleName,
+        avatar: user.avatar,
+        isSuperAdmin: !!user.isSuperAdmin,
+        assignedTenantId: assignedTenant,
+        allowedTenants: (user.allowedTenants || (user.isSuperAdmin ? ["*"] : [assignedTenant])).filter(Boolean),
+        workSchedule: user.workSchedule || "08:00 - 17:00",
+        expectedCheckInTime: user.expectedCheckInTime || (user.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00",
+        expectedCheckOutTime: user.expectedCheckOutTime || (user.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00",
+        scheduleStartDate: user.scheduleStartDate || "",
+        scheduleEndDate: user.scheduleEndDate || "",
+        hireDate: user.hireDate || "",
+        birthDate: user.birthDate || "",
+        preferences: user.preferences || {},
+        permissions: userPermissions,
+        allowedModules: userAllowedModules,
+      }
+    });
+  });
+
   // Catálogo maestro de permisos disponibles
   fastify.get("/permissions", async (_request, reply) => {
     return reply.send({ success: true, data: ALL_PERMISSIONS });
