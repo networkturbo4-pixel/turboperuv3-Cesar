@@ -2723,12 +2723,14 @@ function formatMessageTime(val) {
 }
 
 // Función para determinar si un mensaje fue enviado por el usuario actualmente logueado (Emisor = Derecha, Receptor = Izquierda)
-function checkIfMessageIsMe(m) {
+function checkIfMessageIsMe(m, targetConvOrId) {
   if (!m) return false;
 
   // Mensajes de sistema o explícitamente del cliente entrante siempre van a la izquierda (Receptor)
-  if (m.sender === 'system' || m.from === 'system') return false;
-  if (m.sender === 'client' || m.from === 'client') return false;
+  const senderRole = String(m.sender || m.from || '').trim().toLowerCase();
+  if (senderRole === 'client' || senderRole === 'customer' || senderRole === 'system' || senderRole === 'bot' || senderRole === 'incoming') {
+    return false;
+  }
 
   const activeUser = (typeof currentUser !== 'undefined' && currentUser)
     ? currentUser
@@ -2739,59 +2741,77 @@ function checkIfMessageIsMe(m) {
         } catch (e) { return null; }
       })();
 
+  const myId = activeUser ? String(activeUser.id != null ? activeUser.id : '').trim() : '';
+  const myEmpId = activeUser ? String(activeUser.employeeId != null ? activeUser.employeeId : '').trim() : '';
+  const myUsername = activeUser ? String(activeUser.username || '').trim().toLowerCase() : '';
+  const myName = activeUser ? String(activeUser.name || '').trim().toLowerCase() : '';
+  const myEmail = activeUser ? String(activeUser.email || '').trim().toLowerCase() : '';
+
   const mSenderId = m.senderId !== undefined && m.senderId !== null ? String(m.senderId).trim() : '';
   const mSenderName = m.senderName ? String(m.senderName).trim().toLowerCase() : '';
 
-  // 1. Si tenemos usuario activo logueado, comparamos estrictamente contra su identidad
-  if (activeUser) {
-    const myId = String(activeUser.id || '').trim();
-    const myEmpId = String(activeUser.employeeId || '').trim();
-    const myUsername = String(activeUser.username || '').trim().toLowerCase();
-    const myName = String(activeUser.name || '').trim().toLowerCase();
-    const myEmail = String(activeUser.email || '').trim().toLowerCase();
+  // 1. Verificación inequívoca por senderId si está disponible
+  if (mSenderId && mSenderId !== 'agent' && mSenderId !== 'operator') {
+    if (myId && mSenderId === myId) return true;
+    if (myEmpId && mSenderId === myEmpId) return true;
+    if (myUsername && mSenderId.toLowerCase() === myUsername) return true;
+    if (myEmail && mSenderId.toLowerCase() === myEmail) return true;
+    // Trae senderId de otra persona -> NO fue enviado por mí
+    return false;
+  }
 
-    // Si el mensaje trae senderId explícito
-    if (mSenderId && mSenderId !== 'agent' && mSenderId !== 'operator') {
-      if (myId && mSenderId === myId) return true;
-      if (myEmpId && mSenderId === myEmpId) return true;
-      if (myUsername && mSenderId.toLowerCase() === myUsername) return true;
-      if (myEmail && mSenderId.toLowerCase() === myEmail) return true;
-      // Tiene un senderId de otra persona -> Es mensaje recibido (Izquierda)
+  // 2. Verificación por senderName si no es genérico
+  if (mSenderName) {
+    if (mSenderName === 'tú' || mSenderName === 'tu' || mSenderName === 'yo') return true;
+    if (myName && mSenderName === myName) return true;
+    if (myUsername && mSenderName === myUsername) return true;
+    if (myEmail && mSenderName === myEmail) return true;
+  }
+
+  // 3. Resolver contexto de la conversación
+  let conv = null;
+  if (targetConvOrId && typeof targetConvOrId === 'object') {
+    conv = targetConvOrId;
+  } else if (typeof targetConvOrId === 'string' && typeof currentConversations !== 'undefined' && Array.isArray(currentConversations)) {
+    conv = currentConversations.find(c => c.id === targetConvOrId);
+  }
+  if (!conv && m.conversationId && typeof currentConversations !== 'undefined' && Array.isArray(currentConversations)) {
+    conv = currentConversations.find(c => c.id === m.conversationId);
+  }
+  if (!conv && typeof activeConversationId !== 'undefined' && activeConversationId && typeof currentConversations !== 'undefined' && Array.isArray(currentConversations)) {
+    conv = currentConversations.find(c => c.id === activeConversationId);
+  }
+
+  const isPersonalChat = !!(
+    conv &&
+    (conv.type === 'personal' ||
+      (Array.isArray(conv.tags) && conv.tags.includes('personal')) ||
+      String(conv.id || '').startsWith('conv-staff-'))
+  );
+  const isCommunityChat = (typeof activeChannelMode !== 'undefined' && activeChannelMode === 'community') || !!m.groupId || !!m.communityId;
+
+  // Si el nombre del remitente coincide con la contraparte en este chat -> NO soy yo
+  if (conv && conv.name && mSenderName && mSenderName === String(conv.name).trim().toLowerCase()) {
+    return false;
+  }
+
+  // En chat de personal: si yo soy el destinatario y el mensaje no es mío -> NO soy yo
+  if (isPersonalChat && conv && myId) {
+    const cContact = String(conv.contactId != null ? conv.contactId : '').trim();
+    const cCreator = String(conv.creatorId != null ? conv.creatorId : '').trim();
+    if (cContact === myId && cCreator && cCreator !== myId) {
       return false;
     }
+  }
 
-    // Si el mensaje trae senderName explícito
-    if (mSenderName) {
-      if (mSenderName === 'tú' || mSenderName === 'tu' || mSenderName === 'yo') return true;
-      if (myName && mSenderName === myName) return true;
-      if (myUsername && mSenderName === myUsername) return true;
-      if (myEmail && mSenderName === myEmail) return true;
-      // Si el nombre del remitente coincide con el contacto con el que estamos chateando -> Es mensaje recibido (Izquierda)
-      if (typeof activeConversationId !== 'undefined' && activeConversationId && typeof currentConversations !== 'undefined') {
-        const conv = currentConversations.find(c => c.id === activeConversationId);
-        if (conv && conv.contactName && mSenderName === String(conv.contactName).trim().toLowerCase()) {
-          return false;
-        }
-      }
-      // Si tiene nombre de otra persona (y no es etiqueta genérica de operador) -> Es recibido (Izquierda)
-      if (mSenderName !== 'operador turbonetwork' && mSenderName !== 'agente' && mSenderName !== 'sistema') {
-        return false;
-      }
+  // En chat externo de clientes (WhatsApp/Soporte), mensajes de 'agent' van a la derecha
+  if (!isPersonalChat && !isCommunityChat) {
+    if (senderRole === 'agent' || senderRole === 'operator' || senderRole === 'me' || senderRole === 'outgoing') {
+      return true;
     }
   }
 
-  // 2. Si estamos en una conversación directa y el mensaje fue enviado por el contacto de esa conversación -> Izquierda
-  if (typeof activeConversationId !== 'undefined' && activeConversationId && typeof currentConversations !== 'undefined') {
-    const conv = currentConversations.find(c => c.id === activeConversationId);
-    if (conv) {
-      const convUserId = conv.targetUserId ? String(conv.targetUserId).trim() : '';
-      const convContactName = conv.contactName ? String(conv.contactName).trim().toLowerCase() : '';
-      if (mSenderId && convUserId && mSenderId === convUserId) return false;
-      if (mSenderName && convContactName && mSenderName === convContactName) return false;
-    }
-  }
-
-  if (m.sender === 'agent' || m.from === 'agent' || m.from === 'operator') return true;
+  if (senderRole === 'me' || senderRole === 'outgoing') return true;
   return false;
 }
 
@@ -3126,12 +3146,18 @@ async function simulateIncomingMessageTest() {
 }
 
 function initMessagesRealtime() {
-  if (messagesEventSource) return;
+  const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+
+  if (messagesEventSource) {
+    if (messagesEventSource._connectedUserId === myId) return;
+    try { messagesEventSource.close(); } catch (_) {}
+    messagesEventSource = null;
+  }
 
   try {
-    const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? (currentUser.id || currentUser.username) : '';
     const sseUrl = myId ? `/api/messages/events?userId=${encodeURIComponent(myId)}` : '/api/messages/events';
     messagesEventSource = new EventSource(sseUrl);
+    messagesEventSource._connectedUserId = myId;
 
     messagesEventSource.onopen = () => {
       messagesSseRetryCount = 0;
@@ -3214,6 +3240,10 @@ function initMessagesRealtime() {
             }
           }
         } else if (data.type === 'conversation_read') {
+          // Si fue otro usuario en un chat privado quien leyó en su pantalla, NO borrar mis no leídos
+          if (data.userId && myId && String(data.userId) !== myId) {
+            return;
+          }
           const conv = (currentConversations || []).find(c => c.id === data.conversationId);
           if (conv) {
             conv.unreadCount = 0;
@@ -3259,7 +3289,7 @@ function handleIncomingRealtimeMessage(data) {
   }
 
   const isCurrentChatOpen = activeChannelMode === 'direct' && activeConversationId === conversationId;
-  const isFromMe = checkIfMessageIsMe(message);
+  const isFromMe = checkIfMessageIsMe(message, conversationId);
 
   // PREVENCIÓN DE TORMENTAS DE NOTIFICACIONES:
   // Solo sonar y notificar si el mensaje NO fue enviado por mí y es reciente (últimos 5 min o nuevo)
@@ -3322,8 +3352,14 @@ function handleIncomingRealtimeMessage(data) {
       }
     }
 
-    // Marcar como leído en backend
-    fetch(`/api/messages/conversations/${encodeURIComponent(conversationId)}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+    // Marcar como leído en backend SOLO si no fui yo quien envió el mensaje
+    if (!isFromMe) {
+      fetch(`/api/messages/conversations/${encodeURIComponent(conversationId)}/read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(myId ? { 'x-user-id': myId } : {}) },
+        body: JSON.stringify(myId ? { userId: myId } : {})
+      }).catch(() => {});
+    }
   }
 
   // 3. Actualizar conversación en memoria y lista lateral
@@ -3331,10 +3367,14 @@ function handleIncomingRealtimeMessage(data) {
   if (conv) {
     conv.lastMessage = message.text || (message.attachment ? (message.attachment.type === 'image' ? '📷 Foto' : '📎 Archivo') : '');
     conv.lastMessageTime = formatMessageTime(message.timestamp) || message.timeFormatted;
+    conv.lastMessageAt = message.timestamp || new Date().toISOString();
     if (isCurrentChatOpen) {
       conv.unreadCount = 0;
-    } else if (shouldNotify) {
-      if (typeof data.unreadCount === 'number' && data.unreadCount > 0) {
+    } else if (!isFromMe) {
+      // SIEMPRE que llegue un mensaje de otra persona y el chat no esté abierto, se marca como no leído / recién llegado
+      if (data.unreadCounts && myId && typeof data.unreadCounts[myId] === 'number') {
+        conv.unreadCount = data.unreadCounts[myId];
+      } else if (typeof data.unreadCount === 'number' && data.unreadCount > 0) {
         conv.unreadCount = data.unreadCount;
       } else {
         conv.unreadCount = (conv.unreadCount || 0) + 1;
@@ -3793,7 +3833,12 @@ async function selectConversation(convId) {
   }
 
   // Notificar al backend de inmediato para persistir lectura
-  fetch(`/api/messages/conversations/${encodeURIComponent(convId)}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+  const myCurrentUid = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+  fetch(`/api/messages/conversations/${encodeURIComponent(convId)}/read`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(myCurrentUid ? { 'x-user-id': myCurrentUid } : {}) },
+    body: JSON.stringify(myCurrentUid ? { userId: myCurrentUid } : {})
+  }).catch(() => {});
 
   // Alternar visibilidad de pantalla de bienvenida WhatsApp vs Chat activo
   const emptyView = document.getElementById('messages-empty-state-view');
@@ -12193,7 +12238,7 @@ async function sendCurrentLocation(isLive) {
           lastSyncTimestamp = Date.now();
           const myUid = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? String(currentUser.id) : '';
           const convUrl = myUid ? `/api/messages/conversations?currentUserId=${encodeURIComponent(myUid)}` : '/api/messages/conversations';
-          const r = await fetch(convUrl);
+          const r = await fetch(convUrl, { headers: myUid ? { 'x-user-id': myUid } : {} });
           const d = await r.json();
           if (d.success && Array.isArray(d.data)) {
             const newSorted = sortConversationsList(d.data);

@@ -143,6 +143,7 @@ export interface Conversation {
   serviceStatus?: "active" | "suspended" | "pending";
   debtAmount?: number;
   unreadCount: number;
+  unreadCounts?: Record<string, number>;
   lastMessage: string;
   lastMessageTime: string;
   lastMessageDate: string;
@@ -1031,6 +1032,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
         if (isPersonal) {
           const cContact = c.contactId !== undefined && c.contactId !== null ? String(c.contactId).trim() : "";
           const cCreator = c.creatorId !== undefined && c.creatorId !== null ? String(c.creatorId).trim() : "";
+          const userUnread = (c.unreadCounts && c.unreadCounts[uId] !== undefined)
+            ? c.unreadCounts[uId]
+            : (c.unreadCount || 0);
 
           // Si yo soy el contactId de este chat de personal, la contraparte que veo es el creador
           if (cContact === uId && cCreator && cCreator !== uId) {
@@ -1042,7 +1046,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
               planOrRole: partner ? (partner.roleName || partner.role) : (c.creatorRole || "Personal"),
               phone: partner ? (partner.phone || partner.email) : (c.creatorPhone || c.creatorEmail || c.phone),
               email: partner ? partner.email : (c.creatorEmail || c.email),
-              contactId: cCreator
+              contactId: cCreator,
+              unreadCount: userUnread
             };
           }
           // Si yo soy el creador, la contraparte que veo es el contactId
@@ -1056,9 +1061,14 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
                 planOrRole: partner.roleName || partner.role || c.planOrRole || "Personal",
                 phone: partner.phone || partner.email || c.phone,
                 email: partner.email || c.email,
+                unreadCount: userUnread
               };
             }
           }
+          return {
+            ...c,
+            unreadCount: userUnread
+          };
         }
         return c;
       });
@@ -1158,8 +1168,15 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
 
-    // Marcar como leída
-    conv.unreadCount = 0;
+    // Marcar como leída para este usuario
+    if (isPersonal && uId) {
+      if (!conv.unreadCounts) conv.unreadCounts = {};
+      conv.unreadCounts[uId] = 0;
+      conv.unreadCount = Object.values(conv.unreadCounts).reduce((a, b) => a + b, 0);
+    } else {
+      conv.unreadCount = 0;
+      if (conv.unreadCounts) conv.unreadCounts = {};
+    }
     saveConversationsToDisk(tenantId, list);
 
     const totalMessages = conv.messages.length;
@@ -1301,7 +1318,25 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
 
     conv.messages.push(newMsg);
     const isPersonalChat = conv.type === "personal" || (conv.tags && conv.tags.includes("personal"));
-    if (sender === "client" || isPersonalChat) {
+    const senderIdStr = parse.data.senderId ? String(parse.data.senderId).trim() : "";
+    const creatorIdStr = conv.creatorId !== undefined && conv.creatorId !== null ? String(conv.creatorId).trim() : "";
+    const contactIdStr = conv.contactId !== undefined && conv.contactId !== null ? String(conv.contactId).trim() : "";
+
+    const recipientId = isPersonalChat
+      ? (senderIdStr && senderIdStr === creatorIdStr ? conv.contactId : (senderIdStr && senderIdStr === contactIdStr ? conv.creatorId : (conv.contactId || conv.creatorId)))
+      : conv.contactId;
+    const recKey = recipientId !== undefined && recipientId !== null ? String(recipientId).trim() : "";
+
+    if (isPersonalChat) {
+      if (!conv.unreadCounts) conv.unreadCounts = {};
+      if (recKey) {
+        conv.unreadCounts[recKey] = (conv.unreadCounts[recKey] || 0) + 1;
+      }
+      if (senderIdStr) {
+        conv.unreadCounts[senderIdStr] = 0;
+      }
+      conv.unreadCount = recKey ? (conv.unreadCounts[recKey] || 1) : (conv.unreadCount || 0) + 1;
+    } else if (sender === "client") {
       conv.unreadCount = (conv.unreadCount || 0) + 1;
     }
     conv.lastMessage = fallbackText;
@@ -1325,10 +1360,6 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       ? Array.from(new Set([String(conv.creatorId || ''), String(conv.contactId || ''), ...(conv.participants ? conv.participants.map(String) : [])].filter(Boolean)))
       : undefined;
 
-    const recipientId = isPersonalChat
-      ? (String(parse.data.senderId) === String(conv.creatorId) ? conv.contactId : conv.creatorId)
-      : conv.contactId;
-
     broadcastMessageEvent({
       type: "new_message",
       tenantId,
@@ -1339,7 +1370,8 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       recipientId,
       isPersonal: isPersonalChat,
       targetUserIds: participants,
-      unreadCount: conv.unreadCount,
+      unreadCount: isPersonalChat && recKey ? conv.unreadCounts?.[recKey] : conv.unreadCount,
+      unreadCounts: conv.unreadCounts,
       lastMessage: conv.lastMessage,
       lastMessageTime: conv.lastMessageTime
     });
@@ -1363,6 +1395,10 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post("/messages/conversations/:id/read", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const { id } = request.params as { id: string };
+    const query = request.query as { userId?: string; currentUserId?: string } | undefined;
+    const body = (request.body || {}) as { userId?: string; currentUserId?: string };
+    const readerId = body.userId || body.currentUserId || query?.userId || query?.currentUserId || (request.headers["x-user-id"] as string);
+    const readerIdStr = readerId ? String(readerId).trim() : "";
 
     const list = loadConversationsFromDisk(tenantId);
     const conv = list.find(c => c.id === id);
@@ -1370,13 +1406,22 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(404).send({ success: false, message: "Conversación no encontrada" });
     }
 
-    conv.unreadCount = 0;
+    const isPersonal = conv.type === "personal" || (conv.tags && conv.tags.includes("personal"));
+    if (isPersonal && readerIdStr) {
+      if (!conv.unreadCounts) conv.unreadCounts = {};
+      conv.unreadCounts[readerIdStr] = 0;
+      conv.unreadCount = Object.values(conv.unreadCounts).reduce((a, b) => a + b, 0);
+    } else {
+      conv.unreadCount = 0;
+      if (conv.unreadCounts) conv.unreadCounts = {};
+    }
     saveConversationsToDisk(tenantId, list);
 
     broadcastMessageEvent({
       type: "conversation_read",
       tenantId,
       conversationId: id,
+      userId: readerIdStr || undefined,
       unreadCount: 0
     });
 
@@ -1414,7 +1459,25 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     };
 
     conv.messages.push(newMsg);
-    conv.unreadCount = (conv.unreadCount || 0) + 1;
+    const isPersonalChat = conv.type === "personal" || (conv.tags && conv.tags.includes("personal"));
+    const senderIdStr = body.senderId ? String(body.senderId).trim() : "";
+    const creatorIdStr = conv.creatorId !== undefined && conv.creatorId !== null ? String(conv.creatorId).trim() : "";
+    const contactIdStr = conv.contactId !== undefined && conv.contactId !== null ? String(conv.contactId).trim() : "";
+
+    const recipientId = isPersonalChat
+      ? (senderIdStr && senderIdStr === creatorIdStr ? conv.contactId : (senderIdStr && senderIdStr === contactIdStr ? conv.creatorId : (conv.contactId || conv.creatorId)))
+      : conv.contactId;
+    const recKey = recipientId !== undefined && recipientId !== null ? String(recipientId).trim() : "";
+
+    if (isPersonalChat) {
+      if (!conv.unreadCounts) conv.unreadCounts = {};
+      if (recKey) {
+        conv.unreadCounts[recKey] = (conv.unreadCounts[recKey] || 0) + 1;
+      }
+      conv.unreadCount = recKey ? (conv.unreadCounts[recKey] || 1) : (conv.unreadCount || 0) + 1;
+    } else {
+      conv.unreadCount = (conv.unreadCount || 0) + 1;
+    }
     conv.lastMessage = text;
     conv.lastMessageTime = timeFormatted;
     conv.lastMessageDate = now.toISOString().split("T")[0];
@@ -1431,12 +1494,22 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
 
     saveConversationsToDisk(tenantId, list);
 
+    const participants = isPersonalChat
+      ? Array.from(new Set([String(conv.creatorId || ''), String(conv.contactId || ''), ...(conv.participants ? conv.participants.map(String) : [])].filter(Boolean)))
+      : undefined;
+
     broadcastMessageEvent({
       type: "new_message",
       tenantId,
       conversationId: id,
       message: newMsg,
-      unreadCount: conv.unreadCount,
+      senderId: newMsg.senderId,
+      senderName: newMsg.senderName,
+      recipientId,
+      isPersonal: isPersonalChat,
+      targetUserIds: participants,
+      unreadCount: isPersonalChat && recKey ? conv.unreadCounts?.[recKey] : conv.unreadCount,
+      unreadCounts: conv.unreadCounts,
       lastMessage: conv.lastMessage,
       lastMessageTime: conv.lastMessageTime
     });

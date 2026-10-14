@@ -36631,7 +36631,7 @@ function formatMessageTime(val) {
 }
 
 // Determinar con precisión si un mensaje fue enviado por el usuario actualmente logueado (Emisor = Derecha, Receptor = Izquierda)
-function checkIfMessageIsMe(m) {
+function checkIfMessageIsMe(m, targetConvOrId) {
   if (!m) return false;
 
   // 1. Mensajes entrantes de clientes o de sistema SIEMPRE van a la izquierda (Receptor)
@@ -36640,27 +36640,7 @@ function checkIfMessageIsMe(m) {
     return false;
   }
 
-  // Identificar contexto de la conversación activa
-  const activeConv = (typeof currentConversations !== 'undefined' && Array.isArray(currentConversations) && typeof activeConversationId !== 'undefined' && activeConversationId)
-    ? currentConversations.find(c => c.id === activeConversationId)
-    : null;
-  const isPersonalChat = !!(
-    activeConv &&
-    (activeConv.type === 'personal' ||
-      (Array.isArray(activeConv.tags) && activeConv.tags.includes('personal')) ||
-      String(activeConv.id || '').startsWith('conv-staff-'))
-  );
-  const isCommunityChat = typeof activeChannelMode !== 'undefined' && activeChannelMode === 'community';
-
-  // 2. Si es un chat externo con un cliente (WhatsApp / Omnicanal) y no es un chat interno entre personal ni comunidad:
-  // los mensajes de 'agent'/'operator' son los enviados por nosotros (Derecha) y los de 'client' van a la Izquierda.
-  if (!isPersonalChat && !isCommunityChat) {
-    if (senderRole === 'agent' || senderRole === 'operator' || senderRole === 'me' || senderRole === 'outgoing') {
-      return true;
-    }
-  }
-
-  // 3. En chats internos entre personal (isPersonalChat) o Comunidades (isCommunityChat):
+  // Obtener identidad del usuario logueado en la sesión activa
   let resolvedUser = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
   if (!resolvedUser) {
     try {
@@ -36669,57 +36649,77 @@ function checkIfMessageIsMe(m) {
     } catch (_) {}
   }
 
+  const myId = resolvedUser ? String(resolvedUser.id != null ? resolvedUser.id : '').trim() : '';
+  const myEmpId = resolvedUser ? String(resolvedUser.employeeId != null ? resolvedUser.employeeId : '').trim() : '';
+  const myUsername = resolvedUser ? String(resolvedUser.username || '').trim().toLowerCase() : '';
+  const myName = resolvedUser ? String(resolvedUser.name || '').trim().toLowerCase() : '';
+  const myEmail = resolvedUser ? String(resolvedUser.email || '').trim().toLowerCase() : '';
+
   const mSenderId = m.senderId != null ? String(m.senderId).trim() : '';
   const mSenderName = m.senderName ? String(m.senderName).trim().toLowerCase() : '';
 
-  if (resolvedUser) {
-    const myId = String(resolvedUser.id || '').trim();
-    const myUsername = String(resolvedUser.username || '').trim().toLowerCase();
-    const myName = String(resolvedUser.name || '').trim().toLowerCase();
-    const myEmail = String(resolvedUser.email || '').trim().toLowerCase();
+  // 1. Verificación inequívoca por senderId si está disponible
+  if (mSenderId && mSenderId !== 'agent' && mSenderId !== 'operator') {
+    if (myId && mSenderId === myId) return true;
+    if (myEmpId && mSenderId === myEmpId) return true;
+    if (myUsername && mSenderId.toLowerCase() === myUsername) return true;
+    if (myEmail && mSenderId.toLowerCase() === myEmail) return true;
+    // Trae senderId explícito de otra persona -> NO fue enviado por mí
+    return false;
+  }
 
-    if (mSenderId) {
-      if (myId && mSenderId === myId) return true;
-      if (myUsername && mSenderId.toLowerCase() === myUsername) return true;
-      return false; // Enviado por otro operador -> Izquierda
-    }
+  // 2. Verificación por senderName si no es genérico
+  if (mSenderName) {
+    if (mSenderName === 'tú' || mSenderName === 'tu' || mSenderName === 'yo') return true;
+    if (myName && mSenderName === myName) return true;
+    if (myUsername && mSenderName === myUsername) return true;
+    if (myEmail && mSenderName === myEmail) return true;
+  }
 
-    if (mSenderName) {
-      if (mSenderName === 'tú' || mSenderName === 'tu') return true;
-      if (myName && mSenderName === myName) return true;
-      if (myUsername && mSenderName === myUsername) return true;
-      if (myEmail && mSenderName === myEmail) return true;
+  // 3. Resolver contexto de la conversación
+  let conv = null;
+  if (targetConvOrId && typeof targetConvOrId === 'object') {
+    conv = targetConvOrId;
+  } else if (typeof targetConvOrId === 'string' && typeof currentConversations !== 'undefined' && Array.isArray(currentConversations)) {
+    conv = currentConversations.find(c => c.id === targetConvOrId);
+  }
+  if (!conv && m.conversationId && typeof currentConversations !== 'undefined' && Array.isArray(currentConversations)) {
+    conv = currentConversations.find(c => c.id === m.conversationId);
+  }
+  if (!conv && typeof activeConversationId !== 'undefined' && activeConversationId && typeof currentConversations !== 'undefined' && Array.isArray(currentConversations)) {
+    conv = currentConversations.find(c => c.id === activeConversationId);
+  }
 
-      // Si el nombre coincide con el contacto con el que estamos chateando, es del receptor -> Izquierda
-      if (activeConv && activeConv.name && mSenderName === String(activeConv.name).trim().toLowerCase()) {
-        return false;
-      }
+  const isPersonalChat = !!(
+    conv &&
+    (conv.type === 'personal' ||
+      (Array.isArray(conv.tags) && conv.tags.includes('personal')) ||
+      String(conv.id || '').startsWith('conv-staff-'))
+  );
+  const isCommunityChat = (typeof activeChannelMode !== 'undefined' && activeChannelMode === 'community') || !!m.groupId || !!m.communityId;
 
-      // Si tiene el nombre de otro operador distinto al mío -> Izquierda
-      const isGenericAgentName =
-        mSenderName === 'operador turbonetwork' ||
-        mSenderName === 'agente' ||
-        mSenderName === 'operador';
-      if (!isGenericAgentName) {
-        return false;
-      }
+  // Si el nombre del remitente coincide con el nombre de la contraparte en este chat -> NO soy yo
+  if (conv && conv.name && mSenderName && mSenderName === String(conv.name).trim().toLowerCase()) {
+    return false;
+  }
 
-      // Mensaje antiguo con nombre genérico ("Operador TurboNetwork") sin senderId en chat personal:
-      if (isPersonalChat && activeConv) {
-        // Si yo soy el contactId destino de la conversación, el mensaje genérico lo envió el otro operador
-        if (myId && activeConv.contactId != null && String(activeConv.contactId).trim() === myId) {
-          return false;
-        }
-        return true;
-      }
-    }
-  } else if (activeConv && activeConv.name && mSenderName) {
-    if (mSenderName === String(activeConv.name).trim().toLowerCase()) {
+  // En chat de personal: si yo soy el destinatario y el mensaje no es mío -> NO soy yo
+  if (isPersonalChat && conv && myId) {
+    const cContact = String(conv.contactId != null ? conv.contactId : '').trim();
+    const cCreator = String(conv.creatorId != null ? conv.creatorId : '').trim();
+    if (cContact === myId && cCreator && cCreator !== myId) {
       return false;
     }
   }
 
-  if (senderRole === 'agent' || senderRole === 'operator' || senderRole === 'me') return true;
+  // En chat externo de clientes (WhatsApp/Soporte), mensajes de 'agent' enviados son del operador (lado derecho)
+  if (!isPersonalChat && !isCommunityChat) {
+    if (senderRole === 'agent' || senderRole === 'operator' || senderRole === 'me' || senderRole === 'outgoing') {
+      return true;
+    }
+  }
+
+  if (senderRole === 'me' || senderRole === 'outgoing') return true;
   return false;
 }
 
@@ -37050,12 +37050,18 @@ async function simulateIncomingMessageTest() {
 }
 
 function initMessagesRealtime() {
-  if (messagesEventSource) return;
+  const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+
+  if (messagesEventSource) {
+    if (messagesEventSource._connectedUserId === myId) return;
+    try { messagesEventSource.close(); } catch (_) {}
+    messagesEventSource = null;
+  }
 
   try {
-    const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? (currentUser.id || currentUser.username) : '';
     const sseUrl = myId ? `/api/messages/events?userId=${encodeURIComponent(myId)}` : '/api/messages/events';
     messagesEventSource = new EventSource(sseUrl);
+    messagesEventSource._connectedUserId = myId;
 
     messagesEventSource.onopen = () => {
       messagesSseRetryCount = 0;
@@ -37138,6 +37144,10 @@ function initMessagesRealtime() {
             }
           }
         } else if (data.type === 'conversation_read') {
+          // Si fue otro usuario en un chat privado quien leyó en su pantalla, NO borrar mis no leídos
+          if (data.userId && myId && String(data.userId) !== myId) {
+            return;
+          }
           const conv = (currentConversations || []).find(c => c.id === data.conversationId);
           if (conv) {
             conv.unreadCount = 0;
@@ -37183,7 +37193,7 @@ function handleIncomingRealtimeMessage(data) {
   }
 
   const isCurrentChatOpen = activeChannelMode === 'direct' && activeConversationId === conversationId;
-  const isFromMe = checkIfMessageIsMe(message);
+  const isFromMe = checkIfMessageIsMe(message, conversationId);
 
   // PREVENCIÓN DE TORMENTAS DE NOTIFICACIONES:
   // Solo sonar y notificar si el mensaje NO fue enviado por mí y es reciente (últimos 5 minutos para tolerancia a reloj)
@@ -37241,19 +37251,29 @@ function handleIncomingRealtimeMessage(data) {
       }
     }
 
-    // Marcar como leído en backend
-    fetch(`/api/messages/conversations/${encodeURIComponent(conversationId)}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+    // Marcar como leído en backend SOLO si no fui yo quien envió el mensaje
+    if (!isFromMe) {
+      fetch(`/api/messages/conversations/${encodeURIComponent(conversationId)}/read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(myId ? { 'x-user-id': myId } : {}) },
+        body: JSON.stringify(myId ? { userId: myId } : {})
+      }).catch(() => {});
+    }
   }
 
   // 3. Actualizar conversación en memoria y lista lateral
   let conv = (currentConversations || []).find(c => c.id === conversationId);
   if (conv) {
-    conv.lastMessage = message.text;
+    conv.lastMessage = message.text || (message.attachment ? (message.attachment.type === 'image' ? 'Foto adjunta' : 'Archivo adjunto') : '');
     conv.lastMessageTime = message.timestamp ? formatMessageTime(message.timestamp) : (message.timeFormatted || formatMessageTime(new Date()));
+    conv.lastMessageAt = message.timestamp || new Date().toISOString();
     if (isCurrentChatOpen) {
       conv.unreadCount = 0;
-    } else if (shouldNotify) {
-      if (typeof data.unreadCount === 'number' && data.unreadCount > 0) {
+    } else if (!isFromMe) {
+      // SIEMPRE que llegue un mensaje de otra persona y el chat no esté abierto, se marca como no leído / recién llegado
+      if (data.unreadCounts && myId && typeof data.unreadCounts[myId] === 'number') {
+        conv.unreadCount = data.unreadCounts[myId];
+      } else if (typeof data.unreadCount === 'number' && data.unreadCount > 0) {
         conv.unreadCount = data.unreadCount;
       } else {
         conv.unreadCount = (conv.unreadCount || 0) + 1;
@@ -37715,7 +37735,12 @@ async function selectConversation(convId) {
   }
 
   // Notificar al backend de inmediato para persistir lectura
-  fetch(`/api/messages/conversations/${encodeURIComponent(convId)}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+  const myCurrentUid = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+  fetch(`/api/messages/conversations/${encodeURIComponent(convId)}/read`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(myCurrentUid ? { 'x-user-id': myCurrentUid } : {}) },
+    body: JSON.stringify(myCurrentUid ? { userId: myCurrentUid } : {})
+  }).catch(() => {});
 
   // Ocultar botón de configuración de grupo y miembros ya que es un chat directo
   const grpSettingsBtn = document.getElementById('btn-community-group-settings');
