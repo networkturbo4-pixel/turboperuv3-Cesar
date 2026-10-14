@@ -9893,7 +9893,7 @@
   <!-- MODAL DE CREACIÓN / EDICIÓN DE ROLES RBAC (90vh)         -->
   <!-- ======================================================== -->
   <div id="role-modal" class="fixed inset-0 z-[260] hidden flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6">
-    <div class="pro-card max-w-3xl w-full h-[90vh] max-h-[90vh] p-6 rounded-2xl border border-white/10 shadow-2xl relative flex flex-col justify-between overflow-hidden my-auto">
+    <div class="pro-card max-w-4xl w-full h-[90vh] max-h-[90vh] p-6 rounded-2xl border border-white/10 shadow-2xl relative flex flex-col justify-between overflow-hidden my-auto">
       
       <!-- Modal Header (Fijo) -->
       <div class="flex items-center justify-between pb-4 border-b border-white/5 flex-shrink-0">
@@ -9933,30 +9933,46 @@
           </div>
 
           <!-- SECCIÓN: MÓDULOS EN BARRA LATERAL & PERMISOS GRANULARES -->
-          <div class="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/5">
-              <div class="flex items-center space-x-2.5">
+          <div class="p-3.5 sm:p-4 rounded-xl bg-slate-900/40 border border-white/10 space-y-3">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-white/5">
+              <div class="flex items-center space-x-3">
                 <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" /></svg>
                 </div>
                 <div>
                   <div class="flex items-center space-x-2">
-                    <span class="text-xs font-bold text-slate-200 uppercase tracking-wider">Módulos Visibles & Permisos Granulares</span>
+                    <span class="text-xs font-bold text-slate-100 uppercase tracking-wider">Módulos Visibles & Permisos Granulares</span>
                     <span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Despliegue Dinámico</span>
                   </div>
                   <p class="text-[10px] text-slate-400 mt-0.5">Activa qué módulos puede ver este rol en la barra lateral. Al activar el switch <span class="text-blue-400 font-semibold">Mostrar</span>, se desplegarán inmediatamente los permisos granulares asignables para ese módulo.</p>
                 </div>
               </div>
-              <div class="flex flex-wrap items-center gap-1.5 text-[10px] flex-shrink-0 pt-1 sm:pt-0">
-                <button type="button" onclick="toggleAllRoleModules(true)" class="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-blue-400 font-semibold transition border border-white/5">Mostrar Todos</button>
-                <button type="button" onclick="toggleAllRoleModules(false)" class="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-400 transition border border-white/5">Ocultar</button>
-                <button type="button" onclick="toggleAllRolePermissions(true)" class="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-purple-400 font-semibold transition border border-white/5">Marcar Permisos</button>
-                <button type="button" onclick="toggleAllRolePermissions(false)" class="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-400 transition border border-white/5">Desmarcar</button>
+              <div class="flex flex-wrap items-center gap-1.5 text-[10px] flex-shrink-0">
+                <button type="button" onclick="toggleAllRoleModules(true)" class="px-2.5 py-1 rounded-md bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-semibold transition border border-blue-500/20">Mostrar Todos</button>
+                <button type="button" onclick="toggleAllRoleModules(false)" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-400 transition border border-white/5">Ocultar</button>
+                <button type="button" onclick="toggleAllRolePermissions(true)" class="px-2.5 py-1 rounded-md bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 font-semibold transition border border-purple-500/20">Marcar Permisos</button>
+                <button type="button" onclick="toggleAllRolePermissions(false)" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-400 transition border border-white/5">Desmarcar</button>
+              </div>
+            </div>
+
+            <!-- Barra de Filtros por Categoría & Buscador -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 pb-1">
+              <div class="flex flex-wrap items-center gap-1.5 text-[10px]" id="role-category-filters">
+                <button type="button" onclick="filterRoleCategory('all', this)" class="role-cat-btn px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium border border-blue-500 transition">Todos (12)</button>
+                <button type="button" onclick="filterRoleCategory('ops', this)" class="role-cat-btn px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 font-medium border border-white/5 transition">Operaciones (3)</button>
+                <button type="button" onclick="filterRoleCategory('infra', this)" class="role-cat-btn px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 font-medium border border-white/5 transition">Red & Fibra (4)</button>
+                <button type="button" onclick="filterRoleCategory('admin', this)" class="role-cat-btn px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 font-medium border border-white/5 transition">Administración (5)</button>
+              </div>
+              <div class="relative w-full sm:w-60">
+                <input type="text" id="role-filter-search" oninput="handleRoleSearch(this.value)" placeholder="Buscar módulo o permiso..." class="w-full bg-black/40 border border-white/10 rounded-lg pl-8 pr-3 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
               </div>
             </div>
 
             <!-- Contenedor dinámico de módulos con sus permisos acoplados -->
-            <div id="role-modules-grid" class="space-y-2.5 pt-1">
+            <div id="role-modules-grid" class="space-y-3 pt-1">
               <!-- Renderizado dinámico de tarjetas de módulos con sus permisos granulares acoplados -->
             </div>
             <div id="role-permissions-list" class="hidden"></div>
@@ -20627,18 +20643,18 @@ Estamos atentos para brindarle asistencia inmediata.
     let editingRoleId = null;
 
     const SYSTEM_MODULES = [
-      { id: 'dashboard', name: 'Dashboard General', desc: 'Panel de métricas y KPIs ejecutivos', iconSvg: '<svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>' },
-      { id: 'customers', name: 'Clientes & Contratos', desc: 'Directorio de clientes y contratos', iconSvg: '<svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>' },
-      { id: 'messages', name: 'Mensajes & Chat', desc: 'Canales de soporte, clientes y cuadrillas', iconSvg: '<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>' },
-      { id: 'billing', name: 'Facturación & Pagos', desc: 'Recibos, cobranzas y corte de servicio', iconSvg: '<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>' },
-      { id: 'inventory', name: 'Inventario & Stock', desc: 'Almacén central, compras y códigos', iconSvg: '<svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>' },
-      { id: 'mochila', name: 'Mochila Técnica', desc: 'Materiales asignados y cuadrillas', iconSvg: '<svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>' },
-      { id: 'network', name: 'Red & OLTs Multi-Vendor', desc: 'MikroTik, OLTs Huawei/ZTE y topología', iconSvg: '<svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>' },
-      { id: 'maps', name: 'Mapas & Cobertura FTTH', desc: 'Mapeo visual de red, postes, cajas NAP y cobertura', iconSvg: '<svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>' },
-      { id: 'plans', name: 'Servicios & Planes', desc: 'Tarifas y planes de ancho de banda', iconSvg: '<svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>' },
-      { id: 'rrhh', name: 'RRHH & Asistencias', desc: 'Colaboradores, asistencias y turnos', iconSvg: '<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>' },
-      { id: 'config', name: 'Configuración & Marca', desc: 'Branding, empresa, datos fiscales y roles', iconSvg: '<svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' },
-      { id: 'system', name: 'Diagnóstico & RAM', desc: 'Métricas del sistema, memoria y CPU', iconSvg: '<svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>' }
+      { id: 'dashboard', name: 'Dashboard General', desc: 'Panel de métricas y KPIs ejecutivos', category: 'admin', categoryLabel: 'Administración', iconSvg: '<svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>' },
+      { id: 'customers', name: 'Clientes & Contratos', desc: 'Directorio de clientes y contratos', category: 'ops', categoryLabel: 'Operaciones', iconSvg: '<svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>' },
+      { id: 'messages', name: 'Mensajes & Chat', desc: 'Canales de soporte, clientes y cuadrillas', category: 'ops', categoryLabel: 'Operaciones', iconSvg: '<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>' },
+      { id: 'billing', name: 'Facturación & Pagos', desc: 'Recibos, cobranzas y corte de servicio', category: 'ops', categoryLabel: 'Operaciones', iconSvg: '<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>' },
+      { id: 'inventory', name: 'Inventario & Stock', desc: 'Almacén central, compras y códigos', category: 'infra', categoryLabel: 'Infraestructura', iconSvg: '<svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>' },
+      { id: 'mochila', name: 'Mochila Técnica', desc: 'Materiales asignados y cuadrillas', category: 'infra', categoryLabel: 'Infraestructura', iconSvg: '<svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>' },
+      { id: 'network', name: 'Red & OLTs Multi-Vendor', desc: 'MikroTik, OLTs Huawei/ZTE y topología', category: 'infra', categoryLabel: 'Infraestructura', iconSvg: '<svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>' },
+      { id: 'maps', name: 'Mapas & Cobertura FTTH', desc: 'Mapeo visual de red, postes, cajas NAP y cobertura', category: 'infra', categoryLabel: 'Infraestructura', iconSvg: '<svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>' },
+      { id: 'plans', name: 'Servicios & Planes', desc: 'Tarifas y planes de ancho de banda', category: 'admin', categoryLabel: 'Administración', iconSvg: '<svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>' },
+      { id: 'rrhh', name: 'RRHH & Asistencias', desc: 'Colaboradores, asistencias y turnos', category: 'admin', categoryLabel: 'Administración', iconSvg: '<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>' },
+      { id: 'config', name: 'Configuración & Marca', desc: 'Branding, empresa, datos fiscales y roles', category: 'admin', categoryLabel: 'Administración', iconSvg: '<svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' },
+      { id: 'system', name: 'Diagnóstico & RAM', desc: 'Métricas del sistema, memoria y CPU', category: 'admin', categoryLabel: 'Administración', iconSvg: '<svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>' }
     ];
 
     const MODULE_LABELS = {
@@ -20942,6 +20958,49 @@ Estamos atentos para brindarle asistencia inmediata.
       }
     }
 
+    let currentRoleCategoryFilter = 'all';
+    let currentRoleSearchQuery = '';
+
+    function filterRoleCategory(cat, btn) {
+      currentRoleCategoryFilter = cat;
+      document.querySelectorAll('#role-category-filters .role-cat-btn').forEach(b => {
+        b.className = "role-cat-btn px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 font-medium border border-white/5 transition";
+      });
+      if (btn) {
+        btn.className = "role-cat-btn px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium border border-blue-500 transition";
+      }
+      applyRoleFilters();
+    }
+
+    function handleRoleSearch(q) {
+      currentRoleSearchQuery = (q || '').trim().toLowerCase();
+      applyRoleFilters();
+    }
+
+    function applyRoleFilters() {
+      const cards = document.querySelectorAll('#role-modules-grid .role-module-card');
+      const catHeaders = document.querySelectorAll('#role-modules-grid .role-category-header');
+      
+      cards.forEach(card => {
+        const cat = card.getAttribute('data-category');
+        const searchContent = card.getAttribute('data-search') || '';
+        
+        const matchesCat = (currentRoleCategoryFilter === 'all' || cat === currentRoleCategoryFilter);
+        const matchesQuery = !currentRoleSearchQuery || searchContent.includes(currentRoleSearchQuery);
+        
+        card.style.display = (matchesCat && matchesQuery) ? '' : 'none';
+      });
+
+      catHeaders.forEach(hdr => {
+        const cat = hdr.getAttribute('data-category');
+        if (currentRoleCategoryFilter !== 'all' || currentRoleSearchQuery) {
+          hdr.style.display = 'none';
+        } else {
+          hdr.style.display = '';
+        }
+      });
+    }
+
     function renderRoleModulesCheckboxes(selectedModules = [], selectedPerms = []) {
       const container = document.getElementById('role-modules-grid');
       if (!container) return;
@@ -20951,77 +21010,147 @@ Estamos atentos para brindarle asistencia inmediata.
         ? selectedModules
         : allModIds;
 
-      container.innerHTML = SYSTEM_MODULES.map(m => {
-        const isChecked = activeList.includes(m.id);
-        const perms = MODULE_PERMISSIONS_MAP[m.id] || [];
+      const categories = [
+        { 
+          key: 'ops', 
+          name: 'Operaciones & Clientes', 
+          desc: 'Gestión comercial, soporte y facturación',
+          iconSvg: '<svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>'
+        },
+        { 
+          key: 'infra', 
+          name: 'Red, Fibra & Logística', 
+          desc: 'Equipamiento, trazado FTTH, stock y cuadrillas',
+          iconSvg: '<svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>'
+        },
+        { 
+          key: 'admin', 
+          name: 'Administración & Sistema', 
+          desc: 'Métricas ejecutivas, RRHH, planes y configuración global',
+          iconSvg: '<svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>'
+        }
+      ];
 
-        return `
-          <div class="p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.04] border border-white/5 transition flex flex-col justify-between">
-            <div class="flex items-center justify-between pb-2">
-              <div class="flex items-center space-x-2.5 min-w-0 pr-2">
-                <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
-                  ${m.iconSvg}
-                </div>
-                <div class="min-w-0">
-                  <div class="text-xs font-semibold text-slate-200 truncate">${escapeHtml(m.name)}</div>
-                  <div class="text-[10px] text-slate-400 truncate">${escapeHtml(m.desc)}</div>
-                </div>
-              </div>
-              <div class="flex items-center space-x-2 flex-shrink-0">
-                <span class="text-[10px] font-medium text-slate-400">Mostrar</span>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" data-mod-id="${m.id}" ${isChecked ? 'checked' : ''} onchange="handleRoleModuleToggle('${m.id}', this.checked)" class="sr-only peer">
-                  <div class="w-9 h-5 bg-slate-700/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
+      let html = '';
+
+      categories.forEach(cat => {
+        const modulesInCat = SYSTEM_MODULES.filter(m => m.category === cat.key);
+        if (modulesInCat.length === 0) return;
+
+        html += `
+          <div class="role-category-header flex items-center justify-between pt-2 pb-1 border-b border-white/5" data-category="${cat.key}">
+            <div class="flex items-center space-x-2">
+              ${cat.iconSvg}
+              <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">${cat.name}</span>
+              <span class="text-[10px] text-slate-500 font-normal">(${modulesInCat.length})</span>
             </div>
-
-            <!-- Contenedor dinámico de permisos granulares para este módulo -->
-            <div id="role-mod-perms-${m.id}" class="mt-2 pt-2.5 border-t border-white/5 ${isChecked ? '' : 'hidden'}">
-              <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
-                  <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Permisos del Módulo:</span>
-                  <span id="role-mod-perms-count-${m.id}" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400">0/${perms.length}</span>
-                </div>
-                ${perms.length > 0 ? `
-                  <div class="flex items-center space-x-1">
-                    <button type="button" onclick="toggleModulePerms('${m.id}', true)" class="text-[10px] text-blue-400 hover:text-blue-300 hover:underline px-1 py-0.5">Todos</button>
-                    <span class="text-slate-600 text-[10px]">|</span>
-                    <button type="button" onclick="toggleModulePerms('${m.id}', false)" class="text-[10px] text-slate-400 hover:text-slate-300 hover:underline px-1 py-0.5">Ninguno</button>
-                  </div>
-                ` : ''}
-              </div>
-
-              ${perms.length > 0 ? `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  ${perms.map(p => {
-                    const pChecked = isChecked && selectedPerms.includes(p.id);
-                    return `
-                      <label class="flex items-start space-x-2 p-1.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 cursor-pointer transition">
-                        <input type="checkbox" data-perm-id="${p.id}" ${pChecked ? 'checked' : ''} onchange="updateModulePermCount('${m.id}')" class="mt-0.5 rounded border-white/20 text-blue-600 focus:ring-0 focus:ring-offset-0 bg-white/5">
-                        <div class="min-w-0 pr-1">
-                          <div class="text-[11px] font-medium text-slate-200 leading-tight">${escapeHtml(p.name)}</div>
-                          <div class="text-[9px] text-slate-400 leading-tight truncate mt-0.5">${escapeHtml(p.description)}</div>
-                          <span class="font-mono text-[8px] text-slate-500">${escapeHtml(p.id)}</span>
-                        </div>
-                      </label>
-                    `;
-                  }).join('')}
-                </div>
-              ` : `
-                <div class="text-[10px] text-slate-500 italic py-1">Acceso directo al habilitar el módulo (no requiere permisos adicionales).</div>
-              `}
-            </div>
+            <span class="text-[10px] text-slate-500 hidden sm:inline">${cat.desc}</span>
           </div>
         `;
-      }).join('');
 
-      // Actualizar contadores iniciales
+        modulesInCat.forEach(m => {
+          const isChecked = activeList.includes(m.id);
+          const perms = MODULE_PERMISSIONS_MAP[m.id] || [];
+          const searchKeywords = (m.name + ' ' + m.desc + ' ' + m.id + ' ' + perms.map(p => p.name + ' ' + p.description + ' ' + p.id).join(' ')).toLowerCase();
+
+          html += `
+            <div class="role-module-card rounded-xl border transition-all duration-150 ${isChecked ? 'bg-slate-900/60 border-slate-700/80 shadow-sm' : 'bg-white/[0.015] border-white/5 opacity-70'}" data-category="${m.category}" data-search="${escapeHtml(searchKeywords)}">
+              <!-- Cabecera del Módulo -->
+              <div class="p-3 sm:p-3.5 flex items-center justify-between gap-3">
+                <div class="flex items-center space-x-3 min-w-0">
+                  <div class="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0 shadow-inner">
+                    ${m.iconSvg}
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center space-x-2">
+                      <span class="text-xs font-semibold text-slate-100 tracking-wide">${escapeHtml(m.name)}</span>
+                      <span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-slate-400 border border-white/5">${escapeHtml(m.categoryLabel)}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400 truncate mt-0.5">${escapeHtml(m.desc)}</div>
+                  </div>
+                </div>
+
+                <!-- Controles de cabecera -->
+                <div class="flex items-center space-x-3 flex-shrink-0">
+                  <span id="role-mod-perms-badge-${m.id}" class="hidden sm:inline-flex text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-slate-400 border border-white/5">
+                    ${perms.length === 0 ? 'Acceso directo' : '0/' + perms.length + ' permisos'}
+                  </span>
+
+                  <!-- Switch Mostrar -->
+                  <div class="flex items-center space-x-2 bg-white/[0.03] border border-white/5 px-2.5 py-1 rounded-lg">
+                    <span class="text-[10px] font-medium text-slate-300">Mostrar</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" data-mod-id="${m.id}" ${isChecked ? 'checked' : ''} onchange="handleRoleModuleToggle('${m.id}', this.checked)" class="sr-only peer">
+                      <div class="w-9 h-5 bg-slate-700/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contenedor dinámico de permisos granulares para este módulo -->
+              <div id="role-mod-perms-${m.id}" class="px-3 sm:px-3.5 pb-3.5 pt-2.5 border-t border-white/5 ${isChecked ? '' : 'hidden'} bg-black/20 rounded-b-xl">
+                <div class="flex items-center justify-between mb-2.5">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Permisos del Módulo:</span>
+                    <span id="role-mod-perms-count-${m.id}" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400">0/${perms.length}</span>
+                  </div>
+                  ${perms.length > 0 ? `
+                    <div class="flex items-center space-x-1.5">
+                      <button type="button" onclick="toggleModulePerms('${m.id}', true)" class="px-2 py-0.5 rounded text-[10px] font-medium text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition">Todos</button>
+                      <button type="button" onclick="toggleModulePerms('${m.id}', false)" class="px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 hover:text-slate-300 bg-white/5 hover:bg-white/10 border border-white/5 transition">Ninguno</button>
+                    </div>
+                  ` : ''}
+                </div>
+
+                ${perms.length > 0 ? `
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    ${perms.map(p => {
+                      const pChecked = isChecked && selectedPerms.includes(p.id);
+                      return `
+                        <label class="role-perm-card flex items-start space-x-2.5 p-2.5 rounded-lg border transition-all cursor-pointer select-none ${pChecked ? 'bg-blue-500/10 border-blue-500/30' : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.04]'}">
+                          <input type="checkbox" data-perm-id="${p.id}" ${pChecked ? 'checked' : ''} onchange="updateModulePermCount('${m.id}')" class="mt-0.5 rounded border-white/20 text-blue-600 focus:ring-0 focus:ring-offset-0 bg-white/5 cursor-pointer flex-shrink-0">
+                          <div class="min-w-0 flex-1">
+                            <div class="flex items-center justify-between gap-1.5">
+                              <span class="text-[11px] font-semibold text-slate-200 leading-tight">${escapeHtml(p.name)}</span>
+                              <span class="font-mono text-[8px] text-slate-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/5 flex-shrink-0">${escapeHtml(p.id)}</span>
+                            </div>
+                            <div class="text-[10px] text-slate-400 leading-normal mt-1">${escapeHtml(p.description)}</div>
+                          </div>
+                        </label>
+                      `;
+                    }).join('')}
+                  </div>
+                ` : `
+                  <div class="flex items-center space-x-2 text-[10px] text-slate-400 bg-white/[0.02] border border-white/5 rounded-lg px-3 py-2">
+                    <svg class="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Acceso directo al habilitar el módulo (no requiere permisos adicionales).</span>
+                  </div>
+                `}
+              </div>
+            </div>
+          `;
+        });
+      });
+
+      container.innerHTML = html;
+
+      // Actualizar contadores iniciales y estados
       SYSTEM_MODULES.forEach(m => updateModulePermCount(m.id));
+      applyRoleFilters();
     }
 
     function handleRoleModuleToggle(modId, isChecked) {
       const permsDiv = document.getElementById(`role-mod-perms-${modId}`);
+      const card = permsDiv?.closest('.role-module-card');
+      if (card) {
+        if (isChecked) {
+          card.classList.remove('bg-white/[0.015]', 'border-white/5', 'opacity-70');
+          card.classList.add('bg-slate-900/60', 'border-slate-700/80', 'shadow-sm');
+        } else {
+          card.classList.remove('bg-slate-900/60', 'border-slate-700/80', 'shadow-sm');
+          card.classList.add('bg-white/[0.015]', 'border-white/5', 'opacity-70');
+        }
+      }
       if (permsDiv) {
         permsDiv.classList.toggle('hidden', !isChecked);
         if (!isChecked) {
@@ -21043,15 +21172,43 @@ Estamos atentos para brindarle asistencia inmediata.
     function updateModulePermCount(modId) {
       const permsDiv = document.getElementById(`role-mod-perms-${modId}`);
       const badge = document.getElementById(`role-mod-perms-count-${modId}`);
+      const summaryBadge = document.getElementById(`role-mod-perms-badge-${modId}`);
       if (permsDiv && badge) {
         const allCb = permsDiv.querySelectorAll('input[data-perm-id]');
         const checkedCb = permsDiv.querySelectorAll('input[data-perm-id]:checked');
         badge.textContent = `${checkedCb.length}/${allCb.length}`;
         if (checkedCb.length > 0) {
-          badge.className = "text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold";
+          badge.className = "text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30";
         } else {
-          badge.className = "text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400";
+          badge.className = "text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400 border border-white/5";
         }
+        if (summaryBadge) {
+          if (allCb.length === 0) {
+            summaryBadge.textContent = 'Acceso directo';
+            summaryBadge.className = 'hidden sm:inline-flex text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-slate-400 border border-white/5';
+          } else if (checkedCb.length === allCb.length) {
+            summaryBadge.textContent = `${checkedCb.length}/${allCb.length} todos activos`;
+            summaryBadge.className = 'hidden sm:inline-flex text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/25';
+          } else if (checkedCb.length > 0) {
+            summaryBadge.textContent = `${checkedCb.length}/${allCb.length} permisos`;
+            summaryBadge.className = 'hidden sm:inline-flex text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/25';
+          } else {
+            summaryBadge.textContent = `0/${allCb.length} permisos`;
+            summaryBadge.className = 'hidden sm:inline-flex text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-slate-500 border border-white/5';
+          }
+        }
+        allCb.forEach(cb => {
+          const card = cb.closest('.role-perm-card');
+          if (card) {
+            if (cb.checked) {
+              card.classList.remove('bg-white/[0.02]', 'border-white/5', 'hover:bg-white/[0.04]');
+              card.classList.add('bg-blue-500/10', 'border-blue-500/30');
+            } else {
+              card.classList.remove('bg-blue-500/10', 'border-blue-500/30');
+              card.classList.add('bg-white/[0.02]', 'border-white/5', 'hover:bg-white/[0.04]');
+            }
+          }
+        });
       }
     }
 
@@ -21084,6 +21241,18 @@ Estamos atentos para brindarle asistencia inmediata.
       SYSTEM_MODULES.forEach(m => updateModulePermCount(m.id));
     }
 
+    function resetRoleFiltersUI() {
+      currentRoleCategoryFilter = 'all';
+      currentRoleSearchQuery = '';
+      const searchInput = document.getElementById('role-filter-search');
+      if (searchInput) searchInput.value = '';
+      document.querySelectorAll('#role-category-filters .role-cat-btn').forEach((b, idx) => {
+        b.className = idx === 0 
+          ? "role-cat-btn px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium border border-blue-500 transition"
+          : "role-cat-btn px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 font-medium border border-white/5 transition";
+      });
+    }
+
     function openCreateRoleModal() {
       if (!hasPermission('roles:manage')) {
         showToast("Acceso denegado: No tienes permiso para crear roles.", "error");
@@ -21098,6 +21267,7 @@ Estamos atentos para brindarle asistencia inmediata.
       document.getElementById('role-desc-input').value = "";
       document.getElementById('role-modal-error').textContent = "";
       document.getElementById('btn-save-role-text').textContent = "Crear Rol";
+      resetRoleFiltersUI();
       renderRoleModulesCheckboxes(SYSTEM_MODULES.map(m => m.id), []);
       renderRolePermissionsCheckboxes([]);
       document.getElementById('role-modal').classList.remove('hidden');
@@ -21120,6 +21290,7 @@ Estamos atentos para brindarle asistencia inmediata.
       document.getElementById('role-desc-input').value = role.description || "";
       document.getElementById('role-modal-error').textContent = "";
       document.getElementById('btn-save-role-text').textContent = "Guardar Cambios";
+      resetRoleFiltersUI();
       renderRoleModulesCheckboxes(role.allowedModules || SYSTEM_MODULES.map(m => m.id), role.permissions || []);
       renderRolePermissionsCheckboxes(role.permissions || []);
       document.getElementById('role-modal').classList.remove('hidden');
