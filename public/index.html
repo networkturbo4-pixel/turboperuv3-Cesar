@@ -41,6 +41,7 @@
   <script src="/js/jsQR.min.js"></script>
   <link rel="stylesheet" href="/assets/mapbox-gl.css">
   <script src="/js/mapbox-gl.js"></script>
+  <script src="/js/turbo-calls.js"></script>
 
   <!-- Motor Háptico Nativo Temprano (Feedback físico instantáneo en móvil) -->
   <script>
@@ -19977,6 +19978,9 @@
           refreshTodayAttendanceForActiveTenant()
         ]);
         populateAttendanceTenantFilter();
+        if (typeof initMessagesRealtime === 'function') {
+          try { initMessagesRealtime(); } catch (_) {}
+        }
       } catch (e) {}
     }
 
@@ -37119,15 +37123,18 @@ async function simulateIncomingMessageTest() {
 
 function initMessagesRealtime() {
   const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+  const tenant = (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork';
 
   if (messagesEventSource) {
-    if (messagesEventSource._connectedUserId === myId) return;
+    if (messagesEventSource._connectedUserId === myId && messagesEventSource.readyState !== EventSource.CLOSED) return;
     try { messagesEventSource.close(); } catch (_) {}
     messagesEventSource = null;
   }
 
   try {
-    const sseUrl = myId ? `/api/messages/events?userId=${encodeURIComponent(myId)}` : '/api/messages/events';
+    const sseUrl = myId 
+      ? `/api/messages/events?userId=${encodeURIComponent(myId)}&tenantId=${encodeURIComponent(tenant)}` 
+      : `/api/messages/events?tenantId=${encodeURIComponent(tenant)}`;
     messagesEventSource = new EventSource(sseUrl);
     messagesEventSource._connectedUserId = myId;
 
@@ -37136,7 +37143,7 @@ function initMessagesRealtime() {
         getUserId: () => (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '',
         getUserName: () => (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : 'Usuario',
         getUserAvatar: () => (typeof currentUser !== 'undefined' && currentUser && (currentUser.avatarUrl || currentUser.avatar)) ? (currentUser.avatarUrl || currentUser.avatar) : '',
-        getTenantId: () => (typeof currentTenantId !== 'undefined' && currentTenantId) ? currentTenantId : 'default',
+        getTenantId: () => (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork',
       });
     }
 
@@ -37630,7 +37637,7 @@ function formatLastMessageWithSvgIcon(lastMsg) {
 
 // Resolver la perspectiva de visualización de una conversación (especialmente entre colaboradores del sistema)
 function getConversationDisplayInfo(c) {
-  if (!c) return { name: 'Contacto', avatar: '', role: '', phone: '', isSelf: false };
+  if (!c) return { id: '', userId: '', name: 'Contacto', avatar: '', role: '', phone: '', isSelf: false };
   
   const isPersonal = (c.type === 'personal' || (Array.isArray(c.tags) && c.tags.includes('personal')) || c.contactType === 'personal');
   
@@ -37642,7 +37649,7 @@ function getConversationDisplayInfo(c) {
     
     // Si este chat tiene ambos lados apuntando a mí (self chat de prueba), descartarlo
     if (myId && contactId === myId && (!creatorId || creatorId === myId)) {
-      return { name: c.name || 'Yo', avatar: c.avatar || '', role: 'Yo', isSelf: true };
+      return { id: myId, userId: myId, name: c.name || 'Yo', avatar: c.avatar || '', role: 'Yo', isSelf: true };
     }
 
     // Si yo soy el "contactId" (destinatario original del chat) o el nombre del chat coincide con mi nombre:
@@ -37651,21 +37658,30 @@ function getConversationDisplayInfo(c) {
     if (isContactMe) {
       // Para mí, la persona con la que estoy chateando es el CREADOR / el otro participante
       let partnerUser = null;
+      let partnerId = '';
       if (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers)) {
         if (creatorId && creatorId !== myId) {
           partnerUser = currentUsers.find(u => String(u.id) === creatorId);
+          if (partnerUser) partnerId = String(partnerUser.id);
         }
         if (!partnerUser && c.participants && Array.isArray(c.participants)) {
           const otherId = c.participants.find(p => String(p) !== myId);
-          if (otherId) partnerUser = currentUsers.find(u => String(u.id) === String(otherId));
+          if (otherId) {
+            partnerUser = currentUsers.find(u => String(u.id) === String(otherId));
+            partnerId = String(otherId);
+          }
         }
         // Fallback: buscar en los mensajes un remitente que no sea yo
         if (!partnerUser && c.messages && Array.isArray(c.messages)) {
           const otherMsg = c.messages.slice().reverse().find(m => m.senderId && String(m.senderId) !== myId);
           if (otherMsg) {
             partnerUser = currentUsers.find(u => String(u.id) === String(otherMsg.senderId) || (u.name && u.name.trim().toLowerCase() === (otherMsg.senderName || '').trim().toLowerCase()));
+            partnerId = String(otherMsg.senderId);
           }
         }
+      }
+      if (!partnerId) {
+        partnerId = (creatorId && creatorId !== myId) ? creatorId : '';
       }
 
       const partnerName = partnerUser ? partnerUser.name : (c.creatorName || 'Colaborador');
@@ -37674,6 +37690,8 @@ function getConversationDisplayInfo(c) {
       const partnerPhone = partnerUser ? (partnerUser.phone || partnerUser.email) : (c.creatorPhone || c.creatorEmail || '');
 
       return {
+        id: partnerId,
+        userId: partnerId,
         name: partnerName,
         avatar: partnerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(partnerName)}`,
         role: partnerRole,
@@ -37686,8 +37704,9 @@ function getConversationDisplayInfo(c) {
   // Comportamiento regular para chats de clientes o donde yo soy el iniciador del chat
   let dynamicAvatar = c.avatar || c.contactAvatar;
   const contactName = c.name || c.contactName || 'Contacto';
+  let matchedUser = null;
   if (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers) && currentUsers.length > 0) {
-    const matchedUser = currentUsers.find(u => 
+    matchedUser = currentUsers.find(u => 
       (c.userId && (String(u.id) === String(c.userId) || u.username === c.userId)) ||
       (c.contactId && String(u.id) === String(c.contactId)) ||
       (u.name && contactName && u.name.trim().toLowerCase() === contactName.trim().toLowerCase())
@@ -37697,7 +37716,11 @@ function getConversationDisplayInfo(c) {
     }
   }
 
+  const resolvedId = matchedUser ? String(matchedUser.id) : String(c.contactId || c.userId || '');
+
   return {
+    id: resolvedId,
+    userId: resolvedId,
     name: contactName,
     avatar: dynamicAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || c.id)}`,
     role: c.planOrRole || c.contactDetail || (isPersonal ? 'Personal' : 'Cliente Conectado'),
@@ -46176,11 +46199,16 @@ async function sendCurrentLocation(isLive) {
 let lastProdSyncTimestamp = 0;
 async function syncMessagesInProduction() {
   try {
+    // Si la conexión SSE en tiempo real está abierta y activa, no consultar por polling HTTP
+    if (typeof messagesEventSource !== 'undefined' && messagesEventSource && messagesEventSource.readyState === 1) {
+      return;
+    }
+
     if (activeChannelMode === 'direct' && activeConversationId) {
-      const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages?limit=50`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.success && Array.isArray(data.data)) {
+      const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages?limit=25`).catch(() => null);
+      if (!res || !res.ok) return;
+      const data = await res.json().catch(() => null);
+      if (data && data.success && Array.isArray(data.data)) {
         const existingIds = new Set((currentChatMessages || []).map(m => m.id));
         let hasNew = false;
         for (const m of data.data) {
@@ -46207,10 +46235,10 @@ async function syncMessagesInProduction() {
         }
       }
     } else if (activeChannelMode === 'community' && activeCommunityId && activeGroupId) {
-      const res = await fetch(`/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages?limit=50`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.success && Array.isArray(data.data)) {
+      const res = await fetch(`/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages?limit=25`).catch(() => null);
+      if (!res || !res.ok) return;
+      const data = await res.json().catch(() => null);
+      if (data && data.success && Array.isArray(data.data)) {
         const existingIds = new Set((currentChatMessages || []).map(m => m.id));
         let hasNew = false;
         for (const m of data.data) {
@@ -46237,13 +46265,14 @@ async function syncMessagesInProduction() {
         }
       }
     }
-    if (Date.now() - lastProdSyncTimestamp > 12000) {
+    if (Date.now() - lastProdSyncTimestamp > 15000) {
       lastProdSyncTimestamp = Date.now();
       const myUid = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
       const convUrl = myUid ? `/api/messages/conversations?category=${encodeURIComponent(activeMessageFilter || 'all')}&currentUserId=${encodeURIComponent(myUid)}` : '/api/messages/conversations';
-      const r = await fetch(convUrl, { headers: myUid ? { 'x-user-id': myUid } : {} });
-      const d = await r.json();
-      if (d.success && Array.isArray(d.data)) {
+      const r = await fetch(convUrl, { headers: myUid ? { 'x-user-id': myUid } : {} }).catch(() => null);
+      if (!r || !r.ok) return;
+      const d = await r.json().catch(() => null);
+      if (d && d.success && Array.isArray(d.data)) {
         currentConversations = sortConversationsList(d.data);
         if (activeChannelMode === 'direct' && activeConversationId) {
           const cur = currentConversations.find(c => c.id === activeConversationId);
@@ -46253,7 +46282,9 @@ async function syncMessagesInProduction() {
         if (typeof updateGlobalUnreadBadges === 'function') updateGlobalUnreadBadges();
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    // Silencio de excepciones de polling secundario
+  }
 }
 // ==========================================
 // FUNCIONES INTEGRADAS DE LLAMADAS Y SOPORTE
@@ -46285,16 +46316,34 @@ function updateChatCallButtons(conversation, displayInfo) {
 
 function handleStartCall(type) {
   const conv = (currentConversations || []).find(c => c.id === activeConversationId);
-  if (!conv) return;
-  const displayInfo = getConversationDisplayInfo(conv);
-  
-  let targetId = conv.contactId;
-  const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
-  if (String(conv.contactId) === myId && conv.creatorId) {
-    targetId = conv.creatorId;
+  if (!conv) {
+    showToast('Selecciona una conversación primero', 'error');
+    return;
   }
-  if (!targetId && conv.participants && Array.isArray(conv.participants)) {
-    targetId = conv.participants.find(p => String(p) !== myId);
+  const displayInfo = getConversationDisplayInfo(conv);
+  const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+
+  let targetId = displayInfo.id;
+  if (!targetId || String(targetId) === myId) {
+    if (conv.creatorId && String(conv.creatorId) !== myId) {
+      targetId = String(conv.creatorId);
+    } else if (conv.contactId && String(conv.contactId) !== myId) {
+      targetId = String(conv.contactId);
+    } else if (conv.userId && String(conv.userId) !== myId) {
+      targetId = String(conv.userId);
+    } else if (conv.participants && Array.isArray(conv.participants)) {
+      const other = conv.participants.find(p => String(p) !== myId);
+      if (other) targetId = String(other);
+    }
+    if ((!targetId || String(targetId) === myId) && conv.messages && Array.isArray(conv.messages)) {
+      const otherMsg = conv.messages.slice().reverse().find(m => m.senderId && String(m.senderId) !== myId);
+      if (otherMsg) targetId = String(otherMsg.senderId);
+    }
+  }
+
+  if (!targetId || String(targetId) === myId) {
+    alert('No se pudo identificar al otro participante para realizar la llamada.');
+    return;
   }
 
   if (window.TurboCalls) {
@@ -46303,6 +46352,8 @@ function handleStartCall(type) {
       name: displayInfo.name,
       avatar: displayInfo.avatar
     });
+  } else {
+    alert('El módulo de llamadas se está inicializando. Por favor reintente en unos segundos.');
   }
 }
 
@@ -46342,10 +46393,9 @@ function triggerCustomerPhoneCall() {
   const menu = document.getElementById('customer-call-menu-dropdown');
   if (menu) menu.classList.add('hidden');
 }
-setInterval(syncMessagesInProduction, 6000);
+setInterval(syncMessagesInProduction, 15000);
 
   </script>
-  <script src="/js/turbo-calls.js"></script>
   <script src="/js/maps-module.js"></script>
 
   <!-- ======================================================== -->

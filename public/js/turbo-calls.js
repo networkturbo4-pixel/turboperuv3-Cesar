@@ -20,7 +20,68 @@
       getUserId: () => '',
       getUserName: () => 'Usuario',
       getUserAvatar: () => '',
-      getTenantId: () => 'default',
+      getTenantId: () => 'turbonetwork',
+    },
+
+    // Getters con recuperación en cascada (options -> window.currentUser -> localStorage)
+    getUserId() {
+      if (typeof this.options.getUserId === 'function') {
+        const id = this.options.getUserId();
+        if (id) return String(id);
+      }
+      if (typeof window.currentUser !== 'undefined' && window.currentUser && (window.currentUser.id || window.currentUser.username)) {
+        return String(window.currentUser.id || window.currentUser.username);
+      }
+      try {
+        const sess = localStorage.getItem('turbonetwork_session') || localStorage.getItem('turbonetwork_active_user');
+        if (sess) {
+          const parsed = JSON.parse(sess);
+          if (parsed && (parsed.id || parsed.username)) return String(parsed.id || parsed.username);
+        }
+      } catch (_) {}
+      return '';
+    },
+
+    getUserName() {
+      if (typeof this.options.getUserName === 'function') {
+        const name = this.options.getUserName();
+        if (name && name !== 'Usuario') return name;
+      }
+      if (typeof window.currentUser !== 'undefined' && window.currentUser && window.currentUser.name) {
+        return window.currentUser.name;
+      }
+      try {
+        const sess = localStorage.getItem('turbonetwork_session');
+        if (sess) {
+          const parsed = JSON.parse(sess);
+          if (parsed && parsed.name) return parsed.name;
+        }
+      } catch (_) {}
+      return 'Usuario';
+    },
+
+    getUserAvatar() {
+      if (typeof this.options.getUserAvatar === 'function') {
+        const av = this.options.getUserAvatar();
+        if (av) return av;
+      }
+      if (typeof window.currentUser !== 'undefined' && window.currentUser && (window.currentUser.avatarUrl || window.currentUser.avatar)) {
+        return window.currentUser.avatarUrl || window.currentUser.avatar;
+      }
+      return '';
+    },
+
+    getTenantId() {
+      if (typeof this.options.getTenantId === 'function') {
+        const t = this.options.getTenantId();
+        if (t && t !== 'default') return t;
+      }
+      if (typeof window.activeTenantId !== 'undefined' && window.activeTenantId) {
+        return window.activeTenantId;
+      }
+      const ls = localStorage.getItem('turbonetwork_active_tenant');
+      if (ls) return ls;
+      return 'turbonetwork';
     },
 
     // Estado de la llamada
@@ -46,12 +107,77 @@
     remoteStream: null,
     ringtoneOscillators: [],
     ringtoneInterval: null,
+    _titleBlinkTimer: null,
+    _originalTitle: null,
+    _activeDesktopNotif: null,
 
     init(opts = {}) {
       this.options = Object.assign(this.options, opts);
       this.injectUI();
       this.bindGlobalEvents();
-      console.log('⚡ [TurboCalls] Módulo de llamadas WebRTC inicializado');
+      console.log('⚡ [TurboCalls] Módulo de llamadas WebRTC inicializado (Usuario ID: ' + this.getUserId() + ')');
+    },
+
+    // ==========================================
+    // NOTIFICACIONES Y ALERTA VISUAL / AUDITIVA
+    // ==========================================
+    startTitleBlink(text) {
+      this.stopTitleBlink();
+      this._originalTitle = document.title;
+      let toggle = false;
+      this._titleBlinkTimer = setInterval(() => {
+        document.title = toggle ? text : '🔔 ' + (this._originalTitle || 'TurboNetwork');
+        toggle = !toggle;
+      }, 900);
+    },
+
+    stopTitleBlink() {
+      if (this._titleBlinkTimer) {
+        clearInterval(this._titleBlinkTimer);
+        this._titleBlinkTimer = null;
+      }
+      if (this._originalTitle) {
+        document.title = this._originalTitle;
+        this._originalTitle = null;
+      }
+    },
+
+    closeDesktopNotification() {
+      if (this._activeDesktopNotif) {
+        try { this._activeDesktopNotif.close(); } catch (_) {}
+        this._activeDesktopNotif = null;
+      }
+    },
+
+    triggerIncomingNotification(name, type, avatar) {
+      const typeLabel = type === 'video' ? 'videollamada' : 'llamada de voz';
+      this.startTitleBlink(`📞 LLAMADA DE ${name.toUpperCase()}...`);
+
+      try {
+        if ('vibrate' in navigator) {
+          navigator.vibrate([400, 200, 400, 200, 600]);
+        }
+      } catch (_) {}
+
+      try {
+        if ('Notification' in window) {
+          if (Notification.permission === 'granted') {
+            const notif = new Notification(`Llamada entrante • TurboNetwork`, {
+              body: `${name} te está realizando una ${typeLabel}. Haz clic aquí para responder.`,
+              icon: avatar || '/icons/icon-192.png',
+              tag: 'turbonetwork-incoming-call',
+              requireInteraction: true
+            });
+            notif.onclick = () => {
+              window.focus();
+              notif.close();
+            };
+            this._activeDesktopNotif = notif;
+          } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission();
+          }
+        }
+      } catch (_) {}
     },
 
     // ==========================================
@@ -149,8 +275,8 @@
         return;
       }
 
-      const myId = this.options.getUserId();
-      if (String(myId) === String(targetUser.id)) {
+      const myId = this.getUserId();
+      if (myId && String(myId) === String(targetUser.id)) {
         alert('No es posible realizar una llamada contigo mismo.');
         return;
       }
@@ -159,7 +285,7 @@
       this.state.callType = type || 'audio';
       this.state.targetUserId = String(targetUser.id);
       this.state.targetName = targetUser.name || 'Personal';
-      this.state.targetAvatar = targetUser.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(targetUser.name);
+      this.state.targetAvatar = targetUser.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(targetUser.name || 'Personal');
       this.state.isCaller = true;
       this.state.callStatus = 'calling';
       this.state.isMuted = false;
@@ -186,13 +312,13 @@
       await this.sendCallSignal('call_request', {
         callType: this.state.callType,
         callerId: myId,
-        callerName: this.options.getUserName(),
-        callerAvatar: this.options.getUserAvatar(),
+        callerName: this.getUserName(),
+        callerAvatar: this.getUserAvatar(),
       });
     },
 
     async handleCallSignal(event) {
-      const myId = String(this.options.getUserId() || '');
+      const myId = String(this.getUserId() || '');
       if (!event || !event.action) return;
 
       const action = event.action;
@@ -201,6 +327,10 @@
       switch (action) {
         case 'call_request':
           // Alguien nos está llamando
+          if (myId && String(event.callerId) === myId) {
+            console.log('⚡ [TurboCalls] Ignorando señal propia de llamada');
+            return;
+          }
           if (this.state.callStatus !== 'idle') {
             // Ya estamos en llamada, rechazar ocupado
             this.sendCallSignal('call_rejected', {
@@ -221,9 +351,12 @@
 
           this.showIncomingCallUI();
           this.playRingtone();
+          this.triggerIncomingNotification(this.state.targetName, this.state.callType, this.state.targetAvatar);
           break;
 
         case 'call_accepted':
+          this.stopTitleBlink();
+          this.closeDesktopNotification();
           if (this.state.activeCallId === callId && this.state.isCaller) {
             this.stopRingtone();
             this.state.callStatus = 'connected';
@@ -267,6 +400,8 @@
           break;
 
         case 'call_rejected':
+          this.stopTitleBlink();
+          this.closeDesktopNotification();
           if (this.state.activeCallId === callId) {
             this.stopRingtone();
             const reason = event.reason === 'busy' ? 'Usuario ocupado en otra llamada' : 'Llamada rechazada';
@@ -276,6 +411,8 @@
           break;
 
         case 'call_ended':
+          this.stopTitleBlink();
+          this.closeDesktopNotification();
           if (this.state.activeCallId === callId) {
             this.cleanupCall();
           }
@@ -285,6 +422,8 @@
 
     async acceptIncomingCall() {
       this.stopRingtone();
+      this.stopTitleBlink();
+      this.closeDesktopNotification();
       this.hideIncomingCallUI();
 
       // Solicitar medios locales
@@ -308,6 +447,8 @@
 
     rejectIncomingCall() {
       this.stopRingtone();
+      this.stopTitleBlink();
+      this.closeDesktopNotification();
       this.hideIncomingCallUI();
       this.sendCallSignal('call_rejected', { reason: 'declined' });
       this.cleanupCall();
@@ -322,6 +463,8 @@
 
     cleanupCall() {
       this.stopRingtone();
+      this.stopTitleBlink();
+      this.closeDesktopNotification();
       if (this.state.callTimer) {
         clearInterval(this.state.callTimer);
         this.state.callTimer = null;
@@ -391,7 +534,7 @@
 
     async sendCallSignal(action, extraData = {}) {
       try {
-        const myId = this.options.getUserId();
+        const myId = this.getUserId();
         const payload = Object.assign({
           action,
           callId: this.state.activeCallId,
@@ -404,7 +547,8 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id': String(myId)
+            'x-user-id': String(myId),
+            'x-tenant-id': String(this.getTenantId())
           },
           body: JSON.stringify(payload)
         });
@@ -707,6 +851,9 @@
     },
 
     showIncomingCallUI() {
+      if (!document.getElementById('tc-incoming-modal')) {
+        this.injectUI();
+      }
       const modal = document.getElementById('tc-incoming-modal');
       if (!modal) return;
       document.getElementById('tc-inc-name').textContent = this.state.targetName;
@@ -728,6 +875,9 @@
     },
 
     showActiveCallUI() {
+      if (!document.getElementById('tc-active-modal')) {
+        this.injectUI();
+      }
       const modal = document.getElementById('tc-active-modal');
       if (!modal) return;
 
@@ -835,8 +985,27 @@
           this.endCall();
         }
       });
+
+      // Desbloquear AudioContext en la primera interacción del usuario
+      const unlockAudio = () => {
+        if (this._audioCtx && this._audioCtx.state === 'suspended') {
+          this._audioCtx.resume().catch(() => {});
+        }
+      };
+      ['click', 'touchstart', 'keydown'].forEach(ev => {
+        window.addEventListener(ev, unlockAudio, { once: true, passive: true });
+      });
     }
   };
 
   window.TurboCalls = TurboCalls;
+
+  // Auto-inyectar interfaz en cuanto el DOM esté listo
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => TurboCalls.injectUI());
+    } else {
+      TurboCalls.injectUI();
+    }
+  }
 })(window);

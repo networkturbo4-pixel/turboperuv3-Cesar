@@ -29,6 +29,7 @@
 
   <!-- Estilos Tailwind y fuentes -->
   <link rel="stylesheet" href="/assets/tailwind.min.css">
+  <script src="/js/turbo-calls.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -493,7 +494,7 @@
                 </div>
 
               <!-- Mensajes del Chat con Scroll -->
-              <div id="chat-messages-container" oncontextmenu="handleChatCanvasContextMenu(event)" class="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 min-h-0 scrollbar-none">
+              <div id="chat-messages-container" oncontextmenu="handleChatCanvasContextMenu(event)" class="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 space-y-3 min-h-0 scrollbar-none">
                 <div class="m-auto text-center py-12 text-slate-400 text-xs">
                   <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
@@ -3215,15 +3216,18 @@ async function simulateIncomingMessageTest() {
 
 function initMessagesRealtime() {
   const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+  const tenant = (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork';
 
   if (messagesEventSource) {
-    if (messagesEventSource._connectedUserId === myId) return;
+    if (messagesEventSource._connectedUserId === myId && messagesEventSource.readyState !== EventSource.CLOSED) return;
     try { messagesEventSource.close(); } catch (_) {}
     messagesEventSource = null;
   }
 
   try {
-    const sseUrl = myId ? `/api/messages/events?userId=${encodeURIComponent(myId)}` : '/api/messages/events';
+    const sseUrl = myId 
+      ? `/api/messages/events?userId=${encodeURIComponent(myId)}&tenantId=${encodeURIComponent(tenant)}` 
+      : `/api/messages/events?tenantId=${encodeURIComponent(tenant)}`;
     messagesEventSource = new EventSource(sseUrl);
     messagesEventSource._connectedUserId = myId;
 
@@ -3232,7 +3236,7 @@ function initMessagesRealtime() {
         getUserId: () => (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '',
         getUserName: () => (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : 'Usuario',
         getUserAvatar: () => (typeof currentUser !== 'undefined' && currentUser && (currentUser.avatarUrl || currentUser.avatar)) ? (currentUser.avatarUrl || currentUser.avatar) : '',
-        getTenantId: () => (typeof currentTenantId !== 'undefined' && currentTenantId) ? currentTenantId : 'default',
+        getTenantId: () => (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork',
       });
     }
 
@@ -3730,7 +3734,7 @@ function formatLastMessageWithSvgIcon(lastMsg) {
 
 // Resolver la perspectiva de visualización de una conversación (especialmente entre colaboradores del sistema)
 function getConversationDisplayInfo(c) {
-  if (!c) return { name: 'Contacto', avatar: '', role: '', phone: '', isSelf: false };
+  if (!c) return { id: '', userId: '', name: 'Contacto', avatar: '', role: '', phone: '', isSelf: false };
   
   const isPersonal = (c.type === 'personal' || (Array.isArray(c.tags) && c.tags.includes('personal')) || c.contactType === 'personal');
   
@@ -3742,7 +3746,7 @@ function getConversationDisplayInfo(c) {
     
     // Si este chat tiene ambos lados apuntando a mí (self chat de prueba), descartarlo
     if (myId && contactId === myId && (!creatorId || creatorId === myId)) {
-      return { name: c.name || 'Yo', avatar: c.avatar || '', role: 'Yo', isSelf: true };
+      return { id: myId, userId: myId, name: c.name || 'Yo', avatar: c.avatar || '', role: 'Yo', isSelf: true };
     }
 
     // Si yo soy el "contactId" (destinatario original del chat) o el nombre del chat coincide con mi nombre:
@@ -3751,21 +3755,30 @@ function getConversationDisplayInfo(c) {
     if (isContactMe) {
       // Para mí, la persona con la que estoy chateando es el CREADOR / el otro participante
       let partnerUser = null;
+      let partnerId = '';
       if (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers)) {
         if (creatorId && creatorId !== myId) {
           partnerUser = currentUsers.find(u => String(u.id) === creatorId);
+          if (partnerUser) partnerId = String(partnerUser.id);
         }
         if (!partnerUser && c.participants && Array.isArray(c.participants)) {
           const otherId = c.participants.find(p => String(p) !== myId);
-          if (otherId) partnerUser = currentUsers.find(u => String(u.id) === String(otherId));
+          if (otherId) {
+            partnerUser = currentUsers.find(u => String(u.id) === String(otherId));
+            partnerId = String(otherId);
+          }
         }
         // Fallback: buscar en los mensajes un remitente que no sea yo
         if (!partnerUser && c.messages && Array.isArray(c.messages)) {
           const otherMsg = c.messages.slice().reverse().find(m => m.senderId && String(m.senderId) !== myId);
           if (otherMsg) {
             partnerUser = currentUsers.find(u => String(u.id) === String(otherMsg.senderId) || (u.name && u.name.trim().toLowerCase() === (otherMsg.senderName || '').trim().toLowerCase()));
+            partnerId = String(otherMsg.senderId);
           }
         }
+      }
+      if (!partnerId) {
+        partnerId = (creatorId && creatorId !== myId) ? creatorId : '';
       }
 
       const partnerName = partnerUser ? partnerUser.name : (c.creatorName || 'Colaborador');
@@ -3774,6 +3787,8 @@ function getConversationDisplayInfo(c) {
       const partnerPhone = partnerUser ? (partnerUser.phone || partnerUser.email) : (c.creatorPhone || c.creatorEmail || '');
 
       return {
+        id: partnerId,
+        userId: partnerId,
         name: partnerName,
         avatar: partnerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(partnerName)}`,
         role: partnerRole,
@@ -3786,8 +3801,9 @@ function getConversationDisplayInfo(c) {
   // Comportamiento regular para chats de clientes o donde yo soy el iniciador del chat
   let dynamicAvatar = c.avatar || c.contactAvatar;
   const contactName = c.name || c.contactName || 'Contacto';
+  let matchedUser = null;
   if (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers) && currentUsers.length > 0) {
-    const matchedUser = currentUsers.find(u => 
+    matchedUser = currentUsers.find(u => 
       (c.userId && (String(u.id) === String(c.userId) || u.username === c.userId)) ||
       (c.contactId && String(u.id) === String(c.contactId)) ||
       (u.name && contactName && u.name.trim().toLowerCase() === contactName.trim().toLowerCase())
@@ -3797,7 +3813,11 @@ function getConversationDisplayInfo(c) {
     }
   }
 
+  const resolvedId = matchedUser ? String(matchedUser.id) : String(c.contactId || c.userId || '');
+
   return {
+    id: resolvedId,
+    userId: resolvedId,
     name: contactName,
     avatar: dynamicAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(contactName || c.id)}`,
     role: c.planOrRole || c.contactDetail || (isPersonal ? 'Personal' : 'Cliente Conectado'),
@@ -4438,7 +4458,7 @@ function renderChatMessageRowHtml(m) {
               </div>
             </div>
 
-            <div id="msg-${m.id}" class="max-w-[85%] sm:max-w-md ${deletedBg} rounded-2xl ${isAgent ? 'rounded-tr-xs' : 'rounded-tl-xs'} px-3.5 py-2 text-xs italic flex items-center space-x-2 ${isSelected ? 'chat-bubble-selected ring-2 ring-blue-500' : ''}">
+            <div id="msg-${m.id}" class="max-w-full ${deletedBg} rounded-2xl ${isAgent ? 'rounded-tr-xs' : 'rounded-tl-xs'} px-3.5 py-2 text-xs italic flex items-center space-x-2 ${isSelected ? 'chat-bubble-selected ring-2 ring-blue-500' : ''}">
               <svg class="w-4 h-4 flex-shrink-0 opacity-70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
               <span>Este mensaje fue eliminado</span>
               <span class="text-[10px] font-mono not-italic opacity-60 ml-2">${timeFormatted}</span>
@@ -4501,7 +4521,7 @@ function renderChatMessageRowHtml(m) {
       const hasCustomText = rawText && rawText.toLowerCase() !== 'foto enviada' && rawText.toLowerCase() !== 'foto con anotaciones' && rawText.toLowerCase() !== 'foto enviada con anotaciones';
 
       innerContentHtml = `
-        <div class="max-w-[85%] sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-1.5 shadow-sm text-xs space-y-1 group break-words [overflow-wrap:anywhere] [word-break:break-word]">
+        <div class="max-w-full sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-1.5 shadow-sm text-xs space-y-1 group break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -4510,7 +4530,7 @@ function renderChatMessageRowHtml(m) {
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none rounded-xl"></div>
           </div>
           <div class="px-2 pt-1 pb-0.5 flex flex-col gap-1">
-            ${hasCustomText ? `<p class="leading-relaxed select-text text-[13px] break-words [overflow-wrap:anywhere] [word-break:break-word]">${escapeHtml(rawText)}</p>` : `
+            ${hasCustomText ? `<p class="leading-relaxed select-text text-[13px] break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere;">${escapeHtml(rawText)}</p>` : `
               <div class="flex items-center gap-1.5 text-[11px] ${isAgent ? 'text-blue-100/90' : 'text-slate-500 dark:text-slate-400'} font-medium">
                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
                 <span>Foto adjunta</span>
@@ -4536,7 +4556,7 @@ function renderChatMessageRowHtml(m) {
       const videoId = 'vid-' + m.id;
 
       innerContentHtml = `
-        <div class="max-w-[88%] sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-1.5 shadow-sm text-xs space-y-1.5 group break-words [overflow-wrap:anywhere] [word-break:break-word]">
+        <div class="max-w-full sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-1.5 shadow-sm text-xs space-y-1.5 group break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -4595,7 +4615,7 @@ function renderChatMessageRowHtml(m) {
                 </a>
               </div>
             </div>
-            ${hasCustomText ? `<p class="leading-relaxed select-text text-[13px] pt-0.5 break-words [overflow-wrap:anywhere] [word-break:break-word]">${escapeHtml(rawText)}</p>` : ''}
+            ${hasCustomText ? `<p class="leading-relaxed select-text text-[13px] pt-0.5 break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere;">${escapeHtml(rawText)}</p>` : ''}
             ${bubbleFooterHtml}
           </div>
         </div>
@@ -4613,7 +4633,7 @@ function renderChatMessageRowHtml(m) {
       const cleanAddress = m.attachment.address ? m.attachment.address.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[\u2600-\u26FF\u2700-\u27BF]/g, '').trim() : 'Coordenadas capturadas vía satélite';
 
       innerContentHtml = `
-        <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2">
+        <div class="max-w-full sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -4632,7 +4652,7 @@ function renderChatMessageRowHtml(m) {
               ` : `
                 <div class="relative flex items-center justify-center">
                   <div class="w-9 h-9 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-600/40">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                    <svg class="w-5 h-5 fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
                   </div>
                 </div>
                 <span class="mt-1 px-2 py-0.5 rounded-full bg-slate-900/85 text-white text-[9px] font-semibold backdrop-blur-xs">Punto GPS</span>
@@ -4671,7 +4691,7 @@ function renderChatMessageRowHtml(m) {
       const hasCaption = rawText && rawText !== fileName && !rawText.startsWith('[Adjunto:');
 
       innerContentHtml = `
-        <div class="max-w-[85%] sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group break-words [overflow-wrap:anywhere] [word-break:break-word]">
+        <div class="max-w-full sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -4687,7 +4707,7 @@ function renderChatMessageRowHtml(m) {
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
             </a>
           </div>
-          ${hasCaption ? `<p class="px-1 text-[13px] leading-relaxed select-text break-words [overflow-wrap:anywhere] [word-break:break-word]">${escapeHtml(rawText)}</p>` : ''}
+          ${hasCaption ? `<p class="px-1 text-[13px] leading-relaxed select-text break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">${escapeHtml(rawText)}</p>` : ''}
           ${bubbleFooterHtml}
         </div>
       `;
@@ -4702,7 +4722,7 @@ function renderChatMessageRowHtml(m) {
         : 'bg-white dark:bg-[#1a2333] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 shadow-sm rounded-tl-xs msg-bubble-in';
 
       innerContentHtml = `
-        <div class="max-w-[85%] sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group break-words [overflow-wrap:anywhere] [word-break:break-word]">
+        <div class="max-w-full sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -4770,7 +4790,7 @@ function renderChatMessageRowHtml(m) {
         : 'bg-white dark:bg-[#161c28] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 shadow-md rounded-tl-xs msg-bubble-in';
 
       innerContentHtml = `
-        <div class="max-w-[92%] sm:max-w-md ${cardBg} rounded-2xl p-3 shadow-md text-xs space-y-2.5 group">
+        <div class="max-w-full sm:max-w-md min-w-0 ${cardBg} rounded-2xl p-3 shadow-md text-xs space-y-2.5 group">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -4892,11 +4912,11 @@ function renderChatMessageRowHtml(m) {
       const cleanText = m.text ? m.text.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[\u2600-\u26FF\u2700-\u27BF]/g, '').trim() : '';
 
       innerContentHtml = `
-        <div class="w-fit max-w-[85%] sm:max-w-md min-w-0 ${bgClass} text-xs sm:text-[13px] space-y-1 break-words [overflow-wrap:anywhere] [word-break:break-word]">
+        <div class="w-fit max-w-full sm:max-w-md min-w-0 ${bgClass} text-xs sm:text-[13px] space-y-1 break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
-          <p class="leading-relaxed whitespace-pre-wrap select-text msg-text break-words [overflow-wrap:anywhere] [word-break:break-word]">${escapeHtml(cleanText || m.text)}</p>
+          <p class="leading-relaxed whitespace-pre-wrap select-text msg-text break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere;">${escapeHtml(cleanText || m.text)}</p>
           ${bubbleFooterHtml}
         </div>
       `;
@@ -12344,11 +12364,16 @@ async function sendCurrentLocation(isLive) {
     let lastSyncTimestamp = 0;
     async function syncMessagesInProduction() {
       try {
+        // Si la conexión SSE en tiempo real está abierta y activa, no consultar por polling HTTP
+        if (typeof messagesEventSource !== 'undefined' && messagesEventSource && messagesEventSource.readyState === 1) {
+          return;
+        }
+
         if (activeChannelMode === 'direct' && activeConversationId) {
-          const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages?limit=50`);
-          if (!res.ok) return;
-          const data = await res.json();
-          if (data.success && Array.isArray(data.data)) {
+          const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}/messages?limit=25`).catch(() => null);
+          if (!res || !res.ok) return;
+          const data = await res.json().catch(() => null);
+          if (data && data.success && Array.isArray(data.data)) {
             const existingIds = new Set((currentChatMessages || []).map(m => m.id));
             let hasNew = false;
             for (const m of data.data) {
@@ -12382,10 +12407,10 @@ async function sendCurrentLocation(isLive) {
             }
           }
         } else if (activeChannelMode === 'community' && activeCommunityId && activeGroupId) {
-          const res = await fetch(`/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages?limit=50`);
-          if (!res.ok) return;
-          const data = await res.json();
-          if (data.success && Array.isArray(data.data)) {
+          const res = await fetch(`/api/messages/communities/${encodeURIComponent(activeCommunityId)}/groups/${encodeURIComponent(activeGroupId)}/messages?limit=25`).catch(() => null);
+          if (!res || !res.ok) return;
+          const data = await res.json().catch(() => null);
+          if (data && data.success && Array.isArray(data.data)) {
             const existingIds = new Set((currentChatMessages || []).map(m => m.id));
             let hasNew = false;
             for (const m of data.data) {
@@ -12412,13 +12437,14 @@ async function sendCurrentLocation(isLive) {
             }
           }
         }
-        if (Date.now() - lastSyncTimestamp > 12000) {
+        if (Date.now() - lastSyncTimestamp > 15000) {
           lastSyncTimestamp = Date.now();
           const myUid = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? String(currentUser.id) : '';
           const convUrl = myUid ? `/api/messages/conversations?currentUserId=${encodeURIComponent(myUid)}` : '/api/messages/conversations';
-          const r = await fetch(convUrl, { headers: myUid ? { 'x-user-id': myUid } : {} });
-          const d = await r.json();
-          if (d.success && Array.isArray(d.data)) {
+          const r = await fetch(convUrl, { headers: myUid ? { 'x-user-id': myUid } : {} }).catch(() => null);
+          if (!r || !r.ok) return;
+          const d = await r.json().catch(() => null);
+          if (d && d.success && Array.isArray(d.data)) {
             const newSorted = sortConversationsList(d.data);
             if (activeChannelMode === 'direct' && activeConversationId) {
               const cur = newSorted.find(c => c.id === activeConversationId);
@@ -12431,9 +12457,11 @@ async function sendCurrentLocation(isLive) {
             }
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        // Silencio de excepciones de polling secundario
+      }
     }
-    setInterval(syncMessagesInProduction, 6000);
+    setInterval(syncMessagesInProduction, 15000);
 
     // Inicialización al cargar la aplicación
     document.addEventListener('DOMContentLoaded', () => {
@@ -12478,6 +12506,7 @@ async function sendCurrentLocation(isLive) {
         if (d && d.user) { 
           currentUser = d.user; 
           fetchCommunities(); 
+          initMessagesRealtime();
         } 
       }).catch(() => {});
       fetch('/api/users').then(r => r.json()).then(d => { if (d && d.data) currentUsers = d.data; else if (d && d.users) currentUsers = d.users; }).catch(() => {});
@@ -12519,16 +12548,34 @@ async function sendCurrentLocation(isLive) {
 
     function handleStartCall(type) {
       const conv = (currentConversations || []).find(c => c.id === activeConversationId);
-      if (!conv) return;
-      const displayInfo = getConversationDisplayInfo(conv);
-      
-      let targetId = conv.contactId;
-      const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
-      if (String(conv.contactId) === myId && conv.creatorId) {
-        targetId = conv.creatorId;
+      if (!conv) {
+        showToast('Selecciona una conversación primero', 'error');
+        return;
       }
-      if (!targetId && conv.participants && Array.isArray(conv.participants)) {
-        targetId = conv.participants.find(p => String(p) !== myId);
+      const displayInfo = getConversationDisplayInfo(conv);
+      const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+
+      let targetId = displayInfo.id;
+      if (!targetId || String(targetId) === myId) {
+        if (conv.creatorId && String(conv.creatorId) !== myId) {
+          targetId = String(conv.creatorId);
+        } else if (conv.contactId && String(conv.contactId) !== myId) {
+          targetId = String(conv.contactId);
+        } else if (conv.userId && String(conv.userId) !== myId) {
+          targetId = String(conv.userId);
+        } else if (conv.participants && Array.isArray(conv.participants)) {
+          const other = conv.participants.find(p => String(p) !== myId);
+          if (other) targetId = String(other);
+        }
+        if ((!targetId || String(targetId) === myId) && conv.messages && Array.isArray(conv.messages)) {
+          const otherMsg = conv.messages.slice().reverse().find(m => m.senderId && String(m.senderId) !== myId);
+          if (otherMsg) targetId = String(otherMsg.senderId);
+        }
+      }
+
+      if (!targetId || String(targetId) === myId) {
+        alert('No se pudo identificar al otro participante para realizar la llamada.');
+        return;
       }
 
       if (window.TurboCalls) {
@@ -12537,6 +12584,8 @@ async function sendCurrentLocation(isLive) {
           name: displayInfo.name,
           avatar: displayInfo.avatar
         });
+      } else {
+        alert('El módulo de llamadas se está inicializando. Por favor reintente en unos segundos.');
       }
     }
 
@@ -12577,7 +12626,6 @@ async function sendCurrentLocation(isLive) {
       if (menu) menu.classList.add('hidden');
     }
   </script>
-  <script src="/js/turbo-calls.js"></script>
 
   <!-- Indicador flotante de carga / optimización estilo WhatsApp -->
   <div id="chat-upload-indicator" class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-slate-900/90 dark:bg-white/95 text-white dark:text-slate-900 shadow-2xl backdrop-blur-md items-center space-x-3 text-xs font-semibold border border-white/20 dark:border-slate-800 transition-all duration-300 pointer-events-none">

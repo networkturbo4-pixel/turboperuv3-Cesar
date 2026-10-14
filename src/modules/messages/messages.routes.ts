@@ -719,10 +719,21 @@ export function broadcastMessageEvent(event: {
     ? event.targetUserIds.map(String)
     : null;
 
+  if (event.type === "call_signal") {
+    const clientsSummary = Array.from(messageClients).map(c => `[id:${c.userId || 'none'}, t:${c.tenantId}]`).join(', ');
+    console.log(`📡 [CALL_SIGNAL] Action: ${event.action}, CallId: ${event.callId}, From: ${event.callerId}, Targets: ${JSON.stringify(targetStrs)}, Connected SSE Clients (${messageClients.size}): ${clientsSummary}`);
+  }
+
   for (const client of Array.from(messageClients)) {
     try {
       if (client.tenantId && event.tenantId && client.tenantId !== event.tenantId) {
-        continue;
+        // En llamadas 1-a-1 de personal, si el targetUserId coincide exactamente con el cliente conectado,
+        // no descartar por discrepancia menor de tenant default/turbonetwork
+        if (event.type === "call_signal" && targetStrs && client.userId && targetStrs.includes(String(client.userId))) {
+          // Permitir paso de señalización P2P
+        } else {
+          continue;
+        }
       }
       // Si el evento tiene destinatarios específicos (chat 1-a-1 de personal)
       if (targetStrs) {
@@ -812,6 +823,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       cleanedUp = true;
       clearInterval(heartbeatTimer);
       messageClients.delete(client);
+      if (currentUserId) {
+        console.log(`🔌 [SSE DISCONNECT] Usuario ${currentUserId} desconectado (Restantes: ${messageClients.size})`);
+      }
     };
 
     const client: ActiveMessageClient = {
@@ -831,6 +845,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     };
 
     messageClients.add(client);
+    if (currentUserId) {
+      console.log(`🔌 [SSE CONNECT] Usuario ${currentUserId} conectado al bus de mensajería (Tenant: ${tenantId}, Total: ${messageClients.size})`);
+    }
 
     // Evento inicial de confirmación de conexión
     try {
@@ -842,7 +859,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       return;
     }
 
-    // Latido / Heartbeat cada 25 segundos para mantener viva la conexión
+    // Latido / Heartbeat cada 15 segundos para mantener viva la conexión HTTP/2
     const heartbeatTimer = setInterval(() => {
       try {
         if (!reply.raw.writableEnded && !reply.raw.destroyed) {
@@ -853,7 +870,7 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       } catch (e) {
         cleanup();
       }
-    }, 25000);
+    }, 15000);
 
     request.raw.on("close", cleanup);
     request.raw.on("error", cleanup);
