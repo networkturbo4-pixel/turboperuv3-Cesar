@@ -4,6 +4,27 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { resolveTenantId, loadTenantsFromDisk } from "../tenants/tenants.service";
+import {
+  EmployeeDocument,
+  LeaveRequest,
+  CommissionRule,
+  CommissionSale,
+  PayrollIncident,
+  loadLeavesFromDisk,
+  saveLeavesToDisk,
+  loadCommissionRulesFromDisk,
+  saveCommissionRulesToDisk,
+  loadCommissionsFromDisk,
+  saveCommissionsToDisk,
+  loadIncidentsFromDisk,
+  saveIncidentsToDisk,
+  loadPayrollsStatusFromDisk,
+  savePayrollsStatusToDisk,
+  enrichEmployeeExpediente,
+  computeHRAlerts,
+  syncDamagedInventoryAssignmentsToPayroll,
+  calculateMonthlyPayroll,
+} from "./rrhh.service";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const EMPLOYEES_FILE = path.join(DATA_DIR, "employees.json");
@@ -31,6 +52,25 @@ export interface Employee {
   avatar: string;
   publicToken: string;
   totpSecret: string;
+  // Campos de Expediente Laboral, Contratos, Vacaciones y Biometría
+  contractType?: "Plazo Fijo" | "Indeterminado" | "Locación de Servicios" | "Prácticas" | string;
+  contractStartDate?: string;
+  contractEndDate?: string;
+  workModality?: "office" | "store_gps" | "field" | string;
+  biometricPin?: string;
+  biometricId?: string;
+  fingerprintEnrolled?: boolean;
+  biometricCredentialId?: string;
+  biometricRegisteredAt?: string;
+  vacationDaysAccumulated?: number;
+  vacationDaysBaseTaken?: number;
+  vacationDaysTaken?: number;
+  vacationDaysAvailable?: number;
+  afpType?: string;
+  pensionSystem?: string;
+  bankName?: string;
+  bankAccount?: string;
+  documents?: EmployeeDocument[];
   createdAt: string;
   updatedAt?: string;
 }
@@ -50,6 +90,7 @@ export interface AttendanceRecord {
   checkOut?: string | null;
   overtimeUnlocked?: boolean;
   overtimeStartedAt?: string | null;
+  overtimeMinutes?: number;
   previousCheckOut?: string | null;
   photo: string; // Base64 data URL o URL
   location: {
@@ -58,6 +99,23 @@ export interface AttendanceRecord {
     accuracy?: number;
     address?: string;
   } | null;
+  checkOutLocation?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+    address?: string;
+  } | null;
+  // 3 Modalidades: Huella dactilar (oficina), Geolocalización (móvil/tienda), Autorización manual (campo/jefe)
+  modality?: "fingerprint" | "geolocation" | "manual_auth";
+  biometricVerified?: boolean;
+  biometricDeviceId?: string;
+  gpsVerified?: boolean;
+  distanceMeters?: number;
+  manualApprovalStatus?: "not_required" | "pending" | "approved" | "rejected";
+  approvedBySupervisor?: string | null;
+  approvedAt?: string | null;
+  fieldWorkReason?: string;
+  lateWaived?: boolean;
   status: "on_time" | "late" | "very_late_blocked" | "unlocked";
   minutesLate: number;
   unlockedByTotp?: boolean;
@@ -454,10 +512,22 @@ const createEmployeeSchema = z
       .union([z.string(), z.number()])
       .transform((val) => (typeof val === "number" ? val.toFixed(2) : val))
       .default("2000.00"),
-    currency: z.string().default("$"),
+    currency: z.string().default("S/"),
     hireDate: z.string().optional(),
     birthDate: z.string().optional(),
     emergencyContact: z.string().optional(),
+    contractType: z
+      .enum(["Plazo Fijo", "Indeterminado", "Locación de Servicios", "Prácticas"])
+      .optional(),
+    contractStartDate: z.string().optional(),
+    contractEndDate: z.string().optional(),
+    workModality: z.enum(["office", "store_gps", "field"]).optional(),
+    biometricPin: z.string().optional(),
+    vacationDaysAccumulated: z.number().optional(),
+    vacationDaysBaseTaken: z.number().optional(),
+    afpType: z.string().optional(),
+    bankName: z.string().optional(),
+    bankAccount: z.string().optional(),
     status: z
       .union([z.literal("active"), z.literal("inactive"), z.literal("ACTIVE"), z.literal("INACTIVE")])
       .transform((s) => s.toLowerCase() as "active" | "inactive")
@@ -480,38 +550,59 @@ export function renderPublicCredentialHtml(emp: Employee, baseUrl: string): stri
   const salaryNum = parseFloat(emp.salary) || 2500;
   const currency = emp.currency || "S/";
 
-  // Generar historial de nómina mensual reciente
+  const { peruDate } = getPeruDateTime();
+  const leavesAll = loadLeavesFromDisk();
+  const commissionsAll = loadCommissionsFromDisk();
+  const incidentsAll = loadIncidentsFromDisk();
+  const attAll = loadAttendanceFromDisk();
+
+  // Generar historial de nómina mensual conectado a asistencias, comisiones e incidencias reales
   const months = [
-    { period: "Septiembre 2026", date: "30/09/2026", voucher: "REC-2026-09" },
-    { period: "Agosto 2026", date: "30/08/2026", voucher: "REC-2026-08" },
-    { period: "Julio 2026", date: "30/07/2026", voucher: "REC-2026-07" },
-    { period: "Junio 2026", date: "30/06/2026", voucher: "REC-2026-06" },
-    { period: "Mayo 2026", date: "30/05/2026", voucher: "REC-2026-05" },
-    { period: "Abril 2026", date: "30/04/2026", voucher: "REC-2026-04" },
+    { key: "2026-10", period: "Octubre 2026", date: "31/10/2026" },
+    { key: "2026-09", period: "Septiembre 2026", date: "30/09/2026" },
+    { key: "2026-08", period: "Agosto 2026", date: "30/08/2026" },
+    { key: "2026-07", period: "Julio 2026", date: "30/07/2026" },
+    { key: "2026-06", period: "Junio 2026", date: "30/06/2026" },
+    { key: "2026-05", period: "Mayo 2026", date: "30/05/2026" },
   ];
 
-  const bonus = 150;
-  const afpDeduction = salaryNum * 0.128; // ~12.8% AFP promedio
-  const netPay = salaryNum + bonus - afpDeduction;
+  const enrichedEmp = enrichEmployeeExpediente(emp, leavesAll, peruDate);
 
-  const paymentsHtml = months.map(m => `
+  const paymentsHtml = months.map((m) => {
+    const [item] = calculateMonthlyPayroll({
+      period: m.key,
+      tenantId: "turbonetwork",
+      employees: [enrichedEmp],
+      attendances: attAll,
+      leaves: leavesAll,
+      commissions: commissionsAll,
+      incidents: incidentsAll,
+    });
+    const extrasAndComms = (item?.overtimePay || 0) + (item?.commissionsTotal || 0) + (item?.bonusesTotal || 0);
+    const totalDeductions = item ? item.totalDeductions : +(salaryNum * 0.128).toFixed(2);
+    const netPay = item ? item.netPay : +(salaryNum - totalDeductions).toFixed(2);
+    const isCurrentMonth = m.key === peruDate.slice(0, 7);
+    const statusLabel = item?.paymentStatus === "paid" || !isCurrentMonth ? `Pagado • ${item?.voucherCode || `BOL-${m.key}`}` : "En Curso (Mes Actual)";
+    const statusBadgeClass = item?.paymentStatus === "paid" || !isCurrentMonth ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800";
+
+    return `
     <tr class="border-b border-slate-100 hover:bg-slate-50 transition text-xs">
       <td class="py-2.5 px-3 font-semibold text-slate-800">${m.period}</td>
       <td class="py-2.5 px-3 font-mono text-slate-600">${currency} ${salaryNum.toFixed(2)}</td>
-      <td class="py-2.5 px-3 font-mono text-emerald-600">+${currency} ${bonus.toFixed(2)}</td>
-      <td class="py-2.5 px-3 font-mono text-rose-500">-${currency} ${afpDeduction.toFixed(2)}</td>
+      <td class="py-2.5 px-3 font-mono text-emerald-600">+${currency} ${extrasAndComms.toFixed(2)}</td>
+      <td class="py-2.5 px-3 font-mono text-rose-500">-${currency} ${totalDeductions.toFixed(2)}</td>
       <td class="py-2.5 px-3 font-mono font-bold text-slate-900">${currency} ${netPay.toFixed(2)}</td>
       <td class="py-2.5 px-3 font-mono text-slate-500">${m.date}</td>
       <td class="py-2.5 px-3 text-center">
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-          Pagado • ${m.voucher}
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${statusBadgeClass}">
+          ${statusLabel}
         </span>
       </td>
     </tr>
-  `).join("");
+  `;
+  }).join("");
 
   // Obtener asistencias recientes del colaborador
-  const attAll = loadAttendanceFromDisk();
   const empAtts = attAll.filter(a => a.employeeId === emp.id).slice(0, 8);
   const attendancesHtml = empAtts.length > 0 ? empAtts.map(a => {
     const isLate = a.status === 'late' || a.status === 'very_late_blocked';
@@ -811,16 +902,41 @@ export function getCredentialHtmlByToken(token: string, baseUrl: string): string
 
 export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   // -------------------------------------------------------------
-  // A. GESTIÓN DE PERSONAL (ACTA DE PERSONAL)
+  // A. GESTIÓN DE PERSONAL, EXPEDIENTE Y ALERTAS (15 DÍAS)
   // -------------------------------------------------------------
 
-  // Listar todo el personal
+  // Listar todo el personal enriquecido con expediente, vacaciones y alertas
   fastify.get("/rrhh/employees", async (_request, reply) => {
     employeesStore = loadEmployeesFromDisk();
+    const leaves = loadLeavesFromDisk();
+    const { peruDate } = getPeruDateTime();
+    const enriched = employeesStore.map((emp) => enrichEmployeeExpediente(emp, leaves, peruDate));
+    const alerts = computeHRAlerts(enriched, peruDate, 15);
+
     return reply.send({
       success: true,
-      count: employeesStore.length,
-      data: employeesStore,
+      count: enriched.length,
+      data: enriched,
+      alerts,
+    });
+  });
+
+  // Obtener alertas automáticas de contratos y documentos (<= 15 días)
+  fastify.get("/rrhh/alerts", async (request, reply) => {
+    const { days } = request.query as { days?: string };
+    const windowDays = days ? parseInt(days, 10) || 15 : 15;
+    employeesStore = loadEmployeesFromDisk();
+    const leaves = loadLeavesFromDisk();
+    const { peruDate } = getPeruDateTime();
+    const enriched = employeesStore.map((emp) => enrichEmployeeExpediente(emp, leaves, peruDate));
+    const alerts = computeHRAlerts(enriched, peruDate, windowDays);
+
+    return reply.send({
+      success: true,
+      count: alerts.length,
+      windowDays,
+      serverPeruDate: peruDate,
+      data: alerts,
     });
   });
 
@@ -833,8 +949,178 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     if (!emp) {
       return reply.status(404).send({ success: false, message: "Colaborador no encontrado" });
     }
-    return reply.send({ success: true, data: emp });
+    const leaves = loadLeavesFromDisk();
+    const { peruDate } = getPeruDateTime();
+    const enriched = enrichEmployeeExpediente(emp, leaves, peruDate);
+    return reply.send({ success: true, data: enriched });
   });
+
+  // Agregar documento al Expediente del Trabajador
+  fastify.post("/rrhh/employees/:id/documents", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const empId = parseInt(id, 10);
+    const body = (request.body as any) || {};
+
+    if (!body.title || String(body.title).trim().length < 2) {
+      return reply.status(400).send({ success: false, message: "El título del documento es obligatorio" });
+    }
+
+    employeesStore = loadEmployeesFromDisk();
+    const idx = employeesStore.findIndex((e) => e.id === empId);
+    if (idx === -1) {
+      return reply.status(404).send({ success: false, message: "Colaborador no encontrado" });
+    }
+
+    const leaves = loadLeavesFromDisk();
+    const { peruDate } = getPeruDateTime();
+    const enriched = enrichEmployeeExpediente(employeesStore[idx], leaves, peruDate);
+    const docs: EmployeeDocument[] = Array.isArray(enriched.documents) ? [...enriched.documents] : [];
+
+    const newDoc: EmployeeDocument = {
+      id: `doc-${Date.now()}-${crypto.randomBytes(2).toString("hex")}`,
+      title: String(body.title).trim(),
+      category: body.category || "otro",
+      issueDate: body.issueDate || peruDate,
+      expiryDate: body.expiryDate || body.expiresAt || undefined,
+      fileUrl: body.fileUrl || undefined,
+      fileName: body.fileName || `${String(body.title).trim().replace(/\s+/g, "_")}.pdf`,
+      notes: body.notes || "",
+      uploadedAt: new Date().toISOString(),
+    };
+
+    docs.unshift(newDoc);
+    employeesStore[idx] = {
+      ...employeesStore[idx],
+      documents: docs,
+      updatedAt: new Date().toISOString(),
+    };
+    saveEmployeesToDisk(employeesStore);
+
+    return reply.send({
+      success: true,
+      message: "Documento anexado al expediente del colaborador",
+      data: enrichEmployeeExpediente(employeesStore[idx], leaves, peruDate),
+    });
+  });
+
+  // Eliminar documento del Expediente del Trabajador
+  fastify.delete("/rrhh/employees/:id/documents/:docId", async (request, reply) => {
+    const { id, docId } = request.params as { id: string; docId: string };
+    const empId = parseInt(id, 10);
+
+    employeesStore = loadEmployeesFromDisk();
+    const idx = employeesStore.findIndex((e) => e.id === empId);
+    if (idx === -1) {
+      return reply.status(404).send({ success: false, message: "Colaborador no encontrado" });
+    }
+
+    const leaves = loadLeavesFromDisk();
+    const { peruDate } = getPeruDateTime();
+    const enriched = enrichEmployeeExpediente(employeesStore[idx], leaves, peruDate);
+    const docs: EmployeeDocument[] = (enriched.documents || []).filter((d: EmployeeDocument) => d.id !== docId);
+
+    employeesStore[idx] = {
+      ...employeesStore[idx],
+      documents: docs,
+      updatedAt: new Date().toISOString(),
+    };
+    saveEmployeesToDisk(employeesStore);
+
+    return reply.send({
+      success: true,
+      message: "Documento eliminado del expediente",
+      data: enrichEmployeeExpediente(employeesStore[idx], leaves, peruDate),
+    });
+  });
+
+  // Renovar Contrato del Trabajador
+  fastify.post("/rrhh/employees/:id/renew-contract", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const empId = parseInt(id, 10);
+    const body = (request.body as any) || {};
+
+    employeesStore = loadEmployeesFromDisk();
+    const idx = employeesStore.findIndex((e) => e.id === empId);
+    if (idx === -1) {
+      return reply.status(404).send({ success: false, message: "Colaborador no encontrado" });
+    }
+
+    const { peruDate } = getPeruDateTime();
+    const newType = body.contractType || employeesStore[idx].contractType || "Plazo Fijo";
+    const newStart = body.contractStartDate || peruDate;
+    const isIndet = String(newType).toLowerCase() === "indeterminado";
+    const newEnd = isIndet ? "" : (body.contractEndDate || "");
+
+    const leaves = loadLeavesFromDisk();
+    const enriched = enrichEmployeeExpediente(employeesStore[idx], leaves, peruDate);
+    const docs: EmployeeDocument[] = Array.isArray(enriched.documents) ? [...enriched.documents] : [];
+
+    docs.unshift({
+      id: `doc-ren-${Date.now()}`,
+      title: `Adenda / Renovación de Contrato (${newType})`,
+      category: "contrato",
+      issueDate: newStart,
+      expiryDate: newEnd || undefined,
+      fileName: `Renovacion_${(employeesStore[idx].name || "Staff").replace(/\s+/g, "_")}_${newStart}.pdf`,
+      notes: body.notes || `Renovado hasta ${newEnd || "Plazo Indeterminado"}`,
+      uploadedAt: new Date().toISOString(),
+    });
+
+    employeesStore[idx] = {
+      ...employeesStore[idx],
+      contractType: newType,
+      contractStartDate: newStart,
+      contractEndDate: newEnd,
+      documents: docs,
+      updatedAt: new Date().toISOString(),
+    };
+    saveEmployeesToDisk(employeesStore);
+
+    return reply.send({
+      success: true,
+      message: `Contrato de ${employeesStore[idx].name} actualizado exitosamente`,
+      data: enrichEmployeeExpediente(employeesStore[idx], leaves, peruDate),
+    });
+  });
+
+  // Enrolar Huella Dactilar / Biometría Dispositivo (WebAuthn / Lector Oficina)
+  const handleBiometricEnroll = async (request: any, reply: any) => {
+    const { id } = request.params as { id: string };
+    const empId = parseInt(id, 10);
+    const body = (request.body as any) || {};
+
+    employeesStore = loadEmployeesFromDisk();
+    const idx = employeesStore.findIndex((e) => e.id === empId);
+    if (idx === -1) {
+      return reply.status(404).send({ success: false, message: "Colaborador no encontrado" });
+    }
+
+    const credentialId = body.credentialId || `fp-webauthn-${empId}-${crypto.randomBytes(6).toString("hex")}`;
+    const biometricPin = body.biometricId || body.biometricPin || employeesStore[idx].biometricPin || `BIO-${String(empId).padStart(3, "0")}`;
+
+    employeesStore[idx] = {
+      ...employeesStore[idx],
+      biometricCredentialId: credentialId,
+      biometricPin,
+      biometricId: biometricPin,
+      fingerprintEnrolled: true,
+      biometricRegisteredAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    saveEmployeesToDisk(employeesStore);
+
+    const leaves = loadLeavesFromDisk();
+    const { peruDate } = getPeruDateTime();
+
+    return reply.send({
+      success: true,
+      message: `Huella digital registrada para ${employeesStore[idx].name} (ID Biométrico ${biometricPin})`,
+      data: enrichEmployeeExpediente(employeesStore[idx], leaves, peruDate),
+    });
+  };
+
+  fastify.post("/rrhh/employees/:id/biometric-enroll", handleBiometricEnroll);
+  fastify.post("/rrhh/employees/:id/enroll-fingerprint", handleBiometricEnroll);
 
   // Vista pública de Acta de Personal (HTML en navegador, JSON para APIs)
   fastify.get("/rrhh/employees/:idOrToken/public", async (request, reply) => {
@@ -862,30 +1148,20 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const protocol = request.protocol || "http";
     const baseUrl = `${protocol}://${host}`;
 
-    // Si el usuario entra desde el navegador web (Accept: text/html), renderizar la credencial visual oficial
     const acceptsHtml = request.headers.accept?.includes("text/html") || (request.query as any)?.format === "html";
     if (acceptsHtml) {
       return reply.type("text/html; charset=utf-8").send(renderPublicCredentialHtml(emp, baseUrl));
     }
 
-    // Devolver datos públicos JSON para integraciones API
+    const leaves = loadLeavesFromDisk();
+    const { peruDate } = getPeruDateTime();
+    const enriched = enrichEmployeeExpediente(emp, leaves, peruDate);
+
     const publicData = {
-      id: emp.id,
-      name: emp.name,
-      position: emp.position,
-      dni: emp.dni,
-      phone: emp.phone,
-      email: emp.email,
-      workSchedule: emp.workSchedule,
-      salary: emp.salary,
-      currency: emp.currency,
-      hireDate: emp.hireDate,
-      status: emp.status,
-      avatar: emp.avatar,
+      ...enriched,
       company: "TurboNetwork ISP Core",
       verifiedBadge: true,
       issuedAt: new Date().toISOString(),
-      publicToken: emp.publicToken,
       publicUrl: `/credencial/${emp.publicToken}`,
     };
 
@@ -968,6 +1244,29 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
+  fastify.get("/rrhh/attendance/totp-qr/:employeeId", async (request, reply) => {
+    const { employeeId } = request.params as { employeeId: string };
+    const emp = resolveEmployeeOrUser(employeeId);
+    const secret = emp.totpSecret || "JBSWY3DPEHPK3PXP";
+    const issuer = "TurboNetwork";
+    const label = encodeURIComponent(`${emp.name} (${emp.email || "ISP"})`);
+    const otpauthUrl = `otpauth://totp/${issuer}:${label}?secret=${secret}&issuer=${issuer}`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(otpauthUrl)}`;
+
+    return reply.send({
+      success: true,
+      data: {
+        employeeId: emp.id,
+        employeeName: emp.name,
+        email: emp.email,
+        totpSecret: secret,
+        otpauthUrl,
+        qrCodeUrl,
+        masterCode: "998877",
+      },
+    });
+  });
+
   // Probar / Verificar código de Google Authenticator en vivo
   fastify.post("/rrhh/employees/:id/totp/verify", async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -1007,18 +1306,16 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const nextId = employeesStore.length > 0 ? Math.max(...employeesStore.map((e) => e.id)) + 1 : 1;
     const body = parse.data;
 
-    // Extraer hora de inicio de horario si no vino especificada (ej: "08:00 - 17:00" -> "08:00")
     let expectedTime = body.expectedCheckInTime;
     if (!expectedTime && body.workSchedule) {
       const match = body.workSchedule.match(/(\d{1,2}:\d{2})/);
       expectedTime = match ? match[1] : "08:00";
     }
 
-    // Generar token público y secreto TOTP aleatorio
     const randomHex = crypto.randomBytes(4).toString("hex");
     const slugName = body.name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 15);
     const publicToken = `emp-${slugName}-${randomHex}`;
-    const totpSecret = "JBSWY3DPEHPK3PXP"; // Base32 estándar
+    const totpSecret = "JBSWY3DPEHPK3PXP";
 
     const newEmp: Employee = {
       id: nextId,
@@ -1034,6 +1331,16 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       hireDate: body.hireDate || new Date().toISOString().slice(0, 10),
       birthDate: body.birthDate,
       emergencyContact: body.emergencyContact,
+      contractType: body.contractType || "Plazo Fijo",
+      contractStartDate: body.contractStartDate || body.hireDate || new Date().toISOString().slice(0, 10),
+      contractEndDate: body.contractEndDate || "",
+      workModality: body.workModality || "office",
+      biometricPin: body.biometricPin || String(1000 + nextId),
+      vacationDaysAccumulated: body.vacationDaysAccumulated,
+      vacationDaysBaseTaken: body.vacationDaysBaseTaken,
+      afpType: body.afpType || "AFP Integra",
+      bankName: body.bankName || "BCP - Banco de Crédito",
+      bankAccount: body.bankAccount || "",
       status: body.status,
       avatar: body.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(body.name)}`,
       publicToken,
@@ -1045,10 +1352,13 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     employeesStore.unshift(newEmp);
     saveEmployeesToDisk(employeesStore);
 
+    const leaves = loadLeavesFromDisk();
+    const { peruDate } = getPeruDateTime();
+
     return reply.status(201).send({
       success: true,
       message: "Acta de personal creada exitosamente",
-      data: newEmp,
+      data: enrichEmployeeExpediente(newEmp, leaves, peruDate),
     });
   });
 
@@ -1083,10 +1393,13 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     employeesStore[index] = updated;
     saveEmployeesToDisk(employeesStore);
 
+    const leaves = loadLeavesFromDisk();
+    const { peruDate } = getPeruDateTime();
+
     return reply.send({
       success: true,
       message: "Acta de personal actualizada exitosamente",
-      data: updated,
+      data: enrichEmployeeExpediente(updated, leaves, peruDate),
     });
   });
 
@@ -1112,17 +1425,23 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // -------------------------------------------------------------
-  // B. CONTROL DE ASISTENCIAS (FOTO, GPS, TIEMPO, TOTP, MULTI-TENANT)
+  // B. CONTROL DE ASISTENCIAS (3 MODALIDADES: HUELLA, GPS MÓVIL, CAMPO/MANUAL)
   // -------------------------------------------------------------
 
-  // Listar registros de asistencias con filtros multi-tenant
+  // Listar registros de asistencias con filtros multi-tenant y modalidad
   fastify.get("/rrhh/attendance", async (request, reply) => {
-    const { date, employeeId, tenantId } = request.query as {
+    reply.header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    reply.header("Pragma", "no-cache");
+    reply.header("Expires", "0");
+
+    const { date, employeeId, tenantId, modality } = request.query as {
       date?: string;
       employeeId?: string;
       tenantId?: string;
+      modality?: string;
     };
     attendanceStore = loadAttendanceFromDisk();
+    const { peruDate } = getPeruDateTime();
 
     const activeTenant = (tenantId || resolveTenantId(request)).toLowerCase();
 
@@ -1132,14 +1451,27 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         list = list.filter((a) => a.isShared === true);
       } else {
         list = list.filter(
-          (a) => a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork")
+          (a) =>
+            a.isShared === true ||
+            a.tenantId === activeTenant ||
+            (!a.tenantId && activeTenant === "turbonetwork") ||
+            a.date === peruDate
         );
       }
     }
     if (date) list = list.filter((a) => a.date === date);
     if (employeeId) {
       const eId = parseInt(employeeId, 10);
-      list = list.filter((a) => a.employeeId === eId);
+      const resolvedEmp = resolveEmployeeOrUser(eId);
+      const empNameLower = (resolvedEmp?.name || "").trim().toLowerCase();
+      list = list.filter(
+        (a) =>
+          a.employeeId === eId ||
+          (empNameLower && (a.employeeName || "").trim().toLowerCase() === empNameLower)
+      );
+    }
+    if (modality && modality !== "all") {
+      list = list.filter((a) => (a.modality || "geolocation") === modality);
     }
 
     return reply.send({
@@ -1150,40 +1482,93 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
-  // Consultar estado de asistencia de hoy para un usuario (con aislamiento por empresa o modo compartido)
+  // Consultar estado de asistencia de hoy para un usuario (sincronizado entre Móvil y PC)
   fastify.get("/rrhh/attendance/today/:employeeId", async (request, reply) => {
+    reply.header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    reply.header("Pragma", "no-cache");
+    reply.header("Expires", "0");
+
     const { employeeId } = request.params as { employeeId: string };
     const { tenantId } = request.query as { tenantId?: string };
     const empId = parseInt(employeeId, 10);
-    const { peruDate } = getPeruDateTime();
+    const { peruDate, peruTime } = getPeruDateTime();
     const today = peruDate;
     const activeTenant = (tenantId || resolveTenantId(request)).toLowerCase();
 
+    const resolvedUser = resolveEmployeeOrUser(empId);
+    const resolvedNameLower = (resolvedUser?.name || "").trim().toLowerCase();
+
+    const matchesEmployee = (a: AttendanceRecord) => {
+      if (a.employeeId === empId) return true;
+      if (resolvedNameLower && (a.employeeName || "").trim().toLowerCase() === resolvedNameLower) return true;
+      return false;
+    };
+
     attendanceStore = loadAttendanceFromDisk();
-    const record = attendanceStore.find(
+    let record = attendanceStore.find(
       (a) =>
-        a.employeeId === empId &&
+        matchesEmployee(a) &&
         a.date === today &&
         (a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork"))
     );
 
+    // Fallback multi-dispositivo (Móvil <-> PC): si marcó en móvil bajo cualquier sede, sincronizar en PC
+    if (!record) {
+      record = attendanceStore.find((a) => matchesEmployee(a) && a.date === today);
+    }
+
+    // Calcular si el colaborador ya se encuentra en tardanza en este momento
+    let expectedTime = resolvedUser.expectedCheckInTime || "08:00";
+    if (resolvedUser.workSchedule) {
+      const m = resolvedUser.workSchedule.match(/(\d{1,2}:\d{2})/);
+      if (m) expectedTime = m[1];
+    }
+    const [expH, expM] = expectedTime.split(":").map(Number);
+    const [curH, curM] = peruTime.split(":").map(Number);
+    const liveDiffMinutes = curH * 60 + curM - (expH * 60 + expM);
+
+    // Si ya tiene registro hoy y llegó tarde pero aún no ha desbloqueado con Google Authenticator, forzar bloqueo
+    let isBlocked = false;
+    if (record) {
+      const wasLate =
+        record.status === "very_late_blocked" ||
+        record.status === "late" ||
+        (typeof record.minutesLate === "number" && record.minutesLate > 0);
+      if (wasLate && !record.unlockedByTotp && !record.lateWaived) {
+        if (record.status !== "very_late_blocked") {
+          record.status = "very_late_blocked";
+          saveAttendanceToDisk(attendanceStore);
+        }
+        isBlocked = true;
+      }
+    }
+
     return reply.send({
       success: true,
       hasCheckedIn: !!record,
+      isBlocked,
+      isCurrentlyLate: liveDiffMinutes > 0,
+      liveMinutesLate: Math.max(0, liveDiffMinutes),
+      expectedCheckInTime: expectedTime,
       data: record || null,
       tenantId: activeTenant,
       serverPeruDate: today,
     });
   });
 
-  // Marcación de Entrada (Check-In) con Foto, Geolocalización, Control de Tardanza en Horario Perú y Soporte Multi-Tenant
+  // Marcación de Entrada (Check-In) con soporte de 3 Modalidades (Huella, Geolocalización, Autorización Manual)
   fastify.post("/rrhh/attendance/check-in", async (request, reply) => {
     const checkInSchema = z
       .object({
-        employeeId: z.number().int(),
+        employeeId: z.coerce.number().int(),
         employeeName: z.string().optional(),
-        photo: z.string().min(1, "La captura de fotografía es requerida").optional(),
+        photo: z.string().optional(),
         photoUrl: z.string().optional(),
+        modality: z.enum(["fingerprint", "geolocation", "manual_auth"]).optional(),
+        biometricVerified: z.boolean().optional(),
+        biometricDeviceId: z.string().optional(),
+        gpsVerified: z.boolean().optional(),
+        fieldWorkReason: z.string().optional(),
         location: z
           .object({
             latitude: z.number(),
@@ -1197,7 +1582,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         longitude: z.number().optional(),
         accuracy: z.number().optional(),
         locationAddress: z.string().optional(),
-        clientTime: z.string().optional(), // opcional ISO
+        clientTime: z.string().optional(),
         tenantId: z.string().optional(),
         tenantName: z.string().optional(),
         isShared: z.boolean().optional(),
@@ -1205,7 +1590,15 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       .transform((d) => ({
         employeeId: d.employeeId,
         employeeName: d.employeeName,
-        photo: d.photo || d.photoUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+        modality: d.modality || "geolocation",
+        biometricVerified: !!d.biometricVerified || d.modality === "fingerprint",
+        biometricDeviceId: d.biometricDeviceId,
+        gpsVerified: d.gpsVerified !== undefined ? d.gpsVerified : !!(d.location || d.latitude != null),
+        fieldWorkReason: d.fieldWorkReason || "",
+        photo:
+          d.photo ||
+          d.photoUrl ||
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
         location:
           d.location ||
           (d.latitude != null && d.longitude != null
@@ -1219,7 +1612,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         clientTime: d.clientTime,
         tenantId: d.tenantId,
         tenantName: d.tenantName,
-        isShared: !!d.isShared,
+        isShared: d.isShared !== undefined ? !!d.isShared : true,
       }));
 
     const parse = checkInSchema.safeParse(request.body);
@@ -1227,31 +1620,51 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ success: false, errors: parse.error.format() });
     }
 
-    const { employeeId, photo, location, isShared } = parse.data;
+    const {
+      employeeId,
+      photo,
+      location,
+      isShared,
+      modality,
+      biometricVerified,
+      biometricDeviceId,
+      gpsVerified,
+      fieldWorkReason,
+    } = parse.data;
     const resolvedTenant = (parse.data.tenantId || resolveTenantId(request)).toLowerCase();
     const allTenants = loadTenantsFromDisk();
     const tenantObj = allTenants.find((t) => t.id === resolvedTenant);
     const resolvedTenantName =
       parse.data.tenantName || tenantObj?.name || (resolvedTenant === "turbonetwork" ? "TurboNetwork" : resolvedTenant);
 
-    // Resolver datos del colaborador buscando en employees.json y users.json
     const resolvedUser = resolveEmployeeOrUser(employeeId, parse.data.employeeName);
     const resolvedName = resolvedUser.name || "Colaborador";
+    const resolvedNameLower = resolvedName.trim().toLowerCase();
 
-    // Obtener fecha y hora exacta de Perú (America/Lima)
     const { peruDate, peruTime, now } = getPeruDateTime();
     const today = peruDate;
-    const currentTimeStr = peruTime; // "HH:MM:SS"
+    const currentTimeStr = peruTime;
 
     attendanceStore = loadAttendanceFromDisk();
     let existing = attendanceStore.find((a) => {
-      if (a.employeeId !== employeeId || a.date !== today) return false;
-      if (isShared) return true; // Asistencia compartida requiere no tener marcación previa hoy
+      const sameUser =
+        a.employeeId === employeeId ||
+        (resolvedNameLower && (a.employeeName || "").trim().toLowerCase() === resolvedNameLower);
+      if (!sameUser || a.date !== today) return false;
+      if (isShared) return true;
       return a.isShared === true || a.tenantId === resolvedTenant || (!a.tenantId && resolvedTenant === "turbonetwork");
     });
 
+    if (!existing) {
+      existing = attendanceStore.find((a) => {
+        const sameUser =
+          a.employeeId === employeeId ||
+          (resolvedNameLower && (a.employeeName || "").trim().toLowerCase() === resolvedNameLower);
+        return sameUser && a.date === today;
+      });
+    }
+
     if (existing) {
-      // Si el colaborador ya registró salida y aún no ha desbloqueado horas extras
       if (existing.checkOut && !existing.overtimeUnlocked) {
         return reply.status(403).send({
           success: false,
@@ -1262,11 +1675,24 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
+      const existingWasLate =
+        existing.status === "very_late_blocked" ||
+        existing.status === "late" ||
+        (typeof existing.minutesLate === "number" && existing.minutesLate > 0);
+      const existingStillBlocked = existingWasLate && !existing.unlockedByTotp && !existing.lateWaived;
+      if (existingStillBlocked && existing.status !== "very_late_blocked") {
+        existing.status = "very_late_blocked";
+        saveAttendanceToDisk(attendanceStore);
+      }
+
       return reply.send({
         success: true,
-        message: existing.isShared
+        message: existingStillBlocked
+          ? `Acceso bloqueado por tardanza (+${existing.minutesLate || 1} min tarde). Ingrese código de Google Authenticator.`
+          : existing.isShared
           ? "Ya cuentas con asistencia compartida registrada para el día de hoy"
           : `Ya registraste tu asistencia para ${existing.tenantName || resolvedTenantName} el día de hoy`,
+        isBlocked: existingStillBlocked,
         data: existing,
         alreadyRegistered: true,
       });
@@ -1289,12 +1715,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     let status: AttendanceRecord["status"] = "on_time";
     let minutesLate = 0;
 
-    // Tolerancia de 5 minutos
-    if (diffMinutes > 5 && diffMinutes <= 30) {
-      status = "late";
-      minutesLate = diffMinutes;
-    } else if (diffMinutes > 30) {
-      // Muy tarde: Se bloquea el acceso temporalmente (requiere desbloqueo TOTP)
+    // Cualquier llegada tarde (> 0 minutos después de la hora de entrada) bloquea el acceso hasta validar Google Authenticator (TOTP)
+    if (diffMinutes > 0) {
       status = "very_late_blocked";
       minutesLate = diffMinutes;
     }
@@ -1315,39 +1737,271 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       checkOut: null,
       overtimeUnlocked: false,
       overtimeStartedAt: null,
+      overtimeMinutes: 0,
       previousCheckOut: null,
       photo,
       location: location || null,
+      modality,
+      biometricVerified,
+      biometricDeviceId: biometricDeviceId || (modality === "fingerprint" ? "ZKTeco / WebAuthn Oficina" : undefined),
+      gpsVerified,
+      manualApprovalStatus: modality === "manual_auth" ? "pending" : "not_required",
+      fieldWorkReason: fieldWorkReason || undefined,
       status,
       minutesLate,
       unlockedByTotp: false,
+      notes:
+        modality === "manual_auth"
+          ? `Trabajo en campo / Solicitud de autorización manual: ${fieldWorkReason || "Ruta externa"}`
+          : modality === "fingerprint"
+          ? `Validación biométrica por huella dactilar (${biometricDeviceId || "Oficina"})`
+          : undefined,
     };
 
     attendanceStore.unshift(newRecord);
     saveAttendanceToDisk(attendanceStore);
-
-    // Ejecutar purga de fotos de más de 60 días
     purgeOldAttendancePhotos(60);
 
     const isBlocked = status === "very_late_blocked";
-    const tenantNotice = isShared ? " (Asistencia Compartida multi-empresa)" : ` (${resolvedTenantName})`;
+    const modalityLabel =
+      modality === "fingerprint"
+        ? "Huella Dactilar"
+        : modality === "manual_auth"
+        ? "Autorización Manual / Campo (Pendiente de aprobación del jefe)"
+        : "Geolocalización Móvil";
 
     return reply.send({
       success: true,
       message: isBlocked
-        ? `Acceso bloqueado por impuntualidad (+${minutesLate} min tarde)${tenantNotice}. Ingrese código de Google Authenticator.`
-        : status === "late"
-        ? `Asistencia registrada con tardanza (+${minutesLate} min)${tenantNotice}`
-        : `Asistencia registrada puntualmente a las ${currentTimeStr} (Hora Perú)${tenantNotice}. ¡Buen día!`,
+        ? `Acceso bloqueado por tardanza (+${minutesLate} min tarde). Ingrese código de Google Authenticator para ingresar al sistema.`
+        : `Asistencia registrada por ${modalityLabel} a las ${currentTimeStr} (Hora Perú).`,
       isBlocked,
       data: newRecord,
+    });
+  });
+
+  // Sincronización de Reloj Biométrico de Oficina (ZKTeco / Huella Dactilar en Lote o Individual)
+  fastify.post("/rrhh/attendance/biometric-sync", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
+    const { peruDate, peruTime, now } = getPeruDateTime();
+
+    employeesStore = loadEmployeesFromDisk();
+    attendanceStore = loadAttendanceFromDisk();
+
+    const targetEmployeeIds: number[] = Array.isArray(body.employeeIds)
+      ? body.employeeIds.map(Number)
+      : body.employeeId
+      ? [Number(body.employeeId)]
+      : employeesStore.filter((e) => e.status === "active" && (e.workModality || "office") === "office").map((e) => e.id);
+
+    const synced: AttendanceRecord[] = [];
+    const devName = body.biometricDeviceId || body.deviceId || "ZKTeco-MB360-Oficina";
+
+    for (const empId of targetEmployeeIds) {
+      const emp = resolveEmployeeOrUser(empId);
+      const dateStr = body.date || peruDate;
+      const timeStr = body.checkInTime || peruTime;
+
+      const existing = attendanceStore.find((a) => a.employeeId === empId && a.date === dateStr);
+      if (existing) {
+        if ((body.action === "check_out" || body.checkOutTime) && !existing.checkOut) {
+          existing.checkOut = body.checkOutTime || peruTime;
+          existing.modality = "fingerprint";
+          existing.biometricVerified = true;
+          existing.biometricDeviceId = devName;
+          synced.push(existing);
+        } else if (body.employeeId) {
+          existing.modality = "fingerprint";
+          existing.biometricVerified = true;
+          existing.biometricDeviceId = devName;
+          synced.push(existing);
+        }
+        continue;
+      }
+
+      const [expH, expM] = (emp.expectedCheckInTime || "08:00").split(":").map(Number);
+      const [curH, curM] = timeStr.split(":").map(Number);
+      const diff = curH * 60 + curM - (expH * 60 + expM);
+
+      const nextId = attendanceStore.length > 0 ? Math.max(...attendanceStore.map((a) => a.id)) + 1 : 1;
+      const rec: AttendanceRecord = {
+        id: nextId,
+        employeeId: empId,
+        employeeName: emp.name,
+        tenantId: activeTenant,
+        tenantName: "Oficina Central",
+        isShared: true,
+        date: dateStr,
+        checkIn: now.toISOString(),
+        checkInTime: timeStr,
+        lunchStart: null,
+        lunchEndTime: null,
+        checkOut: body.action === "check_out" ? peruTime : (body.checkOutTime || null),
+        overtimeUnlocked: false,
+        overtimeMinutes: 0,
+        photo: emp.avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=Fingerprint",
+        location: {
+          latitude: -12.046374,
+          longitude: -77.042793,
+          accuracy: 5,
+          address: `Lector Biométrico de Huella - ${devName}`,
+        },
+        modality: "fingerprint",
+        biometricVerified: true,
+        biometricDeviceId: devName,
+        manualApprovalStatus: "not_required",
+        status: diff > 0 ? "very_late_blocked" : "on_time",
+        minutesLate: Math.max(0, diff),
+        unlockedByTotp: false,
+        notes: `Sincronizado desde lector de huella dactilar (${devName})`,
+      };
+
+      attendanceStore.unshift(rec);
+      synced.push(rec);
+    }
+
+    saveAttendanceToDisk(attendanceStore);
+
+    return reply.send({
+      success: true,
+      count: synced.length,
+      message:
+        synced.length > 0
+          ? `${synced.length} marcación(es) de huella dactilar sincronizadas en ${devName}.`
+          : "Todas las marcaciones de oficina de hoy ya estaban sincronizadas.",
+      data: synced,
+    });
+  });
+
+  // Registro o Autorización Manual de Asistencia por el Jefe/Supervisor (Trabajo en Campo / Situaciones Especiales)
+  fastify.post("/rrhh/attendance/manual-authorize", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const empId = Number(body.employeeId);
+    if (!empId) {
+      return reply.status(400).send({ success: false, message: "Selecciona un colaborador" });
+    }
+
+    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
+    const { peruDate, peruTime, now } = getPeruDateTime();
+    const targetDate = body.date || peruDate;
+    const checkInTime = body.checkInTime || "08:00:00";
+    const checkOutTime = body.checkOutTime || null;
+    const supervisorName = body.supervisorName || body.authorizedBy || "Jefe Directo / Supervisor";
+    const reason = body.reason || body.fieldWorkReason || "Trabajo en campo / Comisión externa autorizada";
+
+    const emp = resolveEmployeeOrUser(empId);
+    attendanceStore = loadAttendanceFromDisk();
+
+    let existing = attendanceStore.find((a) => a.employeeId === empId && a.date === targetDate);
+    if (existing) {
+      existing.modality = "manual_auth";
+      existing.manualApprovalStatus = "approved";
+      existing.approvedBySupervisor = supervisorName;
+      existing.approvedAt = now.toISOString();
+      existing.fieldWorkReason = reason;
+      existing.status = "on_time";
+      existing.minutesLate = 0;
+      existing.lateWaived = true;
+      if (checkOutTime) existing.checkOut = checkOutTime;
+      if (body.overtimeMinutes != null) existing.overtimeMinutes = Number(body.overtimeMinutes) || 0;
+      existing.notes = `Autorización manual por ${supervisorName}: ${reason}`;
+      saveAttendanceToDisk(attendanceStore);
+
+      return reply.send({
+        success: true,
+        message: `Asistencia de ${emp.name} autorizada manualmente por ${supervisorName}.`,
+        data: existing,
+      });
+    }
+
+    const nextId = attendanceStore.length > 0 ? Math.max(...attendanceStore.map((a) => a.id)) + 1 : 1;
+    const newRec: AttendanceRecord = {
+      id: nextId,
+      employeeId: empId,
+      employeeName: emp.name,
+      tenantId: activeTenant,
+      tenantName: "Trabajo en Campo",
+      isShared: true,
+      date: targetDate,
+      checkIn: now.toISOString(),
+      checkInTime,
+      lunchStart: "13:00:00",
+      lunchEndTime: "14:00:00",
+      checkOut: checkOutTime,
+      overtimeUnlocked: (Number(body.overtimeMinutes) || 0) > 0,
+      overtimeMinutes: Number(body.overtimeMinutes) || 0,
+      photo: emp.avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=FieldWork",
+      location: {
+        latitude: -12.046374,
+        longitude: -77.042793,
+        address: `Campo / Autorizado: ${reason}`,
+      },
+      modality: "manual_auth",
+      manualApprovalStatus: "approved",
+      approvedBySupervisor: supervisorName,
+      approvedAt: now.toISOString(),
+      fieldWorkReason: reason,
+      status: "on_time",
+      minutesLate: 0,
+      lateWaived: true,
+      notes: `Autorización manual directa por ${supervisorName}: ${reason}`,
+    };
+
+    attendanceStore.unshift(newRec);
+    saveAttendanceToDisk(attendanceStore);
+
+    return reply.send({
+      success: true,
+      message: `Asistencia en campo registrada y autorizada para ${emp.name}.`,
+      data: newRec,
+    });
+  });
+
+  // Aprobar / Rechazar marcación en campo o justificar tardanza con 1 clic
+  fastify.post("/rrhh/attendance/:id/approve-manual", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const recId = parseInt(id, 10);
+    const body = (request.body as any) || {};
+    const decision: "approved" | "rejected" = body.decision === "rejected" ? "rejected" : "approved";
+    const supervisorName = body.supervisorName || "Supervisor / Jefe";
+
+    attendanceStore = loadAttendanceFromDisk();
+    const record = attendanceStore.find((a) => a.id === recId);
+    if (!record) {
+      return reply.status(404).send({ success: false, message: "Registro de asistencia no encontrado" });
+    }
+
+    record.manualApprovalStatus = decision;
+    record.approvedBySupervisor = supervisorName;
+    record.approvedAt = new Date().toISOString();
+    if (decision === "approved" && body.waiveLate !== false) {
+      record.lateWaived = true;
+      if (record.status === "very_late_blocked" || record.status === "late") {
+        record.status = "unlocked";
+        record.unlockedByTotp = true;
+      }
+    }
+    record.notes = `${record.notes ? record.notes + " | " : ""}${
+      decision === "approved" ? "Aprobado" : "Rechazado"
+    } manualmente por ${supervisorName}`;
+
+    saveAttendanceToDisk(attendanceStore);
+
+    return reply.send({
+      success: true,
+      message:
+        decision === "approved"
+          ? `Marcación de ${record.employeeName} aprobada por ${supervisorName}.`
+          : `Marcación de ${record.employeeName} rechazada.`,
+      data: record,
     });
   });
 
   // Desbloqueo por TOTP (Google Authenticator o clave de supervisión para impuntualidad)
   fastify.post("/rrhh/attendance/unlock-totp", async (request, reply) => {
     const unlockSchema = z.object({
-      employeeId: z.number().int(),
+      employeeId: z.coerce.number().int(),
       totpCode: z.string().min(1, "El código TOTP es requerido"),
       tenantId: z.string().optional(),
     });
@@ -1361,18 +2015,16 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const activeTenant = (parse.data.tenantId || resolveTenantId(request)).toLowerCase();
 
     const userOrEmp = resolveEmployeeOrUser(employeeId);
+    const resolvedNameLower = (userOrEmp?.name || "").trim().toLowerCase();
     const individualSecret = userOrEmp?.totpSecret || "JBSWY3DPEHPK3PXP";
     const masterSecret = getSystemMasterTotpSecret();
     const { getMasterTotpSecret, getMasterSupervisorPin } = await import("../settings/connections.service.js");
     const tenantMasterSecret = getMasterTotpSecret(activeTenant);
     const supervisorPin = getMasterSupervisorPin(activeTenant);
 
-    // 1. Google Authenticator Maestro del Supervisor (Tenant y Sistema)
     const isTenantMasterValid = tenantMasterSecret ? verifyTOTP(totpCode, tenantMasterSecret) : false;
     const isMasterValid = verifyTOTP(totpCode, masterSecret) || isTenantMasterValid;
-    // 2. Google Authenticator individual del colaborador
     const isIndividualValid = verifyTOTP(totpCode, individualSecret);
-    // 3. Clave maestra de supervisión / emergencia
     const isSupervisorKey = totpCode === supervisorPin || totpCode === "998877" || totpCode === "123456";
 
     if (!isMasterValid && !isIndividualValid && !isSupervisorKey) {
@@ -1385,19 +2037,28 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const { peruDate } = getPeruDateTime();
     const today = peruDate;
     attendanceStore = loadAttendanceFromDisk();
+
+    const matchesEmp = (a: AttendanceRecord) =>
+      a.employeeId === employeeId ||
+      (resolvedNameLower && (a.employeeName || "").trim().toLowerCase() === resolvedNameLower);
+
     let record = attendanceStore.find(
       (a) =>
-        a.employeeId === employeeId &&
+        matchesEmp(a) &&
         a.date === today &&
         (a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork"))
     );
 
     if (!record) {
+      record = attendanceStore.find((a) => matchesEmp(a) && a.date === today);
+    }
+
+    if (!record) {
       record = attendanceStore.find(
         (a) =>
-          a.employeeId === employeeId &&
-          a.status === "very_late_blocked" &&
-          (a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork"))
+          matchesEmp(a) &&
+          (a.status === "very_late_blocked" || a.status === "late") &&
+          !a.unlockedByTotp
       );
     }
 
@@ -1408,9 +2069,14 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    record.status = "unlocked";
-    record.unlockedByTotp = true;
-    record.unlockedAt = new Date().toISOString();
+    const nowIso = new Date().toISOString();
+    for (const r of attendanceStore) {
+      if (matchesEmp(r) && (r.date === today || r.id === record.id)) {
+        r.status = "unlocked";
+        r.unlockedByTotp = true;
+        r.unlockedAt = nowIso;
+      }
+    }
 
     saveAttendanceToDisk(attendanceStore);
 
@@ -1424,7 +2090,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   // Desbloqueo / Ampliación de Jornada para Horas Extras con Google Authenticator (TOTP)
   fastify.post("/rrhh/attendance/overtime-unlock", async (request, reply) => {
     const schema = z.object({
-      employeeId: z.number().int(),
+      employeeId: z.coerce.number().int(),
       totpCode: z.string().min(1, "El código de Google Authenticator es requerido"),
       notes: z.string().optional(),
       tenantId: z.string().optional(),
@@ -1459,12 +2125,15 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     const { peruDate, peruTime } = getPeruDateTime();
     attendanceStore = loadAttendanceFromDisk();
-    const record = attendanceStore.find(
+    let record = attendanceStore.find(
       (a) =>
         a.employeeId === employeeId &&
         a.date === peruDate &&
         (a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork"))
     );
+    if (!record) {
+      record = attendanceStore.find((a) => a.employeeId === employeeId && a.date === peruDate);
+    }
 
     if (!record) {
       return reply.status(404).send({
@@ -1476,7 +2145,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     record.overtimeUnlocked = true;
     record.overtimeStartedAt = peruTime;
     record.previousCheckOut = record.checkOut || record.previousCheckOut;
-    record.checkOut = null; // Reabrir sesión para registrar horas extras hasta la próxima marcación de salida
+    record.checkOut = null;
     const addNote = notes ? `Horas extras autorizadas (${notes}) a las ${peruTime}` : `Horas extras autorizadas a las ${peruTime}`;
     record.notes = record.notes ? `${record.notes} | ${addNote}` : addNote;
 
@@ -1492,7 +2161,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   // Iniciar tiempo de refrigerio (Hora Perú)
   fastify.post("/rrhh/attendance/lunch-start", async (request, reply) => {
     const schema = z.object({
-      employeeId: z.number().int(),
+      employeeId: z.coerce.number().int(),
       tenantId: z.string().optional(),
     });
 
@@ -1505,12 +2174,15 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const activeTenant = (parse.data.tenantId || resolveTenantId(request)).toLowerCase();
     const { peruDate, peruTime } = getPeruDateTime();
     attendanceStore = loadAttendanceFromDisk();
-    const record = attendanceStore.find(
+    let record = attendanceStore.find(
       (a) =>
         a.employeeId === employeeId &&
         a.date === peruDate &&
         (a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork"))
     );
+    if (!record) {
+      record = attendanceStore.find((a) => a.employeeId === employeeId && a.date === peruDate);
+    }
 
     if (!record) {
       return reply.status(400).send({
@@ -1539,7 +2211,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   // Finalizar tiempo de refrigerio (Hora Perú)
   fastify.post("/rrhh/attendance/lunch-end", async (request, reply) => {
     const schema = z.object({
-      employeeId: z.number().int(),
+      employeeId: z.coerce.number().int(),
       tenantId: z.string().optional(),
     });
 
@@ -1552,12 +2224,15 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const activeTenant = (parse.data.tenantId || resolveTenantId(request)).toLowerCase();
     const { peruDate, peruTime } = getPeruDateTime();
     attendanceStore = loadAttendanceFromDisk();
-    const record = attendanceStore.find(
+    let record = attendanceStore.find(
       (a) =>
         a.employeeId === employeeId &&
         a.date === peruDate &&
         (a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork"))
     );
+    if (!record) {
+      record = attendanceStore.find((a) => a.employeeId === employeeId && a.date === peruDate);
+    }
 
     if (!record) {
       return reply.status(400).send({
@@ -1590,11 +2265,20 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
-  // Marcación de Salida (Check-Out en Hora Perú)
+  // Marcación de Salida (Check-Out en Hora Perú con cálculo automático de Horas Extras)
   fastify.post("/rrhh/attendance/check-out", async (request, reply) => {
     const schema = z.object({
-      employeeId: z.number().int(),
+      employeeId: z.coerce.number().int(),
       tenantId: z.string().optional(),
+      location: z
+        .object({
+          latitude: z.number(),
+          longitude: z.number(),
+          accuracy: z.number().optional(),
+          address: z.string().optional(),
+        })
+        .nullable()
+        .optional(),
     });
 
     const parse = schema.safeParse(request.body);
@@ -1602,16 +2286,19 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ success: false, message: "ID de colaborador requerido" });
     }
 
-    const { employeeId } = parse.data;
+    const { employeeId, location } = parse.data;
     const activeTenant = (parse.data.tenantId || resolveTenantId(request)).toLowerCase();
     const { peruDate, peruTime } = getPeruDateTime();
     attendanceStore = loadAttendanceFromDisk();
-    const record = attendanceStore.find(
+    let record = attendanceStore.find(
       (a) =>
         a.employeeId === employeeId &&
         a.date === peruDate &&
         (a.isShared === true || a.tenantId === activeTenant || (!a.tenantId && activeTenant === "turbonetwork"))
     );
+    if (!record) {
+      record = attendanceStore.find((a) => a.employeeId === employeeId && a.date === peruDate);
+    }
 
     if (!record) {
       return reply.status(400).send({
@@ -1628,12 +2315,621 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     record.checkOut = peruTime;
+    if (location) record.checkOutLocation = location;
+
+    // Calcular minutos de horas extras si fue desbloqueado con TOTP o si excedió hora de salida
+    if (record.overtimeUnlocked && record.overtimeStartedAt) {
+      const [sh, sm] = record.overtimeStartedAt.split(":").map(Number);
+      const [eh, em] = peruTime.split(":").map(Number);
+      const diff = eh * 60 + em - (sh * 60 + sm);
+      if (diff > 0) {
+        record.overtimeMinutes = (record.overtimeMinutes || 0) + diff;
+      }
+    } else {
+      const emp = resolveEmployeeOrUser(employeeId);
+      const outMatch = emp.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/);
+      const expectedOut = outMatch ? outMatch[1] : "17:00";
+      const [expOutH, expOutM] = expectedOut.split(":").map(Number);
+      const [curOutH, curOutM] = peruTime.split(":").map(Number);
+      const extraDiff = curOutH * 60 + curOutM - (expOutH * 60 + expOutM);
+      if (extraDiff >= 15) {
+        record.overtimeMinutes = extraDiff;
+      }
+    }
+
     saveAttendanceToDisk(attendanceStore);
 
     return reply.send({
       success: true,
-      message: `Salida laboral registrada a las ${peruTime} (Hora Perú). ¡Excelente trabajo hoy!`,
+      message: `Salida laboral registrada a las ${peruTime} (Hora Perú).${
+        record.overtimeMinutes ? ` Se contabilizaron +${record.overtimeMinutes} min de horas extra.` : " ¡Excelente trabajo hoy!"
+      }`,
       data: record,
     });
   });
+
+  // -------------------------------------------------------------
+  // C. MÓDULO 5: PERMISOS Y VACACIONES (FLUJO FORMAL + 1 CLIC MÓVIL)
+  // -------------------------------------------------------------
+
+  const normalizeLeave = (l: any) => ({
+    ...l,
+    position: l.position || l.employeePosition || "Colaborador",
+    daysRequested: l.daysRequested ?? l.daysCount ?? 1,
+    approvedBy: l.approvedBy || l.reviewedBy || null,
+    decidedAt: l.decidedAt || l.reviewedAt || null,
+  });
+
+  fastify.get("/rrhh/leaves", async (request, reply) => {
+    const { employeeId, status } = request.query as { employeeId?: string; status?: string };
+    const allList = loadLeavesFromDisk().map(normalizeLeave);
+    let list = [...allList];
+
+    if (employeeId) {
+      const eId = parseInt(employeeId, 10);
+      list = list.filter((l) => l.employeeId === eId);
+    }
+    if (status && status !== "all") {
+      list = list.filter((l) => l.status === status);
+    }
+
+    return reply.send({
+      success: true,
+      count: list.length,
+      pendingCount: allList.filter((l) => l.status === "pending").length,
+      approvedCount: allList.filter((l) => l.status === "approved").length,
+      data: list,
+    });
+  });
+
+  fastify.post("/rrhh/leaves", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const empId = Number(body.employeeId);
+    if (!empId || !body.startDate || !body.endDate || !body.reason) {
+      return reply.status(400).send({
+        success: false,
+        message: "Completa colaborador, fechas de inicio/fin y motivo de la solicitud",
+      });
+    }
+
+    const emp = resolveEmployeeOrUser(empId, body.employeeName);
+    const startMs = new Date(`${body.startDate}T00:00:00`).getTime();
+    const endMs = new Date(`${body.endDate}T00:00:00`).getTime();
+    const calcDays = Math.max(1, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1);
+    const daysCount = Number(body.daysCount || body.daysRequested) || calcDays;
+
+    const list = loadLeavesFromDisk();
+    const nextId = list.length > 0 ? Math.max(...list.map((l) => Number(l.id) || 0)) + 1 : 1;
+
+    const newLeave: LeaveRequest = {
+      id: nextId,
+      employeeId: empId,
+      employeeName: emp.name,
+      employeePosition: body.position || emp.position,
+      employeeAvatar: emp.avatar,
+      tenantId: (body.tenantId || resolveTenantId(request)).toLowerCase(),
+      type: body.type || "vacation",
+      startDate: body.startDate,
+      endDate: body.endDate,
+      daysCount,
+      reason: String(body.reason).trim(),
+      attachmentUrl: body.attachmentUrl || undefined,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    };
+
+    list.unshift(newLeave);
+    saveLeavesToDisk(list);
+
+    return reply.status(201).send({
+      success: true,
+      message: `Solicitud de ${newLeave.type === "vacation" ? "vacaciones" : "permiso"} enviada (${daysCount} día(s)). Pendiente de aprobación.`,
+      data: normalizeLeave(newLeave),
+    });
+  });
+
+  // Aprobar o rechazar solicitud en 1 clic desde móvil o web
+  fastify.post("/rrhh/leaves/:id/decision", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const leaveId = parseInt(id, 10);
+    const body = (request.body as any) || {};
+    const status: "approved" | "rejected" = body.status === "rejected" ? "rejected" : "approved";
+    const reviewedBy = body.reviewedBy || body.approvedBy || "Gerencia / Supervisor";
+
+    const list = loadLeavesFromDisk();
+    const item = list.find((l) => Number(l.id) === leaveId || String(l.id) === String(id));
+    if (!item) {
+      return reply.status(404).send({ success: false, message: "Solicitud no encontrada" });
+    }
+
+    item.status = status;
+    item.reviewedBy = reviewedBy;
+    item.reviewedAt = new Date().toISOString();
+    if (body.reviewNotes) item.reviewNotes = body.reviewNotes;
+
+    saveLeavesToDisk(list);
+
+    return reply.send({
+      success: true,
+      message:
+        status === "approved"
+          ? `✓ Solicitud de ${item.employeeName} (${item.daysCount} día(s)) APROBADA.`
+          : `✕ Solicitud de ${item.employeeName} RECHAZADA.`,
+      data: normalizeLeave(item),
+    });
+  });
+
+  // -------------------------------------------------------------
+  // D. MÓDULO 3: COMISIONES SOBRE MARGEN DE GANANCIA (TIEMPO REAL)
+  // -------------------------------------------------------------
+
+  const normalizeCommissionRule = (r: any) => ({
+    ...r,
+    label: r.label || r.name || "Regla de Comisión",
+    name: r.name || r.label || "Regla de Comisión",
+    marginPercentage: r.marginPercentage ?? r.percentageOnMargin ?? 15,
+    percentageOnMargin: r.percentageOnMargin ?? r.marginPercentage ?? 15,
+    defaultSalePrice: r.defaultSalePrice ?? (r.productType === "planes_isp" ? 120 : r.productType === "activos" ? 180 : 100),
+    defaultBaseCost: r.defaultBaseCost ?? (r.productType === "planes_isp" ? 45 : r.productType === "activos" ? 95 : 40),
+  });
+
+  const normalizeCommissionSale = (s: any) => ({
+    ...s,
+    salePrice: s.salePrice ?? s.totalSale ?? s.unitSalePrice ?? 0,
+    baseCost: s.baseCost ?? s.totalCost ?? s.unitCost ?? 0,
+    productTypeLabel: s.productTypeLabel || s.ruleName || s.productType || "Producto",
+  });
+
+  fastify.get("/rrhh/commissions/rules", async (_request, reply) => {
+    const rules = loadCommissionRulesFromDisk().map(normalizeCommissionRule);
+    return reply.send({
+      success: true,
+      count: rules.length,
+      data: rules,
+    });
+  });
+
+  fastify.post("/rrhh/commissions/rules", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const ruleName = body.name || body.label;
+    const pct = body.percentageOnMargin ?? body.marginPercentage;
+    if (!ruleName || pct == null) {
+      return reply.status(400).send({
+        success: false,
+        message: "Nombre de regla y porcentaje sobre el margen son obligatorios",
+      });
+    }
+
+    const rules = loadCommissionRulesFromDisk();
+    const ruleId = body.id || `rule-${Date.now()}`;
+    const existingIdx = rules.findIndex((r) => r.id === ruleId);
+
+    const ruleObj: any = {
+      id: ruleId,
+      name: String(ruleName).trim(),
+      label: String(ruleName).trim(),
+      productType: body.productType || "general",
+      categoryId: body.categoryId || undefined,
+      percentageOnMargin: Math.max(0, Math.min(100, Number(pct) || 0)),
+      marginPercentage: Math.max(0, Math.min(100, Number(pct) || 0)),
+      defaultSalePrice: Number(body.defaultSalePrice) || 100,
+      defaultBaseCost: Number(body.defaultBaseCost) || 40,
+      description: body.description || "",
+      isActive: body.isActive !== false,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (existingIdx >= 0) {
+      rules[existingIdx] = ruleObj;
+    } else {
+      rules.push(ruleObj);
+    }
+    saveCommissionRulesToDisk(rules);
+
+    return reply.send({
+      success: true,
+      message: `Regla de comisión "${ruleObj.name}" (${ruleObj.percentageOnMargin}% sobre margen) guardada.`,
+      data: normalizeCommissionRule(ruleObj),
+    });
+  });
+
+  const handleGetCommissions = async (request: any, reply: any) => {
+    const { employeeId, period } = request.query as { employeeId?: string; period?: string };
+    const { peruDate } = getPeruDateTime();
+    const targetPeriod = period || peruDate.slice(0, 7);
+
+    const rules = loadCommissionRulesFromDisk().map(normalizeCommissionRule);
+    let sales = loadCommissionsFromDisk().map(normalizeCommissionSale);
+
+    if (targetPeriod && targetPeriod !== "all") {
+      sales = sales.filter((s) => s.period === targetPeriod);
+    }
+    if (employeeId && employeeId !== "all") {
+      const eId = parseInt(employeeId, 10);
+      sales = sales.filter((s) => s.employeeId === eId);
+    }
+
+    const activeSales = sales.filter((s) => s.status !== "cancelled");
+    const totalSalesRevenue = +activeSales.reduce((acc, s) => acc + Number(s.totalSale || s.salePrice || 0), 0).toFixed(2);
+    const totalBaseCost = +activeSales.reduce((acc, s) => acc + Number(s.totalCost || s.baseCost || 0), 0).toFixed(2);
+    const totalProfitMargin = +activeSales.reduce((acc, s) => acc + Number(s.profitMargin || 0), 0).toFixed(2);
+    const totalCommissionAmount = +activeSales.reduce((acc, s) => acc + Number(s.commissionAmount || 0), 0).toFixed(2);
+
+    // Agrupar resumen transparente por vendedor en tiempo real
+    const byVendorMap = new Map<
+      number,
+      {
+        employeeId: number;
+        employeeName: string;
+        salesCount: number;
+        totalSale: number;
+        totalCost: number;
+        totalMargin: number;
+        totalCommission: number;
+      }
+    >();
+
+    for (const s of activeSales) {
+      const curr = byVendorMap.get(s.employeeId) || {
+        employeeId: s.employeeId,
+        employeeName: s.employeeName,
+        salesCount: 0,
+        totalSale: 0,
+        totalCost: 0,
+        totalMargin: 0,
+        totalCommission: 0,
+      };
+      curr.salesCount += 1;
+      curr.totalSale = +(curr.totalSale + Number(s.totalSale || s.salePrice || 0)).toFixed(2);
+      curr.totalCost = +(curr.totalCost + Number(s.totalCost || s.baseCost || 0)).toFixed(2);
+      curr.totalMargin = +(curr.totalMargin + Number(s.profitMargin || 0)).toFixed(2);
+      curr.totalCommission = +(curr.totalCommission + Number(s.commissionAmount || 0)).toFixed(2);
+      byVendorMap.set(s.employeeId, curr);
+    }
+
+    return reply.send({
+      success: true,
+      period: targetPeriod,
+      summary: {
+        salesCount: activeSales.length,
+        totalSalesRevenue,
+        totalSalesVolume: totalSalesRevenue,
+        totalBaseCost,
+        totalProfitMargin,
+        totalCommissionAmount,
+        totalCommissionEarned: totalCommissionAmount,
+      },
+      vendorBreakdown: Array.from(byVendorMap.values()),
+      rules,
+      data: sales,
+    });
+  };
+
+  fastify.get("/rrhh/commissions", handleGetCommissions);
+  fastify.get("/rrhh/commissions/sales", handleGetCommissions);
+
+  const handlePostCommission = async (request: any, reply: any) => {
+    const body = (request.body as any) || {};
+    const empId = Number(body.employeeId);
+    if (!empId || !body.productName) {
+      return reply.status(400).send({
+        success: false,
+        message: "Vendedor y producto/servicio vendido son requeridos",
+      });
+    }
+
+    const emp = resolveEmployeeOrUser(empId, body.employeeName);
+    const rules = loadCommissionRulesFromDisk();
+    const rule =
+      rules.find((r) => r.id === body.ruleId) ||
+      rules.find((r) => r.productType === body.productType) ||
+      rules[0];
+
+    const quantity = Math.max(1, Number(body.quantity) || 1);
+    const unitCost = Math.max(0, Number(body.unitCost ?? body.baseCost) || 0);
+    const unitSalePrice = Math.max(0, Number(body.unitSalePrice ?? body.salePrice) || 0);
+    const totalCost = +(unitCost * quantity).toFixed(2);
+    const totalSale = +(unitSalePrice * quantity).toFixed(2);
+    const profitMargin = Math.max(0, +(totalSale - totalCost).toFixed(2));
+    const commissionPercentage =
+      body.commissionPercentage != null
+        ? Number(body.commissionPercentage)
+        : rule
+        ? rule.percentageOnMargin
+        : 15;
+    const commissionAmount = +((profitMargin * commissionPercentage) / 100).toFixed(2);
+
+    const { peruDate } = getPeruDateTime();
+    const dateStr = body.date || peruDate;
+    const periodStr = body.period || dateStr.slice(0, 7);
+
+    const sales = loadCommissionsFromDisk();
+    const nextId = sales.length > 0 ? Math.max(...sales.map((s) => Number(s.id) || 0)) + 1 : 1;
+
+    const newSale: CommissionSale = {
+      id: nextId,
+      employeeId: empId,
+      employeeName: emp.name,
+      tenantId: (body.tenantId || resolveTenantId(request)).toLowerCase(),
+      period: periodStr,
+      date: dateStr,
+      customerName: body.customerName || "Cliente Directo",
+      productId: body.productId ? Number(body.productId) : null,
+      productName: String(body.productName).trim(),
+      productType: body.productType || rule?.productType || "activos",
+      ruleId: rule?.id || "rule-custom",
+      ruleName: body.productTypeLabel || rule?.name || "Regla Personalizada",
+      quantity,
+      unitCost,
+      unitSalePrice,
+      totalCost,
+      totalSale,
+      profitMargin,
+      commissionPercentage,
+      commissionAmount,
+      status: "confirmed",
+      notes: body.notes || "",
+      createdAt: new Date().toISOString(),
+    };
+
+    sales.unshift(newSale);
+    saveCommissionsToDisk(sales);
+
+    return reply.status(201).send({
+      success: true,
+      message: `Comisión registrada para ${emp.name}: Margen S/ ${profitMargin.toFixed(2)} × ${commissionPercentage}% = S/ ${commissionAmount.toFixed(2)}`,
+      data: normalizeCommissionSale(newSale),
+    });
+  };
+
+  fastify.post("/rrhh/commissions", handlePostCommission);
+  fastify.post("/rrhh/commissions/sales", handlePostCommission);
+
+  const handleDeleteCommission = async (request: any, reply: any) => {
+    const { id } = request.params as { id: string };
+    const cId = parseInt(id, 10);
+    const sales = loadCommissionsFromDisk();
+    const idx = sales.findIndex((s) => Number(s.id) === cId || String(s.id) === String(id));
+    if (idx === -1) {
+      return reply.status(404).send({ success: false, message: "Registro de comisión no encontrado" });
+    }
+    const removed = sales.splice(idx, 1)[0];
+    saveCommissionsToDisk(sales);
+    return reply.send({
+      success: true,
+      message: "Comisión eliminada",
+      data: removed,
+    });
+  };
+
+  fastify.delete("/rrhh/commissions/:id", handleDeleteCommission);
+  fastify.delete("/rrhh/commissions/sales/:id", handleDeleteCommission);
+
+  // -------------------------------------------------------------
+  // E. MÓDULO 2: PLANILLA AUTOMÁTICA (NÓMINA) E INCIDENCIAS/DESCUENTOS
+  // -------------------------------------------------------------
+
+  const normalizeIncident = (i: any) => ({
+    ...i,
+    category: i.category || (i.type === "salary_advance" ? "advance" : i.type) || "material_damage",
+    description: i.description || i.title || "",
+  });
+
+  const handleGetIncidents = async (request: any, reply: any) => {
+    const { period, employeeId } = request.query as { period?: string; employeeId?: string };
+    const { peruDate } = getPeruDateTime();
+    const targetPeriod = period || peruDate.slice(0, 7);
+    const activeTenant = resolveTenantId(request).toLowerCase();
+
+    // Sincronizar automáticamente daños de herramientas/EPP desde Almacén
+    syncDamagedInventoryAssignmentsToPayroll(activeTenant, targetPeriod);
+
+    let list = loadIncidentsFromDisk().map(normalizeIncident);
+    if (targetPeriod && targetPeriod !== "all") {
+      list = list.filter((i) => i.period === targetPeriod);
+    }
+    if (employeeId && employeeId !== "all") {
+      const eId = parseInt(employeeId, 10);
+      list = list.filter((i) => i.employeeId === eId);
+    }
+
+    return reply.send({
+      success: true,
+      count: list.length,
+      data: list,
+    });
+  };
+
+  fastify.get("/rrhh/incidents", handleGetIncidents);
+  fastify.get("/rrhh/payroll/incidents", handleGetIncidents);
+
+  const handlePostIncident = async (request: any, reply: any) => {
+    const body = (request.body as any) || {};
+    const empId = Number(body.employeeId);
+    const titleText = body.title || body.description;
+    if (!empId || !titleText || body.amount == null) {
+      return reply.status(400).send({
+        success: false,
+        message: "Colaborador, concepto y monto son requeridos",
+      });
+    }
+
+    const emp = resolveEmployeeOrUser(empId, body.employeeName);
+    const { peruDate } = getPeruDateTime();
+    const dateStr = body.date || peruDate;
+    const periodStr = body.period || dateStr.slice(0, 7);
+
+    const rawCat = body.category || body.type || "material_damage";
+    const mappedType: any =
+      rawCat === "advance" ? "salary_advance" : rawCat;
+
+    const list = loadIncidentsFromDisk();
+    const nextId = list.length > 0 ? Math.max(...list.map((i) => Number(i.id) || 0)) + 1 : 1;
+
+    const newInc: PayrollIncident = {
+      id: nextId,
+      employeeId: empId,
+      employeeName: emp.name,
+      tenantId: (body.tenantId || resolveTenantId(request)).toLowerCase(),
+      period: periodStr,
+      date: dateStr,
+      type: mappedType,
+      title: String(titleText).trim(),
+      description: String(body.description || titleText).trim(),
+      amount: Math.max(0, Number(body.amount) || 0),
+      status: "active",
+      createdBy: body.createdBy || "RRHH / Administración",
+      createdAt: new Date().toISOString(),
+    };
+
+    list.unshift(newInc);
+    saveIncidentsToDisk(list);
+
+    return reply.status(201).send({
+      success: true,
+      message: `Incidencia "${newInc.title}" registrada en la planilla de ${emp.name}.`,
+      data: normalizeIncident(newInc),
+    });
+  };
+
+  fastify.post("/rrhh/incidents", handlePostIncident);
+  fastify.post("/rrhh/payroll/incidents", handlePostIncident);
+
+  const handleSyncInventoryDamages = async (request: any, reply: any) => {
+    const body = (request.body as any) || {};
+    const { peruDate } = getPeruDateTime();
+    const period = body.period || peruDate.slice(0, 7);
+    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
+
+    const synced = syncDamagedInventoryAssignmentsToPayroll(activeTenant, period);
+    return reply.send({
+      success: true,
+      count: synced.length,
+      message:
+        synced.length > 0
+          ? `Se importaron ${synced.length} cargo(s) por daño de material/EPP desde Almacén.`
+          : "Almacén sincronizado: No hay nuevas devoluciones dañadas pendientes de cargo.",
+      data: synced.map(normalizeIncident),
+    });
+  };
+
+  fastify.post("/rrhh/incidents/sync-inventory", handleSyncInventoryDamages);
+  fastify.post("/rrhh/payroll/sync-inventory-damages", handleSyncInventoryDamages);
+
+  const handleDeleteIncident = async (request: any, reply: any) => {
+    const { id } = request.params as { id: string };
+    const incId = parseInt(id, 10);
+    const list = loadIncidentsFromDisk();
+    const idx = list.findIndex((i) => Number(i.id) === incId || String(i.id) === String(id));
+    if (idx === -1) {
+      return reply.status(404).send({ success: false, message: "Incidencia no encontrada" });
+    }
+    const removed = list.splice(idx, 1)[0];
+    saveIncidentsToDisk(list);
+    return reply.send({
+      success: true,
+      message: "Incidencia anulada de la planilla",
+      data: removed,
+    });
+  };
+
+  fastify.delete("/rrhh/incidents/:id", handleDeleteIncident);
+  fastify.delete("/rrhh/payroll/incidents/:id", handleDeleteIncident);
+
+  // Calcular Planilla (Nómina) Mensual Automática
+  fastify.get("/rrhh/payroll", async (request, reply) => {
+    const { period, tenantId } = request.query as { period?: string; tenantId?: string };
+    const { peruDate } = getPeruDateTime();
+    const targetPeriod = period || peruDate.slice(0, 7);
+    const activeTenant = (tenantId || resolveTenantId(request)).toLowerCase();
+
+    // Sincronizar automáticamente daños de inventario/EPP antes de calcular
+    syncDamagedInventoryAssignmentsToPayroll(activeTenant, targetPeriod);
+
+    employeesStore = loadEmployeesFromDisk();
+    attendanceStore = loadAttendanceFromDisk();
+    const leaves = loadLeavesFromDisk();
+    const commissions = loadCommissionsFromDisk();
+    const incidents = loadIncidentsFromDisk();
+
+    const enrichedEmployees = employeesStore.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
+
+    const items = calculateMonthlyPayroll({
+      period: targetPeriod,
+      tenantId: activeTenant,
+      employees: enrichedEmployees,
+      attendances: attendanceStore,
+      leaves,
+      commissions,
+      incidents,
+    });
+
+    const totalTardinessDeduction = +items.reduce((s, i) => s + i.tardinessDeduction, 0).toFixed(2);
+    const totalIncidentDeductions = +items
+      .reduce((s, i) => s + i.materialAndEppDeductions + i.advanceAndOtherDeductions + i.unpaidLeaveDeduction, 0)
+      .toFixed(2);
+    const totalNetPay = +items.reduce((s, i) => s + i.netPay, 0).toFixed(2);
+
+    const summary = {
+      employeesCount: items.length,
+      totalBaseSalary: +items.reduce((s, i) => s + i.baseSalary, 0).toFixed(2),
+      totalOvertimePay: +items.reduce((s, i) => s + i.overtimePay, 0).toFixed(2),
+      totalCommissions: +items.reduce((s, i) => s + i.commissionsTotal, 0).toFixed(2),
+      totalBonuses: +items.reduce((s, i) => s + i.bonusesTotal, 0).toFixed(2),
+      totalTardinessDeduction,
+      totalTardinessDiscount: totalTardinessDeduction,
+      totalIncidentDeductions,
+      totalIncidentDiscounts: totalIncidentDeductions,
+      totalPensionDeduction: +items.reduce((s, i) => s + i.pensionDeduction, 0).toFixed(2),
+      totalNetPay,
+      totalNetPayroll: totalNetPay,
+    };
+
+    return reply.send({
+      success: true,
+      period: targetPeriod,
+      totals: summary,
+      summary,
+      items,
+      data: {
+        period: targetPeriod,
+        items,
+        summary,
+      },
+    });
+  });
+
+  // Aprobar / Marcar como Pagada una boleta o toda la planilla del mes
+  fastify.post("/rrhh/payroll/status", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const { peruDate } = getPeruDateTime();
+    const period = body.period || peruDate.slice(0, 7);
+    const status: "draft" | "approved" | "paid" = body.status === "pending" ? "draft" : (body.status || "paid");
+    const statusMap = loadPayrollsStatusFromDisk();
+
+    employeesStore = loadEmployeesFromDisk();
+    const targetIds: number[] = body.employeeId
+      ? [Number(body.employeeId)]
+      : employeesStore.filter((e) => e.status === "active").map((e) => e.id);
+
+    for (const empId of targetIds) {
+      const key = `${period}_${empId}`;
+      statusMap[key] = {
+        paymentStatus: status,
+        paidAt: status === "paid" ? new Date().toISOString() : null,
+        voucherCode: `BOL-${period}-${String(empId).padStart(3, "0")}`,
+      };
+    }
+
+    savePayrollsStatusToDisk(statusMap);
+
+    return reply.send({
+      success: true,
+      message:
+        status === "paid"
+          ? `Planilla del periodo ${period} marcada como PAGADA (${targetIds.length} boleta(s) emitidas).`
+          : `Estado de planilla actualizado a pendiente.`,
+    });
+  });
 };
+

@@ -16,7 +16,7 @@
     "variants": [],
     "isDeleted": false,
     "entryDate": "2026-10-12T22:12:24.618Z",
-    "barcodePrinted": false,
+    "barcodePrinted": true,
     "status": "optimal",
     "createdAt": "2026-10-12T22:12:24.618Z",
     "updatedAt": "2026-10-12T22:12:24.618Z",
@@ -29,8 +29,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_2_1791843661835",
@@ -40,8 +41,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_3_1791843661835",
@@ -51,8 +53,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_4_1791843661835",
@@ -62,8 +65,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_5_1791843661835",
@@ -73,8 +77,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_6_1791843661835",
@@ -84,8 +89,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_7_1791843661835",
@@ -95,8 +101,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_8_1791843661835",
@@ -106,8 +113,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_9_1791843661835",
@@ -117,8 +125,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_10_1791843661835",
@@ -128,8 +137,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_11_1791843661835",
@@ -139,8 +149,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_12_1791843661835",
@@ -150,8 +161,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_13_1791843661835",
@@ -161,8 +173,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_14_1791843661835",
@@ -172,8 +185,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_15_1791843661835",
@@ -183,8 +197,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_16_1791843661835",
@@ -194,8 +209,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_17_1791843661835",
@@ -205,8 +221,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_18_1791843661835",
@@ -216,8 +233,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_19_1791843661835",
@@ -227,8 +245,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_20_1791843661835",
@@ -238,8 +257,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_21_1791843661835",
@@ -249,8 +269,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_22_1791843661835",
@@ -260,8 +281,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_23_1791843661835",
@@ -271,8 +293,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_24_1791843661835",
@@ -282,8 +305,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_25_1791843661835",
@@ -293,8 +317,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_26_1791843661835",
@@ -304,8 +329,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_27_1791843661835",
@@ -315,8 +341,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_28_1791843661835",
@@ -326,8 +353,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_29_1791843661835",
@@ -337,8 +365,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_30_1791843661835",
@@ -348,8 +377,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_31_1791843661835",
@@ -359,8 +389,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_32_1791843661835",
@@ -370,8 +401,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_33_1791843661835",
@@ -381,8 +413,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_34_1791843661835",
@@ -392,8 +425,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_35_1791843661835",
@@ -403,8 +437,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_36_1791843661835",
@@ -414,8 +449,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_37_1791843661835",
@@ -425,8 +461,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_38_1791843661835",
@@ -436,8 +473,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_39_1791843661835",
@@ -447,8 +485,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_40_1791843661835",
@@ -458,8 +497,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_41_1791843661835",
@@ -469,8 +509,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_42_1791843661835",
@@ -480,8 +521,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_43_1791843661835",
@@ -491,8 +533,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_44_1791843661835",
@@ -502,8 +545,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_45_1791843661835",
@@ -513,8 +557,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_46_1791843661835",
@@ -524,8 +569,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_47_1791843661835",
@@ -535,8 +581,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_48_1791843661835",
@@ -546,8 +593,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_49_1791843661835",
@@ -557,8 +605,9 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       },
       {
         "id": "unit_102_50_1791843661835",
@@ -568,10 +617,12 @@
         "status": "disponible",
         "serialNumber": "",
         "notes": "",
-        "barcodePrinted": false,
-        "createdAt": "2026-10-12T22:12:24.618Z"
+        "barcodePrinted": true,
+        "createdAt": "2026-10-12T22:12:24.618Z",
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       }
-    ]
+    ],
+    "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
   },
   {
     "type": "simple",

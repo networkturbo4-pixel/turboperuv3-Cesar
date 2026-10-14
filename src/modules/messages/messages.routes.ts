@@ -1671,7 +1671,15 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   // 7.6. Reenviar mensajes seleccionados a otras conversaciones
   fastify.post("/messages/conversations/forward", async (request, reply) => {
     const tenantId = resolveTenantId(request);
-    const body = (request.body as { targetConversationIds: string[]; messages?: any[]; messageIds?: string[] }) || {};
+    const body =
+      (request.body as {
+        targetConversationIds: string[];
+        messages?: any[];
+        messageIds?: string[];
+        senderId?: string | number;
+        senderName?: string;
+        senderAvatar?: string;
+      }) || {};
     const { targetConversationIds } = body;
 
     const list = loadConversationsFromDisk(tenantId);
@@ -1696,11 +1704,11 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const now = new Date();
-    const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeFormatted = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     let sentCount = 0;
     for (const targetId of targetConversationIds) {
-      const conv = list.find(c => c.id === targetId);
+      const conv = list.find((c) => c.id === targetId);
       if (!conv) continue;
 
       for (const m of forwardItems) {
@@ -1708,7 +1716,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
         const fwdMsg: MessageItem = {
           id: "m-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
           sender: "agent",
-          senderName: "Operador TurboNetwork",
+          senderId: body.senderId != null ? String(body.senderId) : undefined,
+          senderName: body.senderName || "Operador TurboNetwork",
+          senderAvatar: body.senderAvatar || undefined,
           text: cleanTxt,
           timestamp: now.toISOString(),
           timeFormatted,

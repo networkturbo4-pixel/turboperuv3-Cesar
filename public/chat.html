@@ -2435,11 +2435,11 @@
     // Variables de entorno para modo standalone
     let currentUser = null;
     try {
-      const sess = sessionStorage.getItem('turbo_user') || localStorage.getItem('turbo_user') || sessionStorage.getItem('user') || localStorage.getItem('user');
+      const sess = localStorage.getItem('turbonetwork_session') || localStorage.getItem('turbonetwork_active_user') || sessionStorage.getItem('turbo_user') || localStorage.getItem('turbo_user') || sessionStorage.getItem('user') || localStorage.getItem('user');
       if (sess) currentUser = JSON.parse(sess);
     } catch (e) {}
     let currentUsers = [];
-    let activeTenantId = 'turbonetwork';
+    let activeTenantId = localStorage.getItem('turbonetwork_active_tenant') || 'turbonetwork';
     let tenantsList = [{ id: 'turbonetwork', name: 'TurboNetwork' }];
     let deferredPwaPrompt = null;
 
@@ -2722,40 +2722,75 @@ function formatMessageTime(val) {
   return `${day}/${month} ${hours}:${minutes}`;
 }
 
-// Función para determinar si un mensaje fue enviado por el usuario actualmente logueado
+// Función para determinar si un mensaje fue enviado por el usuario actualmente logueado (Emisor = Derecha, Receptor = Izquierda)
 function checkIfMessageIsMe(m) {
   if (!m) return false;
-  
-  if (typeof currentUser !== 'undefined' && currentUser) {
-    const myId = String(currentUser.id || '');
-    const myUsername = String(currentUser.username || '').toLowerCase();
-    const myName = String(currentUser.name || '').trim().toLowerCase();
-    const myEmail = String(currentUser.email || '').trim().toLowerCase();
 
-    const mSenderId = m.senderId ? String(m.senderId) : '';
-    const mSenderName = m.senderName ? String(m.senderName).trim().toLowerCase() : '';
+  // Mensajes de sistema o explícitamente del cliente entrante siempre van a la izquierda (Receptor)
+  if (m.sender === 'system' || m.from === 'system') return false;
+  if (m.sender === 'client' || m.from === 'client') return false;
 
-    if (mSenderId) {
+  const activeUser = (typeof currentUser !== 'undefined' && currentUser)
+    ? currentUser
+    : (() => {
+        try {
+          const raw = localStorage.getItem('turbonetwork_session') || localStorage.getItem('turbonetwork_active_user') || sessionStorage.getItem('turbo_user') || localStorage.getItem('turbo_user');
+          return raw ? JSON.parse(raw) : null;
+        } catch (e) { return null; }
+      })();
+
+  const mSenderId = m.senderId !== undefined && m.senderId !== null ? String(m.senderId).trim() : '';
+  const mSenderName = m.senderName ? String(m.senderName).trim().toLowerCase() : '';
+
+  // 1. Si tenemos usuario activo logueado, comparamos estrictamente contra su identidad
+  if (activeUser) {
+    const myId = String(activeUser.id || '').trim();
+    const myEmpId = String(activeUser.employeeId || '').trim();
+    const myUsername = String(activeUser.username || '').trim().toLowerCase();
+    const myName = String(activeUser.name || '').trim().toLowerCase();
+    const myEmail = String(activeUser.email || '').trim().toLowerCase();
+
+    // Si el mensaje trae senderId explícito
+    if (mSenderId && mSenderId !== 'agent' && mSenderId !== 'operator') {
       if (myId && mSenderId === myId) return true;
+      if (myEmpId && mSenderId === myEmpId) return true;
       if (myUsername && mSenderId.toLowerCase() === myUsername) return true;
-      return false; // Tiene senderId y no es el mío -> fue enviado por otra persona
+      if (myEmail && mSenderId.toLowerCase() === myEmail) return true;
+      // Tiene un senderId de otra persona -> Es mensaje recibido (Izquierda)
+      return false;
     }
 
+    // Si el mensaje trae senderName explícito
     if (mSenderName) {
-      if (mSenderName === 'tú' || mSenderName === 'tu') return true;
+      if (mSenderName === 'tú' || mSenderName === 'tu' || mSenderName === 'yo') return true;
       if (myName && mSenderName === myName) return true;
       if (myUsername && mSenderName === myUsername) return true;
       if (myEmail && mSenderName === myEmail) return true;
-      // Si el nombre es de un usuario registrado diferente a mí
+      // Si el nombre del remitente coincide con el contacto con el que estamos chateando -> Es mensaje recibido (Izquierda)
+      if (typeof activeConversationId !== 'undefined' && activeConversationId && typeof currentConversations !== 'undefined') {
+        const conv = currentConversations.find(c => c.id === activeConversationId);
+        if (conv && conv.contactName && mSenderName === String(conv.contactName).trim().toLowerCase()) {
+          return false;
+        }
+      }
+      // Si tiene nombre de otra persona (y no es etiqueta genérica de operador) -> Es recibido (Izquierda)
       if (mSenderName !== 'operador turbonetwork' && mSenderName !== 'agente' && mSenderName !== 'sistema') {
         return false;
       }
     }
   }
 
-  // En chats con clientes externos (WhatsApp / Webhook):
-  if (m.sender === 'client' || m.from === 'client') return false;
-  if (m.sender === 'system' || m.from === 'system') return false;
+  // 2. Si estamos en una conversación directa y el mensaje fue enviado por el contacto de esa conversación -> Izquierda
+  if (typeof activeConversationId !== 'undefined' && activeConversationId && typeof currentConversations !== 'undefined') {
+    const conv = currentConversations.find(c => c.id === activeConversationId);
+    if (conv) {
+      const convUserId = conv.targetUserId ? String(conv.targetUserId).trim() : '';
+      const convContactName = conv.contactName ? String(conv.contactName).trim().toLowerCase() : '';
+      if (mSenderId && convUserId && mSenderId === convUserId) return false;
+      if (mSenderName && convContactName && mSenderName === convContactName) return false;
+    }
+  }
+
   if (m.sender === 'agent' || m.from === 'agent' || m.from === 'operator') return true;
   return false;
 }
@@ -4145,7 +4180,7 @@ function renderChatMessageRowHtml(m) {
     const isSelected = selectedChatMessageIds.has(m.id);
     const timeFormatted = m.timestamp ? formatMessageTime(m.timestamp) : (m.timeFormatted || '');
 
-    const showSenderHeader = activeChannelMode === 'community' && !isMe && (m.senderName || m.senderAvatar);
+    const showSenderHeader = !isMe && (activeChannelMode === 'community' || (m.senderName && m.senderName !== 'Contacto'));
     const senderHeaderHtml = showSenderHeader ? `
       <div class="flex items-center gap-1.5 pb-1 mb-1 border-b border-black/5 dark:border-white/10 text-left">
         ${m.senderAvatar ? `<img src="${m.senderAvatar}" class="w-4 h-4 rounded-full object-cover border border-blue-400/30">` : ''}
@@ -4160,12 +4195,14 @@ function renderChatMessageRowHtml(m) {
         : 'bg-slate-100 dark:bg-white/5 border border-slate-200/90 dark:border-white/10 text-slate-400 dark:text-slate-400';
       return `
         <div class="chat-message-row relative w-full flex ${isAgent ? 'justify-end' : 'justify-start'} group py-0.5 select-none"
+             style="display:flex; width:100%; justify-content:${isAgent ? 'flex-end' : 'flex-start'};"
              data-msg-id="${m.id}"
              data-is-agent="${isAgent}"
              onclick="handleChatMessageClick(event, '${m.id}')"
              oncontextmenu="handleChatMessageContextMenu(event, '${m.id}')"
              ondblclick="handleChatMessageDblClick(event, '${m.id}')">
-          <div class="msg-swipe-container flex items-center max-w-full ${isAgent ? 'justify-end' : 'justify-start'} relative"
+          <div class="msg-swipe-container flex items-center max-w-full ${isAgent ? 'justify-end ml-auto' : 'justify-start mr-auto'} relative"
+               style="margin-left:${isAgent ? 'auto' : '0'}; margin-right:${isAgent ? '0' : 'auto'};"
                ontouchstart="handleMessageTouchStart(event, '${m.id}')"
                ontouchmove="handleMessageTouchMove(event, '${m.id}')"
                ontouchend="handleMessageTouchEnd(event, '${m.id}')">
@@ -4645,13 +4682,15 @@ function renderChatMessageRowHtml(m) {
 
     return `
       <div class="chat-message-row relative w-full flex ${isAgent ? 'justify-end' : 'justify-start'} group py-0.5 select-none"
+           style="display:flex; width:100%; justify-content:${isAgent ? 'flex-end' : 'flex-start'};"
            data-msg-id="${m.id}"
            data-is-agent="${isAgent}"
            onclick="handleChatMessageClick(event, '${m.id}')"
            oncontextmenu="handleChatMessageContextMenu(event, '${m.id}')"
            ondblclick="handleChatMessageDblClick(event, '${m.id}')">
         
-        <div class="msg-swipe-container flex items-center max-w-full ${isAgent ? 'justify-end' : 'justify-start'} relative"
+        <div class="msg-swipe-container flex items-center max-w-full ${isAgent ? 'justify-end ml-auto' : 'justify-start mr-auto'} relative"
+             style="margin-left:${isAgent ? 'auto' : '0'}; margin-right:${isAgent ? '0' : 'auto'};"
              ontouchstart="handleMessageTouchStart(event, '${m.id}')"
              ontouchmove="handleMessageTouchMove(event, '${m.id}')"
              ontouchend="handleMessageTouchEnd(event, '${m.id}')">
@@ -5123,6 +5162,9 @@ async function handleSaveChatTask(event) {
 
   const messagePayload = {
     text: `📋 Tarea: ${title}`,
+    senderName: (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.name || currentUser.username) : 'Operador TurboNetwork',
+    senderId: (typeof currentUser !== 'undefined' && currentUser) ? String(currentUser.id || currentUser.username) : 'agent',
+    senderAvatar: (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.avatar || '') : '',
     attachment: {
       type: 'task',
       task: taskPayload
@@ -5846,7 +5888,10 @@ async function submitForwardMessages() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         targetConversationIds: Array.from(forwardSelectedTargetIds),
-        messageIds: forwardSourceMsgIds
+        messageIds: forwardSourceMsgIds,
+        senderName: (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.name || currentUser.username) : 'Operador TurboNetwork',
+        senderId: (typeof currentUser !== 'undefined' && currentUser) ? String(currentUser.id || currentUser.username) : 'agent',
+        senderAvatar: (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.avatar || '') : ''
       })
     });
     const data = await res.json();
@@ -12113,7 +12158,9 @@ async function sendCurrentLocation(isLive) {
         }
         if (Date.now() - lastSyncTimestamp > 12000) {
           lastSyncTimestamp = Date.now();
-          const r = await fetch('/api/messages/conversations');
+          const myUid = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? String(currentUser.id) : '';
+          const convUrl = myUid ? `/api/messages/conversations?currentUserId=${encodeURIComponent(myUid)}` : '/api/messages/conversations';
+          const r = await fetch(convUrl);
           const d = await r.json();
           if (d.success && Array.isArray(d.data)) {
             const newSorted = sortConversationsList(d.data);

@@ -30,9 +30,9 @@
     "id": 1790781290504,
     "name": "Emanuel Lopez",
     "email": "emanuelalopez@gmail.com",
-    "pin": "74214636",
+    "pin": "95494255",
     "roleId": 3,
-    "roleName": "Cajero Sucursal Centro",
+    "roleName": "Cajero / Cobranzas",
     "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=hhbzmd",
     "isActive": true,
     "createdAt": "2026-09-30T15:14:50.504Z",
@@ -53,10 +53,11 @@
       "toastStyle": "pill",
       "accentColor": "#ff00bb"
     },
-    "assignedTenantId": null,
     "scheduleStartDate": "",
     "scheduleEndDate": "",
-    "requireTotp": false
+    "requireTotp": false,
+    "expectedCheckInTime": "08:00",
+    "expectedCheckOutTime": "17:00"
   },
   {
     "id": 1790787042063,
