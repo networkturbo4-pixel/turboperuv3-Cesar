@@ -719,7 +719,7 @@ export function broadcastMessageEvent(event: {
     ? event.targetUserIds.map(String)
     : null;
 
-  for (const client of messageClients) {
+  for (const client of Array.from(messageClients)) {
     try {
       if (client.tenantId && event.tenantId && client.tenantId !== event.tenantId) {
         continue;
@@ -732,52 +732,98 @@ export function broadcastMessageEvent(event: {
         }
       }
       client.send(payload);
-    } catch (err) {}
+    } catch (err) {
+      messageClients.delete(client);
+    }
   }
 }
 
 export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   // 0. Event Stream en Tiempo Real (Server-Sent Events)
   fastify.get("/messages/events", (request, reply) => {
+    reply.hijack();
+
     const tenantId = resolveTenantId(request);
     const query = request.query as { userId?: string; currentUserId?: string } | undefined;
     const currentUserId = query?.userId || query?.currentUserId || (request.headers["x-user-id"] as string);
 
-    reply.raw.setHeader("Content-Type", "text/event-stream");
-    reply.raw.setHeader("Cache-Control", "no-cache, no-transform");
-    reply.raw.setHeader("Connection", "keep-alive");
-    reply.raw.setHeader("Access-Control-Allow-Origin", "*");
-    reply.raw.setHeader("X-Accel-Buffering", "no");
-    reply.raw.flushHeaders?.();
+    // Cabeceras HTTP estándar para Server-Sent Events compatibles con HTTP/1.1 y HTTP/2
+    const headers: Record<string, string> = {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform, no-store, must-revalidate",
+      "Access-Control-Allow-Origin": "*",
+      "X-Accel-Buffering": "no", // Desactiva el buffering de proxy en Nginx
+    };
 
-    // Evento inicial de confirmación de conexión
-    reply.raw.write(`data: ${JSON.stringify({ type: "connected", tenantId, userId: currentUserId, time: new Date().toISOString() })}\n\n`);
+    // La cabecera "Connection: keep-alive" está estrictamente PROHIBIDA en HTTP/2 (RFC 7540 §8.1.2.2).
+    // Si se envía sobre HTTP/2, Chrome/Nginx abortan la conexión con net::ERR_HTTP2_PROTOCOL_ERROR.
+    // Solo se debe enviar si el cliente se conecta explícitamente vía HTTP/1.x:
+    const httpVersion = request.raw.httpVersion || "1.1";
+    if (httpVersion.startsWith("1.")) {
+      headers["Connection"] = "keep-alive";
+    }
 
-    // Latido / Heartbeat cada 25 segundos para mantener viva la conexión
-    const heartbeatTimer = setInterval(() => {
-      try {
-        reply.raw.write(`: heartbeat\n\n`);
-      } catch (e) {
-        clearInterval(heartbeatTimer);
-      }
-    }, 25000);
+    try {
+      reply.raw.writeHead(200, headers);
+      reply.raw.flushHeaders?.();
+    } catch (e) {
+      return;
+    }
+
+    let cleanedUp = false;
+    const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
+      clearInterval(heartbeatTimer);
+      messageClients.delete(client);
+    };
 
     const client: ActiveMessageClient = {
       tenantId,
       userId: currentUserId ? String(currentUserId) : undefined,
       send: (data: any) => {
         try {
-          reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
-        } catch (err) {}
+          if (!reply.raw.writableEnded && !reply.raw.destroyed) {
+            reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
+          } else {
+            cleanup();
+          }
+        } catch (err) {
+          cleanup();
+        }
       }
     };
 
     messageClients.add(client);
 
-    request.raw.on("close", () => {
-      clearInterval(heartbeatTimer);
-      messageClients.delete(client);
-    });
+    // Evento inicial de confirmación de conexión
+    try {
+      if (!reply.raw.writableEnded && !reply.raw.destroyed) {
+        reply.raw.write(`data: ${JSON.stringify({ type: "connected", tenantId, userId: currentUserId, time: new Date().toISOString() })}\n\n`);
+      }
+    } catch (_) {
+      cleanup();
+      return;
+    }
+
+    // Latido / Heartbeat cada 25 segundos para mantener viva la conexión
+    const heartbeatTimer = setInterval(() => {
+      try {
+        if (!reply.raw.writableEnded && !reply.raw.destroyed) {
+          reply.raw.write(`: heartbeat\n\n`);
+        } else {
+          cleanup();
+        }
+      } catch (e) {
+        cleanup();
+      }
+    }, 25000);
+
+    request.raw.on("close", cleanup);
+    request.raw.on("error", cleanup);
+    reply.raw.on("close", cleanup);
+    reply.raw.on("error", cleanup);
+    reply.raw.on("finish", cleanup);
   });
 
   // 0.1 Obtener configuración de marca / branding exclusiva para TurboChat
@@ -1074,8 +1120,9 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    // Filtro por archivados o categoría
-    const isArchivedFilter = query?.category === "archived";
+    // Filtro por archivados o categoría/tipo
+    const targetFilter = (query?.category || (query as any)?.type || "").trim().toLowerCase();
+    const isArchivedFilter = targetFilter === "archived";
     if (isArchivedFilter) {
       list = list.filter(c => c.isArchived === true);
     } else {
@@ -1084,9 +1131,11 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
         list = list.filter(c => !c.isArchived);
       }
 
-      if (query?.category && query.category !== "all") {
-        const cat = query.category.toLowerCase();
-        list = list.filter(c => c.tags && c.tags.some(t => t.toLowerCase() === cat));
+      if (targetFilter && targetFilter !== "all") {
+        list = list.filter(c => 
+          (c.tags && c.tags.some(t => t.toLowerCase() === targetFilter)) ||
+          (c.type && c.type.toLowerCase() === targetFilter)
+        );
       }
     }
 

@@ -269,6 +269,18 @@ export async function buildApp() {
   return fastify;
 }
 
+// Prevención de caídas del servidor ante excepciones no controladas o sockets abortados (evita 502 Bad Gateway)
+process.on("uncaughtException", (err: any) => {
+  if (err?.code === "ECONNRESET" || err?.code === "EPIPE" || err?.code === "ERR_STREAM_WRITE_AFTER_END") {
+    return; // Desconexión normal de cliente HTTP/2 o SSE
+  }
+  console.error("⚠️ [TurboServer] uncaughtException interceptado para proteger el servicio:", err);
+});
+
+process.on("unhandledRejection", (reason: any) => {
+  console.error("⚠️ [TurboServer] unhandledRejection interceptado para proteger el servicio:", reason);
+});
+
 // Inicialización del servidor
 async function start() {
   try {

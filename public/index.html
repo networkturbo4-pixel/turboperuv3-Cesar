@@ -37371,27 +37371,35 @@ async function loadMessagesModule() {
     const myId = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? currentUser.id : '';
     const convsUrl = `/api/messages/conversations?category=${encodeURIComponent(activeMessageFilter)}${myId ? `&currentUserId=${encodeURIComponent(myId)}` : ''}`;
     const [filtersRes, convsRes] = await Promise.all([
-      fetch('/api/messages/filters'),
-      fetch(convsUrl, { headers: myId ? { 'x-user-id': String(myId) } : {} })
+      fetch('/api/messages/filters').catch(() => null),
+      fetch(convsUrl, { headers: myId ? { 'x-user-id': String(myId) } : {} }).catch(() => null)
     ]);
 
-    const filtersData = await filtersRes.json();
-    if (filtersData.success) {
-      currentMessageFilters = filtersData.data || [];
-      renderMessageFilters(currentMessageFilters);
+    if (filtersRes && filtersRes.ok) {
+      try {
+        const filtersData = await filtersRes.json();
+        if (filtersData.success) {
+          currentMessageFilters = filtersData.data || [];
+          renderMessageFilters(currentMessageFilters);
+        }
+      } catch (_) {}
     }
 
-    const convsData = await convsRes.json();
-    if (convsData.success) {
-      currentConversations = convsData.data || [];
-      renderConversationsList(currentConversations);
-      updateGlobalUnreadBadges();
+    if (convsRes && convsRes.ok) {
+      try {
+        const convsData = await convsRes.json();
+        if (convsData.success) {
+          currentConversations = convsData.data || [];
+          renderConversationsList(currentConversations);
+          updateGlobalUnreadBadges();
 
-      if (activeConversationId && currentConversations.some(c => c.id === activeConversationId)) {
-        selectConversation(activeConversationId);
-      } else {
-        renderEmptyChatWorkspace();
-      }
+          if (activeConversationId && currentConversations.some(c => c.id === activeConversationId)) {
+            selectConversation(activeConversationId);
+          } else {
+            renderEmptyChatWorkspace();
+          }
+        }
+      } catch (_) {}
     }
     if (typeof initChatDragAndDrop === 'function') {
       initChatDragAndDrop();
@@ -40949,6 +40957,10 @@ async function fetchCommunities() {
     const headers = {};
     if (myId) headers['x-user-id'] = myId;
     const res = await fetch(`/api/messages/communities${query}`, { headers });
+    if (!res.ok) {
+      console.warn(`[Comunidades] Servidor no disponible temporalmente (${res.status})`);
+      return;
+    }
     const data = await res.json();
     communitiesLoaded = true;
     if (data.success && Array.isArray(data.data)) {
@@ -42459,6 +42471,10 @@ async function handleCreateChannel(e) {
 async function loadQuickReplies() {
   try {
     const res = await fetch('/api/messages/quick-replies');
+    if (!res.ok) {
+      console.warn(`[Respuestas Rápidas] Servidor no disponible temporalmente (${res.status})`);
+      return;
+    }
     const data = await res.json();
     if (data.success && Array.isArray(data.data)) {
       quickRepliesList = data.data;
