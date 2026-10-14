@@ -37639,7 +37639,7 @@ function formatLastMessageWithSvgIcon(lastMsg) {
 function getConversationDisplayInfo(c) {
   if (!c) return { id: '', userId: '', name: 'Contacto', avatar: '', role: '', phone: '', isSelf: false };
   
-  const isPersonal = (c.type === 'personal' || (Array.isArray(c.tags) && c.tags.includes('personal')) || c.contactType === 'personal');
+  const isPersonal = (c.type === 'personal' || c.contactType === 'personal' || (Array.isArray(c.tags) && c.tags.includes('personal') && c.type !== 'cliente' && c.type !== 'customer'));
   
   if (isPersonal && typeof currentUser !== 'undefined' && currentUser) {
     const myId = String(currentUser.id || '');
@@ -37647,13 +37647,16 @@ function getConversationDisplayInfo(c) {
     const contactId = String(c.contactId || '');
     const creatorId = String(c.creatorId || '');
     
-    // Si este chat tiene ambos lados apuntando a mí (self chat de prueba), descartarlo
-    if (myId && contactId === myId && (!creatorId || creatorId === myId)) {
-      return { id: myId, userId: myId, name: c.name || 'Yo', avatar: c.avatar || '', role: 'Yo', isSelf: true };
+    // Un chat es "conmigo mismo" ÚNICAMENTE si no existe ningún otro participante ni remitente diferente
+    const hasOtherParticipant = (c.participants && Array.isArray(c.participants) && c.participants.some(p => String(p) !== myId));
+    const hasOtherSender = (c.messages && Array.isArray(c.messages) && c.messages.some(m => m.senderId && String(m.senderId) !== myId));
+
+    if (myId && contactId === myId && creatorId === myId && !hasOtherParticipant && !hasOtherSender) {
+      return { id: myId, userId: myId, name: c.name || 'Mensajes guardados (Yo)', avatar: c.avatar || '', role: 'Yo', isSelf: true };
     }
 
-    // Si yo soy el "contactId" (destinatario original del chat) o el nombre del chat coincide con mi nombre:
-    const isContactMe = (myId && contactId === myId) || (c.name && c.name.trim().toLowerCase() === myName);
+    // Si yo soy el "contactId" (destinatario original del chat) o el creador es otra persona o el nombre del chat coincide con mi nombre:
+    const isContactMe = (myId && contactId === myId) || (c.name && c.name.trim().toLowerCase() === myName) || (creatorId && creatorId !== myId && contactId === myId);
     
     if (isContactMe) {
       // Para mí, la persona con la que estoy chateando es el CREADOR / el otro participante
@@ -37681,17 +37684,17 @@ function getConversationDisplayInfo(c) {
         }
       }
       if (!partnerId) {
-        partnerId = (creatorId && creatorId !== myId) ? creatorId : '';
+        partnerId = (creatorId && creatorId !== myId) ? creatorId : ((c.participants && c.participants.find(p => String(p) !== myId)) || '');
       }
 
-      const partnerName = partnerUser ? partnerUser.name : (c.creatorName || 'Colaborador');
+      const partnerName = partnerUser ? partnerUser.name : (c.creatorName || (c.name && c.name.trim().toLowerCase() !== myName ? c.name : 'Colaborador'));
       const partnerAvatar = partnerUser ? (partnerUser.avatarUrl || partnerUser.avatar) : (c.creatorAvatar || '');
       const partnerRole = partnerUser ? (partnerUser.roleName || partnerUser.role) : (c.creatorRole || 'Personal');
       const partnerPhone = partnerUser ? (partnerUser.phone || partnerUser.email) : (c.creatorPhone || c.creatorEmail || '');
 
       return {
-        id: partnerId,
-        userId: partnerId,
+        id: String(partnerId),
+        userId: String(partnerId),
         name: partnerName,
         avatar: partnerAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(partnerName)}`,
         role: partnerRole,
@@ -46302,7 +46305,7 @@ function updateChatCallButtons(conversation, displayInfo) {
 
   if (!conversation) return;
 
-  const isPersonal = (conversation.type === 'personal' || (Array.isArray(conversation.tags) && conversation.tags.includes('personal')));
+  const isPersonal = (conversation.type === 'personal' || conversation.contactType === 'personal' || (Array.isArray(conversation.tags) && conversation.tags.includes('personal') && conversation.type !== 'cliente' && conversation.type !== 'customer'));
   
   if (isPersonal) {
     if (btnVoice) btnVoice.classList.remove('hidden');
@@ -46346,10 +46349,19 @@ function handleStartCall(type) {
     return;
   }
 
+  let targetName = displayInfo.name;
+  if (!targetName || targetName === 'Yo' || targetName === 'Contacto' || targetName === 'Colaborador') {
+    if (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers)) {
+      const u = currentUsers.find(x => String(x.id) === String(targetId));
+      if (u && u.name) targetName = u.name;
+    }
+    if (!targetName && conv.name && conv.name !== 'Yo') targetName = conv.name;
+  }
+
   if (window.TurboCalls) {
     window.TurboCalls.startPersonalCall(type, {
       id: targetId,
-      name: displayInfo.name,
+      name: targetName || 'Compañero',
       avatar: displayInfo.avatar
     });
   } else {

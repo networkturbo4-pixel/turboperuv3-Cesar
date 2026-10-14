@@ -269,6 +269,100 @@
     // ==========================================
     // LLAMADAS DIRECTAS DE PERSONAL (P2P WebRTC)
     // ==========================================
+    async acquireLocalMedia(hasVideo = false) {
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+        console.warn('⚠️ [TurboCalls] navigator.mediaDevices no está disponible en este origen (requiere HTTPS o localhost en móviles/PWA)');
+        const warnEl = document.getElementById('tc-media-warning');
+        if (warnEl) {
+          warnEl.textContent = 'Aviso: En dispositivos móviles el audio y video requieren conexión segura HTTPS.';
+          warnEl.classList.remove('hidden');
+        }
+        return null;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true },
+          video: hasVideo ? { facingMode: this.state.facingMode, width: { ideal: 1280 }, height: { ideal: 720 } } : false
+        });
+        this.localStream = stream;
+
+        // Si hay vista local PIP de video, activarla
+        const localVid = document.getElementById('tc-local-video');
+        if (localVid && hasVideo) {
+          localVid.srcObject = stream;
+        }
+
+        // Si ya hay una peerConnection creada, registrar las pistas
+        if (this.peerConnection) {
+          const senders = this.peerConnection.getSenders();
+          stream.getTracks().forEach(track => {
+            const exists = senders.some(s => s.track && s.track.kind === track.kind);
+            if (!exists) {
+              this.peerConnection.addTrack(track, stream);
+            }
+          });
+        }
+
+        const warnEl = document.getElementById('tc-media-warning');
+        if (warnEl) warnEl.classList.add('hidden');
+        return stream;
+      } catch (err) {
+        console.warn('⚠️ [TurboCalls] Permiso de micrófono o cámara denegado o no disponible:', err);
+        const warnEl = document.getElementById('tc-media-warning');
+        if (warnEl) {
+          warnEl.textContent = hasVideo 
+            ? 'Cámara o micrófono no accesibles. Verifica los permisos del navegador.' 
+            : 'Micrófono no accesible. Verifica los permisos del navegador.';
+          warnEl.classList.remove('hidden');
+        }
+        return null;
+      }
+    },
+
+    async switchCameraFacing() {
+      if (this.state.callType !== 'video') return;
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') return;
+
+      this.state.facingMode = this.state.facingMode === 'user' ? 'environment' : 'user';
+
+      try {
+        if (this.localStream) {
+          const oldVideoTrack = this.localStream.getVideoTracks()[0];
+          if (oldVideoTrack) {
+            oldVideoTrack.stop();
+            this.localStream.removeTrack(oldVideoTrack);
+          }
+        }
+
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: this.state.facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        const newVideoTrack = newStream.getVideoTracks()[0];
+
+        if (this.localStream) {
+          this.localStream.addTrack(newVideoTrack);
+        } else {
+          this.localStream = newStream;
+        }
+
+        const localVid = document.getElementById('tc-local-video');
+        if (localVid) {
+          localVid.srcObject = this.localStream;
+          localVid.style.transform = this.state.facingMode === 'user' ? 'scaleX(-1)' : 'none';
+        }
+
+        if (this.peerConnection) {
+          const sender = this.peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+          if (sender) {
+            await sender.replaceTrack(newVideoTrack);
+          }
+        }
+      } catch (err) {
+        console.warn('⚠️ [TurboCalls] Error cambiando de cámara:', err);
+      }
+    },
+
     async startPersonalCall(type, targetUser) {
       if (!targetUser || !targetUser.id) {
         alert('Selecciona un usuario válido para llamar.');
@@ -290,31 +384,22 @@
       this.state.callStatus = 'calling';
       this.state.isMuted = false;
       this.state.isVideoDisabled = false;
+      this.state.isMinimized = false;
 
-      // Obtener medios locales primero
-      try {
-        const hasVideo = type === 'video';
-        this.localStream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true },
-          video: hasVideo ? { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } : false
-        });
-      } catch (err) {
-        console.error('[TurboCalls] Error solicitando dispositivos:', err);
-        alert('No se pudo acceder al micrófono o cámara. Por favor verifica los permisos del navegador.');
-        return;
-      }
-
-      // Mostrar interfaz de llamada activa en modo "Llamando..."
+      // 1. Mostrar interfaz de llamada activa de INMEDIATO (0ms) en móvil y escritorio
       this.showActiveCallUI();
       this.playRingbackTone();
 
-      // Enviar solicitud de llamada al destinatario mediante la API
-      await this.sendCallSignal('call_request', {
+      // 2. Enviar solicitud de llamada al destinatario mediante la API
+      this.sendCallSignal('call_request', {
         callType: this.state.callType,
         callerId: myId,
         callerName: this.getUserName(),
         callerAvatar: this.getUserAvatar(),
       });
+
+      // 3. Adquirir medios locales de forma no bloqueante y segura
+      await this.acquireLocalMedia(type === 'video');
     },
 
     async handleCallSignal(event) {
@@ -426,23 +511,19 @@
       this.closeDesktopNotification();
       this.hideIncomingCallUI();
 
-      // Solicitar medios locales
-      try {
-        const hasVideo = this.state.callType === 'video';
-        this.localStream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true },
-          video: hasVideo ? { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } : false
-        });
-      } catch (err) {
-        console.error('[TurboCalls] Permisos de micrófono/cámara rechazados:', err);
-        alert('No se pudo acceder al micrófono o cámara.');
-        this.rejectIncomingCall();
-        return;
-      }
+      this.state.isCaller = false;
+      this.state.callStatus = 'connecting';
+      this.state.isMinimized = false;
 
+      // 1. Mostrar interfaz de llamada activa de INMEDIATO
       this.showActiveCallUI();
       this.updateActiveCallHeader('Conectando...');
+
+      // 2. Enviar señal de aceptación inmediatamente
       await this.sendCallSignal('call_accepted', {});
+
+      // 3. Adquirir medios locales de forma segura
+      await this.acquireLocalMedia(this.state.callType === 'video');
     },
 
     rejectIncomingCall() {
@@ -678,7 +759,7 @@
     },
 
     // ==========================================
-    // INTERFAZ DE USUARIO Y CONTROLES FLOTANTES
+    // INTERFAZ DE USUARIO Y CONTROLES RESPONSIVOS (MÓVIL, PWA Y ESCRITORIO)
     // ==========================================
     injectUI() {
       if (document.getElementById('turbocalls-wrapper')) return;
@@ -689,93 +770,144 @@
         <!-- AUDIO ELEMENT REMOTO -->
         <audio id="tc-remote-audio" autoplay class="hidden"></audio>
 
-        <!-- 1. MODAL LLAMADA ENTRANTE -->
-        <div id="tc-incoming-modal" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md items-center justify-center p-4 select-none">
-          <div class="w-full max-w-sm rounded-3xl bg-[#0f172a] border border-white/15 p-6 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-            <div class="relative mb-5">
-              <div class="w-24 h-24 rounded-full border-4 border-emerald-500/40 p-1 shadow-2xl animate-pulse">
+        <!-- 1. MODAL LLAMADA ENTRANTE (CENTRAL / TOP DRAWER RESPONSIVO) -->
+        <div id="tc-incoming-modal" class="hidden fixed inset-0 z-[999999] bg-black/85 backdrop-blur-xl items-center justify-center p-4 select-none">
+          <div class="w-full max-w-sm rounded-3xl bg-[#0b101b] border border-white/20 p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+            <div class="relative mb-6 flex items-center justify-center">
+              <div class="absolute -inset-4 rounded-full bg-emerald-500/25 animate-ping"></div>
+              <div class="absolute -inset-2 rounded-full bg-emerald-500/35 animate-pulse"></div>
+              <div class="w-24 h-24 rounded-full border-4 border-emerald-400/50 p-1 shadow-2xl bg-slate-900 relative">
                 <img id="tc-inc-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" class="w-full h-full rounded-full object-cover bg-slate-800" alt="Avatar">
               </div>
-              <span class="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-emerald-500 border-2 border-[#0f172a] flex items-center justify-center text-white text-xs">
+              <span class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-emerald-500 border-2 border-[#0b101b] flex items-center justify-center text-white shadow-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
               </span>
             </div>
 
-            <h3 id="tc-inc-name" class="text-lg font-bold text-white mb-1">Nombre</h3>
-            <p id="tc-inc-type" class="text-xs text-emerald-400 font-semibold mb-6 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            <h3 id="tc-inc-name" class="text-xl font-bold text-white mb-1.5 tracking-wide">Nombre</h3>
+            <p id="tc-inc-type" class="text-xs text-emerald-400 font-semibold mb-8 flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
               Llamada de voz entrante...
             </p>
 
-            <div class="flex items-center space-x-6">
+            <div class="flex items-center justify-center space-x-10 w-full">
               <!-- Rechazar -->
-              <button type="button" onclick="TurboCalls.rejectIncomingCall()" class="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 active:scale-95 text-white flex items-center justify-center transition shadow-lg shadow-rose-600/30">
-                <svg class="w-6 h-6 rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/></svg>
-              </button>
+              <div class="flex flex-col items-center space-y-2">
+                <button type="button" onclick="TurboCalls.rejectIncomingCall()" class="w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-700 active:scale-90 text-white flex items-center justify-center transition shadow-xl shadow-rose-600/40 cursor-pointer">
+                  <svg class="w-7 h-7 rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/></svg>
+                </button>
+                <span class="text-[11px] font-medium text-slate-400">Rechazar</span>
+              </div>
 
               <!-- Aceptar -->
-              <button type="button" onclick="TurboCalls.acceptIncomingCall()" class="w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white flex items-center justify-center transition shadow-lg shadow-emerald-600/30 animate-bounce">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/></svg>
-              </button>
+              <div class="flex flex-col items-center space-y-2">
+                <button type="button" onclick="TurboCalls.acceptIncomingCall()" class="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 active:scale-90 text-white flex items-center justify-center transition shadow-xl shadow-emerald-500/50 cursor-pointer animate-bounce">
+                  <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/></svg>
+                </button>
+                <span class="text-[11px] font-medium text-emerald-400 font-semibold">Contestar</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- 2. VENTANA FLOTANTE DE LLAMADA ACTIVA (Minimizable y Movible) -->
-        <div id="tc-active-modal" class="hidden fixed bottom-6 right-6 z-[9990] w-80 sm:w-96 rounded-3xl bg-[#0b101b]/95 border border-white/20 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden transition-all select-none">
-          <!-- Barra de Título / Header de la Llamada -->
-          <div class="px-4 py-2.5 border-b border-white/10 flex items-center justify-between bg-white/[0.03]">
-            <div class="flex items-center space-x-2 min-w-0">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span id="tc-act-status" class="text-xs font-semibold text-slate-300 truncate">Llamando...</span>
-              <span id="tc-act-timer" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/10 text-emerald-400">00:00</span>
+        <!-- 2. VENTANA DE LLAMADA ACTIVA (FULLSCREEN EN MÓVIL / PWA - PIP FLOTANTE EN ESCRITORIO) -->
+        <div id="tc-active-modal" class="hidden fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 w-full h-[100dvh] sm:w-96 sm:h-[520px] sm:max-h-[85vh] z-[99999] bg-[#070b14] sm:bg-[#0b101b]/95 border-0 sm:border border-white/20 sm:rounded-3xl shadow-2xl backdrop-blur-2xl flex flex-col justify-between overflow-hidden select-none transition-all">
+
+          <!-- VISTA COMPLETA DE LLAMADA -->
+          <div id="tc-active-full" class="w-full h-full flex flex-col justify-between">
+            <!-- Barra Superior / Header -->
+            <div class="px-4 py-3 sm:py-2.5 border-b border-white/10 flex items-center justify-between bg-white/[0.04] backdrop-blur-md z-20">
+              <div class="flex items-center space-x-2">
+                <button type="button" onclick="TurboCalls.toggleMinimize()" title="Minimizar llamada" class="p-2 sm:p-1.5 rounded-full sm:rounded-xl bg-white/10 text-slate-300 hover:text-white hover:bg-white/20 transition flex items-center justify-center cursor-pointer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                </button>
+                <div class="flex items-center space-x-2 min-w-0">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span id="tc-act-status" class="text-xs sm:text-[13px] font-semibold text-slate-200 truncate">Llamando...</span>
+                  <span id="tc-act-timer" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/10 text-emerald-400">00:00</span>
+                </div>
+              </div>
+              <div class="flex items-center space-x-1.5">
+                <span id="tc-act-type-badge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">Voz HD</span>
+              </div>
             </div>
-            <div class="flex items-center space-x-1">
-              <button type="button" onclick="TurboCalls.toggleMinimize()" title="Minimizar llamada" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15"/></svg>
+
+            <!-- Cuerpo Central: Video Remoto o Avatar con Animación -->
+            <div id="tc-act-body" class="relative flex-1 w-full bg-gradient-to-b from-[#0a0f1d] to-[#04070e] flex flex-col items-center justify-center overflow-hidden">
+              <!-- Video Remoto (Full-bleed en videollamadas) -->
+              <video id="tc-remote-video" autoplay playsinline class="hidden absolute inset-0 w-full h-full object-cover"></video>
+
+              <!-- Placeholder Central con Avatar (Llamadas de voz o esperando conexión) -->
+              <div id="tc-avatar-placeholder" class="flex flex-col items-center justify-center p-6 text-center z-10">
+                <div class="relative mb-5 flex items-center justify-center">
+                  <div class="absolute -inset-4 rounded-full bg-emerald-500/20 animate-ping"></div>
+                  <div class="absolute -inset-2 rounded-full bg-emerald-500/30 animate-pulse"></div>
+                  <div class="w-28 h-28 sm:w-24 sm:h-24 rounded-full border-4 border-emerald-400/40 p-1 shadow-2xl bg-slate-900 overflow-hidden relative">
+                    <img id="tc-act-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" class="w-full h-full rounded-full object-cover bg-slate-800" alt="Avatar">
+                  </div>
+                </div>
+                <h3 id="tc-act-name" class="text-xl sm:text-lg font-bold text-white mb-1 tracking-wide">Nombre</h3>
+                <p class="text-xs text-emerald-400 font-mono flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>TurboNetwork WebRTC HD</span>
+                </p>
+                <div id="tc-media-warning" class="hidden mt-4 max-w-xs px-3.5 py-1.5 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-[11px] text-amber-300 font-medium leading-tight text-center"></div>
+              </div>
+
+              <!-- Miniatura Local PIP (Solo videollamadas) -->
+              <div id="tc-local-pip" class="hidden absolute top-4 right-4 w-24 h-36 sm:w-24 sm:h-32 rounded-2xl overflow-hidden border-2 border-white/40 shadow-2xl bg-slate-950 z-20">
+                <video id="tc-local-video" autoplay playsinline muted class="w-full h-full object-cover" style="transform: scaleX(-1);"></video>
+              </div>
+            </div>
+
+            <!-- Barra de Controles Inferior -->
+            <div id="tc-act-controls" class="p-4 sm:p-3 pb-8 sm:pb-3 border-t border-white/10 flex items-center justify-center space-x-4 sm:space-x-3 bg-black/40 backdrop-blur-md z-20" style="padding-bottom: max(1.75rem, env(safe-area-inset-bottom));">
+              <!-- Mute Audio -->
+              <button type="button" id="tc-btn-mute" onclick="TurboCalls.toggleLocalAudio()" class="w-13 h-13 sm:w-11 sm:h-11 rounded-2xl sm:rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center justify-center transition border border-white/10 cursor-pointer" title="Silenciar Micrófono">
+                <svg id="tc-icon-mic-on" class="w-5 h-5 sm:w-4 sm:h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 1.5a3 3 0 00-3 3v4.5a3 3 0 006 0V4.5a3 3 0 00-3-3z"/></svg>
+                <svg id="tc-icon-mic-off" class="w-5 h-5 sm:w-4 sm:h-4 text-rose-500 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+              </button>
+
+              <!-- Toggle Cámara (en video call) -->
+              <button type="button" id="tc-btn-cam" onclick="TurboCalls.toggleLocalVideo()" class="hidden w-13 h-13 sm:w-11 sm:h-11 rounded-2xl sm:rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white items-center justify-center transition border border-white/10 cursor-pointer" title="Apagar Cámara">
+                <svg id="tc-icon-cam-on" class="w-5 h-5 sm:w-4 sm:h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
+                <svg id="tc-icon-cam-off" class="w-5 h-5 sm:w-4 sm:h-4 text-rose-500 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M12 18.75H4.5a2.25 2.25 0 01-2.25-2.25V9m8.25-3.75h4.5A2.25 2.25 0 0117.25 7.5v3.75M3 3l18 18"/></svg>
+              </button>
+
+              <!-- Girar Cámara Frontal / Trasera (en móvil) -->
+              <button type="button" id="tc-btn-flip" onclick="TurboCalls.switchCameraFacing()" class="hidden w-13 h-13 sm:w-11 sm:h-11 rounded-2xl sm:rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white items-center justify-center transition border border-white/10 cursor-pointer" title="Girar Cámara">
+                <svg class="w-5 h-5 sm:w-4 sm:h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+              </button>
+
+              <!-- Finalizar Llamada -->
+              <button type="button" onclick="TurboCalls.endCall()" class="w-16 h-13 sm:w-14 sm:h-11 rounded-2xl sm:rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white flex items-center justify-center transition shadow-xl shadow-rose-600/40 cursor-pointer" title="Finalizar llamada">
+                <svg class="w-6 h-6 sm:w-5 sm:h-5 rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/></svg>
               </button>
             </div>
           </div>
 
-          <!-- Cuerpo: Video o Avatar -->
-          <div id="tc-act-body" class="relative w-full h-56 sm:h-64 bg-black flex items-center justify-center overflow-hidden">
-            <!-- Video Remoto -->
-            <video id="tc-remote-video" autoplay playsinline class="hidden w-full h-full object-cover"></video>
-
-            <!-- Placeholder con Avatar para Audio Call -->
-            <div id="tc-avatar-placeholder" class="flex flex-col items-center justify-center p-4">
-              <div class="w-20 h-20 rounded-full border-2 border-white/20 p-1 mb-2.5 shadow-xl">
-                <img id="tc-act-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" class="w-full h-full rounded-full object-cover bg-slate-800" alt="Avatar">
+          <!-- VISTA MINIMIZADA (PILL SUPERIOR EN MÓVIL / ESCRITORIO PARA CONTINUAR MENSAJEANDO) -->
+          <div id="tc-active-minimized" class="hidden w-full flex items-center justify-between">
+            <div onclick="TurboCalls.toggleMinimize()" class="flex items-center space-x-2.5 min-w-0 flex-1 cursor-pointer">
+              <div class="relative w-8 h-8 rounded-full border border-emerald-400 overflow-hidden shrink-0">
+                <img id="tc-min-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" class="w-full h-full object-cover">
+                <span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
               </div>
-              <h4 id="tc-act-name" class="text-sm font-bold text-white mb-0.5">Nombre</h4>
-              <p class="text-[11px] text-slate-400 font-mono">TurboNetwork Voz HD</p>
+              <div class="min-w-0">
+                <div id="tc-min-name" class="text-xs font-bold text-white truncate max-w-[140px] sm:max-w-[160px]">Nombre</div>
+                <div id="tc-min-timer" class="text-[11px] font-mono text-emerald-400 font-semibold">00:00 • En llamada</div>
+              </div>
             </div>
-
-            <!-- Video Local en Miniatura PiP (Solo video call) -->
-            <div id="tc-local-pip" class="hidden absolute top-3 right-3 w-20 h-28 rounded-xl overflow-hidden border border-white/30 shadow-xl bg-slate-900">
-              <video id="tc-local-video" autoplay playsinline muted class="w-full h-full object-cover" style="transform: scaleX(-1);"></video>
+            <div class="flex items-center space-x-1.5 shrink-0">
+              <button type="button" onclick="TurboCalls.toggleMinimize()" class="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10" title="Expandir llamada">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/></svg>
+              </button>
+              <button type="button" onclick="TurboCalls.endCall()" class="w-8 h-8 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center transition shadow-md" title="Colgar">
+                <svg class="w-4 h-4 rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/></svg>
+              </button>
             </div>
           </div>
 
-          <!-- Barra de Controles Inferior -->
-          <div id="tc-act-controls" class="p-3 border-t border-white/10 flex items-center justify-center space-x-3 bg-white/[0.02]">
-            <!-- Mute Audio -->
-            <button type="button" id="tc-btn-mute" onclick="TurboCalls.toggleLocalAudio()" class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center justify-center transition border border-white/10" title="Silenciar Micrófono">
-              <svg id="tc-icon-mic-on" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 1.5a3 3 0 00-3 3v4.5a3 3 0 006 0V4.5a3 3 0 00-3-3z"/></svg>
-              <svg id="tc-icon-mic-off" class="w-4 h-4 text-rose-500 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-            </button>
-
-            <!-- Toggle Cámara (en video call) -->
-            <button type="button" id="tc-btn-cam" onclick="TurboCalls.toggleLocalVideo()" class="hidden w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 active:scale-95 text-white items-center justify-center transition border border-white/10" title="Apagar Cámara">
-              <svg id="tc-icon-cam-on" class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
-              <svg id="tc-icon-cam-off" class="w-4 h-4 text-rose-500 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M12 18.75H4.5a2.25 2.25 0 01-2.25-2.25V9m8.25-3.75h4.5A2.25 2.25 0 0117.25 7.5v3.75M3 3l18 18"/></svg>
-            </button>
-
-            <!-- Colgar -->
-            <button type="button" onclick="TurboCalls.endCall()" class="w-12 h-10 rounded-2xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white flex items-center justify-center transition shadow-lg shadow-rose-600/30" title="Finalizar llamada">
-              <svg class="w-5 h-5 rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/></svg>
-            </button>
-          </div>
         </div>
 
         <!-- 3. MODAL DE CREACIÓN DE SALA DE VIDEO-SOPORTE PARA CLIENTE -->
@@ -856,12 +988,18 @@
       }
       const modal = document.getElementById('tc-incoming-modal');
       if (!modal) return;
-      document.getElementById('tc-inc-name').textContent = this.state.targetName;
-      document.getElementById('tc-inc-avatar').src = this.state.targetAvatar;
-      document.getElementById('tc-inc-type').innerHTML = `
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-        ${this.state.callType === 'video' ? 'Videollamada entrante...' : 'Llamada de voz entrante...'}
-      `;
+      const nameEl = document.getElementById('tc-inc-name');
+      const avEl = document.getElementById('tc-inc-avatar');
+      const typeEl = document.getElementById('tc-inc-type');
+
+      if (nameEl) nameEl.textContent = this.state.targetName || 'Compañero';
+      if (avEl) avEl.src = this.state.targetAvatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=User';
+      if (typeEl) {
+        typeEl.innerHTML = `
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+          ${this.state.callType === 'video' ? 'Videollamada entrante...' : 'Llamada de voz entrante...'}
+        `;
+      }
       modal.classList.remove('hidden');
       modal.classList.add('flex');
     },
@@ -881,18 +1019,40 @@
       const modal = document.getElementById('tc-active-modal');
       if (!modal) return;
 
-      document.getElementById('tc-act-name').textContent = this.state.targetName;
-      document.getElementById('tc-act-avatar').src = this.state.targetAvatar;
-      document.getElementById('tc-act-status').textContent = this.state.isCaller ? 'Llamando...' : 'Conectando...';
+      // Restablecer modo vista completa
+      this.state.isMinimized = false;
+      const fullView = document.getElementById('tc-active-full');
+      const minView = document.getElementById('tc-active-minimized');
+      if (fullView) fullView.classList.remove('hidden');
+      if (minView) minView.classList.add('hidden');
+
+      modal.className = 'fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 w-full h-[100dvh] sm:w-96 sm:h-[520px] sm:max-h-[85vh] z-[99999] bg-[#070b14] sm:bg-[#0b101b]/95 border-0 sm:border border-white/20 sm:rounded-3xl shadow-2xl backdrop-blur-2xl flex flex-col justify-between overflow-hidden select-none transition-all';
+
+      const nameEl = document.getElementById('tc-act-name');
+      const avEl = document.getElementById('tc-act-avatar');
+      const statEl = document.getElementById('tc-act-status');
+      const timerEl = document.getElementById('tc-act-timer');
+      const badgeEl = document.getElementById('tc-act-type-badge');
+
+      if (nameEl) nameEl.textContent = this.state.targetName || 'Personal';
+      if (avEl) avEl.src = this.state.targetAvatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=User';
+      if (statEl) statEl.textContent = this.state.isCaller ? 'Llamando...' : 'Conectando...';
+      if (timerEl) timerEl.textContent = '00:00';
 
       const isVideo = this.state.callType === 'video';
+      if (badgeEl) {
+        badgeEl.textContent = isVideo ? 'Video HD' : 'Voz HD';
+      }
+
       const btnCam = document.getElementById('tc-btn-cam');
+      const btnFlip = document.getElementById('tc-btn-flip');
       const pip = document.getElementById('tc-local-pip');
       const remoteVideo = document.getElementById('tc-remote-video');
       const avatarPh = document.getElementById('tc-avatar-placeholder');
 
       if (isVideo) {
         if (btnCam) { btnCam.classList.remove('hidden'); btnCam.classList.add('flex'); }
+        if (btnFlip) { btnFlip.classList.remove('hidden'); btnFlip.classList.add('flex'); }
         if (pip) {
           pip.classList.remove('hidden');
           const localVid = document.getElementById('tc-local-video');
@@ -900,6 +1060,7 @@
         }
       } else {
         if (btnCam) btnCam.classList.add('hidden');
+        if (btnFlip) btnFlip.classList.add('hidden');
         if (pip) pip.classList.add('hidden');
         if (remoteVideo) remoteVideo.classList.add('hidden');
         if (avatarPh) avatarPh.classList.remove('hidden');
@@ -915,6 +1076,10 @@
         modal.classList.add('hidden');
         modal.classList.remove('flex');
       }
+      const remoteVideo = document.getElementById('tc-remote-video');
+      const localVid = document.getElementById('tc-local-video');
+      if (remoteVideo) remoteVideo.srcObject = null;
+      if (localVid) localVid.srcObject = null;
     },
 
     updateActiveCallHeader(text) {
@@ -926,11 +1091,14 @@
       if (this.state.callTimer) return;
       this.state.callSeconds = 0;
       const timerEl = document.getElementById('tc-act-timer');
+      const minTimerEl = document.getElementById('tc-min-timer');
       this.state.callTimer = setInterval(() => {
         this.state.callSeconds++;
         const mins = String(Math.floor(this.state.callSeconds / 60)).padStart(2, '0');
         const secs = String(this.state.callSeconds % 60).padStart(2, '0');
-        if (timerEl) timerEl.textContent = `${mins}:${secs}`;
+        const timeStr = `${mins}:${secs}`;
+        if (timerEl) timerEl.textContent = timeStr;
+        if (minTimerEl) minTimerEl.textContent = `${timeStr} • En llamada`;
       }, 1000);
     },
 
@@ -958,23 +1126,30 @@
 
     toggleMinimize() {
       this.state.isMinimized = !this.state.isMinimized;
-      const body = document.getElementById('tc-act-body');
-      const controls = document.getElementById('tc-act-controls');
       const modal = document.getElementById('tc-active-modal');
+      const fullView = document.getElementById('tc-active-full');
+      const minView = document.getElementById('tc-active-minimized');
+      if (!modal || !fullView || !minView) return;
+
       if (this.state.isMinimized) {
-        if (body) body.classList.add('hidden');
-        if (controls) controls.classList.add('hidden');
-        if (modal) {
-          modal.classList.remove('w-80', 'sm:w-96');
-          modal.classList.add('w-52');
-        }
+        fullView.classList.add('hidden');
+        minView.classList.remove('hidden');
+
+        // Actualizar datos del pill minimizado
+        const minName = document.getElementById('tc-min-name');
+        const minAv = document.getElementById('tc-min-avatar');
+        const minTimer = document.getElementById('tc-min-timer');
+        if (minName) minName.textContent = this.state.targetName || 'Personal';
+        if (minAv) minAv.src = this.state.targetAvatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=User';
+        const mins = String(Math.floor(this.state.callSeconds / 60)).padStart(2, '0');
+        const secs = String(this.state.callSeconds % 60).padStart(2, '0');
+        if (minTimer) minTimer.textContent = `${mins}:${secs} • En llamada`;
+
+        modal.className = 'fixed top-3 left-3 right-3 sm:left-auto sm:top-auto sm:bottom-6 sm:right-6 sm:w-80 z-[99999] rounded-2xl bg-[#0b101b]/95 border border-emerald-500/50 shadow-2xl backdrop-blur-2xl p-2.5 px-3.5 flex items-center justify-between select-none transition-all';
       } else {
-        if (body) body.classList.remove('hidden');
-        if (controls) controls.classList.remove('hidden');
-        if (modal) {
-          modal.classList.remove('w-52');
-          modal.classList.add('w-80', 'sm:w-96');
-        }
+        minView.classList.add('hidden');
+        fullView.classList.remove('hidden');
+        modal.className = 'fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 w-full h-[100dvh] sm:w-96 sm:h-[520px] sm:max-h-[85vh] z-[99999] bg-[#070b14] sm:bg-[#0b101b]/95 border-0 sm:border border-white/20 sm:rounded-3xl shadow-2xl backdrop-blur-2xl flex flex-col justify-between overflow-hidden select-none transition-all';
       }
     },
 
