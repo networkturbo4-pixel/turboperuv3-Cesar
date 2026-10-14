@@ -157,3 +157,39 @@
 .dark .community-channel-item.active .community-channel-name {
   color: #ffffff;
 }
+
+/* ========================================================
+   CORRECCIÓN DEFINITIVA DE DESBORDAMIENTO EN BURBUJAS DE MENSAJE
+   ======================================================== */
+.chat-message-row {
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.msg-swipe-container,
+[id^="msg-"] {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.msg-text,
+.chat-message-row p,
+.msg-bubble-in p,
+.chat-message-row span,
+.chat-message-row h4 {
+  overflow-wrap: anywhere !important;
+  word-break: break-all !important;
+  word-wrap: break-word !important;
+  hyphens: auto;
+}
+
+.chat-message-row .msg-bubble-card,
+.chat-message-row [class*="max-w-"],
+.chat-message-row [class*="rounded-2xl"] {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
+}

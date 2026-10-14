@@ -738,6 +738,42 @@ export function broadcastMessageEvent(event: {
   }
 }
 
+export interface SupportCallRoom {
+  roomId: string;
+  tenantId: string;
+  conversationId?: string;
+  customerName: string;
+  customerPhone?: string;
+  agentId?: string | number;
+  agentName?: string;
+  status: "waiting" | "active" | "ended";
+  createdAt: string;
+  expiresAt: string;
+}
+
+export const activeSupportRooms = new Map<string, SupportCallRoom>();
+
+export interface SupportRoomClient {
+  roomId: string;
+  participantId: string;
+  role: "agent" | "customer";
+  send: (data: any) => void;
+}
+
+export const supportRoomClients = new Set<SupportRoomClient>();
+
+export function broadcastSupportRoomEvent(roomId: string, data: any, excludeParticipantId?: string) {
+  for (const client of Array.from(supportRoomClients)) {
+    if (client.roomId === roomId && (!excludeParticipantId || client.participantId !== excludeParticipantId)) {
+      try {
+        client.send(data);
+      } catch (err) {
+        supportRoomClients.delete(client);
+      }
+    }
+  }
+}
+
 export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
   // 0. Event Stream en Tiempo Real (Server-Sent Events)
   fastify.get("/messages/events", (request, reply) => {
@@ -3267,6 +3303,290 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     });
 
     return reply.send({ success: true, task: updatedTask, message: "Tarea de comunidad actualizada" });
+  });
+
+  // ==========================================
+  // 13. SISTEMA DE LLAMADAS Y SEÑALIZACIÓN WEBRTC
+  // ==========================================
+
+  // 13.1 Señalización de Llamadas Internas (Personal / Cuadrillas / Staff)
+  fastify.post("/messages/calls/signal", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const body = (request.body || {}) as {
+      action: "call_request" | "call_accepted" | "call_rejected" | "call_ended" | "webrtc_offer" | "webrtc_answer" | "webrtc_candidate";
+      callId: string;
+      callType?: "audio" | "video";
+      targetUserId: string | number;
+      callerId?: string | number;
+      callerName?: string;
+      callerAvatar?: string;
+      sdp?: any;
+      candidate?: any;
+      reason?: string;
+    };
+
+    if (!body.action || !body.callId || !body.targetUserId) {
+      return reply.status(400).send({ success: false, message: "Campos requeridos: action, callId, targetUserId" });
+    }
+
+    // Emitir señal al destinatario específico mediante el bus SSE
+    broadcastMessageEvent({
+      type: "call_signal",
+      tenantId,
+      targetUserIds: [body.targetUserId],
+      action: body.action,
+      callId: body.callId,
+      callType: body.callType || "audio",
+      callerId: body.callerId,
+      callerName: body.callerName,
+      callerAvatar: body.callerAvatar,
+      sdp: body.sdp,
+      candidate: body.candidate,
+      reason: body.reason,
+    });
+
+    // Si la llamada fue rechazada o finalizada, también notificar al emisor para que ambos limpien estado
+    if (body.action === "call_rejected" || body.action === "call_ended") {
+      if (body.callerId && String(body.callerId) !== String(body.targetUserId)) {
+        broadcastMessageEvent({
+          type: "call_signal",
+          tenantId,
+          targetUserIds: [body.callerId],
+          action: body.action,
+          callId: body.callId,
+          callType: body.callType || "audio",
+          reason: body.reason,
+        });
+      }
+    }
+
+    return reply.send({ success: true, message: "Señal de llamada transmitida" });
+  });
+
+  // 13.2 Crear o Solicitar Sala de Soporte Técnico en Vivo para Clientes (One-Click Room)
+  fastify.post("/messages/calls/support-room", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const body = (request.body || {}) as {
+      conversationId?: string;
+      customerName?: string;
+      customerPhone?: string;
+      agentId?: string | number;
+      agentName?: string;
+      sendWhatsApp?: boolean;
+    };
+
+    const roomId = "sup_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 7);
+    const host = request.headers["x-forwarded-host"] || request.headers.host || "localhost:3000";
+    const proto = request.headers["x-forwarded-proto"] || request.protocol || "http";
+    const roomUrl = `${proto}://${host}/soporte/${roomId}`;
+
+    const newRoom: SupportCallRoom = {
+      roomId,
+      tenantId,
+      conversationId: body.conversationId,
+      customerName: body.customerName || "Cliente",
+      customerPhone: body.customerPhone,
+      agentId: body.agentId,
+      agentName: body.agentName || "Soporte Técnico",
+      status: "waiting",
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+    };
+
+    activeSupportRooms.set(roomId, newRoom);
+
+    // Si se especificó una conversación, registrar el mensaje en el historial del chat
+    if (body.conversationId) {
+      const convs = loadConversationsFromDisk(tenantId);
+      const conv = convs.find(c => c.id === body.conversationId);
+      if (conv) {
+        const timeFormatted = getFormattedTime();
+        const msgText = `📹 Sesión de soporte en vivo iniciada por el personal técnico.\nPor favor ingrese al siguiente enlace para conectarse por videollamada:\n${roomUrl}`;
+        const newMsg: MessageItem = {
+          id: "msg-" + Date.now() + "-" + Math.random().toString(36).substr(2, 5),
+          sender: "agent",
+          senderId: body.agentId,
+          senderName: body.agentName || "Soporte Técnico",
+          text: msgText,
+          timestamp: new Date().toISOString(),
+          timeFormatted,
+          status: "sent",
+          attachment: {
+            type: "video",
+            url: roomUrl,
+            name: "Videollamada de Soporte en Vivo",
+          }
+        };
+
+        conv.messages.push(newMsg);
+        conv.lastMessage = "📹 Videollamada de Soporte en Vivo";
+        conv.lastMessageTime = timeFormatted;
+        conv.lastMessageDate = "Hoy";
+        conv.lastMessageAt = new Date().toISOString();
+        conv.updatedAt = new Date().toISOString();
+
+        saveConversationsToDisk(tenantId, convs);
+
+        broadcastMessageEvent({
+          type: "new_message",
+          tenantId,
+          conversationId: conv.id,
+          message: newMsg,
+          lastMessage: conv.lastMessage,
+          lastMessageTime: conv.lastMessageTime
+        });
+      }
+    }
+
+    // Si se activó envío por WhatsApp directo y tenemos teléfono del cliente
+    if (body.sendWhatsApp && body.customerPhone) {
+      try {
+        await WhatsAppService.sendMessage(tenantId, {
+          to: body.customerPhone,
+          text: `Hola ${body.customerName || 'estimado cliente'}. Nuestro equipo técnico ha habilitado una sala de videollamada para asistirlo en tiempo real. Por favor ingrese al siguiente enlace: ${roomUrl}`
+        });
+      } catch (waErr) {
+        console.warn("[CALLS] No se pudo enviar enlace vía WhatsApp:", waErr);
+      }
+    }
+
+    const shareText = `Hola, conéctate a la videollamada de soporte técnico de TurboNetwork ingresando a: ${roomUrl}`;
+
+    return reply.send({
+      success: true,
+      roomId,
+      url: roomUrl,
+      shareText,
+      room: newRoom
+    });
+  });
+
+  // 13.3 Consultar Datos de la Sala de Soporte
+  fastify.get("/messages/calls/room/:roomId", async (request, reply) => {
+    const { roomId } = request.params as { roomId: string };
+    const room = activeSupportRooms.get(roomId);
+    if (!room) {
+      return reply.send({
+        success: true,
+        room: {
+          roomId,
+          customerName: "Cliente",
+          agentName: "Soporte Técnico",
+          status: "active"
+        }
+      });
+    }
+    return reply.send({ success: true, room });
+  });
+
+  // 13.4 SSE Stream para Participantes de la Sala de Soporte
+  fastify.get("/messages/calls/room/:roomId/events", (request, reply) => {
+    reply.hijack();
+    const { roomId } = request.params as { roomId: string };
+    const query = request.query as { participantId?: string; role?: "agent" | "customer"; name?: string } | undefined;
+    const participantId = query?.participantId || ("p_" + Math.random().toString(36).substr(2, 7));
+    const role = query?.role || "customer";
+
+    const headers: Record<string, string> = {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform, no-store, must-revalidate",
+      "Access-Control-Allow-Origin": "*",
+      "X-Accel-Buffering": "no",
+    };
+    const httpVersion = request.raw.httpVersion || "1.1";
+    if (httpVersion.startsWith("1.")) {
+      headers["Connection"] = "keep-alive";
+    }
+
+    try {
+      reply.raw.writeHead(200, headers);
+      reply.raw.flushHeaders?.();
+    } catch (e) {
+      return;
+    }
+
+    let cleanedUp = false;
+    const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
+      clearInterval(heartbeatTimer);
+      supportRoomClients.delete(client);
+      broadcastSupportRoomEvent(roomId, {
+        type: "participant_left",
+        participantId,
+        role
+      }, participantId);
+    };
+
+    const client: SupportRoomClient = {
+      roomId,
+      participantId,
+      role,
+      send: (data: any) => {
+        try {
+          if (!reply.raw.writableEnded && !reply.raw.destroyed) {
+            reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
+          } else {
+            cleanup();
+          }
+        } catch (_) {
+          cleanup();
+        }
+      }
+    };
+
+    supportRoomClients.add(client);
+
+    // Notificar a los demás que alguien se unió
+    broadcastSupportRoomEvent(roomId, {
+      type: "participant_joined",
+      participantId,
+      role,
+      name: query?.name
+    }, participantId);
+
+    // Heartbeat
+    const heartbeatTimer = setInterval(() => {
+      try {
+        if (!reply.raw.writableEnded && !reply.raw.destroyed) {
+          reply.raw.write(`: heartbeat\n\n`);
+        } else {
+          cleanup();
+        }
+      } catch (e) {
+        cleanup();
+      }
+    }, 25000);
+
+    request.raw.on("close", cleanup);
+    request.raw.on("error", cleanup);
+    reply.raw.on("close", cleanup);
+    reply.raw.on("error", cleanup);
+    reply.raw.on("finish", cleanup);
+  });
+
+  // 13.5 Reenvío de Señales WebRTC (SDP / ICE) dentro de la Sala de Soporte
+  fastify.post("/messages/calls/room/:roomId/signal", async (request, reply) => {
+    const { roomId } = request.params as { roomId: string };
+    const body = (request.body || {}) as {
+      participantId: string;
+      role?: "agent" | "customer";
+      type: "offer" | "answer" | "candidate" | "end";
+      data?: any;
+    };
+
+    if (!body.participantId || !body.type) {
+      return reply.status(400).send({ success: false, message: "participantId y type son requeridos" });
+    }
+
+    broadcastSupportRoomEvent(roomId, {
+      type: body.type,
+      participantId: body.participantId,
+      role: body.role,
+      data: body.data
+    }, body.participantId);
+
+    return reply.send({ success: true });
   });
 };
 

@@ -155,6 +155,20 @@ export async function buildApp() {
       return serveDynamicChatHtml(req, reply);
     });
 
+    // 1.2 Rutas de Soporte en Vivo por Videollamada (WebRTC One-Click Room para Clientes)
+    fastify.get("/soporte/:roomId", async (req, reply) => {
+      const callPath = path.join(publicPath, "call.html");
+      if (!fs.existsSync(callPath)) {
+        return reply.status(404).send("call.html not found");
+      }
+      return reply.type("text/html; charset=utf-8").send(fs.readFileSync(callPath, "utf-8"));
+    });
+
+    fastify.get("/call/:roomId", async (req, reply) => {
+      const { roomId } = req.params as { roomId: string };
+      return reply.redirect(`/soporte/${roomId}`);
+    });
+
     // 2. Ruta Amigable de Negocio Directa (ej: https://tudominio.com/t/celeris o /t/loanetwork)
     fastify.get("/t/:tenantSlug", async (req, reply) => {
       const { tenantSlug } = req.params as { tenantSlug: string };

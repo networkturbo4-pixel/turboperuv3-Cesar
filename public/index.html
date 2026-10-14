@@ -194,6 +194,40 @@
       z-index: 1;
     }
 
+    /* Corrección definitiva de desbordamiento en burbujas de mensaje */
+    .chat-message-row {
+      min-width: 0 !important;
+      box-sizing: border-box !important;
+    }
+
+    .msg-swipe-container,
+    [id^="msg-"] {
+      min-width: 0 !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .msg-text,
+    .chat-message-row p,
+    .msg-bubble-in p,
+    .chat-message-row span,
+    .chat-message-row h4 {
+      overflow-wrap: anywhere !important;
+      word-break: break-all !important;
+      word-wrap: break-word !important;
+      hyphens: auto;
+    }
+
+    .chat-message-row .msg-bubble-card,
+    .chat-message-row [class*="max-w-"],
+    .chat-message-row [class*="rounded-2xl"] {
+      min-width: 0 !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
+    }
+
     html, body {
       height: 100dvh;
       min-height: 100dvh;
@@ -7743,6 +7777,40 @@
                       <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                       <span class="hidden sm:inline">Ajustes</span>
                     </button>
+
+                    <!-- Botones de Llamada WebRTC y Video-Soporte -->
+                    <button type="button" id="btn-call-voice" onclick="handleStartCall('audio')" title="Llamada de voz WebRTC" class="hidden p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition flex items-center space-x-1.5 text-xs font-semibold cursor-pointer">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+                      <span class="hidden xl:inline">Llamar</span>
+                    </button>
+
+                    <button type="button" id="btn-call-video" onclick="handleStartCall('video')" title="Videollamada WebRTC" class="hidden p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 transition flex items-center space-x-1.5 text-xs font-semibold cursor-pointer">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
+                      <span class="hidden xl:inline">Video</span>
+                    </button>
+
+                    <button type="button" id="btn-call-support-room" onclick="handleStartSupportCall()" title="Iniciar sesión de soporte técnico por videollamada" class="hidden p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/20 transition flex items-center space-x-1.5 text-xs font-semibold cursor-pointer">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
+                      <span class="hidden sm:inline">Video-Soporte</span>
+                    </button>
+
+                    <div class="relative hidden" id="wrap-call-customer-phone">
+                      <button type="button" onclick="toggleCustomerCallMenu()" title="Llamar al cliente" class="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition flex items-center space-x-1 text-xs font-semibold cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                      </button>
+                      <div id="customer-call-menu-dropdown" class="hidden absolute right-0 top-10 z-50 w-52 p-1.5 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 shadow-2xl space-y-1">
+                        <button type="button" onclick="triggerCustomerWhatsAppCall()" class="w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2.5 hover:bg-slate-100 dark:hover:bg-white/5 text-emerald-600 dark:text-emerald-400">
+                          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                          <span>Llamar por WhatsApp</span>
+                        </button>
+                        <button type="button" onclick="triggerCustomerPhoneCall()" class="w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2.5 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200">
+                          <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+                          <span>Llamar a Celular</span>
+                        </button>
+                      </div>
+                    </div>
+
                     <button type="button" onclick="openActiveContactDrawer()" title="Ver expediente y detalles" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 transition flex items-center space-x-1.5 text-xs font-semibold">
                       <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       <span class="hidden sm:inline">Detalles</span>
@@ -7770,7 +7838,7 @@
                 </div>
 
               <!-- Mensajes del Chat con Scroll -->
-              <div id="chat-messages-container" oncontextmenu="handleChatCanvasContextMenu(event)" class="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 min-h-0 scrollbar-none">
+              <div id="chat-messages-container" oncontextmenu="handleChatCanvasContextMenu(event)" class="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-5 space-y-3 min-h-0 scrollbar-none">
                 <div class="m-auto text-center py-12 text-slate-400 text-xs">
                   <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
@@ -37063,6 +37131,15 @@ function initMessagesRealtime() {
     messagesEventSource = new EventSource(sseUrl);
     messagesEventSource._connectedUserId = myId;
 
+    if (window.TurboCalls && typeof window.TurboCalls.init === 'function') {
+      window.TurboCalls.init({
+        getUserId: () => (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '',
+        getUserName: () => (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : 'Usuario',
+        getUserAvatar: () => (typeof currentUser !== 'undefined' && currentUser && (currentUser.avatarUrl || currentUser.avatar)) ? (currentUser.avatarUrl || currentUser.avatar) : '',
+        getTenantId: () => (typeof currentTenantId !== 'undefined' && currentTenantId) ? currentTenantId : 'default',
+      });
+    }
+
     messagesEventSource.onopen = () => {
       messagesSseRetryCount = 0;
       const statusDot = document.getElementById('messages-online-status');
@@ -37076,6 +37153,13 @@ function initMessagesRealtime() {
         if (data.type === 'connected') {
           const statusDot = document.getElementById('messages-online-status');
           if (statusDot) statusDot.textContent = 'En Línea';
+          return;
+        }
+
+        if (data.type === 'call_signal') {
+          if (window.TurboCalls && typeof window.TurboCalls.handleCallSignal === 'function') {
+            window.TurboCalls.handleCallSignal(data);
+          }
           return;
         }
 
@@ -37458,7 +37542,7 @@ async function loadConversations() {
     const data = await res.json();
     if (data.success) {
       currentConversations = sortConversationsList(data.data || []);
-      renderConversationsList(currentConversations);
+      renderConversationsList(currentConversations, true);
 
       if (activeConversationId && currentConversations.some(c => c.id === activeConversationId)) {
         selectConversation(activeConversationId);
@@ -37622,15 +37706,95 @@ function getConversationDisplayInfo(c) {
   };
 }
 
-// 2. Renderizar Lista de Tarjetas de Conversación
-function renderConversationsList(conversations) {
+// 2. Renderizar Lista de Tarjetas de Conversación por Bloques (Chunked Progressive Loading)
+let displayedConversationsLimit = 25;
+const CONVERSATIONS_CHUNK_SIZE = 25;
+
+function renderSingleConversationCardHtml(c) {
+  const isSelected = activeConversationId === c.id;
+  const displayInfo = getConversationDisplayInfo(c);
+  if (displayInfo.isSelf) return ''; // Omitir chat con uno mismo
+
+  const allTags = (Array.isArray(c.tags) && c.tags.length > 0)
+    ? c.tags
+    : (c.tag ? [c.tag] : (c.type ? [c.type] : ['clientes']));
+  const tagBadgesHtml = allTags.map(t => {
+    const tagInfo = getFilterTagBadge(t);
+    return `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap ${tagInfo.colorClass}" ${tagInfo.style ? `style="${tagInfo.style}"` : ''}>${escapeHtml(tagInfo.name)}</span>`;
+  }).join('');
+  const timeFormatted = c.lastMessageAt ? formatMessageTime(c.lastMessageAt) : (c.lastMessageTime || formatMessageTime(c.updatedAt));
+  const contactName = displayInfo.name;
+  const avatarUrl = displayInfo.avatar;
+  
+  // Status dot color & Unread highlight
+  const hasUnread = (c.unreadCount || 0) > 0;
+  const isOnline = (c.type === 'personal' || c.contactType === 'personal') || hasUnread;
+  const dotColor = hasUnread 
+    ? 'bg-blue-500 ring-2 ring-white dark:ring-slate-900 animate-pulse'
+    : (isOnline ? 'bg-emerald-500 ring-2 ring-white dark:ring-slate-900' : 'bg-slate-300 dark:bg-slate-600');
+
+  const titleColor = hasUnread ? 'text-blue-950 dark:text-blue-200 font-extrabold' : 'text-slate-900 dark:text-white font-bold';
+  const timeColor = hasUnread ? 'text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-500 dark:text-slate-400 font-medium';
+  const lastMsgStyle = hasUnread ? 'font-bold text-slate-950 dark:text-white' : 'font-medium text-slate-700 dark:text-slate-300';
+
+  const cardClasses = isSelected
+    ? 'bg-blue-50 dark:bg-blue-950/60 border-2 border-blue-600 dark:border-blue-500 text-slate-900 dark:text-white shadow-sm ring-1 ring-blue-500/20'
+    : (hasUnread
+        ? 'bg-blue-100/90 dark:bg-blue-950/70 border-2 border-blue-600 dark:border-blue-400 text-slate-900 dark:text-white shadow-md ring-2 ring-blue-500/30'
+        : 'bg-white dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white shadow-2xs');
+
+  return `
+    <div onclick="selectConversation('${c.id}')" data-conv-id="${c.id}" data-has-unread="${hasUnread}" oncontextmenu="handleConversationContextMenu(event, '${c.id}')" ontouchstart="handleCardTouchStart('${c.id}', event)" ontouchmove="handleCardTouchMove()" ontouchend="handleCardTouchEnd()" class="msg-conv-item p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-center space-x-3 ${cardClasses}">
+      <div class="relative flex-shrink-0">
+        <img src="${avatarUrl}" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-slate-300 dark:border-white/15 shadow-2xs" alt="${escapeHtml(contactName)}">
+        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${dotColor}"></span>
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between mb-0.5">
+          <div class="flex items-center gap-1.5 truncate">
+            ${c.isPinned ? `<span class="text-xs text-blue-500 font-bold flex-shrink-0" title="Chat fijado">📌</span>` : ''}
+            <h4 class="text-xs sm:text-sm truncate ${titleColor}">${escapeHtml(contactName)}</h4>
+          </div>
+          <span class="text-[10px] font-mono whitespace-nowrap ml-1.5 flex-shrink-0 ${timeColor}">${timeFormatted}</span>
+        </div>
+
+        <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+          ${tagBadgesHtml}
+          ${hasUnread ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-600 text-white shadow-xs uppercase tracking-wider animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>NUEVO</span>` : ''}
+        </div>
+
+        <div class="flex items-center justify-between text-xs">
+          <div class="truncate text-[11px] leading-tight flex-1 mr-1.5 ${lastMsgStyle}">${formatLastMessageWithSvgIcon(c.lastMessage)}</div>
+          ${
+            hasUnread
+              ? `<span class="min-w-[22px] h-[22px] px-2 rounded-full text-[11px] font-black bg-blue-600 text-white flex items-center justify-center flex-shrink-0 animate-bounce shadow-md ring-2 ring-white dark:ring-slate-900">${c.unreadCount}</span>`
+              : ''
+          }
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderConversationsList(conversations, resetLimit = false) {
   const listEl = document.getElementById('messages-conversations-list');
   if (!listEl) return;
+
+  if (resetLimit) {
+    displayedConversationsLimit = CONVERSATIONS_CHUNK_SIZE;
+  }
 
   const sortedList = sortConversationsList(conversations || []);
   currentConversations = sortedList;
 
-  if (!sortedList || sortedList.length === 0) {
+  // Filtrar los que no sean self
+  const validList = sortedList.filter(c => {
+    const displayInfo = getConversationDisplayInfo(c);
+    return !displayInfo.isSelf;
+  });
+
+  if (!validList || validList.length === 0) {
     listEl.innerHTML = `
       <div class="py-14 px-4 text-center text-slate-400">
         <svg class="w-8 h-8 mx-auto mb-2 text-slate-500 opacity-60" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
@@ -37641,72 +37805,40 @@ function renderConversationsList(conversations) {
     return;
   }
 
-  listEl.innerHTML = sortedList.map(c => {
-    const isSelected = activeConversationId === c.id;
-    const displayInfo = getConversationDisplayInfo(c);
-    if (displayInfo.isSelf) return ''; // Omitir chat con uno mismo
+  // Renderizar por bloques para máximo rendimiento y rapidez (evita saturar el DOM con 20+ chats)
+  const visibleChunk = validList.slice(0, displayedConversationsLimit);
+  const remainingCount = validList.length - visibleChunk.length;
 
-    const allTags = (Array.isArray(c.tags) && c.tags.length > 0)
-      ? c.tags
-      : (c.tag ? [c.tag] : (c.type ? [c.type] : ['clientes']));
-    const tagBadgesHtml = allTags.map(t => {
-      const tagInfo = getFilterTagBadge(t);
-      return `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap ${tagInfo.colorClass}" ${tagInfo.style ? `style="${tagInfo.style}"` : ''}>${escapeHtml(tagInfo.name)}</span>`;
-    }).join('');
-    const timeFormatted = c.lastMessageAt ? formatMessageTime(c.lastMessageAt) : (c.lastMessageTime || formatMessageTime(c.updatedAt));
-    const contactName = displayInfo.name;
-    const avatarUrl = displayInfo.avatar;
-    
-    // Status dot color & Unread highlight
-    const hasUnread = (c.unreadCount || 0) > 0;
-    const isOnline = (c.type === 'personal' || c.contactType === 'personal') || hasUnread;
-    const dotColor = hasUnread 
-      ? 'bg-blue-500 ring-2 ring-white dark:ring-slate-900 animate-pulse'
-      : (isOnline ? 'bg-emerald-500 ring-2 ring-white dark:ring-slate-900' : 'bg-slate-300 dark:bg-slate-600');
-
-    const titleColor = hasUnread ? 'text-blue-950 dark:text-blue-200 font-extrabold' : 'text-slate-900 dark:text-white font-bold';
-    const timeColor = hasUnread ? 'text-blue-700 dark:text-blue-300 font-bold' : 'text-slate-500 dark:text-slate-400 font-medium';
-    const lastMsgStyle = hasUnread ? 'font-bold text-slate-950 dark:text-white' : 'font-medium text-slate-700 dark:text-slate-300';
-
-    const cardClasses = isSelected
-      ? 'bg-blue-50 dark:bg-blue-950/60 border-2 border-blue-600 dark:border-blue-500 text-slate-900 dark:text-white shadow-sm ring-1 ring-blue-500/20'
-      : (hasUnread
-          ? 'bg-blue-100/90 dark:bg-blue-950/70 border-2 border-blue-600 dark:border-blue-400 text-slate-900 dark:text-white shadow-md ring-2 ring-blue-500/30'
-          : 'bg-white dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white shadow-2xs');
-
-    return `
-      <div onclick="selectConversation('${c.id}')" data-conv-id="${c.id}" data-has-unread="${hasUnread}" oncontextmenu="handleConversationContextMenu(event, '${c.id}')" ontouchstart="handleCardTouchStart('${c.id}', event)" ontouchmove="handleCardTouchMove()" ontouchend="handleCardTouchEnd()" class="msg-conv-item p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-center space-x-3 ${cardClasses}">
-        <div class="relative flex-shrink-0">
-          <img src="${avatarUrl}" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-slate-300 dark:border-white/15 shadow-2xs" alt="${escapeHtml(contactName)}">
-          <span class="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${dotColor}"></span>
-        </div>
-
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between mb-0.5">
-            <div class="flex items-center gap-1.5 truncate">
-              ${c.isPinned ? `<span class="text-xs text-blue-500 font-bold flex-shrink-0" title="Chat fijado">📌</span>` : ''}
-              <h4 class="text-xs sm:text-sm truncate ${titleColor}">${escapeHtml(contactName)}</h4>
-            </div>
-            <span class="text-[10px] font-mono whitespace-nowrap ml-1.5 flex-shrink-0 ${timeColor}">${timeFormatted}</span>
-          </div>
-
-          <div class="flex items-center gap-1.5 mb-1 flex-wrap">
-            ${tagBadgesHtml}
-            ${hasUnread ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-600 text-white shadow-xs uppercase tracking-wider animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>NUEVO</span>` : ''}
-          </div>
-
-          <div class="flex items-center justify-between text-xs">
-            <div class="truncate text-[11px] leading-tight flex-1 mr-1.5 ${lastMsgStyle}">${formatLastMessageWithSvgIcon(c.lastMessage)}</div>
-            ${
-              hasUnread
-                ? `<span class="min-w-[22px] h-[22px] px-2 rounded-full text-[11px] font-black bg-blue-600 text-white flex items-center justify-center flex-shrink-0 animate-bounce shadow-md ring-2 ring-white dark:ring-slate-900">${c.unreadCount}</span>`
-                : ''
-            }
-          </div>
-        </div>
+  let loadMoreHtml = '';
+  if (remainingCount > 0) {
+    loadMoreHtml = `
+      <div id="conversations-load-more-block" class="py-2.5 px-3 text-center">
+        <button type="button" onclick="loadMoreConversationsChunk()" class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 text-xs font-semibold transition flex items-center justify-center space-x-1.5 border border-slate-200/80 dark:border-white/5">
+          <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+          <span>Cargar más conversaciones (${remainingCount} restantes)</span>
+        </button>
       </div>
     `;
-  }).join('');
+  }
+
+  listEl.innerHTML = visibleChunk.map(c => renderSingleConversationCardHtml(c)).join('') + loadMoreHtml;
+
+  // Auto-cargar siguiente bloque de chats al hacer scroll hacia el final de la lista
+  if (!listEl._paginationScrollAttached) {
+    listEl._paginationScrollAttached = true;
+    listEl.addEventListener('scroll', () => {
+      if (listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - 60) {
+        if (currentConversations && currentConversations.length > displayedConversationsLimit) {
+          loadMoreConversationsChunk();
+        }
+      }
+    });
+  }
+}
+
+function loadMoreConversationsChunk() {
+  displayedConversationsLimit += CONVERSATIONS_CHUNK_SIZE;
+  renderConversationsList(currentConversations, false);
 }
 
 // Actualización instantánea de clases en la tarjeta activa sin reconstruir todo el DOM de la lista
@@ -37854,9 +37986,9 @@ async function selectConversation(convId) {
   }
 
   try {
-    // Cargar los 35 mensajes más recientes (chunking para alto rendimiento)
+    // Cargar los 25 mensajes más recientes (chunking en bloques para máxima ligereza)
     const myCurrentId = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? currentUser.id : '';
-    const res = await fetch(`/api/messages/conversations/${encodeURIComponent(convId)}?limit=35${myCurrentId ? `&userId=${encodeURIComponent(myCurrentId)}` : ''}`, {
+    const res = await fetch(`/api/messages/conversations/${encodeURIComponent(convId)}?limit=25${myCurrentId ? `&userId=${encodeURIComponent(myCurrentId)}` : ''}`, {
       headers: myCurrentId ? { 'x-user-id': String(myCurrentId) } : {}
     });
     const data = await res.json();
@@ -37923,6 +38055,11 @@ async function selectConversation(convId) {
       }
     }
 
+    // Actualizar Botones de Llamada WebRTC / Video-Soporte
+    if (typeof updateChatCallButtons === 'function') {
+      updateChatCallButtons(conversation, displayInfo);
+    }
+
     // Renderizar Mensajes iniciales
     renderChatMessages(currentChatMessages);
 
@@ -37976,7 +38113,7 @@ function setupChatInfiniteScroll() {
       }
 
       try {
-        const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}?limit=35&before=${encodeURIComponent(oldestMsg.id)}`);
+        const res = await fetch(`/api/messages/conversations/${encodeURIComponent(activeConversationId)}?limit=25&before=${encodeURIComponent(oldestMsg.id)}`);
         const data = await res.json();
         if (data.success && Array.isArray(data.data.messages) && data.data.messages.length > 0) {
           currentChatMessages = [...data.data.messages, ...currentChatMessages];
@@ -38258,7 +38395,7 @@ function renderChatMessageRowHtml(m) {
       const hasCustomText = rawText && rawText.toLowerCase() !== 'foto enviada' && rawText.toLowerCase() !== 'foto con anotaciones' && rawText.toLowerCase() !== 'foto enviada con anotaciones';
 
       innerContentHtml = `
-        <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-1.5 shadow-sm text-xs space-y-1 group">
+        <div class="max-w-full sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-1.5 shadow-sm text-xs space-y-1 group break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -38267,7 +38404,7 @@ function renderChatMessageRowHtml(m) {
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none rounded-xl"></div>
           </div>
           <div class="px-2 pt-1 pb-0.5 flex flex-col gap-1">
-            ${hasCustomText ? `<p class="leading-relaxed select-text text-[13px]">${escapeHtml(rawText)}</p>` : `
+            ${hasCustomText ? `<p class="leading-relaxed select-text text-[13px] break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere;">${escapeHtml(rawText)}</p>` : `
               <div class="flex items-center gap-1.5 text-[11px] ${isAgent ? 'text-blue-100/90' : 'text-slate-500 dark:text-slate-400'} font-medium">
                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
                 <span>Foto adjunta</span>
@@ -38293,7 +38430,7 @@ function renderChatMessageRowHtml(m) {
       const videoId = 'vid-' + m.id;
 
       innerContentHtml = `
-        <div class="max-w-[88%] sm:max-w-md ${bgClass} rounded-2xl p-1.5 shadow-sm text-xs space-y-1.5 group">
+        <div class="max-w-full sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-1.5 shadow-sm text-xs space-y-1.5 group break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -38352,7 +38489,7 @@ function renderChatMessageRowHtml(m) {
                 </a>
               </div>
             </div>
-            ${hasCustomText ? `<p class="leading-relaxed select-text text-[13px] pt-0.5">${escapeHtml(rawText)}</p>` : ''}
+            ${hasCustomText ? `<p class="leading-relaxed select-text text-[13px] pt-0.5 break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere;">${escapeHtml(rawText)}</p>` : ''}
             ${bubbleFooterHtml}
           </div>
         </div>
@@ -38370,7 +38507,7 @@ function renderChatMessageRowHtml(m) {
       const cleanAddress = m.attachment.address ? m.attachment.address.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[\u2600-\u26FF\u2700-\u27BF]/g, '').trim() : 'Coordenadas capturadas vía satélite';
 
       innerContentHtml = `
-        <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2">
+        <div class="max-w-full sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -38428,7 +38565,7 @@ function renderChatMessageRowHtml(m) {
       const hasCaption = rawText && rawText !== fileName && !rawText.startsWith('[Adjunto:');
 
       innerContentHtml = `
-        <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group">
+        <div class="max-w-full sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -38444,7 +38581,7 @@ function renderChatMessageRowHtml(m) {
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
             </a>
           </div>
-          ${hasCaption ? `<p class="px-1 text-[13px] leading-relaxed select-text">${escapeHtml(rawText)}</p>` : ''}
+          ${hasCaption ? `<p class="px-1 text-[13px] leading-relaxed select-text break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">${escapeHtml(rawText)}</p>` : ''}
           ${bubbleFooterHtml}
         </div>
       `;
@@ -38459,7 +38596,7 @@ function renderChatMessageRowHtml(m) {
         : 'bg-white dark:bg-[#1a2333] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 shadow-sm rounded-tl-xs msg-bubble-in';
 
       innerContentHtml = `
-        <div class="max-w-[85%] sm:max-w-md ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group">
+        <div class="max-w-full sm:max-w-md min-w-0 ${bgClass} rounded-2xl p-2.5 shadow-sm text-xs space-y-2 group break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -38527,7 +38664,7 @@ function renderChatMessageRowHtml(m) {
         : 'bg-white dark:bg-[#161c28] text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-white/10 shadow-md rounded-tl-xs msg-bubble-in';
 
       innerContentHtml = `
-        <div class="max-w-[92%] sm:max-w-md ${cardBg} rounded-2xl p-3 shadow-md text-xs space-y-2.5 group">
+        <div class="max-w-full sm:max-w-md min-w-0 ${cardBg} rounded-2xl p-3 shadow-md text-xs space-y-2.5 group">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
@@ -38649,11 +38786,11 @@ function renderChatMessageRowHtml(m) {
       const cleanText = m.text ? m.text.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[\u2600-\u26FF\u2700-\u27BF]/g, '').trim() : '';
 
       innerContentHtml = `
-        <div class="max-w-[85%] sm:max-w-md ${bgClass} text-xs sm:text-[13px] space-y-1">
+        <div class="w-fit max-w-full sm:max-w-md min-w-0 ${bgClass} text-xs sm:text-[13px] space-y-1 break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere; box-sizing:border-box;">
           ${senderHeaderHtml}
           ${replySnippetHtml}
           ${forwardedHtml}
-          <p class="leading-relaxed whitespace-pre-wrap select-text msg-text">${escapeHtml(cleanText || m.text)}</p>
+          <p class="leading-relaxed whitespace-pre-wrap select-text msg-text break-all [overflow-wrap:anywhere] [word-break:break-all]" style="word-break:break-all; overflow-wrap:anywhere;">${escapeHtml(cleanText || m.text)}</p>
           ${bubbleFooterHtml}
         </div>
       `;
@@ -38662,16 +38799,16 @@ function renderChatMessageRowHtml(m) {
     const reactionsHtml = renderReactionsCluster(m);
 
     return `
-      <div class="chat-message-row relative w-full flex ${isAgent ? 'justify-end' : 'justify-start'} group py-0.5 select-none"
-           style="display:flex; width:100%; justify-content:${isAgent ? 'flex-end' : 'flex-start'};"
+      <div class="chat-message-row relative w-full flex ${isAgent ? 'justify-end' : 'justify-start'} group py-0.5 select-none min-w-0"
+           style="display:flex; width:100%; justify-content:${isAgent ? 'flex-end' : 'flex-start'}; min-width:0;"
            data-msg-id="${m.id}"
            data-is-agent="${isAgent}"
            onclick="handleChatMessageClick(event, '${m.id}')"
            oncontextmenu="handleChatMessageContextMenu(event, '${m.id}')"
            ondblclick="handleChatMessageDblClick(event, '${m.id}')">
         
-        <div class="msg-swipe-container flex items-center max-w-[88%] sm:max-w-[75%] ${isAgent ? 'justify-end ml-auto' : 'justify-start mr-auto'} relative"
-             style="display:flex; align-items:center; margin-left:${isAgent ? 'auto' : '0'}; margin-right:${isAgent ? '0' : 'auto'};"
+        <div class="msg-swipe-container flex items-center max-w-[88%] sm:max-w-[75%] min-w-0 ${isAgent ? 'justify-end ml-auto' : 'justify-start mr-auto'} relative"
+             style="display:flex; align-items:center; margin-left:${isAgent ? 'auto' : '0'}; margin-right:${isAgent ? '0' : 'auto'}; min-width:0;"
              ontouchstart="handleMessageTouchStart(event, '${m.id}')"
              ontouchmove="handleMessageTouchMove(event, '${m.id}')"
              ontouchend="handleMessageTouchEnd(event, '${m.id}')">
@@ -38685,8 +38822,8 @@ function renderChatMessageRowHtml(m) {
           </div>
 
           <!-- Bubble wrapper con ID para scroll y pulsos -->
-          <div id="msg-${m.id}" class="flex flex-col ${isAgent ? 'items-end' : 'items-start'} ${isSelected ? 'chat-bubble-selected ring-2 ring-blue-500 rounded-2xl' : ''}"
-               style="display:flex; flex-direction:column; align-items:${isAgent ? 'flex-end' : 'flex-start'};">
+          <div id="msg-${m.id}" class="flex flex-col min-w-0 max-w-full ${isAgent ? 'items-end' : 'items-start'} ${isSelected ? 'chat-bubble-selected ring-2 ring-blue-500 rounded-2xl' : ''}"
+               style="display:flex; flex-direction:column; align-items:${isAgent ? 'flex-end' : 'flex-start'}; min-width:0; max-width:100%;">
             ${innerContentHtml}
             ${reactionsHtml}
           </div>
@@ -39257,6 +39394,7 @@ function closeActiveChat() {
     }
   }
   closeAllChatContextMenus();
+  if (typeof updateChatCallButtons === 'function') updateChatCallButtons(null);
 }
 
 function contextMenuAction(action) {
@@ -41207,6 +41345,7 @@ async function selectCommunityChannel(communityId, groupId) {
     }
   }
   updateGlobalUnreadBadges();
+  if (typeof updateChatCallButtons === 'function') updateChatCallButtons(null);
 
   const emptyView = document.getElementById('messages-empty-state-view');
   const chatContent = document.getElementById('active-chat-content');
@@ -42994,7 +43133,7 @@ function handleMessagesSearch(query) {
   }
 
   if (!chatSearchQuery) {
-    renderConversationsList(currentConversations);
+    renderConversationsList(currentConversations, true);
     return;
   }
 
@@ -43005,7 +43144,7 @@ function handleMessagesSearch(query) {
     return contactName.includes(chatSearchQuery) || contactPhone.includes(chatSearchQuery) || msg.includes(chatSearchQuery);
   });
 
-  renderConversationsList(filtered);
+  renderConversationsList(filtered, true);
 }
 
 function clearMessagesSearch() {
@@ -43014,7 +43153,7 @@ function clearMessagesSearch() {
   const clearBtn = document.getElementById('messages-search-clear');
   if (clearBtn) clearBtn.classList.add('hidden');
   chatSearchQuery = '';
-  renderConversationsList(currentConversations);
+  renderConversationsList(currentConversations, true);
 }
 
 // 6. Gestión de Filtros (CRUD)
@@ -46116,9 +46255,97 @@ async function syncMessagesInProduction() {
     }
   } catch (e) {}
 }
+// ==========================================
+// FUNCIONES INTEGRADAS DE LLAMADAS Y SOPORTE
+// ==========================================
+function updateChatCallButtons(conversation, displayInfo) {
+  const btnVoice = document.getElementById('btn-call-voice');
+  const btnVideo = document.getElementById('btn-call-video');
+  const btnSupport = document.getElementById('btn-call-support-room');
+  const wrapPhone = document.getElementById('wrap-call-customer-phone');
+
+  if (btnVoice) btnVoice.classList.add('hidden');
+  if (btnVideo) btnVideo.classList.add('hidden');
+  if (btnSupport) btnSupport.classList.add('hidden');
+  if (wrapPhone) wrapPhone.classList.add('hidden');
+
+  if (!conversation) return;
+
+  const isPersonal = (conversation.type === 'personal' || (Array.isArray(conversation.tags) && conversation.tags.includes('personal')));
+  
+  if (isPersonal) {
+    if (btnVoice) btnVoice.classList.remove('hidden');
+    if (btnVideo) btnVideo.classList.remove('hidden');
+  } else {
+    if (btnSupport) btnSupport.classList.remove('hidden');
+    const phone = conversation.phone || (displayInfo && displayInfo.phone);
+    if (wrapPhone && phone) wrapPhone.classList.remove('hidden');
+  }
+}
+
+function handleStartCall(type) {
+  const conv = (currentConversations || []).find(c => c.id === activeConversationId);
+  if (!conv) return;
+  const displayInfo = getConversationDisplayInfo(conv);
+  
+  let targetId = conv.contactId;
+  const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+  if (String(conv.contactId) === myId && conv.creatorId) {
+    targetId = conv.creatorId;
+  }
+  if (!targetId && conv.participants && Array.isArray(conv.participants)) {
+    targetId = conv.participants.find(p => String(p) !== myId);
+  }
+
+  if (window.TurboCalls) {
+    window.TurboCalls.startPersonalCall(type, {
+      id: targetId,
+      name: displayInfo.name,
+      avatar: displayInfo.avatar
+    });
+  }
+}
+
+function handleStartSupportCall() {
+  const conv = (currentConversations || []).find(c => c.id === activeConversationId);
+  if (!conv) return;
+  const displayInfo = getConversationDisplayInfo(conv);
+  if (window.TurboCalls) {
+    window.TurboCalls.openCustomerSupportModal({
+      name: displayInfo.name,
+      phone: conv.phone || displayInfo.phone
+    }, conv.id);
+  }
+}
+
+function toggleCustomerCallMenu() {
+  const menu = document.getElementById('customer-call-menu-dropdown');
+  if (menu) menu.classList.toggle('hidden');
+}
+
+function triggerCustomerWhatsAppCall() {
+  const conv = (currentConversations || []).find(c => c.id === activeConversationId);
+  const phone = conv?.phone || '';
+  if (window.TurboCalls) {
+    window.TurboCalls.callCustomerViaWhatsApp(phone);
+  }
+  const menu = document.getElementById('customer-call-menu-dropdown');
+  if (menu) menu.classList.add('hidden');
+}
+
+function triggerCustomerPhoneCall() {
+  const conv = (currentConversations || []).find(c => c.id === activeConversationId);
+  const phone = conv?.phone || '';
+  if (window.TurboCalls) {
+    window.TurboCalls.callCustomerViaPhone(phone);
+  }
+  const menu = document.getElementById('customer-call-menu-dropdown');
+  if (menu) menu.classList.add('hidden');
+}
 setInterval(syncMessagesInProduction, 6000);
 
   </script>
+  <script src="/js/turbo-calls.js"></script>
   <script src="/js/maps-module.js"></script>
 
   <!-- ======================================================== -->
