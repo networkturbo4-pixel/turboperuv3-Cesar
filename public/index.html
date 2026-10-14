@@ -44062,7 +44062,11 @@ async function startAudioRecording() {
 
   // Si había una preview previa abierta, la limpiamos
   if (previewAudio) {
-    previewAudio.pause();
+    try {
+      previewAudio.pause();
+      previewAudio.ontimeupdate = null;
+      previewAudio.onended = null;
+    } catch (_) {}
     previewAudio = null;
   }
 
@@ -44169,21 +44173,22 @@ function toggleAudioPreviewPlayback() {
   if (!recordedAudioDataUrl) return;
 
   if (previewAudio && !previewAudio.paused) {
-    previewAudio.pause();
+    try { previewAudio.pause(); } catch (_) {}
     if (playIcon) playIcon.classList.remove('hidden');
     if (pauseIcon) pauseIcon.classList.add('hidden');
     return;
   }
 
   if (!previewAudio) {
-    previewAudio = new Audio(recordedAudioDataUrl);
-    previewAudio.ontimeupdate = () => {
-      if (!previewAudio.duration) return;
-      const pct = (previewAudio.currentTime / previewAudio.duration) * 100;
+    const audioObj = new Audio(recordedAudioDataUrl);
+    previewAudio = audioObj;
+    audioObj.ontimeupdate = function() {
+      if (!audioObj || !audioObj.duration || isNaN(audioObj.duration)) return;
+      const pct = (audioObj.currentTime / audioObj.duration) * 100;
       if (progressBar) progressBar.style.width = `${pct}%`;
-      if (currentTimeEl) currentTimeEl.textContent = formatAudioSeconds(previewAudio.currentTime);
+      if (currentTimeEl) currentTimeEl.textContent = formatAudioSeconds(audioObj.currentTime);
     };
-    previewAudio.onended = () => {
+    audioObj.onended = function() {
       if (playIcon) playIcon.classList.remove('hidden');
       if (pauseIcon) pauseIcon.classList.add('hidden');
       if (progressBar) progressBar.style.width = '0%';
@@ -44213,7 +44218,11 @@ function seekAudioPreview(e) {
 
 function discardRecordedAudio() {
   if (previewAudio) {
-    previewAudio.pause();
+    try {
+      previewAudio.pause();
+      previewAudio.ontimeupdate = null;
+      previewAudio.onended = null;
+    } catch (_) {}
     previewAudio = null;
   }
   recordedAudioBlob = null;
@@ -44230,7 +44239,11 @@ async function sendRecordedAudio() {
   if (!recordedAudioDataUrl || (!activeConversationId && (!activeCommunityId || !activeGroupId))) return;
 
   if (previewAudio) {
-    previewAudio.pause();
+    try {
+      previewAudio.pause();
+      previewAudio.ontimeupdate = null;
+      previewAudio.onended = null;
+    } catch (_) {}
     previewAudio = null;
   }
 
@@ -44331,7 +44344,11 @@ function playVoiceNote(audioUrl, playerId) {
 
   // Si hay otro audio reproduciéndose, detenerlo y resetearlo
   if (activePlayingAudio) {
-    activePlayingAudio.pause();
+    try {
+      activePlayingAudio.pause();
+      activePlayingAudio.ontimeupdate = null;
+      activePlayingAudio.onended = null;
+    } catch (_) {}
     resetVoiceNotePlayer(activePlayingPlayerId);
   }
 
@@ -44344,8 +44361,8 @@ function playVoiceNote(audioUrl, playerId) {
   if (playIcon) playIcon.classList.add('hidden');
   if (pauseIcon) pauseIcon.classList.remove('hidden');
 
-  audio.ontimeupdate = () => {
-    if (!audio.duration) return;
+  audio.ontimeupdate = function() {
+    if (!audio || !audio.duration || isNaN(audio.duration)) return;
     const pct = (audio.currentTime / audio.duration) * 100;
     updateWaveformProgress(playerId, pct);
     if (timeEl) {
@@ -44353,7 +44370,11 @@ function playVoiceNote(audioUrl, playerId) {
     }
   };
 
-  audio.onended = () => {
+  audio.onended = function() {
+    try {
+      audio.ontimeupdate = null;
+      audio.onended = null;
+    } catch (_) {}
     resetVoiceNotePlayer(playerId);
     activePlayingAudio = null;
     activePlayingPlayerId = null;
