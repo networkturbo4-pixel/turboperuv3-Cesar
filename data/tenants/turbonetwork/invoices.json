@@ -1,5 +1,28 @@
 [
   {
+    "id": 5,
+    "invoiceNumber": "REC-TRBO-0005",
+    "customerId": 1,
+    "customerName": "Carlos Mendoza Silva",
+    "customerCode": "CLI-1001",
+    "serviceName": "Fibra Pro 100 Mbps",
+    "concept": "Instalación de Router Wi-Fi 6 Pro",
+    "period": "2026-10",
+    "issueDate": "2026-10-21T20:19:22.472Z",
+    "dueDate": "2026-10-25T00:00:00.000Z",
+    "subtotal": "50.00",
+    "discount": "0.00",
+    "total": "50.00",
+    "status": "paid",
+    "paidDate": "2026-10-21T20:19:22.485Z",
+    "paymentMethod": "efectivo",
+    "referenceNumber": "EFE-TEST-123",
+    "notes": "Cobro de prueba en ventanilla",
+    "createdAt": "2026-10-21T20:19:22.472Z",
+    "registeredBy": "Cajero",
+    "paidAmount": "50.00"
+  },
+  {
     "id": 1,
     "invoiceNumber": "REC-TURBO-00101",
     "customerId": 1,

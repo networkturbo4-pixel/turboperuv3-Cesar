@@ -2,7 +2,7 @@
   {
     "id": "conv-1790804893756",
     "type": "personal",
-    "contactId": 1790781290504,
+    "contactId": 1,
     "name": "Emanuel Lopez",
     "phone": "emanuelalopez@gmail.com",
     "email": "emanuelalopez@gmail.com",
@@ -12,12 +12,12 @@
       "personal"
     ],
     "isArchived": false,
-    "planOrRole": "Cajero Sucursal Centro",
+    "planOrRole": "Fibra Pro 100 Mbps",
     "serviceStatus": "active",
     "unreadCount": 0,
-    "lastMessage": "Nuestro equipo técnico se encuentra realizando trabajos de mantenimiento preventivo y optimización de fibra óptica en su zona. Estimamos el restablecimiento completo en breve. Agradecemos su comprensión.",
-    "lastMessageTime": "12:13 p. m.",
-    "lastMessageDate": "2026-10-14",
+    "lastMessage": "✅ *¡PAGO REGISTRADO CON ÉXITO!*\n    \nEstimado(a) *Carlos Mendoza Silva*, hemos recibido y procesado su pago satisfactoriamente:\n\n- *Recibo Nº:* EFE-TEST-123\n- *Monto Abonado:* S/ 50.00\n- *Método de Pago:* efectivo\n- *Fecha:* 21/10/2026 03:19 p. m.\n🌐 *Servicio de red MikroTik restablecido automáticamente.* (Tráfico habilitado)\n\nAgradecemos su puntualidad y confianza en TurboNetwork. ¡Que disfrute de su navegación!",
+    "lastMessageTime": "03:19 p. m.",
+    "lastMessageDate": "2026-10-21",
     "messages": [
       {
         "id": "m-1790804893757",
@@ -283,10 +283,19 @@
         "timestamp": "2026-10-14T17:13:36.231Z",
         "timeFormatted": "12:13 p. m.",
         "status": "read"
+      },
+      {
+        "id": "sys-1792613965105-s5f",
+        "sender": "system",
+        "senderName": "Facturación TurboNetwork",
+        "text": "✅ *¡PAGO REGISTRADO CON ÉXITO!*\n    \nEstimado(a) *Carlos Mendoza Silva*, hemos recibido y procesado su pago satisfactoriamente:\n\n- *Recibo Nº:* EFE-TEST-123\n- *Monto Abonado:* S/ 50.00\n- *Método de Pago:* efectivo\n- *Fecha:* 21/10/2026 03:19 p. m.\n🌐 *Servicio de red MikroTik restablecido automáticamente.* (Tráfico habilitado)\n\nAgradecemos su puntualidad y confianza en TurboNetwork. ¡Que disfrute de su navegación!",
+        "timestamp": "2026-10-21T20:19:25.105Z",
+        "timeFormatted": "03:19 p. m.",
+        "status": "read"
       }
     ],
     "createdAt": "2026-09-30T21:48:13.756Z",
-    "updatedAt": "2026-10-14T17:13:36.231Z",
+    "updatedAt": "2026-10-21T20:19:25.105Z",
     "contractStartDate": "",
     "address": "",
     "creatorId": 1,
@@ -296,7 +305,8 @@
       1,
       1790781290504
     ],
-    "lastMessageAt": "2026-10-14T17:13:36.231Z"
+    "lastMessageAt": "2026-10-14T17:13:36.231Z",
+    "debtAmount": 0
   },
   {
     "id": "conv-1791561395916",

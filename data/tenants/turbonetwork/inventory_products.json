@@ -622,7 +622,8 @@
         "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
       }
     ],
-    "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
+    "barcodePrintedAt": "2026-10-14T15:52:12.616Z",
+    "barcode": "7750102001028"
   },
   {
     "type": "simple",
@@ -1147,6 +1148,7 @@
         "notes": "",
         "createdAt": "2026-10-09T23:18:00.748Z"
       }
-    ]
+    ],
+    "barcode": "7750101001011"
   }
 ]

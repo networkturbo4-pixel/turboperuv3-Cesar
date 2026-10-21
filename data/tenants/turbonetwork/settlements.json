@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "settlementNumber": "LIQ-2026-0001",
+    "closedAt": "2026-10-21T20:19:25.183Z",
+    "closedBy": "Supervisor de Caja",
+    "countedCash": "50.00",
+    "systemCash": "50.00",
+    "systemTransfer": "125.00",
+    "systemYape": "0.00",
+    "systemPOS": "0.00",
+    "totalCollected": "175.00",
+    "difference": "0.00",
+    "paymentCount": 3,
+    "invoiceIds": [
+      5,
+      1,
+      2
+    ],
+    "notes": "Cierre de prueba automatizada",
+    "status": "closed"
+  }
+]
