@@ -284,6 +284,7 @@ export interface PersonnelAssignment {
   productName?: string;
   productSku?: string;
   productImage?: string;
+  category?: string;
   employeeId: number | string;
   employeeName: string;
   assignedAt: string;
@@ -296,6 +297,12 @@ export interface PersonnelAssignment {
   unitSku?: string;
   itemUnitId?: string;
   unitNumber?: number;
+  expirationDate?: string;
+  hasLifespanControl?: boolean;
+  alertBeforeDays?: number;
+  lifespanValue?: number;
+  lifespanUnit?: string;
+  expectedReturnDate?: string;
 }
 
 export interface ProductTraceabilitySummary {

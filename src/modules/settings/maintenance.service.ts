@@ -18,6 +18,7 @@ export interface SystemVersionInfo {
   gitBranch: string;
   currentCommit: string;
   commitAuthor: string;
+  commitAuthorEmail?: string;
   commitDate: string;
   commitMessage: string;
   remoteUrl: string;
@@ -31,6 +32,7 @@ export interface SystemVersionInfo {
 export interface PendingCommit {
   hash: string;
   author: string;
+  email?: string;
   date: string;
   message: string;
 }
@@ -48,6 +50,7 @@ export interface CheckUpdatesResult {
 }
 
 export interface UpdateExecutionResult {
+  id?: string;
   success: boolean;
   message: string;
   backupFileName?: string;
@@ -57,13 +60,38 @@ export interface UpdateExecutionResult {
   executionLogs?: string[];
   durationMs: number;
   timestamp: string;
+  triggeredBy?: string;
+  author?: string;
+  authorEmail?: string;
+  commitDate?: string;
+  commitMessage?: string;
+}
+
+export interface DetailedUpdateHistoryItem {
+  id: string;
+  hash: string;
+  author: string;
+  authorEmail?: string;
+  date: string;
+  formattedDate: string;
+  message: string;
+  isCurrent?: boolean;
+  type?: "deployment" | "git_commit";
+  deployedAt?: string;
+  deployedBy?: string;
+  durationMs?: number;
+  backupFileName?: string;
+  success?: boolean;
+  logs?: string[];
 }
 
 export interface BackupItem {
   fileName: string;
   fileSizeBytes: number;
   fileSizeFormatted: string;
+  fileSize?: string;
   createdAt: string;
+  formattedDate?: string;
   type: "manual" | "pre_update";
   notes?: string;
   gitCommit?: string;
@@ -89,6 +117,24 @@ function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
+export function formatDateTimeNice(isoOrDateStr: string | Date): string {
+  try {
+    const d = new Date(isoOrDateStr);
+    if (isNaN(d.getTime())) return String(isoOrDateStr);
+    return d.toLocaleString("es-PE", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+  } catch (e) {
+    return String(isoOrDateStr);
+  }
+}
+
 // 1. Obtener información de versión y estado actual de Git
 export async function getSystemVersionInfo(): Promise<SystemVersionInfo> {
   let pkgVersion = "1.0.0";
@@ -106,6 +152,7 @@ export async function getSystemVersionInfo(): Promise<SystemVersionInfo> {
   let gitBranch = "main";
   let currentCommit = "unknown";
   let commitAuthor = "Sistema";
+  let commitAuthorEmail = "";
   let commitDate = "";
   let commitMessage = "";
   let remoteUrl = "";
@@ -121,12 +168,17 @@ export async function getSystemVersionInfo(): Promise<SystemVersionInfo> {
   } catch (e) {}
 
   try {
-    const { stdout: logOut } = await execAsync('git log -1 --pretty=format:"%an|||%ad|||%s" --date=iso', { cwd: ROOT_DIR });
-    const parts = logOut.trim().split("|||");
-    if (parts.length >= 3) {
-      commitAuthor = parts[0];
-      commitDate = parts[1];
-      commitMessage = parts[2];
+    const { stdout: logOut } = await execAsync('git log -1 --pretty=format:"%an@@@%ae@@@%ad@@@%s" --date=format:"%Y-%m-%d %H:%M:%S"', { cwd: ROOT_DIR });
+    const parts = logOut.trim().split("@@@");
+    if (parts.length >= 4) {
+      commitAuthor = parts[0] || commitAuthor;
+      commitAuthorEmail = parts[1] || "";
+      commitDate = parts[2] || "";
+      commitMessage = parts[3] || "";
+    } else if (parts.length >= 3) {
+      commitAuthor = parts[0] || commitAuthor;
+      commitDate = parts[1] || "";
+      commitMessage = parts[2] || "";
     }
   } catch (e) {}
 
@@ -150,6 +202,7 @@ export async function getSystemVersionInfo(): Promise<SystemVersionInfo> {
     gitBranch,
     currentCommit,
     commitAuthor,
+    commitAuthorEmail,
     commitDate,
     commitMessage,
     remoteUrl,
@@ -187,16 +240,17 @@ export async function checkForSystemUpdates(): Promise<CheckUpdatesResult> {
     const commits: PendingCommit[] = [];
     if (behindCount > 0) {
       const { stdout: listOut } = await execAsync(
-        `git log HEAD..origin/${branch} --pretty=format:"%h|||%an|||%ad|||%s" --date=short -n 15`,
+        `git log HEAD..origin/${branch} --pretty=format:"%h@@@%an@@@%ae@@@%ad@@@%s" --date=format:"%Y-%m-%d %H:%M:%S" -n 25`,
         { cwd: ROOT_DIR }
       );
       const lines = listOut.trim().split("\n");
       for (const line of lines) {
         if (!line.trim()) continue;
-        const [hash, author, date, message] = line.split("|||");
+        const [hash, author, email, date, message] = line.split("@@@");
         commits.push({
           hash: hash || "",
           author: author || "Desarrollador",
+          email: email || "",
           date: date || "",
           message: message || "Actualización del sistema",
         });
@@ -311,11 +365,14 @@ export async function createFullBackup(type: "manual" | "pre_update" = "manual",
   fs.writeFileSync(filePath, JSON.stringify(backupPackage, null, 2), "utf-8");
 
   const stat = fs.statSync(filePath);
+  const sizeFormatted = formatBytes(stat.size);
   return {
     fileName,
     fileSizeBytes: stat.size,
-    fileSizeFormatted: formatBytes(stat.size),
+    fileSizeFormatted: sizeFormatted,
+    fileSize: sizeFormatted,
     createdAt: now.toISOString(),
+    formattedDate: formatDateTimeNice(now),
     type,
     notes: backupPackage.notes,
     gitCommit: currentCommit,
@@ -337,12 +394,16 @@ export function listBackups(): BackupItem[] {
         const stat = fs.statSync(fullPath);
         const raw = fs.readFileSync(fullPath, "utf-8");
         const parsed = JSON.parse(raw);
+        const sizeFormatted = formatBytes(stat.size);
+        const dateIso = parsed.createdAt || stat.mtime.toISOString();
 
         list.push({
           fileName: f,
           fileSizeBytes: stat.size,
-          fileSizeFormatted: formatBytes(stat.size),
-          createdAt: parsed.createdAt || stat.mtime.toISOString(),
+          fileSizeFormatted: sizeFormatted,
+          fileSize: sizeFormatted,
+          createdAt: dateIso,
+          formattedDate: formatDateTimeNice(dateIso),
           type: parsed.type || (f.includes("pre_update") ? "pre_update" : "manual"),
           notes: parsed.notes || "",
           gitCommit: parsed.gitCommit || "",
@@ -351,11 +412,15 @@ export function listBackups(): BackupItem[] {
       } catch (e) {
         // En caso de archivo dañado
         const stat = fs.statSync(fullPath);
+        const sizeFormatted = formatBytes(stat.size);
+        const dateIso = stat.mtime.toISOString();
         list.push({
           fileName: f,
           fileSizeBytes: stat.size,
-          fileSizeFormatted: formatBytes(stat.size),
-          createdAt: stat.mtime.toISOString(),
+          fileSizeFormatted: sizeFormatted,
+          fileSize: sizeFormatted,
+          createdAt: dateIso,
+          formattedDate: formatDateTimeNice(dateIso),
           type: "manual",
           notes: "Copia de seguridad",
         });
@@ -618,6 +683,7 @@ export async function executeSystemUpdate(options: {
   createBackup?: boolean;
   runMigrations?: boolean;
   rebuild?: boolean;
+  triggeredBy?: string;
 }): Promise<UpdateExecutionResult> {
   const startTime = Date.now();
   const logs: string[] = [];
@@ -636,6 +702,10 @@ export async function executeSystemUpdate(options: {
   let backupFileName = "";
   let previousCommit = "unknown";
   let newCommit = "unknown";
+  let newAuthor = "";
+  let newAuthorEmail = "";
+  let newCommitDate = "";
+  let newCommitMessage = "";
 
   try {
     const { stdout: prevHash } = await execAsync("git rev-parse --short HEAD", { cwd: ROOT_DIR });
@@ -644,6 +714,9 @@ export async function executeSystemUpdate(options: {
 
   log(`🚀 INICIANDO ACTUALIZACIÓN DEL SISTEMA DESDE GITHUB (Rama: ${branch})...`);
   log(`📌 Commit actual instalado: ${previousCommit}`);
+  if (options.triggeredBy) {
+    log(`👤 Operador que ejecuta la actualización: ${options.triggeredBy}`);
+  }
 
   try {
     // PASO 1: Copia de seguridad preventiva
@@ -665,8 +738,6 @@ export async function executeSystemUpdate(options: {
     log("📦 [3/7] Validando permisos Git y preparando árbol de trabajo...");
     try {
       await execAsync('git config --global --add safe.directory "*"', { cwd: ROOT_DIR });
-      // Descartar cambios locales en archivos compilados o assets (ej: public/assets/tailwind.min.css, public/index.html)
-      // para evitar bloqueos por merges, ya que los datos operacionales de producción están 100% resguardados en .live_preserve_snapshot
       try {
         await execAsync("git checkout HEAD -- public/assets/ public/index.html src/", { cwd: ROOT_DIR });
       } catch (e) {}
@@ -696,6 +767,20 @@ export async function executeSystemUpdate(options: {
       const { stdout: postHash } = await execAsync("git rev-parse --short HEAD", { cwd: ROOT_DIR });
       newCommit = postHash.trim();
       log(`📌 Nuevo commit desplegado: ${newCommit}`);
+    } catch (e) {}
+
+    try {
+      const { stdout: postLog } = await execAsync('git log -1 --pretty=format:"%an@@@%ae@@@%ad@@@%s" --date=format:"%Y-%m-%d %H:%M:%S"', { cwd: ROOT_DIR });
+      const parts = postLog.trim().split("@@@");
+      if (parts.length >= 4) {
+        newAuthor = parts[0];
+        newAuthorEmail = parts[1];
+        newCommitDate = parts[2];
+        newCommitMessage = parts[3];
+        log(`👤 Autor del commit: ${newAuthor} (${newAuthorEmail})`);
+        log(`📅 Fecha del commit: ${newCommitDate}`);
+        log(`📝 Mensaje: ${newCommitMessage}`);
+      }
     } catch (e) {}
 
     // PASO 5: Restaurar datos operacionales de usuarios y Smart-Merge de roles
@@ -786,6 +871,7 @@ export async function executeSystemUpdate(options: {
     log(`🎉 ¡ACTUALIZACIÓN COMPLETADA CON ÉXITO en ${(durationMs / 1000).toFixed(2)}s!`);
 
     const result: UpdateExecutionResult = {
+      id: `${newCommit}_${Date.now()}`,
       success: true,
       message: `Sistema actualizado exitosamente desde GitHub a la versión ${newCommit}.`,
       backupFileName,
@@ -795,6 +881,11 @@ export async function executeSystemUpdate(options: {
       executionLogs: logs,
       durationMs,
       timestamp: new Date().toISOString(),
+      triggeredBy: options.triggeredBy || "Administrador",
+      author: newAuthor || "Desarrollador",
+      authorEmail: newAuthorEmail || "",
+      commitDate: newCommitDate || "",
+      commitMessage: newCommitMessage || "Actualización del sistema",
     };
 
     // Registrar en historial de actualizaciones
@@ -803,7 +894,7 @@ export async function executeSystemUpdate(options: {
         ? JSON.parse(fs.readFileSync(UPDATES_HISTORY_FILE, "utf-8"))
         : [];
       historyList.unshift(result);
-      if (historyList.length > 20) historyList.length = 20; // conservar últimos 20
+      if (historyList.length > 30) historyList.length = 30; // conservar últimos 30
       fs.writeFileSync(UPDATES_HISTORY_FILE, JSON.stringify(historyList, null, 2), "utf-8");
     } catch (e) {}
 
@@ -814,6 +905,7 @@ export async function executeSystemUpdate(options: {
     log(`💡 Nota de seguridad: Dispones del respaldo preventivo '${backupFileName}' para restaurar inmediatamente si fuera necesario.`);
 
     return {
+      id: `err_${Date.now()}`,
       success: false,
       message: `Error al actualizar: ${fatalErr.message || String(fatalErr)}`,
       backupFileName,
@@ -823,17 +915,92 @@ export async function executeSystemUpdate(options: {
       executionLogs: logs,
       durationMs,
       timestamp: new Date().toISOString(),
+      triggeredBy: options.triggeredBy || "Administrador",
+      author: newAuthor || "Desarrollador",
+      authorEmail: newAuthorEmail || "",
+      commitDate: newCommitDate || "",
+      commitMessage: newCommitMessage || "Actualización del sistema",
     };
   }
 }
 
-// 9. Obtener historial de actualizaciones
-export function getUpdatesHistory(): UpdateExecutionResult[] {
+// 9. Obtener historial detallado de actualizaciones (Deployments registrados + Git Commits recientes)
+export async function getUpdatesHistory(): Promise<DetailedUpdateHistoryItem[]> {
+  const recordedList: UpdateExecutionResult[] = [];
   try {
     if (fs.existsSync(UPDATES_HISTORY_FILE)) {
       const raw = fs.readFileSync(UPDATES_HISTORY_FILE, "utf-8");
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) recordedList.push(...parsed);
     }
   } catch (e) {}
-  return [];
+
+  let currentCommit = "";
+  try {
+    const { stdout: hOut } = await execAsync("git rev-parse --short HEAD", { cwd: ROOT_DIR });
+    currentCommit = hOut.trim();
+  } catch (e) {}
+
+  const gitItems: DetailedUpdateHistoryItem[] = [];
+  try {
+    const { stdout: logOut } = await execAsync(
+      'git log -30 --pretty=format:"%h@@@%an@@@%ae@@@%ad@@@%s" --date=format:"%Y-%m-%d %H:%M:%S"',
+      { cwd: ROOT_DIR }
+    );
+    const lines = logOut.trim().split("\n");
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const [hash, author, authorEmail, date, message] = line.split("@@@");
+      if (!hash) continue;
+
+      const cleanHash = hash.trim();
+      const isCurrent = cleanHash === currentCommit;
+      const matchedDeployment = recordedList.find(
+        (r) => (r.newCommit && r.newCommit === cleanHash) || (r.previousCommit && r.previousCommit === cleanHash)
+      );
+
+      gitItems.push({
+        id: cleanHash,
+        hash: cleanHash,
+        author: author ? author.trim() : "Desarrollador",
+        authorEmail: authorEmail ? authorEmail.trim() : "",
+        date: date ? date.trim() : "",
+        formattedDate: date ? date.trim() : "",
+        message: message ? message.trim() : "Actualización del sistema",
+        isCurrent,
+        type: matchedDeployment ? "deployment" : "git_commit",
+        deployedAt: matchedDeployment?.timestamp,
+        deployedBy: matchedDeployment?.triggeredBy || (isCurrent ? "Despliegue cPanel" : undefined),
+        durationMs: matchedDeployment?.durationMs,
+        backupFileName: matchedDeployment?.backupFileName,
+        success: matchedDeployment ? matchedDeployment.success : true,
+        logs: matchedDeployment?.logs || matchedDeployment?.executionLogs,
+      });
+    }
+  } catch (e) {}
+
+  // Agregar despliegues guardados antiguos que no figuren en los 30 commits de git
+  for (const dep of recordedList) {
+    if (dep.newCommit && !gitItems.some((g) => g.hash === dep.newCommit)) {
+      gitItems.push({
+        id: dep.id || dep.newCommit || dep.timestamp,
+        hash: dep.newCommit || "unknown",
+        author: dep.author || "Administrador",
+        authorEmail: dep.authorEmail || "",
+        date: dep.commitDate || dep.timestamp,
+        formattedDate: dep.commitDate || dep.timestamp,
+        message: dep.commitMessage || dep.message,
+        isCurrent: dep.newCommit === currentCommit,
+        type: "deployment",
+        deployedAt: dep.timestamp,
+        deployedBy: dep.triggeredBy,
+        durationMs: dep.durationMs,
+        backupFileName: dep.backupFileName,
+        success: dep.success,
+        logs: dep.logs || dep.executionLogs,
+      });
+    }
+  }
+
+  return gitItems;
 }

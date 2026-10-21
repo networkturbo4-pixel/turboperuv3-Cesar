@@ -34,3 +34,4 @@ data/updates_history.json
 data/connections_settings.json
 data/tenants/*/connections.json
 tmp/
+scratch/

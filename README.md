@@ -27,6 +27,8 @@
   - Adaptadores listos para **MikroTik RouterOS (v6 y v7)**, **OLTs de Fibra Óptica (Huawei, ZTE, VSOL)** y switches de capa 2/3.
 - **Facturación y Cobranza Interna**:
   - Emisión de recibos mensuales, liquidación de pagos en efectivo o transferencias bancarias y gestión de deudas.
+- **Control de Asistencia Biométrico (ZKTeco)**:
+  - Sincronización de marcaciones de oficina mediante lectores de huella ZKTeco (MB360, MB160, K40, etc.), cálculo de puntualidad y expediente del colaborador. Ver [Guía de Integración ZKTeco](docs/ZKTECO_INTEGRATION_GUIDE.md).
 
 ---
 

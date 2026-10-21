@@ -1789,6 +1789,11 @@ export function createPersonnelAssignment(
     productName: payload.productName || product?.name || "Material",
     productSku: payload.productSku || product?.sku || "SKU-GEN",
     productImage: payload.productImage || (product?.images && product.images[0]) || "",
+    expirationDate: (payload.expirationDate || product?.expirationDate) ?? undefined,
+    alertBeforeDays: (payload.alertBeforeDays !== undefined ? payload.alertBeforeDays : product?.alertBeforeDays) ?? undefined,
+    lifespanValue: (payload.lifespanValue !== undefined ? payload.lifespanValue : product?.lifespanValue) ?? undefined,
+    lifespanUnit: (payload.lifespanUnit || product?.lifespanUnit) ?? undefined,
+    hasLifespanControl: payload.hasLifespanControl !== undefined ? payload.hasLifespanControl : product?.hasLifespanControl,
     id: "asg-" + crypto.randomBytes(3).toString("hex"),
     tenantId,
     unitNumber: matchedUnitNumber,
@@ -1893,11 +1898,154 @@ export function returnPersonnelAssignment(
   return asg;
 }
 
+// TRANSFERENCIA DIRECTA ENTRE TÉCNICOS EN CAMPO
+export function transferPersonnelAssignment(
+  tenantId: string,
+  assignmentId: string,
+  targetEmployeeId: number | string,
+  targetEmployeeName: string,
+  options?: { notes?: string; quantity?: number }
+): { oldAssignment: PersonnelAssignment; newAssignment: PersonnelAssignment } | null {
+  const assignments = loadAssignments(tenantId);
+  const asg = assignments.find((a) => a.id === assignmentId);
+  if (!asg || asg.status === "devuelto" || asg.status === "baja") return null;
+
+  const qtyToTransfer = Math.min(Math.max(1, Number(options?.quantity) || asg.quantity), asg.quantity);
+  const now = new Date().toISOString();
+  const transferReason = options?.notes || `Transferencia en campo de ${asg.employeeName} hacia ${targetEmployeeName}`;
+
+  let newAssignment: PersonnelAssignment;
+
+  if (qtyToTransfer >= asg.quantity) {
+    // Transferencia total
+    asg.status = "devuelto";
+    asg.returnedAt = now;
+    asg.returnCondition = "buen_estado";
+    asg.notes = (asg.notes ? asg.notes + " | " : "") + `Transferido a ${targetEmployeeName}: ${transferReason}`;
+
+    newAssignment = {
+      id: `asg-${Math.random().toString(36).substring(2, 8)}`,
+      tenantId,
+      productId: asg.productId,
+      productName: asg.productName,
+      productSku: asg.productSku,
+      productImage: asg.productImage,
+      category: asg.category,
+      employeeId: targetEmployeeId,
+      employeeName: targetEmployeeName,
+      assignedAt: now,
+      quantity: qtyToTransfer,
+      status: "en_uso",
+      variantName: asg.variantName,
+      unitSku: asg.unitSku,
+      itemUnitId: asg.itemUnitId,
+      unitNumber: asg.unitNumber,
+      notes: `Recibido por transferencia de ${asg.employeeName}. ${transferReason}`,
+    };
+    assignments.push(newAssignment);
+  } else {
+    // Transferencia parcial
+    asg.quantity -= qtyToTransfer;
+    asg.notes = (asg.notes ? asg.notes + " | " : "") + `Transferidas ${qtyToTransfer} und a ${targetEmployeeName}`;
+
+    newAssignment = {
+      id: `asg-${Math.random().toString(36).substring(2, 8)}`,
+      tenantId,
+      productId: asg.productId,
+      productName: asg.productName,
+      productSku: asg.productSku,
+      productImage: asg.productImage,
+      category: asg.category,
+      employeeId: targetEmployeeId,
+      employeeName: targetEmployeeName,
+      assignedAt: now,
+      quantity: qtyToTransfer,
+      status: "en_uso",
+      variantName: asg.variantName,
+      notes: `Recibido por transferencia parcial de ${asg.employeeName}. ${transferReason}`,
+    };
+    assignments.push(newAssignment);
+  }
+
+  // Si tiene unidad individual serializada, actualizar custodia en el catálogo
+  if (asg.itemUnitId || asg.unitSku) {
+    const products = loadProducts(tenantId);
+    const product = products.find((p) => p.id === asg.productId);
+    if (product && Array.isArray(product.itemUnits)) {
+      const cleanUnitKey = (s?: string) => (s || "").toLowerCase().replace(/[\s\-_./]/g, "");
+      const targetKey = cleanUnitKey(asg.itemUnitId || asg.unitSku);
+      const unit = product.itemUnits.find(
+        (u) => (asg.itemUnitId && u.id === asg.itemUnitId) || cleanUnitKey(u.sku) === targetKey
+      );
+      if (unit) {
+        unit.status = "en_uso";
+        unit.assignedTo = targetEmployeeName;
+        unit.assignedAt = now;
+        saveProducts(tenantId, products);
+      }
+    }
+  }
+
+  saveAssignments(tenantId, assignments);
+  return { oldAssignment: asg, newAssignment };
+}
+
 export function getPersonnelAssignments(
   tenantId: string,
   options?: { employeeId?: string | number; status?: string }
 ): PersonnelAssignment[] {
   let list = loadAssignments(tenantId);
+  const products = loadProducts(tenantId);
+  const productMap = new Map<number, InventoryProduct>();
+  products.forEach((p) => productMap.set(p.id, p));
+
+  list = list.map((a) => {
+    const prod = a.productId ? productMap.get(a.productId) : undefined;
+    let name = a.productName;
+    let sku = a.productSku;
+    let image = a.productImage;
+    let category = (a as any).category || (prod as any)?.category || (prod as any)?.categoryName;
+
+    if (!name && prod) name = prod.name;
+    if (!sku && prod) sku = prod.sku;
+    if (!image && prod) image = (prod as any).image || (prod.images && prod.images[0]);
+
+    // Fallbacks para IDs estándar conocidos si faltasen en base de datos
+    if (!name) {
+      if (a.productId === 103) {
+        name = "Casco Dieléctrico con Barbiquejo ANSI Z89.1";
+        category = "EPP & Seguridad";
+        sku = sku || "EPP-CSK-ANSI";
+      } else if (a.productId === 101) {
+        name = "Cinta Doble Cara / Material de Sujeción";
+        category = "Insumos";
+        sku = sku || "PAS-UZQLCB";
+      } else if (a.productId === 102) {
+        name = "ONT Router ZTE GPON Dual Band";
+        category = "Equipos";
+        sku = sku || "EQ-VR9UD5";
+      } else if (a.productId === 105) {
+        name = "ONU GPON Bridge 1GE XPON";
+        category = "Equipos";
+        sku = sku || "EQ-ONU-1GE";
+      }
+    }
+
+    return {
+      ...a,
+      productName: name || a.notes || "Material Telecom",
+      productSku: sku || "--",
+      productImage: image || undefined,
+      category: category || "Insumos",
+      expirationDate: a.expirationDate || prod?.expirationDate || undefined,
+      hasLifespanControl: a.hasLifespanControl !== undefined ? a.hasLifespanControl : (prod?.hasLifespanControl || false),
+      alertBeforeDays: a.alertBeforeDays !== undefined ? a.alertBeforeDays : (prod?.alertBeforeDays ?? 30),
+      lifespanValue: a.lifespanValue !== undefined ? a.lifespanValue : prod?.lifespanValue,
+      lifespanUnit: a.lifespanUnit || prod?.lifespanUnit || undefined,
+      expectedReturnDate: a.expectedReturnDate || undefined,
+    } as PersonnelAssignment;
+  });
+
   if (options?.employeeId) {
     const target = String(options.employeeId).trim();
     list = list.filter((a) => String(a.employeeId).trim() === target);

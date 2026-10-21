@@ -17,7 +17,7 @@ import { usersRoutes } from "./modules/users/users.routes";
 import { settingsRoutes } from "./modules/settings/settings.routes";
 import { maintenanceRoutes } from "./modules/settings/maintenance.routes";
 import { connectionsRoutes } from "./modules/settings/connections.routes";
-import { rrhhRoutes, getCredentialHtmlByToken } from "./modules/rrhh/rrhh.routes";
+import { rrhhRoutes, zktecoIclockRoutes, getCredentialHtmlByToken } from "./modules/rrhh/rrhh.routes";
 import { tenantsRoutes } from "./modules/tenants/tenants.routes";
 import { inventoryRoutes } from "./modules/inventory/inventory.routes";
 import { messagesRoutes } from "./modules/messages/messages.routes";
@@ -258,6 +258,7 @@ export async function buildApp() {
   await fastify.register(usersRoutes, { prefix: "/api" });
   await fastify.register(settingsRoutes, { prefix: "/api" });
   await fastify.register(rrhhRoutes, { prefix: "/api" });
+  await fastify.register(zktecoIclockRoutes); // Protocolo nativo ZKTeco ADMS (/iclock/cdata) directo sin /api
   await fastify.register(tenantsRoutes, { prefix: "/api" });
   await fastify.register(ogRoutes, { prefix: "/api" });
   await fastify.register(maintenanceRoutes, { prefix: "/api" });

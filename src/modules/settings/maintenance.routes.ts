@@ -47,6 +47,7 @@ export const maintenanceRoutes: FastifyPluginAsync = async (fastify) => {
       runMigration: z.boolean().optional(),
       rebuild: z.boolean().optional(),
       runBuild: z.boolean().optional(),
+      triggeredBy: z.string().optional(),
     });
 
     const parse = schema.safeParse(request.body || {});
@@ -60,6 +61,7 @@ export const maintenanceRoutes: FastifyPluginAsync = async (fastify) => {
       createBackup: data.createBackup ?? data.createBackupBefore ?? true,
       runMigrations: data.runMigrations ?? data.runMigration ?? true,
       rebuild: data.rebuild ?? data.runBuild ?? true,
+      triggeredBy: data.triggeredBy,
     };
 
     try {
@@ -90,7 +92,7 @@ export const maintenanceRoutes: FastifyPluginAsync = async (fastify) => {
   // 4. Historial de actualizaciones aplicadas
   fastify.get("/settings/system/updates-history", async (_request, reply) => {
     try {
-      const history = getUpdatesHistory();
+      const history = await getUpdatesHistory();
       return reply.send({ success: true, data: history });
     } catch (err: any) {
       return reply.status(500).send({ success: false, message: err.message });

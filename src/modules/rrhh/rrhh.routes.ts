@@ -3,6 +3,8 @@ import { z } from "zod";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import net from "net";
+import os from "os";
 import { resolveTenantId, loadTenantsFromDisk } from "../tenants/tenants.service";
 import {
   EmployeeDocument,
@@ -342,7 +344,8 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
   const numId = typeof id === "string" ? parseInt(id, 10) : id;
   // 1. Buscar en employees.json
   const empList = loadEmployeesFromDisk();
-  const emp = empList.find((e) => e.id === numId);
+  const strId = String(id).trim();
+  const emp = empList.find((e) => e.id === numId || (strId && (e.biometricPin === strId || e.biometricId === strId || e.dni === strId)));
   if (emp) {
     return {
       id: emp.id,
@@ -2900,6 +2903,73 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // Aprobar / Marcar como Pagada una boleta o toda la planilla del mes
+  // -------------------------------------------------------------
+  // E. DIAGNÓSTICO DE RED Y ESTADO DEL TERMINAL ZKTECO (MB360 / MB160)
+  // -------------------------------------------------------------
+  fastify.get("/rrhh/zkteco/status", async (_request, reply) => {
+    const nets = os.networkInterfaces();
+    const localIps: string[] = [];
+    for (const name of Object.keys(nets)) {
+      for (const iface of nets[name] || []) {
+        if (iface.family === "IPv4" && !iface.internal) {
+          localIps.push(iface.address);
+        }
+      }
+    }
+    const serverIp = localIps[0] || "192.168.1.190";
+    const serverPort = Number(process.env.PORT) || 3000;
+    const emps = loadEmployeesFromDisk();
+
+    return reply.send({
+      success: true,
+      serverIp,
+      allLocalIps: localIps,
+      serverPort,
+      admsEndpoint: `http://${serverIp}:${serverPort}/iclock/cdata`,
+      connectedDevices: Object.values(zktecoAdmsDevices),
+      employeesMapping: emps.map((e) => ({
+        id: e.id,
+        name: e.name,
+        position: e.position,
+        zkUserId: e.biometricPin || String(e.id),
+        dni: e.dni,
+      })),
+    });
+  });
+
+  fastify.post("/rrhh/zkteco/test-lan", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const targetIp = String(body.ip || "192.168.1.201").trim();
+    const targetPort = Number(body.port || 4370);
+
+    const reachable = await new Promise<boolean>((resolve) => {
+      const socket = new net.Socket();
+      socket.setTimeout(2500);
+      socket.connect(targetPort, targetIp, () => {
+        socket.destroy();
+        resolve(true);
+      });
+      socket.on("error", () => {
+        socket.destroy();
+        resolve(false);
+      });
+      socket.on("timeout", () => {
+        socket.destroy();
+        resolve(false);
+      });
+    });
+
+    return reply.send({
+      success: true,
+      ip: targetIp,
+      port: targetPort,
+      reachable,
+      message: reachable
+        ? `Conexión exitosa con el terminal ZKTeco en ${targetIp}:${targetPort}.`
+        : `No se detectó respuesta en ${targetIp}:${targetPort}. Verifica que el cable de red RJ45 esté conectado al router/switch y que la IP del ZKTeco esté en la red 192.168.1.X.`,
+    });
+  });
+
   fastify.post("/rrhh/payroll/status", async (request, reply) => {
     const body = (request.body as any) || {};
     const { peruDate } = getPeruDateTime();
@@ -2933,3 +3003,185 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   });
 };
 
+
+// Registro en memoria de terminales ZKTeco conectados por ADMS (Servidor de Nube)
+const zktecoAdmsDevices: Record<
+  string,
+  { sn: string; ip: string; lastSeen: string; pushVersion?: string; totalSynced: number }
+> = {};
+
+// ============================================================================
+// PROTOCOLO NATIVO ZKTECO ADMS / ICLOCK PUSH SERVER (MB360 / MB160 / MB20)
+// Permite que el reloj ZKTeco envíe automáticamente huellas y rostros en vivo
+// al configurar en el menú del ZKTeco: Red -> Servidor de Nube (ADMS)
+// ============================================================================
+export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
+  fastify.addContentTypeParser(
+    ["application/octet-stream", "application/x-www-form-urlencoded"],
+    { parseAs: "string" },
+    (_req, body, done) => {
+      done(null, typeof body === "string" ? body : String(body || ""));
+    }
+  );
+
+  // 1. Handshake inicial del ZKTeco (convierte el icono de servidor en pantalla de ROJO a VERDE)
+  fastify.get("/iclock/cdata", async (request, reply) => {
+    const query = (request.query as Record<string, string>) || {};
+    const sn = query.SN || "ZKTECO-OFICINA";
+    const clientIp = request.ip || "LAN";
+
+    zktecoAdmsDevices[sn] = {
+      sn,
+      ip: clientIp,
+      lastSeen: new Date().toISOString(),
+      pushVersion: query.pushver || "2.4.1",
+      totalSynced: zktecoAdmsDevices[sn]?.totalSynced || 0,
+    };
+
+    const configResponse = [
+      `GET OPTION FROM: ${sn}`,
+      `ATTLOGStamp=None`,
+      `OPERLOGStamp=9999`,
+      `ATTPHOTOStamp=None`,
+      `ErrorDelay=30`,
+      `Delay=5`,
+      `TransTimes=00:00;14:05`,
+      `TransInterval=1`,
+      `TransFlag=TransData AttLog\tOpLog`,
+      `TimeZone=-5`,
+      `Realtime=1`,
+      `Encrypt=0`,
+    ].join("\n");
+
+    return reply.type("text/plain; charset=utf-8").send(configResponse);
+  });
+
+  // 2. Recepción en tiempo real de marcaciones de Huella (VERIFY=1) y Rostro (VERIFY=15)
+  fastify.post("/iclock/cdata", async (request, reply) => {
+    const query = (request.query as Record<string, string>) || {};
+    const sn = query.SN || "ZKTeco-MB360-Oficina";
+    const table = (query.table || "ATTLOG").toUpperCase();
+    const rawBody = typeof request.body === "string" ? request.body : JSON.stringify(request.body || "");
+
+    if (zktecoAdmsDevices[sn]) {
+      zktecoAdmsDevices[sn].lastSeen = new Date().toISOString();
+    } else {
+      zktecoAdmsDevices[sn] = {
+        sn,
+        ip: request.ip || "LAN",
+        lastSeen: new Date().toISOString(),
+        totalSynced: 0,
+      };
+    }
+
+    if (table !== "ATTLOG") {
+      return reply.type("text/plain").send("OK");
+    }
+
+    const lines = rawBody
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+
+    let processedCount = 0;
+    const attendanceList = loadAttendanceFromDisk();
+
+    for (const line of lines) {
+      // Formato estándar ZKTeco ADMS: PIN \t YYYY-MM-DD HH:MM:SS \t STATUS \t VERIFY \t WORKCODE...
+      const parts = line.split(/\t+/);
+      if (parts.length < 2) continue;
+
+      const pin = parts[0].trim();
+      const dateTimeStr = parts[1].trim(); // Ej: "2026-10-20 09:15:30"
+      const statusFlag = parseInt(parts[2] || "0", 10); // 0=Entrada, 1=Salida, 4=HE Entrada, 5=HE Salida
+      const verifyMode = parseInt(parts[3] || "1", 10); // 1=Huella, 15=Rostro/Facial, 4=Tarjeta RFID, 3=PIN
+
+      const [dateStr, timeStr] = dateTimeStr.split(" ");
+      if (!dateStr || !timeStr) continue;
+
+      const emp = resolveEmployeeOrUser(pin, `Colaborador #${pin}`);
+      const verifyLabel =
+        verifyMode === 15
+          ? "Reconocimiento Facial ZKTeco"
+          : verifyMode === 4
+          ? "Tarjeta RFID ZKTeco"
+          : "Huella Dactilar ZKTeco";
+      const devLabel = `${sn} (${verifyLabel})`;
+
+      const existing = attendanceList.find((a) => a.employeeId === emp.id && a.date === dateStr);
+      const [curH, curM] = timeStr.split(":").map(Number);
+      const isCheckout = statusFlag === 1 || statusFlag === 5 || (existing && curH >= 13);
+
+      if (existing) {
+        if (isCheckout) {
+          existing.checkOut = timeStr;
+        }
+        existing.modality = "fingerprint";
+        existing.biometricVerified = true;
+        existing.biometricDeviceId = devLabel;
+        processedCount++;
+        continue;
+      }
+
+      const [expH, expM] = (emp.expectedCheckInTime || "08:00").split(":").map(Number);
+      const diff = curH * 60 + curM - (expH * 60 + expM);
+      const nextId = attendanceList.length > 0 ? Math.max(...attendanceList.map((a) => a.id)) + 1 : 1;
+
+      const newRec: AttendanceRecord = {
+        id: nextId,
+        employeeId: emp.id,
+        employeeName: emp.name,
+        tenantId: "turbonetwork",
+        tenantName: "Oficina Central",
+        isShared: true,
+        date: dateStr,
+        checkIn: new Date().toISOString(),
+        checkInTime: timeStr,
+        lunchStart: null,
+        lunchEndTime: null,
+        checkOut: statusFlag === 1 ? timeStr : null,
+        overtimeUnlocked: false,
+        overtimeMinutes: 0,
+        photo: emp.avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=ZKTeco",
+        location: {
+          latitude: -12.046374,
+          longitude: -77.042793,
+          accuracy: 5,
+          address: `Terminal Biométrico ${devLabel}`,
+        },
+        modality: "fingerprint",
+        biometricVerified: true,
+        biometricDeviceId: devLabel,
+        manualApprovalStatus: "not_required",
+        status: diff > 0 ? "very_late_blocked" : "on_time",
+        minutesLate: Math.max(0, diff),
+        unlockedByTotp: false,
+        notes: `Marcación automática en tiempo real vía ${devLabel}`,
+      };
+
+      attendanceList.unshift(newRec);
+      processedCount++;
+    }
+
+    if (processedCount > 0) {
+      saveAttendanceToDisk(attendanceList);
+      zktecoAdmsDevices[sn].totalSynced += processedCount;
+    }
+
+    return reply.type("text/plain").send(`OK: ${processedCount}`);
+  });
+
+  // 3. Heartbeat periódico del ZKTeco (mantiene el icono de servidor en VERDE)
+  fastify.get("/iclock/getrequest", async (request, reply) => {
+    const query = (request.query as Record<string, string>) || {};
+    const sn = query.SN || "ZKTECO-OFICINA";
+    if (zktecoAdmsDevices[sn]) {
+      zktecoAdmsDevices[sn].lastSeen = new Date().toISOString();
+    }
+    return reply.type("text/plain").send("OK");
+  });
+
+  fastify.post("/iclock/devicecmd", async (_request, reply) => {
+    return reply.type("text/plain").send("OK");
+  });
+};

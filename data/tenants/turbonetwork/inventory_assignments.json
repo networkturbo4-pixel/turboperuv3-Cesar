@@ -66,12 +66,14 @@
     "tenantId": "turbonetwork",
     "productId": 103,
     "employeeId": 1,
-    "employeeName": "Juan Pérez (Técnico Alturas)",
+    "employeeName": "César Administrador",
     "assignedAt": "2026-07-22T08:00:00Z",
     "quantity": 1,
     "status": "en_uso",
     "variantName": "Blanco / Talla Estándar (Liniero)",
-    "notes": "Asignación semestral de EPP normado"
+    "notes": "Asignación semestral de EPP normado",
+    "expirationDate": "2026-10-28",
+    "alertBeforeDays": 30
   },
   {
     "id": "asg-002",

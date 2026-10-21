@@ -34,6 +34,7 @@ import {
   createPersonnelAssignment,
   createPersonnelAssignmentsBatch,
   returnPersonnelAssignment,
+  transferPersonnelAssignment,
   getPersonnelAssignments,
   getInventoryMetrics,
   loadMovements,
@@ -860,6 +861,43 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       success: true,
       message: "Material/EPP retornado e ingresado nuevamente al stock disponible",
       data: returned,
+    };
+  });
+
+  fastify.post("/inventory/personnel-assignments/:id/transfer", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const schema = z.object({
+      targetEmployeeId: z.union([z.number(), z.string()]),
+      targetEmployeeName: z.string().min(1, "Nombre del técnico receptor requerido"),
+      quantity: z.number().positive().optional(),
+      notes: z.string().optional(),
+    });
+
+    const parse = schema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ success: false, errors: parse.error.format() });
+    }
+
+    const result = transferPersonnelAssignment(
+      tenantId,
+      id,
+      parse.data.targetEmployeeId,
+      parse.data.targetEmployeeName,
+      {
+        notes: parse.data.notes,
+        quantity: parse.data.quantity,
+      }
+    );
+
+    if (!result) {
+      return reply.status(404).send({ success: false, message: "Asignación no encontrada o no disponible para transferir" });
+    }
+
+    return {
+      success: true,
+      message: `¡Material transferido exitosamente a ${parse.data.targetEmployeeName}!`,
+      data: result,
     };
   });
 
