@@ -2043,7 +2043,7 @@
         }
 
         // Listener de clics para herramientas interactivas
-        map.on('click', handleMapClick);
+        setupMapEvents();
 
         // Feedback visual en el cursor según herramienta
         updateMapCursor();
@@ -2582,6 +2582,8 @@
   }
 
   // 12. EVENTOS DEL MAPA SEGÚN HERRAMIENTA ACTIVA
+  function handleMapClick(e) {}
+
   function setupMapEvents() {
     const map = state.map;
 
