@@ -1776,6 +1776,94 @@
   }
 
   // 7. INICIALIZAR MAPBOX GL JS
+
+  const OPEN_SATELLITE_STYLE = {
+    version: 8,
+    sources: {
+      'esri-satellite': {
+        type: 'raster',
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256,
+        attribution: 'Esri, Maxar, Earthstar Geographics'
+      }
+    },
+    layers: [
+      {
+        id: 'esri-satellite-layer',
+        type: 'raster',
+        source: 'esri-satellite',
+        minzoom: 0,
+        maxzoom: 19
+      }
+    ]
+  };
+
+  const OPEN_STREETS_STYLE = {
+    version: 8,
+    sources: {
+      'osm-tiles': {
+        type: 'raster',
+        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        attribution: '© OpenStreetMap contributors'
+      }
+    },
+    layers: [
+      {
+        id: 'osm-tiles-layer',
+        type: 'raster',
+        source: 'osm-tiles',
+        minzoom: 0,
+        maxzoom: 19
+      }
+    ]
+  };
+
+  async function saveInlineMapboxToken() {
+    const input = document.getElementById('inline-mapbox-token-input');
+    const token = input ? input.value.trim() : '';
+    if (!token) {
+      showToast('Por favor ingrese su Access Token de Mapbox (comienza con "pk.")', 'warning');
+      return;
+    }
+    if (!token.startsWith('pk.')) {
+      showToast('El token debe ser un Public Access Token de Mapbox (comienza con "pk.")', 'warning');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/settings/connections?tenantId=${encodeURIComponent(state.tenantId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mapbox: {
+            enabled: true,
+            accessToken: token,
+            defaultStyle: state.mapStyle || 'mapbox://styles/mapbox/satellite-streets-v12',
+          },
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        state.mapboxToken = token;
+        delete state.freeMapStyle;
+        showToast('¡Token de Mapbox activado y guardado!', 'success');
+        initMapbox();
+      } else {
+        showToast(data.message || 'Error al guardar token de Mapbox.', 'error');
+      }
+    } catch (err) {
+      console.error('[MAPS] Error al guardar token:', err);
+      showToast('Error al conectar con el servidor para guardar el token.', 'error');
+    }
+  }
+
+  function loadFreeMapStyle(styleType) {
+    state.freeMapStyle = styleType || 'esri';
+    initMapbox();
+    showToast(styleType === 'osm' ? 'Cargando mapa con OpenStreetMap (Modo Libre)' : 'Cargando mapa con Satélite Esri (Modo Libre)', 'info');
+  }
+
   function initMapbox() {
     const container = document.getElementById('mapbox-container');
     if (!container) return;
@@ -1797,22 +1885,87 @@
       return;
     }
 
-    // Configurar Token de Mapbox desde Ajustes / Conexiones
-    mapboxgl.accessToken = state.mapboxToken || '';
+    const hasValidToken = Boolean(state.mapboxToken && state.mapboxToken.trim().startsWith('pk.'));
+
+    // Si no hay token de Mapbox y aún no ha seleccionado estilo libre:
+    if (!hasValidToken && !state.freeMapStyle) {
+      const projectName = state.data?.name || 'LOA NETWORK RESIDENCIAL';
+      container.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full p-6 text-center max-w-lg mx-auto space-y-4">
+          <div class="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center shadow-inner">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Activar Visualizador de Mapa</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+              El mapa <strong>"${escapeHtml(projectName)}"</strong> se importó con éxito. Para cargar la capa satelital en alta definición, activa tu token de Mapbox o visualízalo al instante con mapas libres:
+            </p>
+          </div>
+
+          <!-- Opciones Rápidas Sin Token (Instantáneo) -->
+          <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+            <button type="button" onclick="mapsModule.loadFreeMapStyle('esri')" class="p-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md transition flex items-center justify-center space-x-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>🛰️ Ver Satélite Esri (Gratis)</span>
+            </button>
+            <button type="button" onclick="mapsModule.loadFreeMapStyle('osm')" class="p-3 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/15 text-slate-800 dark:text-white font-semibold text-xs border border-slate-300 dark:border-white/10 transition flex items-center justify-center space-x-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+              <span>🗺️ Ver OpenStreetMap</span>
+            </button>
+          </div>
+
+          <!-- Formulario Directo de Token Mapbox -->
+          <div class="w-full bg-slate-100 dark:bg-white/5 p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-2.5 text-left shadow-2xs">
+            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">O ingresa tu Access Token de Mapbox (pk....)</label>
+            <div class="flex items-center space-x-2">
+              <input type="password" id="inline-mapbox-token-input" placeholder="pk.eyJ1Ijoi..." class="flex-1 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+              <button type="button" onclick="mapsModule.saveInlineMapboxToken()" class="px-4 py-2 rounded-xl text-xs font-bold btn-brand-primary whitespace-nowrap shadow-sm">Activar Mapbox</button>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+              <a href="https://account.mapbox.com/access-tokens/" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline flex items-center space-x-1">
+                <span>Crear cuenta gratuita en Mapbox</span>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </a>
+              <span>50,000 cargas/mes gratis</span>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-3 pt-1">
+            <button type="button" onclick="switchTab('config'); switchConfigSubTab('connections');" class="text-xs text-blue-500 hover:underline font-semibold">
+              Ir a Configuración > Conexiones
+            </button>
+            <span class="text-slate-400">•</span>
+            <button type="button" onclick="mapsModule.exitMapMode()" class="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition">
+              Volver a Mis Mapas
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // Configurar Token y Estilo
+    let effectiveStyle = state.mapStyle || 'mapbox://styles/mapbox/satellite-streets-v12';
+    if (!hasValidToken) {
+      mapboxgl.accessToken = 'pk.eyJ1IjoiZHVtbXkiLCJhIjoiZHVtbXkifQ.dummy';
+      effectiveStyle = state.freeMapStyle === 'osm' ? OPEN_STREETS_STYLE : OPEN_SATELLITE_STYLE;
+    } else {
+      mapboxgl.accessToken = state.mapboxToken;
+    }
 
     try {
       const map = new mapboxgl.Map({
         container: 'mapbox-container',
-        style: state.mapStyle || 'mapbox://styles/mapbox/satellite-streets-v12',
+        style: effectiveStyle,
         center: state.data.center || [-77.0368, -12.0970],
         zoom: state.data.zoom || 14,
         attributionControl: false,
         trackResize: true,
         touchZoomRotate: true,
         touchPitch: true,
-        fadeDuration: 0, // Elimina transiciones lentas de tile en GPUs móviles
-        preserveDrawingBuffer: false, // Libera memoria RAM y GPU
-        maxTileCacheSize: 50, // Límite eficiente para no saturar memoria en móviles
+        fadeDuration: 0,
+        preserveDrawingBuffer: false,
+        maxTileCacheSize: 50,
       });
 
       // Controles nativos no invasivos
@@ -1838,34 +1991,28 @@
         state.map = map;
         state.isLoaded = true;
 
-        // Inicializar Relieve 3D (DEM), Sombreado Topográfico, Atmósfera y Edificios 3D
+        // Inicializar Relieve 3D (DEM), Sombreado Topográfico, Atmósfera y Edificios 3D si hay token
         initTerrainAnd3DLayers();
 
         // Fuentes GeoJSON para líneas y áreas
         initGeoJsonSources();
 
-        // Renderizar marcadores, trazados y áreas
+        // Renderizar todos los elementos
         renderAllMapLayers();
 
-        // Eventos de clic sobre el mapa según herramienta activa
-        setupMapEvents();
+        // Si tenemos un cuadro delimitador (bounds) guardado o recién importado, encuadrar
+        if (state.pendingFitBounds) {
+          try {
+            map.fitBounds(state.pendingFitBounds, { padding: 60, maxZoom: 16.5, duration: 1200 });
+            delete state.pendingFitBounds;
+          } catch (e) {}
+        }
 
-        // Banner informativo si no tiene token propio
-        checkTokenBanner();
+        // Listener de clics para herramientas interactivas
+        map.on('click', handleMapClick);
 
-        // Actualizar HUD de altímetro e inclinación inicial
-        updateLiveTerrainHud();
-      });
-
-      map.on('moveend', () => {
-        const c = map.getCenter();
-        state.data.center = [Number(c.lng.toFixed(6)), Number(c.lat.toFixed(6))];
-        state.data.zoom = Number(map.getZoom().toFixed(2));
-        updateLiveTerrainHud([c.lng, c.lat]);
-      });
-
-      map.on('pitch', () => {
-        updateLiveTerrainHud();
+        // Feedback visual en el cursor según herramienta
+        updateMapCursor();
       });
 
       map.on('move', () => {
@@ -1888,9 +2035,12 @@
       console.error('[MAPS] Error al inicializar Mapbox:', err);
       container.innerHTML = `
         <div class="flex flex-col items-center justify-center h-full p-8 text-center text-slate-400">
-          <p class="text-rose-500 font-bold mb-2">Error al iniciar mapa Mapbox</p>
-          <p class="text-xs mb-4">Verifique su conexión o configure su Access Token en Configuración > Conexiones.</p>
-          <button onclick="switchTab('config'); switchConfigSubTab('connections');" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold">Ir a Conexiones & Pasarelas</button>
+          <p class="text-rose-500 font-bold mb-2">Error al iniciar mapa</p>
+          <p class="text-xs mb-4">No se pudo cargar el estilo de mapa solicitado.</p>
+          <div class="flex items-center space-x-2">
+            <button onclick="mapsModule.loadFreeMapStyle('esri')" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold">Cargar Satélite Esri Libre</button>
+            <button onclick="switchTab('config'); switchConfigSubTab('connections');" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-white text-xs font-semibold">Ir a Conexiones</button>
+          </div>
         </div>
       `;
     }
