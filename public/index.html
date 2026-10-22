@@ -4217,12 +4217,20 @@
                   </div>
                 </div>
 
-                <!-- Botones Accesorios: GPS y Capas -->
+                <!-- Botones Accesorios: 3D Relieve, GPS y Capas -->
                 <div class="flex items-center space-x-0.5 sm:space-x-1 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-1 rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-xl text-slate-700 dark:text-white">
+                  <button type="button" id="maps-btn-3d-tilt" onclick="mapsModule.toggle3DCameraTilt()" class="px-2 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 transition flex items-center space-x-1 text-xs font-extrabold" title="Vista Relieve 3D (Google Earth) - Incline con 2 dedos o clic derecho + arrastrar">
+                    <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 20h18L14 6l-4 6-3-4L3 20z"/></svg>
+                    <span>3D</span>
+                    <span id="maps-pitch-badge" class="hidden sm:inline-block px-1 py-0.2 rounded text-[9.5px] font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">0°</span>
+                  </button>
+                  <button type="button" id="maps-btn-orbit" onclick="mapsModule.toggleOrbitCamera()" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition" title="Orbitar 360° alrededor del relieve">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                  </button>
                   <button type="button" onclick="mapsModule.centerOnUserLocation()" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition" title="Mi ubicación GPS">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2m0 16v2m10-10h-2M4 12H2m16.243-7.243l-1.414 1.414M7.172 16.828l-1.414 1.414M16.828 16.828l1.414 1.414M6.757 7.172l1.414-1.414M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
                   </button>
-                  <button type="button" onclick="mapsModule.togglePopover('maps-layers-popover')" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition" title="Capas & Estilos">
+                  <button type="button" onclick="mapsModule.togglePopover('maps-layers-popover')" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition" title="Capas, Estilos & Relieve 3D">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
                   </button>
                 </div>
@@ -4278,10 +4286,33 @@
               <!-- Contenido dinámico según herramienta activa -->
             </div>
 
+            <!-- HUD DE ALTÍMETRO EN VIVO Y CONTROLES DE CÁMARA 3D (ESTILO GOOGLE EARTH) -->
+            <div id="maps-terrain-hud" class="absolute bottom-14 sm:bottom-11 left-2.5 sm:left-3 z-20 pointer-events-auto flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-2.5 py-1.5 rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-xl text-[11px] text-slate-700 dark:text-slate-200 select-none">
+              <div class="flex items-center gap-1 pr-1.5 border-r border-slate-200 dark:border-white/10" title="Altitud sobre el nivel del mar (m.s.n.m.) en el punto actual">
+                <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 20h18L14 6l-4 6-3-4L3 20z"/></svg>
+                <span id="maps-live-elevation-val" class="font-mono font-bold text-slate-900 dark:text-white">-- m.s.n.m.</span>
+              </div>
+              <div class="hidden xs:flex items-center gap-1 pr-1.5 border-r border-slate-200 dark:border-white/10" title="Inclinación de cámara 3D (Pitch)">
+                <span class="text-[10px] text-slate-400">Inclinación:</span>
+                <span id="maps-live-pitch-val" class="font-mono font-bold text-emerald-600 dark:text-emerald-400">0°</span>
+              </div>
+              <div class="flex items-center gap-0.5">
+                <button type="button" onclick="mapsModule.adjustCameraPitch(15)" class="px-1.5 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-[10px] font-bold text-slate-600 dark:text-slate-300 transition" title="Inclinar más la vista para ver cerros y pendientes (+15°)">+Inclinar</button>
+                <button type="button" onclick="mapsModule.adjustCameraPitch(-15)" class="px-1.5 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-[10px] font-bold text-slate-600 dark:text-slate-300 transition" title="Reducir inclinación (-15°)">-2D</button>
+              </div>
+            </div>
+
+            <!-- PANEL FLOTANTE DE PERFIL DE ELEVACIÓN TOPOGRÁFICO & LÍNEA DE VISTA (LOS) -->
+            <div id="maps-elevation-profile-drawer" class="hidden absolute bottom-20 sm:bottom-16 left-1/2 transform -translate-x-1/2 z-40 w-[calc(100vw-1.5rem)] sm:w-[680px] max-w-[95vw] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl border border-slate-200/90 dark:border-white/15 shadow-2xl p-4 text-slate-900 dark:text-white transition-all duration-200">
+              <div id="maps-elevation-profile-content">
+                <!-- Se puebla dinámicamente con el gráfico SVG de relieve, pendiente y línea de vista -->
+              </div>
+            </div>
+
             <!-- POPOVER FLOTANTE DE CAPAS Y ESTILOS -->
-            <div id="maps-layers-popover" class="hidden absolute top-16 right-4 z-40 w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-2xl text-slate-900 dark:text-white space-y-4">
+            <div id="maps-layers-popover" class="hidden absolute top-16 right-4 z-40 w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-2xl text-slate-900 dark:text-white space-y-4">
               <div class="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 pb-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Capas del Mapa</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Capas & Relieve 3D</span>
                 <button type="button" onclick="mapsModule.closePopover('maps-layers-popover')" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs">✕</button>
               </div>
 
@@ -4292,7 +4323,47 @@
                   <button type="button" onclick="mapsModule.setMapStyle('mapbox://styles/mapbox/satellite-streets-v12')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white text-left font-medium">Satelital</button>
                   <button type="button" onclick="mapsModule.setMapStyle('mapbox://styles/mapbox/streets-v12')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white text-left font-medium">Calles</button>
                   <button type="button" onclick="mapsModule.setMapStyle('mapbox://styles/mapbox/dark-v11')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white text-left font-medium">Oscuro NOC</button>
-                  <button type="button" onclick="mapsModule.setMapStyle('mapbox://styles/mapbox/outdoors-v12')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white text-left font-medium">Terreno</button>
+                  <button type="button" onclick="mapsModule.setMapStyle('mapbox://styles/mapbox/outdoors-v12')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white text-left font-medium">Topográfico</button>
+                </div>
+              </div>
+
+              <!-- Relieve 3D & Topografía (Estilo Google Earth) -->
+              <div class="space-y-2.5 pt-2 border-t border-slate-200/80 dark:border-white/10">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 20h18L14 6l-4 6-3-4L3 20z"/></svg>
+                    Relieve 3D (Google Earth)
+                  </span>
+                  <button type="button" onclick="mapsModule.toggle3DCameraTilt()" class="px-2 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold transition">
+                    Inclinar Vista
+                  </button>
+                </div>
+
+                <label class="flex items-center justify-between cursor-pointer text-xs text-slate-700 dark:text-slate-200">
+                  <span>Cerros y Pendientes 3D</span>
+                  <input type="checkbox" id="maps-terrain-toggle" checked onchange="mapsModule.toggleTerrain3D(this.checked)" class="rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20 text-emerald-500">
+                </label>
+
+                <label class="flex items-center justify-between cursor-pointer text-xs text-slate-700 dark:text-slate-200">
+                  <span>Sombreado de Laderas</span>
+                  <input type="checkbox" id="maps-hillshade-toggle" checked onchange="mapsModule.toggleHillshade(this.checked)" class="rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20 text-amber-500">
+                </label>
+
+                <label class="flex items-center justify-between cursor-pointer text-xs text-slate-700 dark:text-slate-200">
+                  <span>Edificaciones en 3D</span>
+                  <input type="checkbox" id="maps-buildings3d-toggle" onchange="mapsModule.toggleBuildings3D(this.checked)" class="rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20 text-indigo-500">
+                </label>
+
+                <div class="space-y-1 pt-1">
+                  <div class="flex items-center justify-between text-[10.5px] text-slate-500 dark:text-slate-400">
+                    <span>Escala de Relieve (Cerros)</span>
+                    <span id="maps-exaggeration-label" class="font-mono font-bold text-emerald-600 dark:text-emerald-400">1.4x</span>
+                  </div>
+                  <div class="grid grid-cols-3 gap-1 text-[10.5px]">
+                    <button type="button" id="maps-exag-btn-1" onclick="mapsModule.setTerrainExaggeration(1.0)" class="py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 font-semibold transition">1.0x Real</button>
+                    <button type="button" id="maps-exag-btn-1.4" onclick="mapsModule.setTerrainExaggeration(1.4)" class="py-1 rounded-lg bg-emerald-600 text-white font-bold shadow-xs transition">1.4x Ideal</button>
+                    <button type="button" id="maps-exag-btn-2.2" onclick="mapsModule.setTerrainExaggeration(2.2)" class="py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 font-semibold transition">2.2x Cerro</button>
+                  </div>
                 </div>
               </div>
 
@@ -42174,7 +42245,19 @@ async function simulateIncomingMessageTest() {
 }
 
 function initMessagesRealtime() {
-  const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+  let myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+  if (!myId && window.TurboCalls && typeof window.TurboCalls.getUserId === 'function') {
+    myId = window.TurboCalls.getUserId();
+  }
+  if (!myId) {
+    try {
+      const sess = localStorage.getItem('turbonetwork_session') || localStorage.getItem('turbonetwork_active_user');
+      if (sess) {
+        const parsed = JSON.parse(sess);
+        if (parsed && (parsed.id || parsed.username)) myId = String(parsed.id || parsed.username);
+      }
+    } catch (_) {}
+  }
   const tenant = (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork';
 
   if (messagesEventSource) {
@@ -42192,11 +42275,23 @@ function initMessagesRealtime() {
 
     if (window.TurboCalls && typeof window.TurboCalls.init === 'function') {
       window.TurboCalls.init({
-        getUserId: () => (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '',
+        getUserId: () => {
+          let uId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+          if (!uId) {
+            try {
+              const sess = localStorage.getItem('turbonetwork_session') || localStorage.getItem('turbonetwork_active_user');
+              if (sess) { const p = JSON.parse(sess); if (p && (p.id || p.username)) uId = String(p.id || p.username); }
+            } catch (_) {}
+          }
+          return uId;
+        },
         getUserName: () => (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : 'Usuario',
         getUserAvatar: () => (typeof currentUser !== 'undefined' && currentUser && (currentUser.avatarUrl || currentUser.avatar)) ? (currentUser.avatarUrl || currentUser.avatar) : '',
         getTenantId: () => (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork',
       });
+      if (typeof window.TurboCalls.initPushNotifications === 'function') {
+        window.TurboCalls.initPushNotifications().catch(() => {});
+      }
     }
 
     messagesEventSource.onopen = () => {

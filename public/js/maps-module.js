@@ -67,6 +67,17 @@
     libraryFilter: 'all', // 'all' | 'nodes' | 'lines' | 'areas'
     librarySearchQuery: '',
     activeLightboxPhoto: null,
+    // Configuración de Relieve 3D & Topografía (Estilo Google Earth)
+    terrain3d: true,
+    terrainExaggeration: 1.4,
+    hillshade: true,
+    buildings3d: false,
+    skyAtmosphere: true,
+    isOrbiting: false,
+    orbitFrameId: null,
+    hoverProfileMarker: null,
+    activeProfileCoords: null,
+    activeProfileTitle: '',
   };
 
   // Iconos predefinidos SVG nítidos y vectoriales
@@ -152,6 +163,151 @@
       return (meters / 1000).toFixed(2) + ' km';
     }
     return meters + ' m';
+  }
+
+  // Consultar altitud real sobre el nivel del mar (m.s.n.m.) desde el DEM de Mapbox
+  function getPointElevationMeters(coord) {
+    if (!state.map || typeof state.map.queryTerrainElevation !== 'function' || !coord || coord.length < 2) {
+      return null;
+    }
+    try {
+      const elev = state.map.queryTerrainElevation([Number(coord[0]), Number(coord[1])], { exaggerated: false });
+      if (typeof elev === 'number' && !isNaN(elev)) {
+        return Math.round(elev);
+      }
+    } catch (e) {
+      // Ignorar si los tiles DEM aún están descargando
+    }
+    return null;
+  }
+
+  // Calcular resumen topográfico completo (desnivel, pendiente %, distancia 3D y línea de vista)
+  function computeRouteElevationSummary(coords, sampleCount = 36) {
+    if (!Array.isArray(coords) || coords.length < 2) return null;
+
+    // 1. Distancia horizontal acumulada por vértice
+    const vertexDists = [0];
+    let totalDist2d = 0;
+    for (let i = 0; i < coords.length - 1; i++) {
+      totalDist2d += getDistanceMeters(coords[i], coords[i + 1]);
+      vertexDists.push(totalDist2d);
+    }
+
+    // 2. Generar muestras equidistantes a lo largo del trazado para perfil de cerros
+    const samples = [];
+    const steps = Math.max(2, sampleCount);
+
+    for (let s = 0; s <= steps; s++) {
+      const targetDist = totalDist2d === 0 ? 0 : (totalDist2d * s) / steps;
+      let segIdx = 0;
+      for (let i = 0; i < vertexDists.length - 1; i++) {
+        if (targetDist >= vertexDists[i] && targetDist <= vertexDists[i + 1]) {
+          segIdx = i;
+          break;
+        }
+      }
+      const d0 = vertexDists[segIdx];
+      const d1 = vertexDists[segIdx + 1];
+      const segLen = d1 - d0;
+      const t = segLen > 0 ? (targetDist - d0) / segLen : 0;
+      const c0 = coords[segIdx];
+      const c1 = coords[segIdx + 1] || c0;
+      const lng = c0[0] + (c1[0] - c0[0]) * t;
+      const lat = c0[1] + (c1[1] - c0[1]) * t;
+      const rawElev = getPointElevationMeters([lng, lat]);
+      samples.push({
+        dist: Math.round(targetDist),
+        coord: [Number(lng.toFixed(6)), Number(lat.toFixed(6))],
+        elev: rawElev,
+      });
+    }
+
+    const validElevs = samples.filter(x => typeof x.elev === 'number');
+    if (validElevs.length < 2) {
+      return {
+        hasElevation: false,
+        distance2d: totalDist2d,
+        distance3d: totalDist2d,
+      };
+    }
+
+    // Rellenar cualquier muestra nula con el vecino válido más cercano
+    let lastValid = validElevs[0].elev;
+    samples.forEach(s => {
+      if (typeof s.elev === 'number') lastValid = s.elev;
+      else s.elev = lastValid;
+    });
+
+    const startElev = samples[0].elev;
+    const endElev = samples[samples.length - 1].elev;
+    const deltaNet = endElev - startElev;
+
+    let minElev = startElev;
+    let maxElev = startElev;
+    let totalAscent = 0;
+    let totalDescent = 0;
+    let totalDist3d = 0;
+    let maxSlopePct = 0;
+
+    // Altura de mástil / poste estándar (8m) para evaluar Línea de Vista (LOS) entre extremo A y B
+    const mastHeightMeters = 8;
+    let maxObstructionMeters = 0;
+
+    for (let i = 0; i < samples.length; i++) {
+      const cur = samples[i];
+      if (cur.elev < minElev) minElev = cur.elev;
+      if (cur.elev > maxElev) maxElev = cur.elev;
+
+      const frac = totalDist2d > 0 ? cur.dist / totalDist2d : 0;
+      const losElev = (startElev + mastHeightMeters) + ((endElev + mastHeightMeters) - (startElev + mastHeightMeters)) * frac;
+      cur.losElev = Math.round(losElev);
+      const diffObstruction = cur.elev - losElev;
+      cur.obstructed = i > 0 && i < samples.length - 1 && diffObstruction > 0;
+      if (cur.obstructed && diffObstruction > maxObstructionMeters) {
+        maxObstructionMeters = Math.round(diffObstruction);
+      }
+
+      if (i > 0) {
+        const prev = samples[i - 1];
+        const dh = cur.elev - prev.elev;
+        const dd = Math.max(1, cur.dist - prev.dist);
+        if (dh > 0) totalAscent += dh;
+        else totalDescent += Math.abs(dh);
+
+        totalDist3d += Math.sqrt(dd * dd + dh * dh);
+        const segSlopePct = (dh / dd) * 100;
+        cur.slopePct = Number(segSlopePct.toFixed(1));
+        if (Math.abs(segSlopePct) > Math.abs(maxSlopePct)) {
+          maxSlopePct = Number(segSlopePct.toFixed(1));
+        }
+      } else {
+        cur.slopePct = 0;
+      }
+    }
+
+    const avgSlopePct = totalDist2d > 0 ? Number(((deltaNet / totalDist2d) * 100).toFixed(1)) : 0;
+    const avgSlopeDeg = totalDist2d > 0 ? Number((Math.atan(Math.abs(deltaNet) / totalDist2d) * (180 / Math.PI)).toFixed(1)) : 0;
+    const maxSlopeDeg = Number((Math.atan(Math.abs(maxSlopePct) / 100) * (180 / Math.PI)).toFixed(1));
+
+    return {
+      hasElevation: true,
+      startElev,
+      endElev,
+      minElev,
+      maxElev,
+      deltaNet,
+      totalAscent: Math.round(totalAscent),
+      totalDescent: Math.round(totalDescent),
+      distance2d: totalDist2d,
+      distance3d: Math.round(totalDist3d),
+      avgSlopePct,
+      avgSlopeDeg,
+      maxSlopePct,
+      maxSlopeDeg,
+      losClear: maxObstructionMeters <= 0,
+      maxObstructionMeters,
+      samples,
+    };
   }
 
   // Helper para obtener el proyecto de mapa activo
@@ -1326,6 +1482,9 @@
         state.map = map;
         state.isLoaded = true;
 
+        // Inicializar Relieve 3D (DEM), Sombreado Topográfico, Atmósfera y Edificios 3D
+        initTerrainAnd3DLayers();
+
         // Fuentes GeoJSON para líneas y áreas
         initGeoJsonSources();
 
@@ -1337,12 +1496,37 @@
 
         // Banner informativo si no tiene token propio
         checkTokenBanner();
+
+        // Actualizar HUD de altímetro e inclinación inicial
+        updateLiveTerrainHud();
       });
 
       map.on('moveend', () => {
         const c = map.getCenter();
         state.data.center = [Number(c.lng.toFixed(6)), Number(c.lat.toFixed(6))];
         state.data.zoom = Number(map.getZoom().toFixed(2));
+        updateLiveTerrainHud([c.lng, c.lat]);
+      });
+
+      map.on('pitch', () => {
+        updateLiveTerrainHud();
+      });
+
+      map.on('move', () => {
+        updateLiveTerrainHud();
+      });
+
+      map.on('mousemove', (e) => {
+        if (e && e.lngLat) {
+          updateLiveTerrainHud([e.lngLat.lng, e.lngLat.lat]);
+        }
+      });
+
+      map.on('dragstart', () => {
+        if (state.isOrbiting) stopOrbitCamera();
+      });
+      map.on('touchstart', () => {
+        if (state.isOrbiting) stopOrbitCamera();
       });
     } catch (err) {
       console.error('[MAPS] Error al inicializar Mapbox:', err);
@@ -1353,6 +1537,101 @@
           <button onclick="switchTab('config'); switchConfigSubTab('connections');" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold">Ir a Conexiones & Pasarelas</button>
         </div>
       `;
+    }
+  }
+
+  // 7b. INICIALIZAR RELIEVE 3D (DEM), SOMBREADO DE COLINAS, ATMÓSFERA Y EDIFICIOS 3D (GOOGLE EARTH)
+  function initTerrainAnd3DLayers() {
+    const map = state.map;
+    if (!map) return;
+
+    try {
+      // 1. Fuente DEM oficial de Mapbox para elevación 3D de cerros y quebradas
+      if (!map.getSource('mapbox-dem')) {
+        map.addSource('mapbox-dem', {
+          type: 'raster-dem',
+          url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+          tileSize: 512,
+          maxzoom: 14,
+        });
+      }
+
+      // 2. Activar terreno 3D si está habilitado
+      if (typeof map.setTerrain === 'function') {
+        if (state.terrain3d) {
+          map.setTerrain({
+            source: 'mapbox-dem',
+            exaggeration: state.terrainExaggeration || 1.4,
+          });
+        } else {
+          map.setTerrain(null);
+        }
+      }
+
+      // 3. Capa de Cielo Atmosférico (Horizonte realista al inclinar la vista como Google Earth)
+      if (!map.getLayer('maps-sky-atmosphere')) {
+        map.addLayer({
+          id: 'maps-sky-atmosphere',
+          type: 'sky',
+          paint: {
+            'sky-type': 'atmosphere',
+            'sky-atmosphere-sun': [0.0, 0.0],
+            'sky-atmosphere-sun-intensity': 15,
+          },
+        });
+      }
+
+      // 4. Capa de Sombreado de Laderas / Pendientes (Hillshade)
+      if (!map.getLayer('maps-terrain-hillshade')) {
+        // Insertar debajo de las etiquetas o líneas para no tapar vectores
+        const layers = map.getStyle()?.layers || [];
+        const labelLayerId = layers.find(l => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
+        map.addLayer(
+          {
+            id: 'maps-terrain-hillshade',
+            type: 'hillshade',
+            source: 'mapbox-dem',
+            layout: {
+              visibility: state.hillshade ? 'visible' : 'none',
+            },
+            paint: {
+              'hillshade-exaggeration': 0.55,
+              'hillshade-shadow-color': '#0f172a',
+              'hillshade-highlight-color': '#ffffff',
+              'hillshade-accent-color': '#059669',
+            },
+          },
+          labelLayerId
+        );
+      }
+
+      // 5. Capa opcional de Edificaciones en 3D
+      if (map.getSource('composite') && !map.getLayer('maps-3d-buildings')) {
+        const layers = map.getStyle()?.layers || [];
+        const labelLayerId = layers.find(l => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
+        map.addLayer(
+          {
+            id: 'maps-3d-buildings',
+            source: 'composite',
+            'source-layer': 'building',
+            filter: ['==', 'extrude', 'true'],
+            type: 'fill-extrusion',
+            minzoom: 14.5,
+            layout: {
+              visibility: state.buildings3d ? 'visible' : 'none',
+            },
+            paint: {
+              'fill-extrusion-color': '#64748b',
+              'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 14.5, 0, 15.2, ['get', 'height']],
+              'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 14.5, 0, 15.2, ['get', 'min_height']],
+              'fill-extrusion-opacity': 0.65,
+            },
+          },
+          labelLayerId
+        );
+      }
+    } catch (err) {
+      console.warn('[MAPS] Aviso al inicializar capas 3D:', err);
     }
   }
 
@@ -1623,6 +1902,10 @@
               <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
             </button>
           </div>
+          <div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-white/5">
+            <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Altitud Relieve</span>
+            <span id="maps-node-elev-${node.id}" class="font-mono text-[11px] font-bold text-emerald-600 dark:text-emerald-400">${(() => { const ev = getPointElevationMeters([node.lng, node.lat]); return ev !== null ? ev + ' m.s.n.m.' : 'Calculando...'; })()}</span>
+          </div>
           ${node.capacity ? `
           <div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-white/5">
             <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Capacidad</span>
@@ -1678,6 +1961,13 @@
     `;
 
     const popup = new mapboxgl.Popup({ offset: 25, closeButton: true }).setHTML(popupHtml);
+    popup.on('open', () => {
+      const elevEl = document.getElementById(`maps-node-elev-${node.id}`);
+      if (elevEl) {
+        const ev = getPointElevationMeters([node.lng, node.lat]);
+        elevEl.textContent = ev !== null ? `${ev} m.s.n.m.` : 'Sin datos DEM';
+      }
+    });
     const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom', offset: [0, 0] })
       .setLngLat([node.lng, node.lat])
       .setPopup(popup);
@@ -1790,13 +2080,29 @@
       state.keyboardShortcutsBound = true;
     }
 
-    // Clic en líneas para mostrar popup de alto contraste con Editar y Compartir
+    // Clic en líneas para mostrar popup de alto contraste con Editar, Perfil de Elevación y Compartir
     map.on('click', 'lines-layer', (e) => {
       if (state.activeTool !== 'select') return;
       if (!e.features || !e.features[0]) return;
       const f = e.features[0];
       const p = f.properties;
       const line = (state.data.lines || []).find(l => l.id === p.id) || p;
+      const elevInfo = line && Array.isArray(line.coordinates) && line.coordinates.length >= 2
+        ? computeRouteElevationSummary(line.coordinates, 32)
+        : null;
+      const slopeBadgeHtml = elevInfo && elevInfo.hasElevation
+        ? `<div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-white/5">
+             <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Desnivel / Pendiente</span>
+             <span class="font-mono text-[11px] font-bold ${Math.abs(elevInfo.maxSlopePct) >= 18 ? 'text-rose-500' : Math.abs(elevInfo.maxSlopePct) >= 8 ? 'text-amber-500' : 'text-emerald-500'}">
+               ${elevInfo.deltaNet >= 0 ? '↑ +' + elevInfo.deltaNet : '↓ ' + elevInfo.deltaNet} m (${elevInfo.avgSlopePct}%)
+             </span>
+           </div>
+           <div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-white/5">
+             <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Longitud Real 3D</span>
+             <span class="font-mono text-[11px] font-bold text-indigo-600 dark:text-indigo-400">${formatDistance(elevInfo.distance3d)} <span class="text-[9.5px] text-slate-400">(${elevInfo.startElev}→${elevInfo.endElev} msnm)</span></span>
+           </div>`
+        : '';
+
       new mapboxgl.Popup({ closeButton: true })
         .setLngLat(e.lngLat)
         .setHTML(`
@@ -1816,16 +2122,19 @@
             <!-- Body -->
             <div class="p-3.5 space-y-2 text-xs">
               <div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-white/5">
-                <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Longitud</span>
+                <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Longitud 2D</span>
                 <span class="font-mono text-xs font-black text-slate-900 dark:text-white">${formatDistance(p.distanceMeters)}</span>
               </div>
+              ${slopeBadgeHtml}
               <div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-white/5">
                 <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Hilos Ópticos</span>
                 <span class="font-bold text-slate-800 dark:text-slate-200">${p.cores || 12} Fibras</span>
               </div>
-              <div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-white/5">
-                <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Grosor de Trazo</span>
-                <span class="font-medium text-slate-700 dark:text-slate-300">${p.width || 3}px (${p.style || 'solid'})</span>
+              <div class="pt-1">
+                <button type="button" onclick="mapsModule.openElevationProfileByLineId('${p.id}')" class="w-full py-1.5 px-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[11px] font-bold transition flex items-center justify-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 20h18L14 6l-4 6-3-4L3 20z"/></svg>
+                  <span>Ver Perfil de Relieve & Pendiente</span>
+                </button>
               </div>
               ${line.notes ? `
               <div class="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-[10.5px] text-slate-600 dark:text-slate-300 italic">
@@ -2067,6 +2376,17 @@
   function updateRulerHud() {
     const hudStatus = document.getElementById('maps-floating-status-pill');
     if (!hudStatus) return;
+
+    const elevInfo = state.tempPoints.length >= 2 ? computeRouteElevationSummary(state.tempPoints, 28) : null;
+    const elevBadgeHtml = elevInfo && elevInfo.hasElevation
+      ? `<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 font-mono text-[11px]" title="Desnivel neto, pendiente media y distancia topográfica 3D real">
+           <span class="font-bold ${elevInfo.deltaNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-cyan-600 dark:text-cyan-400'}">${elevInfo.deltaNet >= 0 ? '↑+' + elevInfo.deltaNet : '↓' + elevInfo.deltaNet}m</span>
+           <span class="text-slate-400">|</span>
+           <span class="font-bold ${Math.abs(elevInfo.maxSlopePct) >= 18 ? 'text-rose-500' : Math.abs(elevInfo.maxSlopePct) >= 8 ? 'text-amber-500' : 'text-slate-700 dark:text-slate-200'}">${elevInfo.avgSlopePct}% (${elevInfo.avgSlopeDeg}°)</span>
+           <span class="hidden md:inline text-slate-400">| 3D: ${formatDistance(elevInfo.distance3d)}</span>
+         </div>`
+      : '';
+
     hudStatus.innerHTML = `
       <div class="flex flex-wrap items-center gap-2 text-xs">
         <div class="flex items-center space-x-1.5">
@@ -2076,6 +2396,7 @@
         <div class="font-mono font-black text-slate-900 dark:text-white text-xs sm:text-sm bg-slate-100 dark:bg-black/60 px-2.5 py-0.5 rounded-lg border border-amber-500/40 shadow-xs">
           ${formatDistance(state.rulerDistanceMeters)}
         </div>
+        ${elevBadgeHtml}
         <span class="text-[11px] text-slate-500 dark:text-slate-300">(${state.tempPoints.length} ${state.tempPoints.length === 1 ? 'punto' : 'puntos'})</span>
         
         ${state.tempPoints.length > 0 ? `
@@ -2084,6 +2405,7 @@
         ` : ''}
 
         ${state.tempPoints.length >= 2 ? `
+        <button type="button" onclick="mapsModule.openElevationProfile(mapsModule.state.tempPoints.slice(), 'Medición con Regla')" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10.5px] font-bold shadow-xs transition active:scale-95" title="Ver gráfico de relieve, cerros, pendiente y línea de vista">⛰️ Perfil 3D</button>
         ${can('maps:create') ? `
         <button type="button" onclick="mapsModule.openCreateLineModal(mapsModule.state.tempPoints.slice())" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10.5px] font-bold shadow-xs transition active:scale-95" title="Guardar esta medición como un trazado de fibra">💾 Guardar como Línea</button>
         ` : `
@@ -2113,6 +2435,16 @@
       dist += getDistanceMeters(state.tempPoints[i], state.tempPoints[i + 1]);
     }
 
+    const elevInfo = state.tempPoints.length >= 2 ? computeRouteElevationSummary(state.tempPoints, 28) : null;
+    const elevBadgeHtml = elevInfo && elevInfo.hasElevation
+      ? `<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 font-mono text-[11px]" title="Desnivel neto, pendiente media y distancia topográfica 3D real">
+           <span class="font-bold ${elevInfo.deltaNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-cyan-600 dark:text-cyan-400'}">${elevInfo.deltaNet >= 0 ? '↑+' + elevInfo.deltaNet : '↓' + elevInfo.deltaNet}m</span>
+           <span class="text-slate-400">|</span>
+           <span class="font-bold ${Math.abs(elevInfo.maxSlopePct) >= 18 ? 'text-rose-500' : Math.abs(elevInfo.maxSlopePct) >= 8 ? 'text-amber-500' : 'text-slate-700 dark:text-slate-200'}">${elevInfo.avgSlopePct}% (${elevInfo.avgSlopeDeg}°)</span>
+           <span class="hidden md:inline text-slate-400">| 3D: ${formatDistance(elevInfo.distance3d)}</span>
+         </div>`
+      : '';
+
     hudStatus.innerHTML = `
       <div class="flex flex-wrap items-center gap-2 text-xs">
         <div class="flex items-center space-x-1.5">
@@ -2123,6 +2455,7 @@
         <div class="font-mono font-black text-slate-900 dark:text-white text-xs sm:text-sm bg-slate-100 dark:bg-black/60 px-2.5 py-0.5 rounded-lg border border-emerald-500/40 shadow-xs">
           ${formatDistance(dist)}
         </div>
+        ${elevBadgeHtml}
         ` : ''}
         <span class="text-[11px] text-slate-500 dark:text-slate-300">(${state.tempPoints.length} ${state.tempPoints.length === 1 ? 'punto' : 'puntos'})</span>
 
@@ -2134,6 +2467,7 @@
         `}
 
         ${state.tempPoints.length >= 2 ? `
+        <button type="button" onclick="mapsModule.openElevationProfile(mapsModule.state.tempPoints.slice(), 'Trazado de Fibra en Progreso')" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10.5px] font-bold shadow-xs transition active:scale-95" title="Ver gráfico de relieve, cerros, pendiente y línea de vista">⛰️ Perfil 3D</button>
         ${can('maps:create') ? `
         <button type="button" onclick="mapsModule.finishLineDraw()" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10.5px] font-bold shadow-xs transition active:scale-95">💾 Guardar Conector</button>
         ` : `
@@ -2768,14 +3102,17 @@
   // 19. ESTILOS Y CAPAS (Satelital, Calles, Oscuro)
   function setMapStyle(styleUri) {
     if (!state.map) return;
-    state.mapStyle = styleUri;
-    state.map.setStyle(styleUri);
+    const normalizedStyle = styleUri.startsWith('mapbox://') ? styleUri : `mapbox://styles/mapbox/${styleUri}`;
+    state.mapStyle = normalizedStyle;
+    state.map.setStyle(normalizedStyle);
     state.map.once('style.load', () => {
+      initTerrainAnd3DLayers();
       initGeoJsonSources();
       renderAllMapLayers();
+      updateLiveTerrainHud();
     });
     closePopover('maps-layers-popover');
-    showToast('Estilo de mapa actualizado.', 'info');
+    showToast('Estilo de mapa actualizado con relieve 3D.', 'info');
   }
 
   function toggleLayer(layerKey) {
@@ -2785,6 +3122,481 @@
     // Actualizar checkbox
     const chk = document.getElementById(`maps-layer-toggle-${layerKey}`);
     if (chk) chk.checked = state.visibleLayers[layerKey];
+  }
+
+  // 19b. CONTROL DE RELIEVE 3D (ESTILO GOOGLE EARTH), CÁMARA Y PERFIL DE ELEVACIÓN / PENDIENTE
+  function toggleTerrain3D(enabled) {
+    state.terrain3d = typeof enabled === 'boolean' ? enabled : !state.terrain3d;
+    const chk = document.getElementById('maps-terrain-toggle');
+    if (chk) chk.checked = state.terrain3d;
+
+    if (state.map && typeof state.map.setTerrain === 'function') {
+      if (state.terrain3d) {
+        if (!state.map.getSource('mapbox-dem')) {
+          initTerrainAnd3DLayers();
+        } else {
+          state.map.setTerrain({
+            source: 'mapbox-dem',
+            exaggeration: state.terrainExaggeration || 1.4,
+          });
+        }
+        showToast('Relieve 3D de cerros y pendientes activado.', 'success');
+      } else {
+        state.map.setTerrain(null);
+        showToast('Terreno en modo plano 2D.', 'info');
+      }
+      updateLiveTerrainHud();
+    }
+  }
+
+  function toggleHillshade(enabled) {
+    state.hillshade = typeof enabled === 'boolean' ? enabled : !state.hillshade;
+    const chk = document.getElementById('maps-hillshade-toggle');
+    if (chk) chk.checked = state.hillshade;
+
+    if (state.map) {
+      if (!state.map.getLayer('maps-terrain-hillshade')) {
+        initTerrainAnd3DLayers();
+      }
+      if (state.map.getLayer('maps-terrain-hillshade')) {
+        state.map.setLayoutProperty('maps-terrain-hillshade', 'visibility', state.hillshade ? 'visible' : 'none');
+      }
+      showToast(state.hillshade ? 'Sombreado de laderas activado.' : 'Sombreado de laderas oculto.', 'info');
+    }
+  }
+
+  function toggleBuildings3D(enabled) {
+    state.buildings3d = typeof enabled === 'boolean' ? enabled : !state.buildings3d;
+    const chk = document.getElementById('maps-buildings3d-toggle');
+    if (chk) chk.checked = state.buildings3d;
+
+    if (state.map) {
+      if (!state.map.getLayer('maps-3d-buildings')) {
+        initTerrainAnd3DLayers();
+      }
+      if (state.map.getLayer('maps-3d-buildings')) {
+        state.map.setLayoutProperty('maps-3d-buildings', 'visibility', state.buildings3d ? 'visible' : 'none');
+      }
+      showToast(state.buildings3d ? 'Edificaciones 3D activadas.' : 'Edificaciones 3D desactivadas.', 'info');
+    }
+  }
+
+  function setTerrainExaggeration(val) {
+    const exag = Number(val) || 1.4;
+    state.terrainExaggeration = exag;
+
+    const lbl = document.getElementById('maps-exaggeration-label');
+    if (lbl) lbl.textContent = `${exag}x`;
+
+    [1, 1.4, 2.2].forEach(v => {
+      const btn = document.getElementById(`maps-exag-btn-${v}`);
+      if (btn) {
+        if (Math.abs(v - exag) < 0.05) {
+          btn.className = 'py-1 rounded-lg bg-emerald-600 text-white font-bold shadow-xs transition';
+        } else {
+          btn.className = 'py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 font-semibold transition';
+        }
+      }
+    });
+
+    if (!state.terrain3d) {
+      toggleTerrain3D(true);
+    } else if (state.map && typeof state.map.setTerrain === 'function') {
+      state.map.setTerrain({
+        source: 'mapbox-dem',
+        exaggeration: exag,
+      });
+    }
+    showToast(`Escala de relieve ajustada a ${exag}x`, 'info');
+  }
+
+  function toggle3DCameraTilt() {
+    if (!state.map) return;
+    if (state.isOrbiting) stopOrbitCamera();
+
+    const currentPitch = state.map.getPitch();
+    if (currentPitch < 25) {
+      if (!state.terrain3d) {
+        toggleTerrain3D(true);
+      }
+      const targetBearing = Math.abs(state.map.getBearing()) < 3 ? -18 : state.map.getBearing();
+      state.map.easeTo({
+        pitch: 64,
+        bearing: targetBearing,
+        duration: 900,
+        essential: true,
+      });
+      showToast('Vista 3D estilo Google Earth activada. Mueve con 2 dedos o clic derecho + arrastrar.', 'success');
+    } else {
+      state.map.easeTo({
+        pitch: 0,
+        bearing: 0,
+        duration: 750,
+        essential: true,
+      });
+      showToast('Vista cenital 2D restablecida.', 'info');
+    }
+  }
+
+  function adjustCameraPitch(deltaDeg) {
+    if (!state.map) return;
+    if (state.isOrbiting) stopOrbitCamera();
+    if (deltaDeg > 0 && !state.terrain3d) {
+      toggleTerrain3D(true);
+    }
+    const nextPitch = Math.max(0, Math.min(80, Math.round(state.map.getPitch() + deltaDeg)));
+    state.map.easeTo({
+      pitch: nextPitch,
+      duration: 350,
+      essential: true,
+    });
+  }
+
+  function toggleOrbitCamera() {
+    if (!state.map) return;
+    if (state.isOrbiting) {
+      stopOrbitCamera();
+      showToast('Órbita 360° detenida.', 'info');
+      return;
+    }
+
+    if (!state.terrain3d) {
+      toggleTerrain3D(true);
+    }
+    if (state.map.getPitch() < 45) {
+      state.map.easeTo({ pitch: 62, duration: 600, essential: true });
+    }
+
+    state.isOrbiting = true;
+    const btnOrbit = document.getElementById('maps-btn-orbit');
+    if (btnOrbit) {
+      btnOrbit.classList.add('bg-emerald-600', 'text-white', 'animate-spin');
+      btnOrbit.classList.remove('text-slate-600', 'dark:text-slate-300');
+    }
+    showToast('Orbitando 360° alrededor del relieve... (Toque el mapa para detener)', 'info');
+
+    let lastTime = performance.now();
+    function rotateStep(now) {
+      if (!state.isOrbiting || !state.map) return;
+      const dt = now - lastTime;
+      lastTime = now;
+      const nextBearing = (state.map.getBearing() + (dt * 0.012)) % 360;
+      state.map.rotateTo(nextBearing, { duration: 0 });
+      state.orbitFrameId = requestAnimationFrame(rotateStep);
+    }
+    state.orbitFrameId = requestAnimationFrame(rotateStep);
+  }
+
+  function stopOrbitCamera() {
+    state.isOrbiting = false;
+    if (state.orbitFrameId) {
+      cancelAnimationFrame(state.orbitFrameId);
+      state.orbitFrameId = null;
+    }
+    const btnOrbit = document.getElementById('maps-btn-orbit');
+    if (btnOrbit) {
+      btnOrbit.classList.remove('bg-emerald-600', 'text-white', 'animate-spin');
+      btnOrbit.classList.add('text-slate-600', 'dark:text-slate-300');
+    }
+  }
+
+  function updateLiveTerrainHud(customCoord) {
+    if (!state.map) return;
+
+    const pitch = Math.round(state.map.getPitch());
+    const pitchBadge = document.getElementById('maps-pitch-badge');
+    if (pitchBadge) pitchBadge.textContent = `${pitch}°`;
+
+    const livePitchVal = document.getElementById('maps-live-pitch-val');
+    if (livePitchVal) livePitchVal.textContent = `${pitch}°`;
+
+    const btn3d = document.getElementById('maps-btn-3d-tilt');
+    if (btn3d) {
+      if (pitch >= 25) {
+        btn3d.classList.add('bg-emerald-600', 'text-white', 'shadow-md');
+        btn3d.classList.remove('text-slate-700', 'dark:text-slate-200', 'hover:bg-slate-100', 'dark:hover:bg-white/10');
+        if (pitchBadge) {
+          pitchBadge.className = 'hidden sm:inline-block px-1 py-0.2 rounded text-[9.5px] font-mono bg-white/20 text-white';
+        }
+      } else {
+        btn3d.classList.remove('bg-emerald-600', 'text-white', 'shadow-md');
+        btn3d.classList.add('text-slate-700', 'dark:text-slate-200', 'hover:bg-slate-100', 'dark:hover:bg-white/10');
+        if (pitchBadge) {
+          pitchBadge.className = 'hidden sm:inline-block px-1 py-0.2 rounded text-[9.5px] font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400';
+        }
+      }
+    }
+
+    const elevEl = document.getElementById('maps-live-elevation-val');
+    if (elevEl) {
+      const targetCoord = customCoord || (() => {
+        const c = state.map.getCenter();
+        return [c.lng, c.lat];
+      })();
+      const elev = getPointElevationMeters(targetCoord);
+      if (elev !== null) {
+        elevEl.textContent = `${elev} m.s.n.m.`;
+      } else {
+        elevEl.textContent = state.terrain3d ? 'Relieve 3D' : 'Modo 2D';
+      }
+    }
+  }
+
+  function openElevationProfileByLineId(lineId) {
+    const activeMap = getActiveMap();
+    const lines = (activeMap ? activeMap.lines : state.data.lines) || [];
+    const line = lines.find(l => l.id === lineId) || (state.data.lines || []).find(l => l.id === lineId);
+    if (!line || !Array.isArray(line.coordinates) || line.coordinates.length < 2) {
+      showToast('No se encontraron coordenadas suficientes en este tramo.', 'warning');
+      return;
+    }
+    openElevationProfile(line.coordinates, `Trazado: ${line.name}`);
+  }
+
+  function openElevationProfile(coords, title = 'Perfil de Elevación y Pendiente') {
+    if (!state.map || !Array.isArray(coords) || coords.length < 2) {
+      showToast('Seleccione al menos 2 puntos para analizar el relieve.', 'warning');
+      return;
+    }
+
+    // Asegurar que el terreno 3D esté activo para consultar el modelo de elevación DEM
+    if (!state.terrain3d) {
+      toggleTerrain3D(true);
+    }
+
+    const drawer = document.getElementById('maps-elevation-profile-drawer');
+    const content = document.getElementById('maps-elevation-profile-content');
+    if (!drawer || !content) return;
+
+    state.activeProfileCoords = coords;
+    state.activeProfileTitle = title;
+
+    const summary = computeRouteElevationSummary(coords, 40);
+    drawer.classList.remove('hidden');
+
+    if (!summary || !summary.hasElevation) {
+      content.innerHTML = `
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-2.5 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center font-bold">⛰️</span>
+            <div>
+              <h4 class="text-xs font-bold text-slate-900 dark:text-white">${escapeHtml(title)}</h4>
+              <p class="text-[10.5px] text-slate-500 dark:text-slate-400">Cargando malla topográfica 3D de Mapbox...</p>
+            </div>
+          </div>
+          <button type="button" onclick="mapsModule.closeElevationProfile()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
+        </div>
+        <div class="p-4 text-center text-xs text-slate-500 dark:text-slate-400 space-y-2">
+          <p>Acérquese al tramo o espere un instante a que terminen de cargar los tiles de elevación satelital (DEM) y pulse Reintentar.</p>
+          <button type="button" onclick="mapsModule.openElevationProfile(mapsModule.state.activeProfileCoords, mapsModule.state.activeProfileTitle)" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold">🔄 Reintentar Cálculo 3D</button>
+        </div>
+      `;
+      return;
+    }
+
+    state.activeProfileSamples = summary.samples;
+
+    // Construir gráfico SVG interactivo del relieve + Línea de Vista (LOS)
+    const svgW = 600;
+    const svgH = 145;
+    const padL = 42;
+    const padR = 16;
+    const padT = 16;
+    const padB = 24;
+    const plotW = svgW - padL - padR;
+    const plotH = svgH - padT - padB;
+
+    const minE = Math.min(summary.minElev, summary.startElev, summary.endElev);
+    const maxE = Math.max(summary.maxElev, summary.startElev + 10, summary.endElev + 10);
+    const elevSpan = Math.max(12, maxE - minE);
+
+    const pts = summary.samples.map((s, idx) => {
+      const x = padL + (summary.distance2d > 0 ? (s.dist / summary.distance2d) * plotW : (idx / (summary.samples.length - 1)) * plotW);
+      const y = padT + plotH - ((s.elev - minE) / elevSpan) * plotH;
+      const yLos = padT + plotH - ((s.losElev - minE) / elevSpan) * plotH;
+      return { x: Number(x.toFixed(1)), y: Number(y.toFixed(1)), yLos: Number(yLos.toFixed(1)), s, idx };
+    });
+
+    const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    const areaPath = `${linePath} L ${pts[pts.length - 1].x} ${padT + plotH} L ${pts[0].x} ${padT + plotH} Z`;
+    const losPath = `M ${pts[0].x} ${pts[0].yLos} L ${pts[pts.length - 1].x} ${pts[pts.length - 1].yLos}`;
+
+    const hoverRects = pts.map((p, i) => {
+      const colW = plotW / pts.length + 1;
+      const rx = Math.max(padL, p.x - colW / 2);
+      return `<rect x="${rx.toFixed(1)}" y="${padT}" width="${colW.toFixed(1)}" height="${plotH}" fill="transparent" class="cursor-crosshair" onmouseenter="mapsModule.onElevationProfileHover(${i})" ontouchstart="mapsModule.onElevationProfileHover(${i})" />`;
+    }).join('');
+
+    const losBadge = summary.losClear
+      ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">✅ Línea de Vista Despejada</span>`
+      : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">⚠️ Cerro obstruye enlace (+${summary.maxObstructionMeters} m)</span>`;
+
+    content.innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 dark:border-white/10 pb-2.5 mb-3">
+        <div class="flex items-center space-x-2 min-w-0">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 font-bold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 20h18L14 6l-4 6-3-4L3 20z"/></svg>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(title)}</h4>
+              ${losBadge}
+            </div>
+            <p id="maps-profile-hover-readout" class="text-[10.5px] text-slate-500 dark:text-slate-400 truncate">
+              Pase el cursor o dedo sobre el perfil para ubicar el punto exacto en el cerro 3D
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button type="button" onclick="mapsModule.toggle3DCameraTilt()" class="px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10.5px] font-bold border border-emerald-500/20 transition">
+            Vista 3D
+          </button>
+          <button type="button" onclick="mapsModule.closeElevationProfile()" class="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-500 dark:text-slate-300 text-xs transition" title="Cerrar perfil de elevación">✕</button>
+        </div>
+      </div>
+
+      <!-- Métricas Clave de Relieve y Pendiente -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3 text-center">
+        <div class="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/5">
+          <div class="text-[9.5px] uppercase font-bold text-slate-400">Cota Inicio → Fin</div>
+          <div class="text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5">${summary.startElev}m → ${summary.endElev}m</div>
+        </div>
+        <div class="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/5">
+          <div class="text-[9.5px] uppercase font-bold text-slate-400">Desnivel Neto</div>
+          <div class="text-xs font-mono font-bold ${summary.deltaNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-cyan-600 dark:text-cyan-400'} mt-0.5">
+            ${summary.deltaNet >= 0 ? '↑ +' + summary.deltaNet : '↓ ' + summary.deltaNet} m
+          </div>
+        </div>
+        <div class="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/5">
+          <div class="text-[9.5px] uppercase font-bold text-slate-400">Pendiente Media / Máx</div>
+          <div class="text-xs font-mono font-bold ${Math.abs(summary.maxSlopePct) >= 18 ? 'text-rose-500' : 'text-amber-500'} mt-0.5">
+            ${summary.avgSlopePct}% / ${summary.maxSlopePct}%
+          </div>
+        </div>
+        <div class="p-2 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/5">
+          <div class="text-[9.5px] uppercase font-bold text-slate-400">Cumbre Máxima</div>
+          <div class="text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5">${summary.maxElev} m.s.n.m.</div>
+        </div>
+        <div class="col-span-2 sm:col-span-1 p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+          <div class="text-[9.5px] uppercase font-bold text-indigo-500 dark:text-indigo-400">Cable Real 3D</div>
+          <div class="text-xs font-mono font-black text-indigo-600 dark:text-indigo-300 mt-0.5">${formatDistance(summary.distance3d)}</div>
+        </div>
+      </div>
+
+      <!-- Gráfico SVG del Terreno y Línea de Vista -->
+      <div class="relative w-full bg-slate-950/90 rounded-2xl p-2 border border-slate-800 overflow-hidden" onmouseleave="mapsModule.clearElevationProfileHover()">
+        <svg viewBox="0 0 ${svgW} ${svgH}" class="w-full h-32 sm:h-36 overflow-visible select-none">
+          <defs>
+            <linearGradient id="terrainGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#10b981" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="#059669" stop-opacity="0.05"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Líneas guía horizontales -->
+          <line x1="${padL}" y1="${padT}" x2="${svgW - padR}" y2="${padT}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3,3"/>
+          <line x1="${padL}" y1="${padT + plotH / 2}" x2="${svgW - padR}" y2="${padT + plotH / 2}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3,3"/>
+          <line x1="${padL}" y1="${padT + plotH}" x2="${svgW - padR}" y2="${padT + plotH}" stroke="rgba(255,255,255,0.18)"/>
+
+          <!-- Etiquetas eje Y (m.s.n.m.) -->
+          <text x="${padL - 5}" y="${padT + 4}" text-anchor="end" fill="#94a3b8" font-size="9.5" font-family="monospace">${maxE}m</text>
+          <text x="${padL - 5}" y="${padT + plotH / 2 + 3}" text-anchor="end" fill="#94a3b8" font-size="9.5" font-family="monospace">${Math.round((maxE + minE) / 2)}m</text>
+          <text x="${padL - 5}" y="${padT + plotH + 3}" text-anchor="end" fill="#94a3b8" font-size="9.5" font-family="monospace">${minE}m</text>
+
+          <!-- Etiquetas eje X (Distancia) -->
+          <text x="${padL}" y="${svgH - 5}" text-anchor="start" fill="#94a3b8" font-size="9.5" font-family="monospace">0 m</text>
+          <text x="${padL + plotW / 2}" y="${svgH - 5}" text-anchor="middle" fill="#94a3b8" font-size="9.5" font-family="monospace">${formatDistance(Math.round(summary.distance2d / 2))}</text>
+          <text x="${svgW - padR}" y="${svgH - 5}" text-anchor="end" fill="#94a3b8" font-size="9.5" font-family="monospace">${formatDistance(summary.distance2d)}</text>
+
+          <!-- Relleno y silueta del cerro / relieve -->
+          <path d="${areaPath}" fill="url(#terrainGrad)" />
+          <path d="${linePath}" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+
+          <!-- Recta de Línea de Vista (LOS) entre extremo A y B -->
+          <path d="${losPath}" fill="none" stroke="${summary.losClear ? '#38bdf8' : '#f43f5e'}" stroke-width="1.5" stroke-dasharray="4,4" />
+
+          <!-- Indicador interactivo al pasar el mouse/dedo -->
+          <line id="maps-profile-hover-line" x1="0" y1="${padT}" x2="0" y2="${padT + plotH}" stroke="#f59e0b" stroke-width="1.5" visibility="hidden" />
+          <circle id="maps-profile-hover-dot" cx="0" cy="0" r="4.5" fill="#f59e0b" stroke="#ffffff" stroke-width="2" visibility="hidden" />
+
+          <!-- Columnas invisibles para detección táctil / mouse -->
+          ${hoverRects}
+        </svg>
+      </div>
+    `;
+  }
+
+  function onElevationProfileHover(sampleIndex) {
+    const samples = state.activeProfileSamples;
+    if (!Array.isArray(samples) || !samples[sampleIndex] || !state.map) return;
+
+    const sample = samples[sampleIndex];
+    const totalDist = samples[samples.length - 1].dist || 1;
+    const minE = Math.min(...samples.map(s => s.elev));
+    const maxE = Math.max(...samples.map(s => s.elev), samples[0].elev + 10, samples[samples.length - 1].elev + 10);
+    const elevSpan = Math.max(12, maxE - minE);
+
+    const svgW = 600;
+    const svgH = 145;
+    const padL = 42;
+    const padR = 16;
+    const padT = 16;
+    const padB = 24;
+    const plotW = svgW - padL - padR;
+    const plotH = svgH - padT - padB;
+
+    const x = padL + (totalDist > 0 ? (sample.dist / totalDist) * plotW : (sampleIndex / (samples.length - 1)) * plotW);
+    const y = padT + plotH - ((sample.elev - minE) / elevSpan) * plotH;
+
+    const lineEl = document.getElementById('maps-profile-hover-line');
+    const dotEl = document.getElementById('maps-profile-hover-dot');
+    if (lineEl) {
+      lineEl.setAttribute('x1', x.toFixed(1));
+      lineEl.setAttribute('x2', x.toFixed(1));
+      lineEl.setAttribute('visibility', 'visible');
+    }
+    if (dotEl) {
+      dotEl.setAttribute('cx', x.toFixed(1));
+      dotEl.setAttribute('cy', y.toFixed(1));
+      dotEl.setAttribute('visibility', 'visible');
+    }
+
+    const readout = document.getElementById('maps-profile-hover-readout');
+    if (readout) {
+      readout.innerHTML = `<span class="font-mono font-bold text-amber-500">📍 Dist: ${formatDistance(sample.dist)}</span> • <span class="font-mono font-bold text-emerald-500">Altitud: ${sample.elev} m.s.n.m.</span> • <span class="font-mono font-bold text-slate-700 dark:text-slate-200">Pendiente tramo: ${sample.slopePct >= 0 ? '+' : ''}${sample.slopePct}%</span>`;
+    }
+
+    // Mostrar pin luminoso en el mapa 3D en esa coordenada exacta del cerro
+    if (!state.hoverProfileMarker) {
+      const el = document.createElement('div');
+      el.className = 'pointer-events-none';
+      el.innerHTML = `
+        <div class="w-4 h-4 rounded-full bg-amber-500 border-2 border-white shadow-lg animate-ping absolute"></div>
+        <div class="w-4 h-4 rounded-full bg-amber-500 border-2 border-white shadow-lg relative"></div>
+      `;
+      state.hoverProfileMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+        .setLngLat(sample.coord)
+        .addTo(state.map);
+    } else {
+      state.hoverProfileMarker.setLngLat(sample.coord);
+    }
+  }
+
+  function clearElevationProfileHover() {
+    const lineEl = document.getElementById('maps-profile-hover-line');
+    const dotEl = document.getElementById('maps-profile-hover-dot');
+    if (lineEl) lineEl.setAttribute('visibility', 'hidden');
+    if (dotEl) dotEl.setAttribute('visibility', 'hidden');
+    if (state.hoverProfileMarker) {
+      state.hoverProfileMarker.remove();
+      state.hoverProfileMarker = null;
+    }
+  }
+
+  function closeElevationProfile() {
+    clearElevationProfileHover();
+    const drawer = document.getElementById('maps-elevation-profile-drawer');
+    if (drawer) drawer.classList.add('hidden');
   }
 
   // 20. BÚSQUEDA Y CENTRADO EN NODO O COORDENADAS
@@ -4042,6 +4854,7 @@
                   <span>Volar</span>
                 </button>
                 <div class="flex items-center space-x-1">
+                  <button type="button" onclick="mapsModule.openElevationProfileByLineId('${it.id}')" class="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-xs font-semibold" title="Ver Perfil de Relieve & Pendiente 3D">⛰️</button>
                   <button type="button" onclick="mapsModule.openEditLineModal('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-500 text-xs font-semibold" title="Editar">✏️</button>
                   <button type="button" onclick="mapsModule.deleteLine('${it.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 text-xs font-semibold" title="Eliminar">🗑️</button>
                 </div>
@@ -4220,6 +5033,22 @@
     onCommandPaletteKeydown,
     setPaletteFilter,
     executePaletteItem,
+    // Relieve 3D (Google Earth), Altímetro y Perfil de Elevación
+    initTerrainAnd3DLayers,
+    toggleTerrain3D,
+    toggleHillshade,
+    toggleBuildings3D,
+    setTerrainExaggeration,
+    toggle3DCameraTilt,
+    adjustCameraPitch,
+    toggleOrbitCamera,
+    stopOrbitCamera,
+    updateLiveTerrainHud,
+    openElevationProfileByLineId,
+    openElevationProfile,
+    closeElevationProfile,
+    onElevationProfileHover,
+    clearElevationProfileHover,
   };
 
   // Manejo de tecla Escape y atajos de teclado para el módulo de mapas
@@ -4235,6 +5064,11 @@
     }
 
     if (e.key === 'Escape') {
+      const ep = document.getElementById('maps-elevation-profile-drawer');
+      if (ep && !ep.classList.contains('hidden')) {
+        closeElevationProfile();
+        return;
+      }
       const cp = document.getElementById('maps-command-palette-modal');
       if (cp && !cp.classList.contains('hidden')) {
         closeCommandPalette();
