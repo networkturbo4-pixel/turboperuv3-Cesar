@@ -38054,7 +38054,8 @@ async function handleLookupTraceability(query) {
   }
 
   try {
-    const res = await fetch(`/api/inventory/traceability/${encodeURIComponent(q)}`, {
+    const tenant = (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork';
+    const res = await fetch(`/api/inventory/traceability/${encodeURIComponent(q)}?tenantId=${encodeURIComponent(tenant)}`, {
       headers: getInventoryHeaders()
     });
     const data = await res.json();
@@ -38538,18 +38539,21 @@ function closePurchaseModal() {
 async function handleSavePurchase(e) {
   e.preventDefault();
   const productId = parseInt(document.getElementById('inv-purch-prod-id').value, 10);
+  const purchaseDate = document.getElementById('inv-purch-date').value || new Date().toISOString().split('T')[0];
   const payload = {
     productId,
     supplier: document.getElementById('inv-purch-supplier').value.trim(),
     invoiceNumber: document.getElementById('inv-purch-invoice').value.trim().toUpperCase(),
-    purchaseDate: document.getElementById('inv-purch-date').value,
+    date: purchaseDate,
+    purchaseDate: purchaseDate,
     quantity: parseFloat(document.getElementById('inv-purch-qty').value),
     unitCost: parseFloat(document.getElementById('inv-purch-cost').value),
     notes: document.getElementById('inv-purch-notes').value.trim() || undefined
   };
 
   try {
-    const res = await fetch('/api/inventory/purchases', {
+    const tenant = (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork';
+    const res = await fetch(`/api/inventory/purchases?tenantId=${encodeURIComponent(tenant)}`, {
       method: 'POST',
       headers: getInventoryHeaders(),
       body: JSON.stringify(payload)
@@ -38560,10 +38564,11 @@ async function handleSavePurchase(e) {
       closePurchaseModal();
       await loadInventoryModule();
       if (currentTraceabilityData && currentTraceabilityData.product.id === productId) {
-        await handleLookupTraceability(currentTraceabilityData.product.sku);
+        await handleLookupTraceability(currentTraceabilityData.product.sku || currentTraceabilityData.product.barcode || String(currentTraceabilityData.product.id));
       }
     } else {
-      showToast(data.message || 'Error al registrar compra', 'error');
+      const errMsg = data.message || 'Error al registrar compra';
+      showToast(errMsg, 'error');
     }
   } catch (err) {
     showToast('Error de conexión con el servidor', 'error');
@@ -38591,18 +38596,24 @@ function closeInstallationModal() {
 async function handleSaveClientInstallation(e) {
   e.preventDefault();
   const productId = parseInt(document.getElementById('inv-inst-prod-id').value, 10);
+  const clientName = document.getElementById('inv-inst-client').value.trim();
+  const technician = document.getElementById('inv-inst-technician').value.trim();
+  const installedAt = document.getElementById('inv-inst-date').value || new Date().toISOString().split('T')[0];
   const payload = {
     productId,
-    clientName: document.getElementById('inv-inst-client').value.trim(),
+    clientName,
+    customerName: clientName,
     contractNumber: document.getElementById('inv-inst-contract').value.trim().toUpperCase(),
     address: document.getElementById('inv-inst-address').value.trim(),
     serialOrMac: document.getElementById('inv-inst-serial').value.trim() || undefined,
-    installedAt: document.getElementById('inv-inst-date').value,
-    technician: document.getElementById('inv-inst-technician').value.trim()
+    installedAt,
+    technician,
+    technicianName: technician
   };
 
   try {
-    const res = await fetch('/api/inventory/client-installations', {
+    const tenant = (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork';
+    const res = await fetch(`/api/inventory/client-installations?tenantId=${encodeURIComponent(tenant)}`, {
       method: 'POST',
       headers: getInventoryHeaders(),
       body: JSON.stringify(payload)
@@ -38613,7 +38624,7 @@ async function handleSaveClientInstallation(e) {
       closeInstallationModal();
       await loadInventoryModule();
       if (currentTraceabilityData && currentTraceabilityData.product.id === productId) {
-        await handleLookupTraceability(currentTraceabilityData.product.sku);
+        await handleLookupTraceability(currentTraceabilityData.product.sku || currentTraceabilityData.product.barcode || String(currentTraceabilityData.product.id));
       }
     } else {
       showToast(data.message || 'Error al registrar instalación', 'error');
@@ -39048,6 +39059,7 @@ async function quickAdjustProductStock(productId, delta) {
 // DETECCIÓN GLOBAL DE PISTOLA LÁSER (HID BURST) Y ATAJO DE TECLADO F2
 // -------------------------------------------------------------
 window.addEventListener('keydown', function(e) {
+  if (!e || typeof e.key !== 'string') return;
   // Atajo F2: Abre inmediatamente el escáner inteligente
   if (e.key === 'F2') {
     e.preventDefault();
@@ -39086,7 +39098,7 @@ window.addEventListener('keydown', function(e) {
     return;
   }
 
-  if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+  if (e.key && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
     if (diff > LASER_GUN_THRESHOLD_MS) {
       laserGunBuffer = '';
     }
@@ -51683,7 +51695,13 @@ setInterval(syncMessagesInProduction, 15000);
       }
 
       window.addEventListener('offline', () => showPwaToast(null, 'offline'));
-      window.addEventListener('online', () => showPwaToast(null, 'online'));
+      window.addEventListener('online', () => {
+        showPwaToast(null, 'online');
+        if (typeof initMessagesRealtime === 'function') {
+          messagesSseRetryCount = 0;
+          initMessagesRealtime();
+        }
+      });
     })();
   </script>
 

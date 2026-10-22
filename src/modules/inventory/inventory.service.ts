@@ -1699,10 +1699,13 @@ export function createPurchase(
 ): ProductPurchase {
   const purchases = loadPurchases(tenantId);
   const now = new Date().toISOString();
+  const purchaseDate = (payload as any).purchaseDate || payload.date || now.split("T")[0];
   const newPurchase: ProductPurchase = {
     ...payload,
     id: "pch-" + crypto.randomBytes(3).toString("hex"),
     tenantId,
+    date: purchaseDate,
+    purchaseDate,
     totalCost: Number(payload.quantity) * Number(payload.unitCost),
     createdAt: now,
   };
@@ -1727,10 +1730,16 @@ export function createClientInstallation(
   payload: Omit<ClientInstallation, "id" | "tenantId">
 ): ClientInstallation {
   const installations = loadInstallations(tenantId);
+  const clientName = (payload as any).clientName || payload.customerName || "Cliente";
+  const technicianName = (payload as any).technician || payload.technicianName || "Técnico General";
   const newInstallation: ClientInstallation = {
     ...payload,
     id: "inst-" + crypto.randomBytes(3).toString("hex"),
     tenantId,
+    customerName: clientName,
+    clientName,
+    technicianName,
+    technician: technicianName,
   };
 
   installations.unshift(newInstallation);
@@ -1739,9 +1748,9 @@ export function createClientInstallation(
   // Descontar del almacén
   adjustStock(tenantId, payload.productId, {
     type: "out",
-    quantity: payload.quantity,
-    reason: `Instalación Cliente: ${payload.customerName}`,
-    operatorName: payload.technicianName,
+    quantity: payload.quantity || 1,
+    reason: `Instalación Cliente: ${clientName}`,
+    operatorName: technicianName,
   });
 
   return newInstallation;
@@ -2061,28 +2070,29 @@ export function getProductTraceability(
   tenantId: string,
   skuOrBarcodeOrId: string
 ): ProductTraceabilitySummary | null {
-  const products = loadProducts(tenantId);
   const rawQuery = (skuOrBarcodeOrId || "").trim();
   if (!rawQuery) return null;
 
   const needle = rawQuery.toLowerCase();
   const cleanNeedle = needle.replace(/[\s\-_./]/g, "");
 
-  const cleanMatch = (str?: string) => {
-    if (!str) return false;
-    const s = str.toLowerCase().trim();
+  const cleanMatch = (str?: any) => {
+    if (str === undefined || str === null || str === "") return false;
+    const s = String(str).toLowerCase().trim();
     if (s === needle) return true;
     const c = s.replace(/[\s\-_./]/g, "");
     return c === cleanNeedle;
   };
 
   let matchedUnit: ProductItemUnit | undefined = undefined;
+  let effectiveTenantId = tenantId;
+  const products = loadProducts(tenantId);
 
   // 1. Buscar coincidencia exacta o normalizada (insensible a espacios, guiones o mayúsculas)
   let product = products.find((p) => {
     if (String(p.id) === needle || String(p.id) === cleanNeedle) return true;
     if (cleanMatch(p.sku) || cleanMatch(p.barcode) || cleanMatch(p.unitSku)) return true;
-    if (p.variants && p.variants.some((v) => cleanMatch(v.sku))) return true;
+    if (p.variants && p.variants.some((v) => cleanMatch(v.sku) || cleanMatch((v as any).barcode))) return true;
 
     if (p.itemUnits && p.itemUnits.length > 0) {
       const uMatch = p.itemUnits.find(
@@ -2114,12 +2124,46 @@ export function getProductTraceability(
     });
   }
 
+  // 3. Fallback Multi-tenant: Si no fue hallado en el tenant activo, buscar en los demás tenants
+  if (!product) {
+    const tenantsBase = path.join(process.cwd(), "data", "tenants");
+    if (fs.existsSync(tenantsBase)) {
+      try {
+        const tenantDirs = fs.readdirSync(tenantsBase).filter((d) => d !== tenantId);
+        for (const otherTenant of tenantDirs) {
+          const otherProducts = loadProducts(otherTenant);
+          const foundOther = otherProducts.find((p) => {
+            if (String(p.id) === needle || String(p.id) === cleanNeedle) return true;
+            if (cleanMatch(p.sku) || cleanMatch(p.barcode) || cleanMatch(p.unitSku)) return true;
+            if (p.variants && p.variants.some((v) => cleanMatch(v.sku) || cleanMatch((v as any).barcode))) return true;
+            if (p.itemUnits && p.itemUnits.length > 0) {
+              const uMatch = p.itemUnits.find(
+                (u) => cleanMatch(u.sku) || cleanMatch(u.barcode) || cleanMatch(u.serialNumber)
+              );
+              if (uMatch) {
+                matchedUnit = uMatch;
+                return true;
+              }
+            }
+            return false;
+          });
+
+          if (foundOther) {
+            product = foundOther;
+            effectiveTenantId = otherTenant;
+            break;
+          }
+        }
+      } catch (err) {}
+    }
+  }
+
   if (!product) return null;
 
-  const allMovements = loadMovements(tenantId).filter((m) => m.productId === product.id);
-  const allPurchases = loadPurchases(tenantId).filter((p) => p.productId === product.id);
-  const allInstallations = loadInstallations(tenantId).filter((i) => i.productId === product.id);
-  const allAssignments = loadAssignments(tenantId).filter((a) => a.productId === product.id);
+  const allMovements = loadMovements(effectiveTenantId).filter((m) => m.productId === product.id);
+  const allPurchases = loadPurchases(effectiveTenantId).filter((p) => p.productId === product.id);
+  const allInstallations = loadInstallations(effectiveTenantId).filter((i) => i.productId === product.id);
+  const allAssignments = loadAssignments(effectiveTenantId).filter((a) => a.productId === product.id);
 
   // Cálculo de las 6 tarjetas de información
   const totalPurchasedQty = allPurchases.reduce((acc, p) => acc + (Number(p.quantity) || 0), 0);
@@ -2153,8 +2197,18 @@ export function getProductTraceability(
       inPersonnelEpp: inPersonnelEppQty,
     },
     movements: allMovements,
-    purchases: allPurchases,
-    installations: allInstallations,
+    purchases: allPurchases.map((p) => ({
+      ...p,
+      date: p.date || (p as any).purchaseDate,
+      purchaseDate: (p as any).purchaseDate || p.date,
+    })),
+    installations: allInstallations.map((ins) => ({
+      ...ins,
+      clientName: (ins as any).clientName || ins.customerName,
+      customerName: ins.customerName || (ins as any).clientName,
+      technician: (ins as any).technician || ins.technicianName,
+      technicianName: ins.technicianName || (ins as any).technician,
+    })),
     assignments: allAssignments,
     matchedUnit,
   };

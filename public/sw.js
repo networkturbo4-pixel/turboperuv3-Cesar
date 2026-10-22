@@ -1,5 +1,5 @@
 // TurboNetwork PWA - High Performance Service Worker
-const CACHE_NAME = 'turbonetwork-pwa-v3';
+const CACHE_NAME = 'turbonetwork-pwa-v4';
 
 const STATIC_SHELL = [
   '/',
@@ -58,14 +58,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Ignorar protocolos no soportados por Cache Storage (extensiones chrome-extension://, moz-extension://, data:, blob:)
+  if (!url.protocol.startsWith('http:') && !url.protocol.startsWith('https:')) {
+    return;
+  }
+
   // A. NAVEGACIÓN PRINCIPAL (HTML / SPA): Network First con fallback a Shell en caché
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req)
         .then((response) => {
-          if (response && response.status === 200) {
+          if (response && response.status === 200 && req.url.startsWith('http')) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone)).catch(() => {});
           }
           return response;
         })
@@ -119,9 +124,9 @@ self.addEventListener('fetch', (event) => {
     caches.match(req).then((cachedResponse) => {
       const fetchPromise = fetch(req)
         .then((networkResponse) => {
-          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque') && req.url.startsWith('http')) {
             const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone)).catch(() => {});
           }
           return networkResponse;
         })

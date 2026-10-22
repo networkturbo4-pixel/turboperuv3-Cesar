@@ -704,7 +704,8 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       productId: z.number().int().positive(),
       supplier: z.string().min(1, "El proveedor es requerido"),
       invoiceNumber: z.string().min(1, "El número de factura es requerido"),
-      date: z.string().min(1, "La fecha de compra es requerida"),
+      date: z.string().optional(),
+      purchaseDate: z.string().optional(),
       quantity: z.number().positive("La cantidad debe ser mayor a 0"),
       unitCost: z.number().min(0, "El costo unitario no puede ser negativo"),
       notes: z.string().optional(),
@@ -712,13 +713,21 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
 
     const parse = schema.safeParse(request.body);
     if (!parse.success) {
-      return reply.status(400).send({ success: false, errors: parse.error.format() });
+      const errMsgs = Object.values(parse.error.flatten().fieldErrors).flat().join(", ");
+      return reply.status(400).send({
+        success: false,
+        message: errMsgs || "Datos de compra inválidos",
+        errors: parse.error.format()
+      });
     }
 
+    const purchaseDate = parse.data.purchaseDate || parse.data.date || new Date().toISOString().split("T")[0];
     const purchase = createPurchase(tenantId, {
       ...parse.data,
+      date: purchaseDate,
+      purchaseDate,
       totalCost: parse.data.quantity * parse.data.unitCost,
-    });
+    } as any);
     return reply.status(201).send({
       success: true,
       message: "Compra registrada e ingresada al Kardex de almacén",
@@ -730,22 +739,43 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
     const tenantId = resolveTenantId(request);
     const schema = z.object({
       productId: z.number().int().positive(),
-      customerId: z.union([z.number(), z.string()]),
-      customerName: z.string().min(1, "El nombre del cliente es requerido"),
+      customerId: z.union([z.number(), z.string()]).optional(),
+      customerName: z.string().optional(),
+      clientName: z.string().optional(),
+      contractNumber: z.string().optional(),
       address: z.string().optional(),
       assignedIp: z.string().optional(),
-      installedAt: z.string().default(new Date().toISOString()),
-      technicianName: z.string().min(1, "El técnico instalador es requerido"),
+      serialOrMac: z.string().optional(),
+      installedAt: z.string().optional(),
+      technicianName: z.string().optional(),
+      technician: z.string().optional(),
       quantity: z.number().positive().default(1),
       notes: z.string().optional(),
     });
 
     const parse = schema.safeParse(request.body);
     if (!parse.success) {
-      return reply.status(400).send({ success: false, errors: parse.error.format() });
+      const errMsgs = Object.values(parse.error.flatten().fieldErrors).flat().join(", ");
+      return reply.status(400).send({
+        success: false,
+        message: errMsgs || "Datos de instalación inválidos",
+        errors: parse.error.format()
+      });
     }
 
-    const inst = createClientInstallation(tenantId, parse.data);
+    const clientName = parse.data.clientName || parse.data.customerName || "Cliente";
+    const technicianName = parse.data.technician || parse.data.technicianName || "Técnico General";
+    const inst = createClientInstallation(tenantId, {
+      ...parse.data,
+      customerId: parse.data.customerId || parse.data.contractNumber || ("CLI-" + Date.now()),
+      customerName: clientName,
+      clientName,
+      contractNumber: parse.data.contractNumber || "",
+      serialOrMac: parse.data.serialOrMac,
+      technicianName,
+      technician: technicianName,
+      installedAt: parse.data.installedAt || new Date().toISOString(),
+    } as any);
     return reply.status(201).send({
       success: true,
       message: "Instalación en cliente registrada y descontada del almacén",

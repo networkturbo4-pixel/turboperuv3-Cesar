@@ -256,6 +256,7 @@ export interface ProductPurchase {
   supplier: string;
   invoiceNumber: string;
   date: string;
+  purchaseDate?: string;
   quantity: number;
   unitCost: number;
   totalCost: number;
@@ -269,10 +270,14 @@ export interface ClientInstallation {
   productId: number;
   customerId: number | string;
   customerName: string;
+  clientName?: string;
+  contractNumber?: string;
   address?: string;
   assignedIp?: string;
   installedAt: string;
   technicianName: string;
+  technician?: string;
+  serialOrMac?: string;
   quantity: number;
   notes?: string;
 }
