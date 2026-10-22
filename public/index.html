@@ -9076,8 +9076,6 @@
         </div>
         <!-- Cierre de área central 2 columnas -->
       </div>
-      <!-- Cierre de tarjeta unificada -->
-    </div>
   </section>
 
 
@@ -21152,8 +21150,9 @@
         return;
       }
       activeTabId = tabId;
-      document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
-      document.getElementById('tab-' + tabId).classList.remove('hidden');
+      document.querySelectorAll('main > section, section[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+      const targetTab = document.getElementById('tab-' + tabId);
+      if (targetTab) targetTab.classList.remove('hidden');
 
       if (typeof closeQuickActionsSheet === 'function') closeQuickActionsSheet();
       if (typeof closeMobileConfigDrawer === 'function') closeMobileConfigDrawer();
@@ -21172,6 +21171,7 @@
         rrhh: "Recursos Humanos & Asistencias",
         inventory: "Inventario & Almacén",
         mochila: "Mochila Técnica",
+        apartados: "Apartados & Apps Móviles",
         config: "Configuración & Marca",
         system: "Diagnóstico & RAM"
       };
