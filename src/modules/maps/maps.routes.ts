@@ -204,6 +204,8 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       capacity: body.capacity || "",
       status: body.status || "active",
       notes: body.notes || "",
+      napThreads: body.napThreads ? Number(body.napThreads) : undefined,
+      napSlots: Array.isArray(body.napSlots) ? body.napSlots : undefined,
       createdAt: now,
       updatedAt: now,
     };
@@ -723,7 +725,7 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const preview = previewKmlData(kmlContent);
+      const preview = await previewKmlData(kmlContent);
       return reply.send(preview);
     } catch (err: any) {
       return reply.status(400).send({
@@ -747,7 +749,7 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const result = importKmlData(tenantId, {
+      const result = await importKmlData(tenantId, {
         kmlContent,
         targetMapId: body.targetMapId,
         createNewMap: body.createNewMap === true || body.createNewMap === "true",

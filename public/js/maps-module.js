@@ -1426,97 +1426,150 @@
   async function processKmlFile(file) {
     if (!file) return;
 
-    if (!file.name.toLowerCase().endsWith('.kml') && !file.type.includes('xml') && !file.type.includes('kml')) {
-      showToast('Por favor seleccione un archivo con extensión .kml', 'warning');
-    }
-
-    if (file.size > 35 * 1024 * 1024) {
-      showToast('El archivo supera el límite de 35 MB.', 'error');
-      return;
-    }
-
+    const modal = document.getElementById('maps-kml-modal');
+    const dropzone = document.getElementById('maps-kml-dropzone');
+    const previewCard = document.getElementById('maps-kml-preview-card');
+    const filenameEl = document.getElementById('maps-kml-file-name');
+    const filesizeEl = document.getElementById('maps-kml-file-size');
     const statusText = document.getElementById('maps-kml-status-text');
-    if (statusText) statusText.textContent = 'Leyendo y analizando archivo KML...';
+    const submitBtn = document.getElementById('maps-kml-submit-btn');
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const text = event.target.result;
-      if (!text || typeof text !== 'string') {
-        showToast('No se pudo leer el contenido del archivo KML.', 'error');
-        return;
-      }
+    if (filenameEl) filenameEl.textContent = file.name;
+    if (filesizeEl) filesizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+    if (dropzone) dropzone.classList.add('hidden');
+    if (previewCard) previewCard.classList.remove('hidden');
+    if (statusText) statusText.innerHTML = '<span class="text-blue-500 animate-pulse">⏳ Leyendo y analizando archivo KML/KMZ...</span>';
+    if (submitBtn) {
+      submitBtn.setAttribute('disabled', 'true');
+      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
 
+    const sendKmlPayload = async (contentPayload) => {
       try {
         const res = await fetch(`/api/maps/preview-kml?tenantId=${encodeURIComponent(state.tenantId)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ kmlContent: text }),
+          body: JSON.stringify({ kmlContent: contentPayload }),
         });
         const preview = await res.json();
 
         if (!preview.success) {
           showToast(preview.message || 'Error al procesar archivo KML.', 'error');
-          if (statusText) statusText.textContent = 'Error al analizar archivo KML.';
+          if (statusText) {
+            statusText.innerHTML = `<span class="text-rose-500 font-semibold">❌ ${escapeHtml(preview.message || 'Error al procesar archivo KML.')}</span>`;
+          }
+          if (submitBtn) {
+            submitBtn.setAttribute('disabled', 'true');
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          }
           return;
         }
 
         state.pendingKml = {
           file,
-          text,
+          text: contentPayload,
           preview,
         };
 
-        // Actualizar UI
-        const nameEl = document.getElementById('maps-kml-file-name');
-        if (nameEl) nameEl.textContent = file.name;
-
-        const sizeEl = document.getElementById('maps-kml-file-size');
-        if (sizeEl) sizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB`;
-
+        // Actualizar contadores
         const countNodes = document.getElementById('maps-kml-count-nodes');
-        if (countNodes) countNodes.textContent = preview.counts.nodes;
+        if (countNodes) countNodes.textContent = preview.counts?.nodes ?? 0;
 
         const countLines = document.getElementById('maps-kml-count-lines');
-        if (countLines) countLines.textContent = preview.counts.lines;
+        if (countLines) countLines.textContent = preview.counts?.lines ?? 0;
 
         const countAreas = document.getElementById('maps-kml-count-areas');
-        if (countAreas) countAreas.textContent = preview.counts.areas;
+        if (countAreas) countAreas.textContent = preview.counts?.areas ?? 0;
 
         // Sugerir nombre para nuevo mapa
         const newNameInput = document.getElementById('maps-kml-new-name');
         if (newNameInput) {
-          newNameInput.value = preview.docName || file.name.replace(/\.kml$/i, '');
+          newNameInput.value = preview.docName || file.name.replace(/\.(kml|kmz)$/i, '');
         }
 
-        // Mostrar vista previa y ocultar dropzone
-        const dropzone = document.getElementById('maps-kml-dropzone');
-        if (dropzone) dropzone.classList.add('hidden');
-
-        const previewCard = document.getElementById('maps-kml-preview-card');
-        if (previewCard) previewCard.classList.remove('hidden');
-
-        // Habilitar botón de importación
-        const submitBtn = document.getElementById('maps-kml-submit-btn');
-        if (submitBtn) submitBtn.removeAttribute('disabled');
-
-        if (statusText) {
-          statusText.textContent = `Archivo analizado: ${preview.counts.total} elementos listos para importar.`;
+        const total = preview.counts?.total ?? 0;
+        if (total === 0) {
+          if (submitBtn) {
+            submitBtn.setAttribute('disabled', 'true');
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          }
+          if (preview.networkLinkDetected) {
+            if (statusText) {
+              statusText.innerHTML = `
+                <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs space-y-2 text-left mt-2 shadow-xs">
+                  <div class="font-bold flex items-center space-x-1.5 text-amber-800 dark:text-amber-200">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <span>Vínculo de Red de Google My Maps (NetworkLink)</span>
+                  </div>
+                  <p class="leading-relaxed text-[11.5px] text-slate-700 dark:text-slate-300">Este archivo es un enlace web de Google Maps y no almacena los puntos y cables directamente en el archivo.</p>
+                  <div class="p-2.5 rounded-lg bg-white dark:bg-black/40 border border-amber-500/20 font-sans text-[11px] space-y-1.5 text-slate-800 dark:text-slate-200">
+                    <div class="font-bold text-slate-900 dark:text-white">¿Cómo exportar el mapa completo con todos sus datos?:</div>
+                    <ol class="list-decimal list-inside space-y-1 text-slate-600 dark:text-slate-300 pl-1">
+                      <li>Abre tu mapa en <strong>Google My Maps</strong> en el navegador de tu computadora.</li>
+                      <li>Haz clic en el menú de 3 puntos (<strong>⋮</strong>) al lado del título del mapa.</li>
+                      <li>Selecciona <strong>Exportar a KML/KMZ</strong>.</li>
+                      <li><strong class="text-amber-600 dark:text-amber-300 underline">DESMARCA</strong> la casilla <em>"Mantener los datos actualizados mediante un vínculo de red KML"</em>.</li>
+                      <li>Descarga el archivo completo y vuelve a subirlo aquí.</li>
+                    </ol>
+                  </div>
+                </div>
+              `;
+            }
+          } else {
+            if (statusText) {
+              statusText.innerHTML = '<span class="text-rose-500 font-semibold">⚠️ No se encontraron puntos, líneas ni polígonos válidos en este archivo.</span>';
+            }
+          }
+        } else {
+          // Total > 0: Habilitar botón de importación
+          if (submitBtn) {
+            submitBtn.removeAttribute('disabled');
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          }
+          if (preview.resolvedFromNetworkLink) {
+            if (statusText) {
+              statusText.innerHTML = `<span class="text-emerald-600 dark:text-emerald-400 font-semibold">✓ Vínculo de Google My Maps descargado con éxito:</span> ${total} elementos listos para importar.`;
+            }
+          } else {
+            if (statusText) {
+              statusText.innerHTML = `<span class="text-emerald-600 dark:text-emerald-400 font-semibold">✓ Archivo analizado:</span> ${total} elementos listos para importar (${preview.counts.nodes} nodos, ${preview.counts.lines} líneas, ${preview.counts.areas} zonas).`;
+            }
+          }
         }
       } catch (err) {
         console.error('[MAPS] Error en preview KML:', err);
-        showToast('Error al conectar con el servidor para analizar el KML.', 'error');
-        if (statusText) statusText.textContent = 'Error al conectar con el servidor.';
+        showToast('Error al conectar con el servidor para analizar el archivo.', 'error');
+        if (statusText) statusText.innerHTML = '<span class="text-rose-500 font-semibold">❌ Error al conectar con el servidor.</span>';
       }
     };
 
-    reader.onerror = () => {
+    // Detectar si el archivo es KMZ / ZIP (firma 0x50, 0x4B) o texto plano KML
+    const slice = file.slice(0, 4);
+    const headerReader = new FileReader();
+    headerReader.onload = () => {
+      const arr = new Uint8Array(headerReader.result || []);
+      const isZip = (arr.length >= 2 && arr[0] === 0x50 && arr[1] === 0x4b);
+      if (isZip || file.name.toLowerCase().endsWith('.kmz')) {
+        const dataUrlReader = new FileReader();
+        dataUrlReader.onload = async (e) => {
+          await sendKmlPayload(e.target.result);
+        };
+        dataUrlReader.readAsDataURL(file);
+      } else {
+        const textReader = new FileReader();
+        textReader.onload = async (e) => {
+          await sendKmlPayload(e.target.result);
+        };
+        textReader.readAsText(file, 'utf-8');
+      }
+    };
+    headerReader.onerror = () => {
       showToast('Error al leer el archivo desde el dispositivo.', 'error');
     };
-
-    reader.readAsText(file, 'utf-8');
+    headerReader.readAsArrayBuffer(slice);
   }
 
-  function toggleKmlTargetInputs() {
+    function toggleKmlTargetInputs() {
     const isNew = document.getElementById('maps-kml-opt-new')?.checked;
     const newFields = document.getElementById('maps-kml-new-map-fields');
     const currentFields = document.getElementById('maps-kml-current-map-fields');
@@ -2209,6 +2262,22 @@
             <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Altitud Relieve</span>
             <span id="maps-node-elev-${node.id}" class="font-mono text-[11px] font-bold text-emerald-600 dark:text-emerald-400">${(() => { const ev = getPointElevationMeters([node.lng, node.lat]); return ev !== null ? ev + ' m.s.n.m.' : 'Calculando...'; })()}</span>
           </div>
+          ${(node.type === 'nap' && node.napSlots && node.napSlots.length > 0) ? `
+          <div class="p-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-500/20 space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] font-bold">
+              <span class="text-blue-700 dark:text-blue-300">Hilos NAP (${node.napThreads || node.napSlots.length} Puertos)</span>
+              <span class="text-[10px] text-emerald-600 dark:text-emerald-400">
+                ${node.napSlots.filter(s => s.name?.trim() || s.phone?.trim()).length} Conectados
+              </span>
+            </div>
+            <div class="grid grid-cols-8 gap-1 pt-1">
+              ${node.napSlots.map(s => {
+                const occ = Boolean(s.name?.trim() || s.phone?.trim());
+                return `<div class="w-full h-4 rounded-sm flex items-center justify-center text-[9px] font-bold ${occ ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-500'}" title="Hilo #${s.port}: ${escapeHtml(s.name || 'Libre')}">${s.port}</div>`;
+              }).join('')}
+            </div>
+          </div>
+          ` : ''}
           ${node.capacity ? `
           <div class="flex items-center justify-between py-1 border-b border-slate-100 dark:border-white/5">
             <span class="text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">Capacidad</span>
@@ -2904,6 +2973,12 @@
     renderIconSelector('maps-node-type', 'nap');
     renderNewNodePhotosGrid();
 
+    state.napThreads = 8;
+    state.napSlots = createEmptyNapSlots(8);
+    renderNapCards();
+    updateNapSummary();
+    toggleNapConfigSection(true);
+
     modal.classList.remove('hidden');
   }
 
@@ -2946,6 +3021,18 @@
     renderIconSelector('maps-node-type', node.type || 'nap');
     renderNewNodePhotosGrid();
 
+    const nodeType = node.type || 'nap';
+    if (nodeType === 'nap') {
+      const threads = node.napThreads || (node.capacity && node.capacity.includes('16') ? 16 : 8);
+      state.napThreads = threads;
+      state.napSlots = loadOrInitNapSlots(node.napSlots, threads);
+      renderNapCards();
+      updateNapSummary();
+      toggleNapConfigSection(true);
+    } else {
+      toggleNapConfigSection(false);
+    }
+
     modal.classList.remove('hidden');
   }
 
@@ -2960,6 +3047,18 @@
     const capacity = document.getElementById('maps-node-capacity')?.value?.trim();
     const address = document.getElementById('maps-node-address')?.value?.trim();
     const notes = document.getElementById('maps-node-notes')?.value?.trim();
+
+    let napThreads = undefined;
+    let napSlots = undefined;
+    if (type === 'nap') {
+      napThreads = state.napThreads || 8;
+      syncNapSlotsFromDOM();
+      napSlots = state.napSlots;
+      const occupied = getOccupiedNapCount();
+      if (!capacity || capacity.includes('Hilos')) {
+        capacity = `${napThreads} Hilos (${occupied} ocupados / ${napThreads - occupied} libres)`;
+      }
+    }
 
     if (!name || isNaN(lat) || isNaN(lng)) {
       showToast('Por favor ingrese el nombre y coordenadas válidas.', 'error');
@@ -2980,6 +3079,8 @@
       address,
       notes,
       status: 'active',
+      napThreads,
+      napSlots,
     };
 
     try {
@@ -4459,17 +4560,542 @@
     `).join('');
   }
 
+
+  // ========================================================
+  // GESTIÓN AVANZADA DE CAJA NAP: 8 / 16 HILOS Y CARDS REORDENABLES
+  // ========================================================
+  function createEmptyNapSlots(count) {
+    const slots = [];
+    for (let i = 1; i <= count; i++) {
+      slots.push({
+        port: i,
+        name: '',
+        address: '',
+        phone: '',
+        startDate: '',
+        status: 'empty',
+      });
+    }
+    return slots;
+  }
+
+  function loadOrInitNapSlots(existingSlots, count) {
+    const slots = [];
+    for (let i = 0; i < count; i++) {
+      const existing = Array.isArray(existingSlots) && existingSlots[i] ? existingSlots[i] : null;
+      slots.push({
+        port: i + 1,
+        name: existing?.name || '',
+        address: existing?.address || '',
+        phone: existing?.phone || '',
+        startDate: existing?.startDate || '',
+        status: (existing?.name?.trim() || existing?.phone?.trim()) ? 'active' : 'empty',
+        customerId: existing?.customerId || undefined,
+        notes: existing?.notes || '',
+      });
+    }
+    return slots;
+  }
+
+  function toggleNapConfigSection(show) {
+    const section = document.getElementById('maps-nap-config-section');
+    if (section) {
+      if (show) {
+        section.classList.remove('hidden');
+        renderNapCards();
+        updateNapSummary();
+      } else {
+        section.classList.add('hidden');
+      }
+    }
+  }
+
+  function handleNodeTypeChange(targetSelectId, key) {
+    const el = document.getElementById(targetSelectId);
+    if (el) el.value = key;
+    const preview = document.getElementById('maps-node-icon-preview');
+    if (preview && NODE_ICONS[key]) preview.innerHTML = NODE_ICONS[key].svg;
+    renderIconSelector(targetSelectId, key);
+    toggleNapConfigSection(key === 'nap');
+  }
+
+  function setNapThreads(threads) {
+    threads = parseInt(threads, 10);
+    if (threads !== 8 && threads !== 16) return;
+    if (state.napThreads === threads) return;
+
+    syncNapSlotsFromDOM();
+
+    if (threads < state.napThreads) {
+      const hasDataBeyond = (state.napSlots || []).slice(threads).some(s => s.name?.trim() || s.phone?.trim());
+      if (hasDataBeyond) {
+        if (!confirm('Hay datos en los hilos 9 al 16. Si cambias a 8 hilos se mantendrán sólo los primeros 8. ¿Continuar?')) {
+          return;
+        }
+      }
+    }
+
+    state.napThreads = threads;
+    const currentSlots = state.napSlots || [];
+    const newSlots = [];
+    for (let i = 0; i < threads; i++) {
+      if (currentSlots[i]) {
+        newSlots.push({ ...currentSlots[i], port: i + 1 });
+      } else {
+        newSlots.push({
+          port: i + 1,
+          name: '',
+          address: '',
+          phone: '',
+          startDate: '',
+          status: 'empty',
+        });
+      }
+    }
+    state.napSlots = newSlots;
+
+    const capInput = document.getElementById('maps-node-capacity');
+    if (capInput && (!capInput.value || capInput.value.includes('Hilos'))) {
+      const occ = getOccupiedNapCount();
+      capInput.value = `${threads} Hilos (${occ} ocupados / ${threads - occ} libres)`;
+    }
+
+    renderNapCards();
+    updateNapSummary();
+  }
+
+  function syncNapSlotsFromDOM() {
+    if (!state.napSlots || !Array.isArray(state.napSlots)) return;
+    state.napSlots.forEach((slot, i) => {
+      const nameEl = document.getElementById(`nap-slot-name-${i}`);
+      const addrEl = document.getElementById(`nap-slot-address-${i}`);
+      const phoneEl = document.getElementById(`nap-slot-phone-${i}`);
+      const dateEl = document.getElementById(`nap-slot-date-${i}`);
+
+      if (nameEl) slot.name = nameEl.value.trim();
+      if (addrEl) slot.address = addrEl.value.trim();
+      if (phoneEl) slot.phone = phoneEl.value.trim();
+      if (dateEl) slot.startDate = dateEl.value;
+
+      slot.port = i + 1;
+      slot.status = (slot.name || slot.phone) ? 'active' : 'empty';
+    });
+  }
+
+  function updateNapSlotField(index, field, value) {
+    if (!state.napSlots || !state.napSlots[index]) return;
+    state.napSlots[index][field] = value;
+    state.napSlots[index].status = (state.napSlots[index].name?.trim() || state.napSlots[index].phone?.trim()) ? 'active' : 'empty';
+
+    if (field === 'name' || field === 'phone') {
+      updateSingleCardHeaderVisual(index);
+      updateNapSummary();
+    }
+  }
+
+  function updateSingleCardHeaderVisual(index) {
+    const cardEl = document.getElementById(`nap-slot-card-${index}`);
+    const badgeEl = document.getElementById(`nap-slot-badge-${index}`);
+    const statusEl = document.getElementById(`nap-slot-status-${index}`);
+    if (!cardEl) return;
+
+    const slot = state.napSlots[index];
+    const isOccupied = Boolean(slot.name?.trim() || slot.phone?.trim());
+
+    if (isOccupied) {
+      cardEl.className = 'relative rounded-2xl border p-3 transition-all duration-150 group bg-white dark:bg-slate-800/80 border-blue-400 dark:border-blue-500/40 shadow-xs';
+      if (badgeEl) {
+        badgeEl.className = 'px-2 py-0.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-xs';
+      }
+      if (statusEl) {
+        statusEl.className = 'text-[10px] font-semibold flex items-center gap-1 text-emerald-600 dark:text-emerald-400';
+        statusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Conectado';
+      }
+    } else {
+      cardEl.className = 'relative rounded-2xl border p-3 transition-all duration-150 group bg-slate-50/70 dark:bg-white/[0.02] border-slate-200 dark:border-white/10';
+      if (badgeEl) {
+        badgeEl.className = 'px-2 py-0.5 rounded-lg text-xs font-bold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300';
+      }
+      if (statusEl) {
+        statusEl.className = 'text-[10px] font-semibold flex items-center gap-1 text-slate-400';
+        statusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Libre';
+      }
+    }
+  }
+
+  function getOccupiedNapCount() {
+    if (!state.napSlots || !Array.isArray(state.napSlots)) return 0;
+    return state.napSlots.filter(s => s.name?.trim() || s.phone?.trim()).length;
+  }
+
+  function updateNapSummary() {
+    const total = state.napThreads || 8;
+    const occupied = getOccupiedNapCount();
+    const free = total - occupied;
+
+    const summaryBadge = document.getElementById('maps-nap-summary-badge');
+    if (summaryBadge) {
+      summaryBadge.textContent = `${occupied} / ${total} Hilos Ocupados (${free} Libres)`;
+      if (occupied === total) {
+        summaryBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-300/60 dark:border-rose-500/30';
+      } else if (occupied > 0) {
+        summaryBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-300/60 dark:border-blue-500/30';
+      } else {
+        summaryBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 border border-slate-300/60 dark:border-white/10';
+      }
+    }
+
+    const btn8 = document.getElementById('maps-nap-btn-8');
+    const btn16 = document.getElementById('maps-nap-btn-16');
+    if (btn8 && btn16) {
+      if (total === 8) {
+        btn8.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-blue-600 text-white shadow-xs';
+        btn16.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/10';
+      } else {
+        btn16.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-blue-600 text-white shadow-xs';
+        btn8.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/10';
+      }
+    }
+  }
+
+  function renderNapCards() {
+    const container = document.getElementById('maps-nap-cards-container');
+    if (!container) return;
+
+    const total = state.napThreads || 8;
+    if (!state.napSlots || state.napSlots.length !== total) {
+      state.napSlots = loadOrInitNapSlots(state.napSlots, total);
+    }
+
+    container.innerHTML = state.napSlots.map((slot, i) => {
+      const isOccupied = Boolean(slot.name?.trim() || slot.phone?.trim());
+      const portNum = i + 1;
+
+      return `
+        <div id="nap-slot-card-${i}"
+          draggable="true"
+          ondragstart="mapsModule.handleNapDragStart(event, ${i})"
+          ondragover="mapsModule.handleNapDragOver(event)"
+          ondragenter="mapsModule.handleNapDragEnter(event, ${i})"
+          ondragleave="mapsModule.handleNapDragLeave(event)"
+          ondrop="mapsModule.handleNapDrop(event, ${i})"
+          ondragend="mapsModule.handleNapDragEnd(event)"
+          class="relative rounded-2xl border p-3 transition-all duration-150 group ${isOccupied ? 'bg-white dark:bg-slate-800/80 border-blue-400 dark:border-blue-500/40 shadow-xs' : 'bg-slate-50/70 dark:bg-white/[0.02] border-slate-200 dark:border-white/10'}">
+          
+          <!-- Header de la Card con Handle, Hilo #, Estado y Acciones de Mover -->
+          <div class="flex items-center justify-between gap-1.5 border-b border-slate-100 dark:border-white/5 pb-2">
+            <div class="flex items-center space-x-1.5 min-w-0">
+              <!-- Drag Handle -->
+              <div class="cursor-grab active:cursor-grabbing p-1 rounded-md text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-white/10 transition" title="Arrastra para cambiar la posición de este hilo">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+              </div>
+
+              <!-- Badge Hilo # -->
+              <span id="nap-slot-badge-${i}" class="px-2 py-0.5 rounded-lg text-xs font-bold ${isOccupied ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300'}">
+                Hilo #${portNum}
+              </span>
+
+              <!-- Indicador Conectado / Libre -->
+              <span id="nap-slot-status-${i}" class="text-[10px] font-semibold flex items-center gap-1 ${isOccupied ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}">
+                <span class="w-1.5 h-1.5 rounded-full ${isOccupied ? 'bg-emerald-500' : 'bg-slate-400'}"></span>
+                ${isOccupied ? 'Conectado' : 'Libre'}
+              </span>
+            </div>
+
+            <!-- Controles para Mover posición y Acciones -->
+            <div class="flex items-center space-x-1">
+              <!-- Botón Subir ▲ -->
+              <button type="button" onclick="mapsModule.moveNapSlot(${i}, -1)" ${i === 0 ? 'disabled' : ''} class="p-1 rounded-md text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition" title="Subir / Mover a Hilo anterior (▲)">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+              </button>
+
+              <!-- Botón Bajar ▼ -->
+              <button type="button" onclick="mapsModule.moveNapSlot(${i}, 1)" ${i === total - 1 ? 'disabled' : ''} class="p-1 rounded-md text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition" title="Bajar / Mover a Hilo siguiente (▼)">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+
+              <!-- Selector directo Intercambiar con Posición -->
+              <select onchange="mapsModule.moveNapSlotTo(${i}, parseInt(this.value)); this.value='';" class="text-[10px] font-semibold bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-md px-1 py-0.5 text-slate-700 dark:text-slate-300 cursor-pointer focus:outline-none" title="Intercambiar con otra posición">
+                <option value="" disabled selected>⇄ Pos</option>
+                ${Array.from({ length: total }, (_, pIdx) => `
+                  <option value="${pIdx + 1}" ${pIdx === i ? 'disabled' : ''}>Hilo #${pIdx + 1}</option>
+                `).join('')}
+              </select>
+
+              <!-- Autocompletar desde cliente registrado -->
+              <button type="button" onclick="mapsModule.openCustomerAutofillModal(${i})" class="p-1 rounded-md text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/15 transition" title="Autocompletar desde Clientes">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              </button>
+
+              <!-- Botón Limpiar/Vaciar Hilo -->
+              <button type="button" onclick="mapsModule.clearNapSlot(${i})" class="p-1 rounded-md text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/15 transition ${isOccupied ? 'visible' : 'invisible'}" title="Vaciar datos de este hilo">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Campos requeridos de la Card: Nombre, Dirección, Celular, Fecha de Inicio -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs">
+            <!-- 1. Nombre -->
+            <div>
+              <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-0.5">Nombre *</label>
+              <input type="text" id="nap-slot-name-${i}" value="${escapeHtml(slot.name || '')}" placeholder="Nombre del abonado" oninput="mapsModule.updateNapSlotField(${i}, 'name', this.value)" class="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium">
+            </div>
+
+            <!-- 2. Dirección -->
+            <div>
+              <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-0.5">Dirección</label>
+              <input type="text" id="nap-slot-address-${i}" value="${escapeHtml(slot.address || '')}" placeholder="Av. Los Álamos 123" oninput="mapsModule.updateNapSlotField(${i}, 'address', this.value)" class="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium">
+            </div>
+
+            <!-- 3. Número de Celular -->
+            <div>
+              <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-0.5">Número de Celular</label>
+              <input type="tel" id="nap-slot-phone-${i}" value="${escapeHtml(slot.phone || '')}" placeholder="987 654 321" oninput="mapsModule.updateNapSlotField(${i}, 'phone', this.value)" class="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium">
+            </div>
+
+            <!-- 4. Fecha de Inicio -->
+            <div>
+              <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-0.5">Fecha de Inicio</label>
+              <input type="date" id="nap-slot-date-${i}" value="${escapeHtml(slot.startDate || '')}" onchange="mapsModule.updateNapSlotField(${i}, 'startDate', this.value)" class="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium">
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Drag and Drop para Hilos NAP
+  function handleNapDragStart(e, index) {
+    syncNapSlotsFromDOM();
+    state.napDragSourceIndex = index;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+    const card = document.getElementById(`nap-slot-card-${index}`);
+    if (card) {
+      card.classList.add('opacity-50', 'ring-2', 'ring-blue-500');
+    }
+  }
+
+  function handleNapDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+
+  function handleNapDragEnter(e, targetIndex) {
+    e.preventDefault();
+    if (state.napDragSourceIndex !== null && state.napDragSourceIndex !== targetIndex) {
+      const card = document.getElementById(`nap-slot-card-${targetIndex}`);
+      if (card) {
+        card.classList.add('ring-2', 'ring-blue-500', 'border-blue-500', 'scale-[1.01]');
+      }
+    }
+  }
+
+  function handleNapDragLeave(e) {
+    const card = e.currentTarget;
+    if (card) {
+      card.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'scale-[1.01]');
+    }
+  }
+
+  function handleNapDrop(e, targetIndex) {
+    e.preventDefault();
+    const card = document.getElementById(`nap-slot-card-${targetIndex}`);
+    if (card) {
+      card.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'scale-[1.01]');
+    }
+    if (state.napDragSourceIndex !== null && state.napDragSourceIndex !== targetIndex) {
+      swapNapSlots(state.napDragSourceIndex, targetIndex);
+      showToast(`Hilo #${state.napDragSourceIndex + 1} intercambiado con Hilo #${targetIndex + 1}`, 'info');
+    }
+  }
+
+  function handleNapDragEnd(e) {
+    if (state.napDragSourceIndex !== null) {
+      const card = document.getElementById(`nap-slot-card-${state.napDragSourceIndex}`);
+      if (card) {
+        card.classList.remove('opacity-50', 'ring-2', 'ring-blue-500');
+      }
+    }
+    state.napDragSourceIndex = null;
+  }
+
+  function moveNapSlot(index, direction) {
+    syncNapSlotsFromDOM();
+    const targetIndex = index + direction;
+    const total = state.napThreads || 8;
+    if (targetIndex >= 0 && targetIndex < total) {
+      swapNapSlots(index, targetIndex);
+    }
+  }
+
+  function moveNapSlotTo(fromIndex, toPortNumber) {
+    syncNapSlotsFromDOM();
+    const targetIndex = toPortNumber - 1;
+    const total = state.napThreads || 8;
+    if (targetIndex >= 0 && targetIndex < total && targetIndex !== fromIndex) {
+      swapNapSlots(fromIndex, targetIndex);
+      showToast(`Abonado movido al Hilo #${toPortNumber}`, 'info');
+    }
+  }
+
+  function swapNapSlots(idxA, idxB) {
+    const temp = state.napSlots[idxA];
+    state.napSlots[idxA] = state.napSlots[idxB];
+    state.napSlots[idxB] = temp;
+    state.napSlots[idxA].port = idxA + 1;
+    state.napSlots[idxB].port = idxB + 1;
+    renderNapCards();
+    updateNapSummary();
+  }
+
+  function clearNapSlot(index) {
+    if (!state.napSlots || !state.napSlots[index]) return;
+    state.napSlots[index].name = '';
+    state.napSlots[index].address = '';
+    state.napSlots[index].phone = '';
+    state.napSlots[index].startDate = '';
+    state.napSlots[index].status = 'empty';
+    renderNapCards();
+    updateNapSummary();
+    showToast(`Hilo #${index + 1} liberado`, 'info');
+  }
+
+  function focusNextEmptyNapSlot() {
+    syncNapSlotsFromDOM();
+    const total = state.napThreads || 8;
+    const emptyIdx = (state.napSlots || []).findIndex(s => !s.name?.trim() && !s.phone?.trim());
+    if (emptyIdx !== -1) {
+      const inputEl = document.getElementById(`nap-slot-name-${emptyIdx}`);
+      const cardEl = document.getElementById(`nap-slot-card-${emptyIdx}`);
+      if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (inputEl) inputEl.focus();
+    } else {
+      showToast(`Todos los ${total} hilos están ocupados`, 'info');
+    }
+  }
+
+  // Modal Autocompletar Cliente para Hilo NAP
+  async function openCustomerAutofillModal(slotIndex) {
+    syncNapSlotsFromDOM();
+    state.pickerTargetSlot = slotIndex;
+    const modal = document.getElementById('maps-nap-customer-picker-modal');
+    const subtitle = document.getElementById('maps-nap-picker-subtitle');
+    const searchInput = document.getElementById('maps-nap-picker-search');
+    if (!modal) return;
+
+    if (subtitle) subtitle.textContent = `Asignar abonado a Hilo #${slotIndex + 1}`;
+    if (searchInput) searchInput.value = '';
+
+    if (!state.customers || state.customers.length === 0) {
+      try {
+        const res = await fetch(`/api/customers?tenantId=${encodeURIComponent(state.tenantId)}`);
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          state.customers = json.data;
+        }
+      } catch (e) {
+        console.warn('Error fetching customers:', e);
+      }
+    }
+
+    renderCustomerPickerList(state.customers || []);
+    modal.classList.remove('hidden');
+    setTimeout(() => searchInput?.focus(), 100);
+  }
+
+  function filterCustomerPicker(query) {
+    const q = (query || '').toLowerCase().trim();
+    const list = state.customers || [];
+    if (!q) {
+      renderCustomerPickerList(list);
+      return;
+    }
+    const filtered = list.filter(c => {
+      const name = (c.name || c.fullName || '').toLowerCase();
+      const addr = (c.address || '').toLowerCase();
+      const phone = (c.phone || '').toLowerCase();
+      const code = (c.code || c.customerCode || '').toLowerCase();
+      return name.includes(q) || addr.includes(q) || phone.includes(q) || code.includes(q);
+    });
+    renderCustomerPickerList(filtered);
+  }
+
+  function renderCustomerPickerList(customers) {
+    const listEl = document.getElementById('maps-nap-picker-list');
+    if (!listEl) return;
+
+    if (!customers || customers.length === 0) {
+      listEl.innerHTML = `
+        <div class="text-center py-8 text-slate-400 text-xs">
+          <p>No se encontraron clientes.</p>
+        </div>
+      `;
+      return;
+    }
+
+    listEl.innerHTML = customers.map(c => {
+      const name = c.name || c.fullName || 'Cliente Sin Nombre';
+      const code = c.code || c.customerCode || '';
+      const phone = c.phone || 'Sin celular';
+      const address = c.address || 'Sin dirección';
+
+      return `
+        <div onclick='mapsModule.selectCustomerForNapSlot(${JSON.stringify(c).replace(/'/g, "&#39;")})'
+          class="p-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-500/10 cursor-pointer transition flex items-center justify-between group">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold text-xs text-slate-900 dark:text-white truncate">${escapeHtml(name)}</span>
+              ${code ? `<span class="px-1.5 py-0.2 rounded text-[9.5px] font-mono font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">${escapeHtml(code)}</span>` : ''}
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-2 mt-0.5">
+              <span>📍 ${escapeHtml(address)}</span>
+              <span>📱 ${escapeHtml(phone)}</span>
+            </div>
+          </div>
+          <span class="text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition">Asignar →</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function selectCustomerForNapSlot(cust) {
+    if (state.pickerTargetSlot === null || !state.napSlots || !state.napSlots[state.pickerTargetSlot]) return;
+    syncNapSlotsFromDOM();
+
+    const name = cust.name || cust.fullName || '';
+    const address = cust.address || '';
+    const phone = cust.phone || '';
+    const startDate = cust.startDate ? cust.startDate.substring(0, 10) : new Date().toISOString().substring(0, 10);
+
+    state.napSlots[state.pickerTargetSlot].name = name;
+    state.napSlots[state.pickerTargetSlot].address = address;
+    state.napSlots[state.pickerTargetSlot].phone = phone;
+    state.napSlots[state.pickerTargetSlot].startDate = startDate;
+    state.napSlots[state.pickerTargetSlot].customerId = cust.id;
+    state.napSlots[state.pickerTargetSlot].status = 'active';
+
+    closeModal('maps-nap-customer-picker-modal');
+    renderNapCards();
+    updateNapSummary();
+    showToast(`Cliente "${name}" asignado a Hilo #${state.pickerTargetSlot + 1}`, 'success');
+  }
+
+
   function renderIconSelector(targetSelectId, currentType) {
     const container = document.getElementById('maps-node-icon-selector');
     if (!container) return;
 
     container.innerHTML = Object.entries(NODE_ICONS).map(([key, item]) => `
-      <button type="button" onclick="document.getElementById('${targetSelectId}').value = '${key}'; document.getElementById('maps-node-icon-preview').innerHTML = mapsModule.NODE_ICONS['${key}'].svg; mapsModule.renderIconSelector('${targetSelectId}', '${key}');" 
+      <button type="button" onclick="mapsModule.handleNodeTypeChange('${targetSelectId}', '${key}')" 
         class="flex flex-col items-center justify-center p-2 rounded-xl border text-xs transition ${key === currentType ? 'border-blue-500 bg-blue-500/15 text-blue-400 font-bold' : 'border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400'}">
         <div class="w-5 h-5 mb-1">${item.svg}</div>
         <span class="text-[9.5px] truncate w-full text-center">${item.name}</span>
       </button>
     `).join('');
+
+    toggleNapConfigSection(currentType === 'nap');
   }
 
   function checkTokenBanner() {
@@ -5295,6 +5921,25 @@
     exportGeoJson,
     renderColorPickerGrid,
     renderIconSelector,
+    setNapThreads,
+    renderNapCards,
+    updateNapSlotField,
+    handleNapDragStart,
+    handleNapDragOver,
+    handleNapDragEnter,
+    handleNapDragLeave,
+    handleNapDrop,
+    handleNapDragEnd,
+    moveNapSlot,
+    moveNapSlotTo,
+    swapNapSlots,
+    clearNapSlot,
+    focusNextEmptyNapSlot,
+    handleNodeTypeChange,
+    openCustomerAutofillModal,
+    filterCustomerPicker,
+    selectCustomerForNapSlot,
+    toggleNapConfigSection,
     closeModal,
     togglePopover,
     closePopover,

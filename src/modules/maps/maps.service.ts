@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import zlib from "zlib";
 import { getTenantFilePath } from "../tenants/tenants.service";
 import { MapTenantData, MapNode, MapLine, MapArea, MapStats, MapProject, MapProjectStats, NodeType, LineType } from "./maps.types";
 
@@ -912,23 +913,80 @@ function inferLineType(name: string, description: string): { type: LineType; def
   return { type: "distribution", defaultColor: "#10b981", defaultWidth: 3 };
 }
 
+
+// Extraer KML desde un búfer ZIP (formato KMZ estándar)
+export function extractKmlFromZipBuffer(buf: Buffer): string | null {
+  try {
+    let offset = 0;
+    while (offset + 30 < buf.length) {
+      // Firma de cabecera local de archivo ZIP: 0x04034b50 ('PK\x03\x04')
+      if (buf[offset] !== 0x50 || buf[offset + 1] !== 0x4b || buf[offset + 2] !== 0x03 || buf[offset + 3] !== 0x04) {
+        break;
+      }
+      const compMethod = buf.readUInt16LE(offset + 8);
+      const compSize = buf.readUInt32LE(offset + 18);
+      const nameLen = buf.readUInt16LE(offset + 26);
+      const extraLen = buf.readUInt16LE(offset + 28);
+      const fileName = buf.toString("utf8", offset + 30, offset + 30 + nameLen);
+      const dataStart = offset + 30 + nameLen + extraLen;
+      const dataEnd = dataStart + compSize;
+      const compressedData = buf.subarray(dataStart, dataEnd);
+
+      if (fileName.toLowerCase().endsWith(".kml")) {
+        if (compMethod === 0) {
+          return compressedData.toString("utf8");
+        } else if (compMethod === 8) {
+          return zlib.inflateRawSync(compressedData).toString("utf8");
+        }
+      }
+      offset = dataEnd;
+    }
+  } catch (err) {
+    console.warn("[MAPS] Error al descomprimir archivo KMZ:", err);
+  }
+  return null;
+}
+
 function parseCoordinatesString(coordString: string): [number, number][] {
+  if (!coordString || typeof coordString !== "string") return [];
+
+  // 1. Quitar envolturas CDATA y caracteres de salto
+  let cleaned = coordString.replace(/<!\[CDATA\[/gi, "").replace(/\]\]>/gi, "");
+  cleaned = cleaned.replace(/\r\n|\r|\n|\t/g, " ").trim();
+
+  // 2. Normalizar comas: eliminar espacios en blanco antes y después de cada coma
+  cleaned = cleaned.replace(/\s*,\s*/g, ",");
+
   const result: [number, number][] = [];
-  const normalized = coordString.replace(/,\s+/g, ",");
-  const tokens = normalized.trim().split(/\s+/);
+  const tokens = cleaned.split(/\s+/).filter(Boolean);
+
   for (const token of tokens) {
-    if (!token) continue;
-    const parts = token.split(",");
+    const parts = token.split(",").filter((p) => p.trim().length > 0);
     if (parts.length >= 2) {
-      const lng = parseFloat(parts[0]);
-      const lat = parseFloat(parts[1]);
-      if (!isNaN(lng) && !isNaN(lat) && isFinite(lng) && isFinite(lat)) {
-        if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
-          result.push([Number(lng.toFixed(6)), Number(lat.toFixed(6))]);
+      if (parts.length > 3) {
+        // En caso de secuencias de coordenadas continuas sin espacios intermedios
+        const step = parts.length % 3 === 0 ? 3 : 2;
+        for (let i = 0; i + 1 < parts.length; i += step) {
+          const lng = parseFloat(parts[i]);
+          const lat = parseFloat(parts[i + 1]);
+          if (!isNaN(lng) && !isNaN(lat) && isFinite(lng) && isFinite(lat)) {
+            if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
+              result.push([Number(lng.toFixed(6)), Number(lat.toFixed(6))]);
+            }
+          }
+        }
+      } else {
+        const lng = parseFloat(parts[0]);
+        const lat = parseFloat(parts[1]);
+        if (!isNaN(lng) && !isNaN(lat) && isFinite(lng) && isFinite(lat)) {
+          if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
+            result.push([Number(lng.toFixed(6)), Number(lat.toFixed(6))]);
+          }
         }
       }
     }
   }
+
   return result;
 }
 
@@ -1182,8 +1240,104 @@ export function parseKmlContent(kmlContent: string): KmlParseResult {
   };
 }
 
+// Resolver contenido de KML, soportando KMZ comprimido y vínculos NetworkLink de Google My Maps
+export async function resolveKmlContent(rawInput: string): Promise<{
+  content: string;
+  source: "direct" | "networklink" | "kmz";
+  networkLinkDetected?: boolean;
+  networkLinkUrl?: string;
+  networkLinkError?: string;
+}> {
+  if (!rawInput || typeof rawInput !== "string") {
+    throw new Error("El contenido del archivo KML está vacío o no es válido.");
+  }
+
+  let text = rawInput.trim();
+
+  // 1. Manejar KMZ / ZIP (sea DataURL base64 o buffer binario codificado)
+  if (text.startsWith("data:") || text.startsWith("UEsDB") || text.startsWith("PK")) {
+    try {
+      let buf: Buffer;
+      if (text.startsWith("data:")) {
+        const base64Part = text.split(",")[1] || "";
+        buf = Buffer.from(base64Part, "base64");
+      } else if (text.startsWith("UEsDB")) {
+        buf = Buffer.from(text, "base64");
+      } else {
+        buf = Buffer.from(text, "binary");
+      }
+
+      if (buf.length > 4 && buf[0] === 0x50 && buf[1] === 0x4b) {
+        const extracted = extractKmlFromZipBuffer(buf);
+        if (extracted) {
+          return { content: extracted, source: "kmz" };
+        }
+      }
+    } catch (e) {
+      console.warn("[MAPS] Intento de descompresión KMZ falló:", e);
+    }
+  }
+
+  // 2. Comprobar si el archivo es un NetworkLink de Google Earth / Google My Maps
+  const netLinkMatch = text.match(/<NetworkLink\b[\s\S]*?<\/NetworkLink>/i);
+  if (netLinkMatch) {
+    const hrefMatch = netLinkMatch[0].match(/<href>([\s\S]*?)<\/href>/i) || text.match(/<href>([\s\S]*?)<\/href>/i);
+    if (hrefMatch && hrefMatch[1]) {
+      const rawUrl = hrefMatch[1].replace(/<!\[CDATA\[/gi, "").replace(/\]\]>/gi, "").trim();
+      if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
+        let fetchUrl = rawUrl;
+        if (fetchUrl.includes("google.com/maps/d/") && !fetchUrl.includes("forcekml=1")) {
+          fetchUrl += (fetchUrl.includes("?") ? "&" : "?") + "forcekml=1";
+        }
+
+        try {
+          const resp = await fetch(fetchUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              "Accept": "application/vnd.google-earth.kml+xml, application/vnd.google-earth.kmz, text/xml, */*"
+            }
+          });
+
+          if (resp.ok) {
+            const arr = await resp.arrayBuffer();
+            const buf = Buffer.from(arr);
+            if (buf.length > 4 && buf[0] === 0x50 && buf[1] === 0x4b) {
+              const unzipped = extractKmlFromZipBuffer(buf);
+              if (unzipped) {
+                return { content: unzipped, source: "networklink", networkLinkDetected: true, networkLinkUrl: rawUrl };
+              }
+            }
+            const fetchedText = buf.toString("utf8");
+            if (fetchedText.includes("<kml") || fetchedText.includes("<Document") || fetchedText.includes("<Placemark")) {
+              return { content: fetchedText, source: "networklink", networkLinkDetected: true, networkLinkUrl: rawUrl };
+            }
+          } else {
+            return {
+              content: text,
+              source: "direct",
+              networkLinkDetected: true,
+              networkLinkUrl: rawUrl,
+              networkLinkError: `El servidor remoto respondió con código HTTP ${resp.status}. Es posible que el mapa sea privado o requiera inicio de sesión.`
+            };
+          }
+        } catch (fetchErr: any) {
+          return {
+            content: text,
+            source: "direct",
+            networkLinkDetected: true,
+            networkLinkUrl: rawUrl,
+            networkLinkError: fetchErr?.message || "No se pudo conectar con el servidor remoto."
+          };
+        }
+      }
+    }
+  }
+
+  return { content: text, source: "direct" };
+}
+
 // Previsualizar datos de un archivo KML sin guardar
-export function previewKmlData(kmlContent: string): {
+export async function previewKmlData(kmlContent: string): Promise<{
   success: boolean;
   docName: string;
   counts: { nodes: number; lines: number; areas: number; total: number };
@@ -1193,8 +1347,20 @@ export function previewKmlData(kmlContent: string): {
   sampleNodes: Array<{ name: string; type: string; color: string; lat: number; lng: number }>;
   sampleLines: Array<{ name: string; type: string; color: string; distanceMeters: number }>;
   sampleAreas: Array<{ name: string; surfaceAreaKm2?: number; fillColor: string }>;
-} {
-  const parsed = parseKmlContent(kmlContent);
+  networkLinkDetected?: boolean;
+  networkLinkUrl?: string;
+  networkLinkError?: string;
+  networkLinkAdvice?: string;
+  resolvedFromNetworkLink?: boolean;
+}> {
+  const resolved = await resolveKmlContent(kmlContent);
+  const parsed = parseKmlContent(resolved.content);
+
+  let networkLinkAdvice: string | undefined;
+  if (resolved.networkLinkDetected && parsed.counts.total === 0) {
+    networkLinkAdvice = "El archivo exportado es un 'Vínculo de Red' (NetworkLink). Para exportar los datos reales: En Google My Maps, ve al menú ⋮ > 'Exportar a KML/KMZ' y DESMARCA la casilla 'Mantener los datos actualizados mediante un vínculo de red'.";
+  }
+
   return {
     success: true,
     docName: parsed.docName,
@@ -1205,14 +1371,19 @@ export function previewKmlData(kmlContent: string): {
     sampleNodes: parsed.nodes.slice(0, 5).map((n) => ({ name: n.name, type: n.type, color: n.color, lat: n.lat, lng: n.lng })),
     sampleLines: parsed.lines.slice(0, 5).map((l) => ({ name: l.name, type: l.type, color: l.color, distanceMeters: l.distanceMeters })),
     sampleAreas: parsed.areas.slice(0, 5).map((a) => ({ name: a.name, surfaceAreaKm2: a.surfaceAreaKm2, fillColor: a.fillColor })),
+    networkLinkDetected: resolved.networkLinkDetected,
+    networkLinkUrl: resolved.networkLinkUrl,
+    networkLinkError: resolved.networkLinkError,
+    networkLinkAdvice,
+    resolvedFromNetworkLink: resolved.source === "networklink" && parsed.counts.total > 0,
   };
 }
 
 // Importar datos de un archivo KML hacia el mapa del tenant
-export function importKmlData(
+export async function importKmlData(
   tenantId: string,
   options: KmlImportOptions
-): {
+): Promise<{
   success: boolean;
   message: string;
   project: MapProject;
@@ -1221,12 +1392,18 @@ export function importKmlData(
   bounds?: [[number, number], [number, number]];
   data: MapTenantData;
   stats: MapStats;
-} {
+}> {
   const current = loadMapData(tenantId);
-  const parsed = parseKmlContent(options.kmlContent);
+  const resolved = await resolveKmlContent(options.kmlContent);
+  const parsed = parseKmlContent(resolved.content);
 
   if (parsed.counts.total === 0) {
-    throw new Error("No se encontraron puntos, líneas ni polígonos válidos en el archivo KML.");
+    if (resolved.networkLinkDetected) {
+      throw new Error(
+        `El archivo KML es un acceso directo / vínculo de red (NetworkLink) de Google My Maps hacia "${resolved.networkLinkUrl || ''}". No se pudo acceder a los datos porque el mapa es privado o requiere autenticación. Solución: En Google My Maps (ordenador), haz clic en el menú ⋮ junto al nombre del mapa > 'Exportar a KML/KMZ' y asegúrate de DESMARCAR la casilla 'Mantener los datos actualizados mediante un vínculo de red KML'. Luego vuelve a subir el archivo descargado.`
+      );
+    }
+    throw new Error("No se encontraron puntos, líneas ni polígonos válidos en el archivo KML. Verifica que el archivo no esté vacío ni protegido.");
   }
 
   const now = new Date().toISOString();
@@ -1273,16 +1450,16 @@ export function importKmlData(
         targetProject.zoom = parsed.zoom;
       }
     }
-    targetProject.updatedAt = now;
   }
 
+  targetProject.updatedAt = now;
   syncActiveMapFields(current);
   saveMapData(current, tenantId);
-  const stats = calculateMapStats(current);
 
+  const stats = calculateMapStats(current);
   return {
     success: true,
-    message: `Archivo KML importado exitosamente (${parsed.counts.nodes} nodos, ${parsed.counts.lines} líneas, ${parsed.counts.areas} áreas).`,
+    message: `KML importado con éxito: ${parsed.counts.nodes} puntos, ${parsed.counts.lines} líneas y ${parsed.counts.areas} áreas agregadas a "${targetProject.name}".`,
     project: targetProject,
     activeMapId: current.activeMapId,
     importedCounts: parsed.counts,

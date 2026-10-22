@@ -29,6 +29,17 @@ export interface NodePhoto {
   notes?: string;
 }
 
+export interface NapSlot {
+  port: number;
+  name: string;
+  address: string;
+  phone: string;
+  startDate: string;
+  status?: 'active' | 'empty' | 'suspended';
+  customerId?: string | number;
+  notes?: string;
+}
+
 export interface MapNode {
   id: string;
   name: string;
@@ -43,6 +54,8 @@ export interface MapNode {
   capacity?: string;
   status: 'active' | 'maintenance' | 'offline';
   notes?: string;
+  napThreads?: number;
+  napSlots?: NapSlot[];
   createdAt: string;
   updatedAt: string;
 }

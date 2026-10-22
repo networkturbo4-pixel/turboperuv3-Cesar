@@ -4592,7 +4592,7 @@
 
           <!-- MODAL: CREAR / EDITAR NODO (PUNTO) -->
           <div id="maps-node-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div class="w-full max-w-lg pro-card rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto sidebar-scroll">
+            <div class="w-full max-w-3xl pro-card rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto sidebar-scroll transition-all duration-300">
               <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
                 <div class="flex items-center space-x-2.5">
                   <div id="maps-node-icon-preview" class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center p-1.5 shadow-sm"></div>
@@ -4612,6 +4612,52 @@
                   <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Tipo de Elemento & Icono Vectorial</label>
                   <input type="hidden" id="maps-node-type" value="nap">
                   <div id="maps-node-icon-selector" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+                </div>
+
+                <!-- SECCIÓN ESPECIAL CAJA NAP: 8 O 16 HILOS Y CARDS REORDENABLES -->
+                <div id="maps-nap-config-section" class="space-y-3.5 p-4 rounded-2xl bg-slate-50/90 dark:bg-white/[0.03] border border-blue-200/80 dark:border-blue-500/20">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 dark:border-white/10 pb-3">
+                    <div>
+                      <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                          Distribución de Hilos NAP
+                        </h4>
+                      </div>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Selecciona 8 o 16 hilos y arrastra o mueve las tarjetas para ordenar los abonados.</p>
+                    </div>
+
+                    <!-- Selector 8 o 16 Hilos -->
+                    <div class="flex items-center space-x-1.5 bg-slate-200/80 dark:bg-black/40 p-1 rounded-xl border border-slate-300 dark:border-white/10 self-start sm:self-auto">
+                      <button type="button" id="maps-nap-btn-8" onclick="mapsModule.setNapThreads(8)" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="7" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/></svg>
+                        <span>8 Hilos</span>
+                      </button>
+                      <button type="button" id="maps-nap-btn-16" onclick="mapsModule.setNapThreads(16)" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="6" cy="10" r="1"/><circle cx="10" cy="10" r="1"/><circle cx="14" cy="10" r="1"/><circle cx="18" cy="10" r="1"/><circle cx="6" cy="14" r="1"/><circle cx="10" cy="14" r="1"/><circle cx="14" cy="14" r="1"/><circle cx="18" cy="14" r="1"/></svg>
+                        <span>16 Hilos</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Barra de estado y acciones rápidas -->
+                  <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center space-x-2">
+                      <span id="maps-nap-summary-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-300/60 dark:border-blue-500/30">
+                        0 / 8 Hilos Ocupados
+                      </span>
+                      <span class="text-[10.5px] text-slate-500 dark:text-slate-400 hidden sm:inline">Arrastra o usa ▲ / ▼ para cambiar de posición</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <button type="button" onclick="mapsModule.focusNextEmptyNapSlot()" class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition flex items-center space-x-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        <span>+ Siguiente hilo libre</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Contenedor dinámico de Cards de Hilos -->
+                  <div id="maps-nap-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[420px] overflow-y-auto sidebar-scroll pr-1"></div>
                 </div>
 
                 <!-- Imagen / Foto Personalizada del Punto (PC o Cámara) -->
@@ -4722,6 +4768,34 @@
               </div>
             </div>
           </div>
+          <!-- MODAL: SELECCIONAR CLIENTE PARA HILO NAP -->
+          <div id="maps-nap-customer-picker-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div class="w-full max-w-md pro-card rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl p-5 space-y-3.5 max-h-[85vh] flex flex-col">
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                <div class="flex items-center space-x-2">
+                  <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">👤</div>
+                  <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Seleccionar Cliente para Hilo</h3>
+                    <p id="maps-nap-picker-subtitle" class="text-[10.5px] text-slate-500 dark:text-slate-400">Asignar abonado a Hilo #1</p>
+                  </div>
+                </div>
+                <button type="button" onclick="mapsModule.closeModal('maps-nap-customer-picker-modal')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
+              </div>
+
+              <div>
+                <input type="text" id="maps-nap-picker-search" placeholder="Buscar por nombre, dirección o celular..." oninput="mapsModule.filterCustomerPicker(this.value)" class="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+
+              <div id="maps-nap-picker-list" class="flex-1 overflow-y-auto sidebar-scroll space-y-1.5 min-h-[220px] max-h-[340px] pr-1">
+                <!-- Se llena dinámicamente -->
+              </div>
+
+              <div class="flex justify-end pt-2 border-t border-slate-200 dark:border-white/10">
+                <button type="button" onclick="mapsModule.closeModal('maps-nap-customer-picker-modal')" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Cerrar</button>
+              </div>
+            </div>
+          </div>
+
 
           <!-- MODAL: CREAR / EDITAR LÍNEA (CONECTOR) -->
           <div id="maps-line-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -5016,7 +5090,7 @@
               </div>
 
               <!-- Input invisible para archivo KML -->
-              <input type="file" id="maps-kml-file-input" accept=".kml,text/xml,application/vnd.google-earth.kml+xml" class="hidden" onchange="mapsModule.handleKmlFileSelect(event)">
+              <input type="file" id="maps-kml-file-input" accept=".kml,.kmz,text/xml,application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz,application/zip" class="hidden" onchange="mapsModule.handleKmlFileSelect(event)">
 
               <!-- Dropzone Drag & Drop -->
               <div id="maps-kml-dropzone" 
@@ -5033,10 +5107,10 @@
                   </div>
                   <div>
                     <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-white block group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                      Arrastra tu archivo .kml aquí o haz clic para explorar
+                      Arrastra tu archivo .kml o .kmz aquí o haz clic para explorar
                     </span>
                     <span class="text-[11px] text-slate-400 dark:text-slate-500 block mt-0.5">
-                      Archivos Keyhole Markup Language (.kml) exportados de Google Earth Pro, QGIS o ArcGIS
+                      Archivos .kml y .kmz exportados de Google Earth Pro, Google My Maps, QGIS o ArcGIS
                     </span>
                   </div>
                   <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10.5px] font-mono font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
@@ -51967,7 +52041,7 @@ function triggerCustomerPhoneCall() {
 setInterval(syncMessagesInProduction, 15000);
 
   </script>
-  <script src="/js/maps-module.js?v=2.5.0"></script>
+  <script src="/js/maps-module.js?v=2.6.0"></script>
 
   <!-- ======================================================== -->
   <!-- TURBONETWORK PWA: SERVICE WORKER & GESTIÓN DE INSTALACIÓN -->
