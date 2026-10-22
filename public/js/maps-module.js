@@ -5351,7 +5351,18 @@
     openElevationProfile,
     closeElevationProfile,
     onElevationProfileHover,
-    clearElevationProfileHover,
+        clearElevationProfileHover,
+    // Subida e Importación KML (Google Earth & QGIS)
+    openKmlUploadModal,
+    closeKmlModal,
+    triggerKmlFileInput,
+    handleKmlDragOver,
+    handleKmlDragLeave,
+    handleKmlDrop,
+    handleKmlFileSelect,
+    processKmlFile,
+    toggleKmlTargetInputs,
+    submitKmlImport,
   };
 
   // Manejo de tecla Escape y atajos de teclado para el módulo de mapas
