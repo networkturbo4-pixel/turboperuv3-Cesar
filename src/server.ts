@@ -24,6 +24,7 @@ import { messagesRoutes } from "./modules/messages/messages.routes";
 import { whatsappRoutes } from "./modules/messages/whatsapp.routes";
 import { mapsRoutes } from "./modules/maps/maps.routes";
 import { databaseRoutes } from "./modules/database/database.routes";
+import { apartadosRoutes } from "./modules/apartados/apartados.routes";
 import { ogRoutes } from "./modules/og/og.routes";
 import { resolveTenantFromRequest, injectOpenGraphHtml } from "./modules/og/og.service";
 import { initializeTenantsSystem } from "./modules/tenants/tenants.service";
@@ -155,6 +156,35 @@ export async function buildApp() {
       return serveDynamicChatHtml(req, reply);
     });
 
+    // 1.1b Rutas de Apartado Móvil de Técnicos (TurboTech Standalone App)
+    const serveDynamicTechHtml = (req: any, reply: any, tenantSlug?: string) => {
+      const techPath = path.join(publicPath, "tech.html");
+      if (!fs.existsSync(techPath)) {
+        return reply.status(404).send("tech.html not found");
+      }
+      const rawHtml = fs.readFileSync(techPath, "utf-8");
+      const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
+      const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
+      const baseUrl = `${proto}://${host}`;
+      const currentUrl = `${baseUrl}${req.url}`;
+      const tenant = resolveTenantFromRequest(req, tenantSlug);
+      const processedHtml = injectOpenGraphHtml(rawHtml, tenant, currentUrl, baseUrl);
+      return reply.type("text/html; charset=utf-8").send(processedHtml);
+    };
+
+    fastify.get("/tech", async (req, reply) => {
+      return serveDynamicTechHtml(req, reply);
+    });
+
+    fastify.get("/apartado/:slug", async (req, reply) => {
+      return serveDynamicTechHtml(req, reply);
+    });
+
+    fastify.get("/t/:tenantSlug/tech", async (req, reply) => {
+      const { tenantSlug } = req.params as { tenantSlug: string };
+      return serveDynamicTechHtml(req, reply, tenantSlug);
+    });
+
     // 1.2 Rutas de Soporte en Vivo por Videollamada (WebRTC One-Click Room para Clientes)
     fastify.get("/soporte/:roomId", async (req, reply) => {
       const callPath = path.join(publicPath, "call.html");
@@ -269,6 +299,7 @@ export async function buildApp() {
   await fastify.register(whatsappRoutes); // Permite /webhooks/whatsapp directo sin /api
   await fastify.register(mapsRoutes, { prefix: "/api" });
   await fastify.register(databaseRoutes, { prefix: "/api" });
+  await fastify.register(apartadosRoutes, { prefix: "/api" });
 
 
   // Mensaje base de bienvenida para la API

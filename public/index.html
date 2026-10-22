@@ -37,7 +37,7 @@
   </script>
   
   <!-- Tailwind CSS Compilado Estático de Alto Rendimiento (0ms de tiempo de compilación en runtime) -->
-  <link rel="stylesheet" href="/assets/tailwind.min.css?v=mochila_v2">
+  <link rel="stylesheet" href="/assets/tailwind.min.css?v=apartados_v3">
   <script src="/js/jsQR.min.js"></script>
   <link rel="stylesheet" href="/assets/mapbox-gl.css">
   <script src="/js/mapbox-gl.js"></script>
@@ -3016,6 +3016,19 @@
             <span class="nav-label truncate text-[13px] font-medium">Mochila Técnica</span>
             <span id="nav-mochila-badge" class="sidebar-text ml-auto px-1.5 py-0.5 rounded-md text-[9.5px] font-mono font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400">EPP/Tool</span>
             <span class="sidebar-tooltip">Mochila Técnica</span>
+          </button>
+
+          <!-- Apartados & Mini-Apps Móviles (Técnicos / Campo) -->
+          <button onclick="switchTab('apartados')" id="nav-apartados" title="Apartados & Apps" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
+            <span class="nav-active-pill"></span>
+            <div class="nav-icon-box">
+              <svg fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <span class="nav-label truncate text-[13px] font-medium">Apartados</span>
+            <span id="nav-apartados-badge" class="sidebar-text ml-auto px-1.5 py-0.5 rounded-md text-[9.5px] font-mono font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">Apps</span>
+            <span class="sidebar-tooltip">Apartados & Apps Móviles</span>
           </button>
 
           <!-- Separador / Categoría 2: INFRAESTRUCTURA -->
@@ -9067,6 +9080,222 @@
     </div>
   </section>
 
+
+        <!-- ======================================================== -->
+        <!-- TAB APARTADOS: GESTIÓN DE APARTADOS Y MINI-APPS MÓVILES  -->
+        <!-- ======================================================== -->
+        <section id="tab-apartados" class="space-y-5 hidden">
+          <style>
+            .apartados-layout-grid {
+              display: grid;
+              grid-template-columns: 100%;
+              gap: 1.25rem;
+              align-items: start;
+              width: 100%;
+            }
+            @media (min-width: 1024px) {
+              .apartados-layout-grid {
+                grid-template-columns: 360px minmax(0, 1fr);
+              }
+            }
+            @media (min-width: 1280px) {
+              .apartados-layout-grid {
+                grid-template-columns: 380px minmax(0, 1fr);
+              }
+            }
+            .apartados-apps-grid {
+              display: grid;
+              grid-template-columns: 100%;
+              gap: 1rem;
+              width: 100%;
+            }
+            @media (min-width: 768px) {
+              .apartados-apps-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+              }
+            }
+          </style>
+          <!-- Encabezado Superior -->
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-[#0f172a]/90 border border-slate-200/80 dark:border-white/10 shadow-xs">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30">
+                  Launcher & Super-Apps
+                </span>
+                <h2 class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                  Apartados Operativos & Mini-Apps Móviles
+                </h2>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 max-w-3xl">
+                Configura los apartados tipo aplicativo móvil (como el <strong>Apartado de Técnicos</strong>) para que el personal operativo interactúe únicamente con sus accesos directos asignados sin navegar por el sistema general.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+              <button type="button" onclick="copyApartadoLink()" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 text-xs font-bold flex items-center gap-2 transition">
+                <svg class="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Copiar Link App
+              </button>
+              <a id="apartados-open-live-link" href="/tech" target="_blank" class="px-3.5 py-2.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-600 dark:text-cyan-300 border border-cyan-500/30 text-xs font-extrabold flex items-center gap-2 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                Abrir App Móvil (/tech)
+              </a>
+              <button type="button" onclick="promptCreateNewApartado()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold flex items-center gap-2 shadow-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Crear Nuevo Apartado
+              </button>
+            </div>
+          </div>
+
+          <!-- KPIs de Apartados -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-4 rounded-2xl bg-white dark:bg-[#0f172a]/90 border border-slate-200/80 dark:border-white/10 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Apartados Creados</p>
+                <p id="apt-kpi-total" class="text-2xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">1</p>
+                <p class="text-[11px] text-emerald-500 font-semibold mt-0.5">Modo PWA Activo</p>
+              </div>
+              <div class="w-11 h-11 rounded-2xl bg-cyan-500/15 text-cyan-500 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white dark:bg-[#0f172a]/90 border border-slate-200/80 dark:border-white/10 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Mini-Apps Habilitadas</p>
+                <p id="apt-kpi-apps" class="text-2xl font-extrabold font-mono text-blue-600 dark:text-blue-400 mt-1">8 / 8</p>
+                <p id="apt-kpi-perms" class="text-[11px] text-slate-400 font-mono mt-0.5">21 permisos activos</p>
+              </div>
+              <div class="w-11 h-11 rounded-2xl bg-blue-500/15 text-blue-500 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white dark:bg-[#0f172a]/90 border border-slate-200/80 dark:border-white/10 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Instalaciones en Campo</p>
+                <p id="apt-kpi-installations" class="text-2xl font-extrabold font-mono text-rose-500 mt-1">0</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Órdenes activas en agenda</p>
+              </div>
+              <div class="w-11 h-11 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white dark:bg-[#0f172a]/90 border border-slate-200/80 dark:border-white/10 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Solicitudes de Técnicos</p>
+                <p id="apt-kpi-requests" class="text-2xl font-extrabold font-mono text-amber-500 mt-1">0</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Materiales y adelantos</p>
+              </div>
+              <div class="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-500 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cuerpo Principal: Selector de Apartados (Izquierda) + Configuración de Apps y Permisos (Derecha) -->
+          <div class="apartados-layout-grid">
+
+            <!-- Columna Izquierda: Lista de Apartados y Reglas de Acceso -->
+            <div class="mochila-tech-sidebar space-y-4">
+              <div class="p-4 rounded-2xl bg-white dark:bg-[#0f172a]/90 border border-slate-200/80 dark:border-white/10 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Apartados Disponibles</h3>
+                  <span class="text-[11px] font-mono text-cyan-500 font-bold">Multi-App</span>
+                </div>
+                <div id="apartados-sidebar-list" class="space-y-2.5"></div>
+              </div>
+
+              <!-- Reglas de Aislamiento y Roles Asignados al Apartado Seleccionado -->
+              <div class="p-4 rounded-2xl bg-white dark:bg-[#0f172a]/90 border border-slate-200/80 dark:border-white/10 space-y-4">
+                <div>
+                  <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Control de Acceso al Apartado</h3>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Define quién entra directamente a este apartado móvil sin pasar por el sistema general.</p>
+                </div>
+
+                <label class="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 cursor-pointer">
+                  <input type="checkbox" id="apt-exclusive-checkbox" onchange="toggleApartadoExclusiveAccess(this.checked)" class="mt-0.5 w-4 h-4 rounded text-blue-600 focus:ring-blue-500">
+                  <div>
+                    <div class="text-xs font-extrabold text-slate-900 dark:text-white">Bloquear Sistema General (Acceso Exclusivo)</div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Los técnicos asignados solo verán su aplicativo móvil de accesos directos al iniciar sesión con su PIN.
+                    </div>
+                  </div>
+                </label>
+
+                <div>
+                  <div class="text-xs font-bold text-slate-700 dark:text-slate-200 mb-2">Roles asignados a este Apartado:</div>
+                  <div id="apt-roles-checklist" class="space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
+                </div>
+
+                <button type="button" onclick="saveCurrentApartadoConfig()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-sm transition">
+                  Guardar Configuración del Apartado
+                </button>
+              </div>
+            </div>
+
+            <!-- Columna Derecha: Catálogo de Aplicaciones, Permisos y Bandeja de Campo -->
+            <div class="mochila-detail-pane space-y-4">
+              <div class="p-4 rounded-2xl bg-white dark:bg-[#0f172a]/90 border border-slate-200/80 dark:border-white/10">
+                <!-- Sub-navegación del Panel Derecho -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-200/80 dark:border-white/10">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" id="apt-subtab-apps" onclick="switchApartadoSubtab('apps')" class="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-blue-600 text-white transition">
+                      1. Aplicaciones y Permisos (8)
+                    </button>
+                    <button type="button" id="apt-subtab-installations" onclick="switchApartadoSubtab('installations')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 transition">
+                      2. Mis Instalaciones Asignadas
+                    </button>
+                    <button type="button" id="apt-subtab-requests" onclick="switchApartadoSubtab('requests')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 transition">
+                      3. Pedidos de Material y Adelantos
+                    </button>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <button type="button" onclick="enableAllApartadoApps(true)" class="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                      Marcar Todo
+                    </button>
+                    <button type="button" onclick="saveCurrentApartadoConfig()" class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-extrabold">
+                      Guardar Cambios
+                    </button>
+                  </div>
+                </div>
+
+                <!-- SUB-VISTA 1: MATRIZ DE LAS 8 APLICACIONES Y SUS PERMISOS GRANULARES -->
+                <div id="apt-panel-apps" class="apartados-apps-grid"></div>
+
+                <!-- SUB-VISTA 2: GESTIÓN DE INSTALACIONES Y ÓRDENES DE CAMPO -->
+                <div id="apt-panel-installations" class="hidden space-y-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="text-sm font-extrabold text-slate-900 dark:text-white">Agenda de Instalaciones y Averías en App Técnica</h4>
+                      <p class="text-xs text-slate-400">Asigna órdenes para que aparezcan al instante en el acceso directo "Mis Instalaciones" del técnico.</p>
+                    </div>
+                    <button type="button" onclick="promptNewFieldInstallation()" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold">
+                      + Asignar Orden a Técnico
+                    </button>
+                  </div>
+                  <div id="apt-installations-table" class="space-y-2.5"></div>
+                </div>
+
+                <!-- SUB-VISTA 3: BANDEJA DE SOLICITUDES DE MATERIAL Y ADELANTOS DE TÉCNICOS -->
+                <div id="apt-panel-requests" class="hidden space-y-5">
+                  <div>
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-500 mb-2">Solicitudes y Devoluciones de Material (Almacén)</h4>
+                    <div id="apt-material-requests-list" class="space-y-2"></div>
+                  </div>
+                  <div class="pt-3 border-t border-slate-200/70 dark:border-white/10">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-amber-500 mb-2">Solicitudes de Adelantos y Viáticos (RRHH)</h4>
+                    <div id="apt-advances-requests-list" class="space-y-2"></div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </section>
 
       </main>
     </div>
@@ -17776,6 +18005,7 @@
       if (!currentUser) return true;
 
       const isSuperAdminUser = (currentUser.id === 1 && currentUser.isSuperAdmin);
+      if (tabId === 'apartados' && (isSuperAdminUser || currentUser.roleId === 1 || currentUser.isSuperAdmin)) return true;
 
       // 1. Visibilidad estricta por módulo según rol del operador (allowedModules)
       const userRole = (typeof currentRoles !== 'undefined' ? currentRoles : []).find(r => r.id === currentUser.roleId);
@@ -17850,6 +18080,7 @@
         { id: 'billing', check: () => canAccessTab('billing') },
         { id: 'inventory', check: () => canAccessTab('inventory') },
         { id: 'mochila', check: () => canAccessTab('mochila') },
+        { id: 'apartados', check: () => canAccessTab('apartados') },
         { id: 'network', check: () => canAccessTab('network') },
         { id: 'maps', check: () => canAccessTab('maps') },
         { id: 'plans', check: () => canAccessTab('plans') },
@@ -20953,6 +21184,7 @@
       if (tabId === 'rrhh') loadRRHHModule();
       if (tabId === 'inventory') loadInventoryModule();
       if (tabId === 'mochila') loadMochilaModule();
+      if (tabId === 'apartados') loadApartadosModule();
       if (tabId === 'maps' && window.mapsModule) window.mapsModule.loadMapsModule();
       if (tabId === 'dashboard') renderDashboardAttendanceWidget();
       const mainEl = document.querySelector('main');
@@ -21175,6 +21407,20 @@
     });
 
     async function completeLoginSuccess(data) {
+      const loggedUser = data?.data?.user;
+      if (loggedUser && !loggedUser.isSuperAdmin && loggedUser.roleId !== 1) {
+        try {
+          const aptCheck = await fetch(`/api/apartados/my-access?userId=${encodeURIComponent(loggedUser.id || 0)}&roleId=${encodeURIComponent(loggedUser.roleId || 0)}`).then(r => r.json());
+          if (aptCheck && aptCheck.apartado && aptCheck.apartado.exclusiveAccess && (
+            (Array.isArray(aptCheck.apartado.assignedRoleIds) && aptCheck.apartado.assignedRoleIds.includes(Number(loggedUser.roleId))) ||
+            (Array.isArray(aptCheck.apartado.assignedUserIds) && aptCheck.apartado.assignedUserIds.includes(Number(loggedUser.id)))
+          )) {
+            localStorage.setItem('turbonetwork_session', JSON.stringify(loggedUser));
+            window.location.href = aptCheck.apartado.routePath || '/tech';
+            return;
+          }
+        } catch (e) {}
+      }
       currentUser = data.data.user;
       currentUser.permissions = data.data.permissions || data.data.user?.permissions || [];
       currentUser.allowedModules = data.data.allowedModules || data.data.user?.allowedModules || [];
@@ -40930,7 +41176,7 @@ function selectMochilaTechnician(techId, userInitiated = false) {
     <div class="p-4 sm:p-5 rounded-3xl bg-slate-900/70 dark:bg-white/[0.03] border border-slate-800 dark:border-white/10 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
       <div class="flex items-center space-x-3.5 min-w-0">
         <div class="relative flex-shrink-0">
-          <img src="${avatar}" class="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl object-cover border-2 border-purple-500/30 shadow-md" alt="Avatar">
+          <img src="${avatar}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-purple-500/30 shadow-md" alt="Avatar">
           <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full ring-2 ring-slate-900 ${heroStatusDotClass}"></span>
         </div>
         <div class="min-w-0">
@@ -51712,6 +51958,403 @@ setInterval(syncMessagesInProduction, 15000);
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
     </svg>
     <span id="chat-upload-indicator-text">Optimizando imagen...</span>
+  </div>
+
+  <!-- MÓDULO DE GESTIÓN DE APARTADOS Y MINI-APPS MÓVILES -->
+  <script>
+    let apartadosList = [];
+    let apartadosCatalog = [];
+    let selectedApartadoId = 'apt-tecnicos';
+    let apartadoInstallations = [];
+    let apartadoMaterialRequests = [];
+    let apartadoAdvances = [];
+
+    async function loadApartadosModule() {
+      try {
+        const [aptRes, instRes, matRes, advRes] = await Promise.all([
+          fetch('/api/apartados').then(r => r.json()),
+          fetch('/api/apartados/installations').then(r => r.json()),
+          fetch('/api/apartados/material-requests').then(r => r.json()),
+          fetch('/api/apartados/advances').then(r => r.json()),
+        ]);
+
+        if (aptRes.success) {
+          apartadosList = aptRes.data || [];
+          apartadosCatalog = aptRes.catalog || [];
+          if (!apartadosList.some(a => a.id === selectedApartadoId) && apartadosList[0]) {
+            selectedApartadoId = apartadosList[0].id;
+          }
+        }
+        apartadoInstallations = instRes.data || [];
+        apartadoMaterialRequests = matRes.data || [];
+        apartadoAdvances = advRes.data || [];
+
+        renderApartadosAdminUI();
+      } catch (err) {
+        console.error('Error cargando módulo de Apartados:', err);
+      }
+    }
+
+    function getSelectedApartado() {
+      return apartadosList.find(a => a.id === selectedApartadoId) || apartadosList[0] || null;
+    }
+
+    function selectApartadoItem(id) {
+      selectedApartadoId = id;
+      renderApartadosAdminUI();
+    }
+
+    function switchApartadoSubtab(sub) {
+      const tabs = ['apps', 'installations', 'requests'];
+      tabs.forEach(t => {
+        const panel = document.getElementById('apt-panel-' + t);
+        const btn = document.getElementById('apt-subtab-' + t);
+        const active = (t === sub);
+        if (panel) panel.classList.toggle('hidden', !active);
+        if (btn) {
+          btn.className = active
+            ? 'px-3.5 py-2 rounded-xl text-xs font-extrabold bg-blue-600 text-white transition'
+            : 'px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 transition';
+        }
+      });
+    }
+
+    function renderApartadosAdminUI() {
+      const current = getSelectedApartado();
+      if (!current) return;
+
+      const liveLink = document.getElementById('apartados-open-live-link');
+      if (liveLink) {
+        liveLink.href = current.slug === 'tecnicos' ? '/tech' : `/tech?apartado=${encodeURIComponent(current.slug)}`;
+      }
+
+      const kpiTotal = document.getElementById('apt-kpi-total');
+      const kpiApps = document.getElementById('apt-kpi-apps');
+      const kpiPerms = document.getElementById('apt-kpi-perms');
+      const kpiInst = document.getElementById('apt-kpi-installations');
+      const kpiReqs = document.getElementById('apt-kpi-requests');
+
+      if (kpiTotal) kpiTotal.textContent = apartadosList.length;
+      if (kpiApps) kpiApps.textContent = `${(current.enabledApps || []).length} / ${apartadosCatalog.length}`;
+      if (kpiPerms) kpiPerms.textContent = `${(current.enabledPermissions || []).length} permisos activos`;
+      if (kpiInst) kpiInst.textContent = apartadoInstallations.filter(i => i.status !== 'completada').length;
+      if (kpiReqs) {
+        const pendMat = apartadoMaterialRequests.filter(m => m.status === 'pendiente').length;
+        const pendAdv = apartadoAdvances.filter(a => a.status === 'pendiente').length;
+        kpiReqs.textContent = pendMat + pendAdv;
+      }
+
+      const sidebarList = document.getElementById('apartados-sidebar-list');
+      if (sidebarList) {
+        sidebarList.innerHTML = apartadosList.map(apt => {
+          const isSel = apt.id === current.id;
+          return `
+            <div
+              onclick="selectApartadoItem('${apt.id}')"
+              class="p-3.5 rounded-2xl border cursor-pointer transition flex items-center justify-between gap-3 ${
+                isSel
+                  ? 'bg-blue-600/10 border-blue-500/40 dark:bg-blue-500/15'
+                  : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200/80 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5'
+              }"
+            >
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-extrabold text-slate-900 dark:text-white truncate">${apt.name}</span>
+                  ${apt.exclusiveAccess ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/15 text-amber-500">Aislado</span>` : ''}
+                </div>
+                <div class="text-[11px] text-slate-400 font-mono mt-0.5">Ruta: ${apt.routePath || '/tech'} • ${(apt.enabledApps || []).length} apps</div>
+              </div>
+              <a href="${apt.slug === 'tecnicos' ? '/tech' : `/tech?apartado=${encodeURIComponent(apt.slug)}`}" target="_blank" onclick="event.stopPropagation()" class="px-2.5 py-1.5 rounded-xl bg-blue-600 text-white text-[11px] font-bold flex-shrink-0">
+                Abrir
+              </a>
+            </div>
+          `;
+        }).join('');
+      }
+
+      const exclCheck = document.getElementById('apt-exclusive-checkbox');
+      if (exclCheck) exclCheck.checked = !!current.exclusiveAccess;
+
+      const rolesBox = document.getElementById('apt-roles-checklist');
+      const rolesSource = (typeof currentRoles !== 'undefined' && Array.isArray(currentRoles) && currentRoles.length > 0)
+        ? currentRoles
+        : [
+            { id: 4, name: 'Soporte Técnico en Campo' },
+            { id: 3, name: 'Cajero / Cobranzas' },
+            { id: 2, name: 'Administrador de Red / NOC' },
+          ];
+      if (rolesBox) {
+        rolesBox.innerHTML = rolesSource.filter(r => r.id !== 1).map(r => {
+          const checked = Array.isArray(current.assignedRoleIds) && current.assignedRoleIds.includes(Number(r.id));
+          return `
+            <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/10 cursor-pointer">
+              <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">${r.name}</span>
+              <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleApartadoRole(${r.id}, this.checked)" class="w-4 h-4 rounded text-blue-600">
+            </label>
+          `;
+        }).join('');
+      }
+
+      const appsPanel = document.getElementById('apt-panel-apps');
+      if (appsPanel) {
+        appsPanel.innerHTML = apartadosCatalog.map(app => {
+          const appEnabled = Array.isArray(current.enabledApps) && current.enabledApps.includes(app.id);
+          return `
+            <div class="p-4 rounded-2xl border transition ${
+              appEnabled
+                ? 'bg-slate-50/70 dark:bg-white/[0.04] border-blue-500/30'
+                : 'bg-slate-100/50 dark:bg-white/[0.01] border-slate-200/60 dark:border-white/5 opacity-60'
+            }">
+              <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-200/70 dark:border-white/10">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-extrabold text-slate-900 dark:text-white">${app.name}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/15 text-blue-500">${app.badge}</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">${app.description}</p>
+                </div>
+                <label class="inline-flex items-center cursor-pointer flex-shrink-0">
+                  <input type="checkbox" ${appEnabled ? 'checked' : ''} onchange="toggleApartadoApp('${app.id}', this.checked)" class="w-4 h-4 rounded text-blue-600">
+                </label>
+              </div>
+
+              <div class="pt-3 space-y-2">
+                <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">Permisos de esta Aplicación:</div>
+                ${(app.permissions || []).map(perm => {
+                  const permEnabled = Array.isArray(current.enabledPermissions) && current.enabledPermissions.includes(perm.id);
+                  return `
+                    <label class="flex items-center justify-between gap-2 p-2 rounded-xl bg-white dark:bg-[#0b1120] border border-slate-200/60 dark:border-white/5 cursor-pointer">
+                      <div class="min-w-0">
+                        <div class="text-xs font-bold text-slate-800 dark:text-slate-200">${perm.name}</div>
+                        <div class="text-[10px] text-slate-400 truncate">${perm.description}</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        ${permEnabled ? 'checked' : ''}
+                        ${appEnabled ? '' : 'disabled'}
+                        onchange="toggleApartadoPermission('${perm.id}', this.checked)"
+                        class="w-4 h-4 rounded text-emerald-600 flex-shrink-0"
+                      >
+                    </label>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      const instTable = document.getElementById('apt-installations-table');
+      if (instTable) {
+        instTable.innerHTML = apartadoInstallations.map(inst => `
+          <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/15 text-blue-500">${inst.code}</span>
+                <span class="text-xs font-extrabold text-slate-900 dark:text-white">${inst.customerName} (${inst.customerCiz})</span>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-0.5">${inst.address} • ${inst.planName} • ${inst.napCode || 'NAP'}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${inst.status === 'completada' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}">
+                ${inst.status.toUpperCase()}
+              </span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      const matListEl = document.getElementById('apt-material-requests-list');
+      if (matListEl) {
+        matListEl.innerHTML = apartadoMaterialRequests.length === 0
+          ? `<div class="p-3 rounded-xl bg-slate-50 dark:bg-white/5 text-xs text-slate-400 text-center">No hay solicitudes ni devoluciones pendientes.</div>`
+          : apartadoMaterialRequests.map(m => `
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-3">
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">${m.techName} — ${m.type.toUpperCase()}: ${m.itemName} (x${m.quantity})</div>
+                <div class="text-[11px] text-slate-400">${m.reason || 'Sin nota'} • Urgencia: ${m.urgency}</div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                ${m.status === 'pendiente' ? `
+                  <button onclick="resolveApartadoMaterial('${m.id}', 'aprobado')" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold">Aprobar</button>
+                  <button onclick="resolveApartadoMaterial('${m.id}', 'rechazado')" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white text-[11px] font-bold">Rechazar</button>
+                ` : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-500">${m.status.toUpperCase()}</span>`}
+              </div>
+            </div>
+          `).join('');
+      }
+
+      const advListEl = document.getElementById('apt-advances-requests-list');
+      if (advListEl) {
+        advListEl.innerHTML = apartadoAdvances.length === 0
+          ? `<div class="p-3 rounded-xl bg-slate-50 dark:bg-white/5 text-xs text-slate-400 text-center">No hay solicitudes de adelantos o viáticos.</div>`
+          : apartadoAdvances.map(a => `
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-3">
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">${a.techName} — S/ ${Number(a.amount).toFixed(2)} (${a.category})</div>
+                <div class="text-[11px] text-slate-400">${a.reason}</div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                ${a.status === 'pendiente' ? `
+                  <button onclick="resolveApartadoAdvance('${a.id}', 'aprobado')" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold">Aprobar</button>
+                  <button onclick="resolveApartadoAdvance('${a.id}', 'rechazado')" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white text-[11px] font-bold">Rechazar</button>
+                ` : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-500">${a.status.toUpperCase()}</span>`}
+              </div>
+            </div>
+          `).join('');
+      }
+    }
+
+    function toggleApartadoExclusiveAccess(checked) {
+      const current = getSelectedApartado();
+      if (!current) return;
+      current.exclusiveAccess = !!checked;
+      renderApartadosAdminUI();
+    }
+
+    function toggleApartadoRole(roleId, checked) {
+      const current = getSelectedApartado();
+      if (!current) return;
+      const set = new Set((current.assignedRoleIds || []).map(Number));
+      if (checked) set.add(Number(roleId));
+      else set.delete(Number(roleId));
+      current.assignedRoleIds = Array.from(set);
+    }
+
+    function toggleApartadoApp(appId, checked) {
+      const current = getSelectedApartado();
+      if (!current) return;
+      const appSet = new Set(current.enabledApps || []);
+      const permSet = new Set(current.enabledPermissions || []);
+      const appMeta = apartadosCatalog.find(a => a.id === appId);
+
+      if (checked) {
+        appSet.add(appId);
+        if (appMeta && Array.isArray(appMeta.permissions)) {
+          appMeta.permissions.forEach(p => permSet.add(p.id));
+        }
+      } else {
+        appSet.delete(appId);
+        if (appMeta && Array.isArray(appMeta.permissions)) {
+          appMeta.permissions.forEach(p => permSet.delete(p.id));
+        }
+      }
+      current.enabledApps = Array.from(appSet);
+      current.enabledPermissions = Array.from(permSet);
+      renderApartadosAdminUI();
+    }
+
+    function toggleApartadoPermission(permId, checked) {
+      const current = getSelectedApartado();
+      if (!current) return;
+      const permSet = new Set(current.enabledPermissions || []);
+      if (checked) permSet.add(permId);
+      else permSet.delete(permId);
+      current.enabledPermissions = Array.from(permSet);
+      renderApartadosAdminUI();
+    }
+
+    function enableAllApartadoApps(enable) {
+      const current = getSelectedApartado();
+      if (!current) return;
+      if (enable) {
+        current.enabledApps = apartadosCatalog.map(a => a.id);
+        current.enabledPermissions = apartadosCatalog.flatMap(a => a.permissions.map(p => p.id));
+      } else {
+        current.enabledApps = [];
+        current.enabledPermissions = [];
+      }
+      renderApartadosAdminUI();
+    }
+
+    async function saveCurrentApartadoConfig() {
+      const current = getSelectedApartado();
+      if (!current) return;
+      try {
+        const res = await fetch(`/api/apartados/${encodeURIComponent(current.id)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(current)
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (typeof showToast === 'function') showToast('Apartado y permisos guardados exitosamente', 'success');
+          await loadApartadosModule();
+        }
+      } catch (e) {
+        if (typeof showToast === 'function') showToast('Error al guardar el apartado', 'error');
+      }
+    }
+
+    async function promptCreateNewApartado() {
+      const name = prompt('Nombre del nuevo Apartado Móvil (ej. Apartado Cobradores en Campo, Vendedores FTTH):');
+      if (!name || !name.trim()) return;
+      const subtitle = prompt('Subtítulo o especialidad:', 'Portal Móvil de Accesos Rápidos') || 'Portal Móvil';
+      try {
+        const res = await fetch('/api/apartados', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name.trim(), subtitle })
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          selectedApartadoId = data.data.id;
+          if (typeof showToast === 'function') showToast('Nuevo apartado creado', 'success');
+          await loadApartadosModule();
+        }
+      } catch (e) {}
+    }
+
+    async function promptNewFieldInstallation() {
+      const customerName = prompt('Nombre del cliente a instalar/atender:');
+      if (!customerName) return;
+      const address = prompt('Dirección y referencia del domicilio:', 'Av. Principal 123');
+      if (!address) return;
+      const napCode = prompt('Caja NAP asignada:', 'NAP-01-A') || 'NAP-01-A';
+      try {
+        const res = await fetch('/api/apartados/installations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerName, address, napCode, type: 'instalacion', priority: 'alta' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (typeof showToast === 'function') showToast('Orden enviada a la app del técnico', 'success');
+          await loadApartadosModule();
+        }
+      } catch (e) {}
+    }
+
+    async function resolveApartadoMaterial(id, status) {
+      await fetch(`/api/apartados/material-requests/${encodeURIComponent(id)}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (typeof showToast === 'function') showToast(`Solicitud ${status}`, 'success');
+      await loadApartadosModule();
+    }
+
+    async function resolveApartadoAdvance(id, status) {
+      await fetch(`/api/apartados/advances/${encodeURIComponent(id)}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (typeof showToast === 'function') showToast(`Adelanto/Viático ${status}`, 'success');
+      await loadApartadosModule();
+    }
+
+    function copyApartadoLink() {
+      const current = getSelectedApartado();
+      const pathUrl = current && current.slug !== 'tecnicos'
+        ? `${window.location.origin}/tech?apartado=${encodeURIComponent(current.slug)}`
+        : `${window.location.origin}/tech`;
+      navigator.clipboard?.writeText(pathUrl);
+      if (typeof showToast === 'function') showToast(`Enlace copiado: ${pathUrl}`, 'success');
+    }
+  </script>
+  <div>
   </div>
 </body>
 </html>

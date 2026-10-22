@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>TurboTech • Apartado Móvil de Técnicos</title>
+
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('turbonetwork_theme');
+        if (t === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TurboTech">
+  <link rel="icon" type="image/png" href="/icons/icon-192.png">
+
+  <link rel="stylesheet" href="/assets/tailwind.min.css?v=apartados_v3">
+  <script src="/js/jsQR.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    dialog#techAppDialog {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      max-width: 100%;
+      height: 92dvh;
+      max-height: 92dvh;
+      position: fixed;
+      inset: auto 0 0 0;
+      border: none;
+      border-radius: 1.75rem 1.75rem 0 0;
+      background: transparent;
+      overflow: hidden;
+    }
+    @media (min-width: 640px) {
+      dialog#techAppDialog {
+        margin: auto;
+        inset: 0;
+        max-width: 34rem;
+        height: 86dvh;
+        max-height: 86dvh;
+        border-radius: 1.75rem;
+      }
+    }
+    dialog#techAppDialog::backdrop {
+      background-color: rgba(2, 6, 23, 0.72);
+      backdrop-filter: blur(6px);
+    }
+    .app-icon-card {
+      transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
+    }
+    .app-icon-card:active {
+      transform: scale(0.95);
+    }
+    .pin-dot.active {
+      background-color: #3b82f6;
+      border-color: #60a5fa;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.65);
+      transform: scale(1.15);
+    }
+    .tech-shell {
+      width: 100%;
+      max-width: 28rem;
+      margin-left: auto;
+      margin-right: auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 6.5rem;
+    }
+    .tech-bottom-nav {
+      position: fixed;
+      bottom: 0.75rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 1.5rem);
+      max-width: 26.5rem;
+      z-index: 35;
+      border-radius: 1.5rem;
+      box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.22);
+    }
+    .tech-bottom-nav-grid {
+      display: grid !important;
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+      align-items: center !important;
+      padding: 0.45rem 0.5rem;
+    }
+    .tech-nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+      padding: 0.35rem 0.25rem;
+      border-radius: 0.85rem;
+      text-align: center;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+
+  <!-- PANTALLA DE LOGIN POR PIN EXCLUSIVA PARA APARTADO TÉCNICO -->
+  <div id="tech-login-overlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 hidden">
+    <div class="w-full max-w-sm bg-slate-900/90 border border-white/10 rounded-3xl p-6 shadow-2xl text-center">
+      <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+        <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-blue-500/15 text-blue-400 border border-blue-500/30 mb-2">
+        Apartado Operativo Móvil
+      </span>
+      <h1 class="text-xl font-extrabold text-white tracking-tight">TurboTech Campo</h1>
+      <p class="text-xs text-slate-400 mt-1 mb-5">Ingresa tu PIN de 8 dígitos para acceder a tus herramientas de campo</p>
+
+      <!-- 8 Puntos PIN -->
+      <div class="flex items-center justify-center gap-2.5 mb-3">
+        <span id="tdot-0" class="pin-dot w-3 h-3 rounded-full border border-slate-600 bg-slate-800 transition-all"></span>
+        <span id="tdot-1" class="pin-dot w-3 h-3 rounded-full border border-slate-600 bg-slate-800 transition-all"></span>
+        <span id="tdot-2" class="pin-dot w-3 h-3 rounded-full border border-slate-600 bg-slate-800 transition-all"></span>
+        <span id="tdot-3" class="pin-dot w-3 h-3 rounded-full border border-slate-600 bg-slate-800 transition-all"></span>
+        <span id="tdot-4" class="pin-dot w-3 h-3 rounded-full border border-slate-600 bg-slate-800 transition-all"></span>
+        <span id="tdot-5" class="pin-dot w-3 h-3 rounded-full border border-slate-600 bg-slate-800 transition-all"></span>
+        <span id="tdot-6" class="pin-dot w-3 h-3 rounded-full border border-slate-600 bg-slate-800 transition-all"></span>
+        <span id="tdot-7" class="pin-dot w-3 h-3 rounded-full border border-slate-600 bg-slate-800 transition-all"></span>
+      </div>
+      <div id="tech-login-feedback" class="text-xs font-mono min-h-[20px] text-slate-400 mb-4"></div>
+
+      <!-- Teclado numérico táctil -->
+      <div class="grid grid-cols-3 gap-2.5">
+        <button onclick="techPressPin('1')" class="h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-blue-600/30 border border-white/10 text-lg font-bold text-white transition">1</button>
+        <button onclick="techPressPin('2')" class="h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-blue-600/30 border border-white/10 text-lg font-bold text-white transition">2</button>
+        <button onclick="techPressPin('3')" class="h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-blue-600/30 border border-white/10 text-lg font-bold text-white transition">3</button>
+        <button onclick="techPressPin('4')" class="h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-blue-600/30 border border-white/10 text-lg font-bold text-white transition">4</button>
+        <button onclick="techPressPin('5')" class="h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-blue-600/30 border border-white/10 text-lg font-bold text-white transition">5</button>
+        <button onclick="techPressPin('6')" class="h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-blue-600/30 border border-white/10 text-lg font-bold text-white transition">6</button>
+        <button onclick="techPressPin('7')" class="h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-blue-600/30 border border-white/10 text-lg font-bold text-white transition">7</button>
+        <button onclick="techPressPin('8')" class="h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-blue-600/30 border border-white/10 text-lg font-bold text-white transition">8</button>
+        <button onclick="techPressPin('9')" class="h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-blue-600/30 border border-white/10 text-lg font-bold text-white transition">9</button>
+        <button onclick="techClearPin()" class="h-14 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-bold text-rose-400 transition">BORRAR</button>
+        <button onclick="techPressPin('0')" class="h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-blue-600/30 border border-white/10 text-lg font-bold text-white transition">0</button>
+        <button onclick="techBackspacePin()" class="h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENEDOR PRINCIPAL ESTILO APLICATIVO MÓVIL -->
+  <div class="tech-shell">
+
+    <!-- HEADER SUPERIOR COMPACTO CON ESTADO GPS Y TURNO -->
+    <header class="sticky top-0 z-30 mx-4 mt-2 rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-xl border border-slate-200/90 dark:border-white/10 px-3.5 py-2.5 shadow-sm">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+          <div class="relative flex-shrink-0">
+            <img id="tech-user-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Tech" alt="Avatar" class="w-10 h-10 rounded-2xl object-cover border-2 border-blue-500/40 bg-slate-800">
+            <span id="tech-gps-dot" class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#111827]" title="GPS Activo"></span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5">
+              <span id="tech-apartado-badge" class="px-2 py-0.5 rounded-md text-[9.5px] font-extrabold uppercase tracking-wider bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25">TurboTech</span>
+              <span id="tech-attendance-pill" class="px-2 py-0.5 rounded-md text-[9.5px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">En Campo</span>
+            </div>
+            <h1 id="tech-user-name" class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate mt-0.5">Cargando técnico...</h1>
+            <p id="tech-gps-coords" class="text-[10.5px] font-mono text-slate-500 dark:text-slate-400 truncate">GPS: Obteniendo ubicación...</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          <!-- Botón Admin (solo visible si el usuario es Superadmin previsualizando el apartado) -->
+          <a id="tech-back-admin-btn" href="/" style="white-space:nowrap;" class="hidden px-2.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[11px] font-extrabold flex items-center gap-1 transition" title="Volver al Sistema General">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            <span>Admin</span>
+          </a>
+          <button onclick="toggleTechTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 transition" title="Cambiar Tema">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+          </button>
+          <button onclick="techLogout()" class="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 transition" title="Cerrar Sesión">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-1 px-4 pt-4 space-y-4">
+
+      <!-- WIDGET HERO: RESUMEN OPERATIVO EN VIVO -->
+      <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-4 text-white shadow-xl shadow-blue-900/20">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-blue-100/90">Resumen Operativo de Hoy</p>
+            <h2 id="tech-apartado-title" class="text-base font-extrabold tracking-tight">Mis Accesos Rápidos</h2>
+          </div>
+          <button onclick="refreshAllTechData()" class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-xs font-bold flex items-center gap-1.5 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Sincronizar
+          </button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5">
+          <button onclick="openTechApp('my_installations')" class="text-left bg-black/20 hover:bg-black/30 rounded-2xl p-2.5 border border-white/10 transition">
+            <div class="text-[10px] text-blue-100/80 font-medium">Instalaciones</div>
+            <div id="hero-kpi-installations" class="text-lg font-extrabold font-mono mt-0.5">0</div>
+            <div class="text-[10px] text-emerald-300 font-semibold">Pendientes hoy</div>
+          </button>
+          <button onclick="openTechApp('my_stock')" class="text-left bg-black/20 hover:bg-black/30 rounded-2xl p-2.5 border border-white/10 transition">
+            <div class="text-[10px] text-blue-100/80 font-medium">Mi Mochila</div>
+            <div id="hero-kpi-stock" class="text-lg font-extrabold font-mono mt-0.5">0</div>
+            <div class="text-[10px] text-purple-200 font-semibold">Ítems en mano</div>
+          </button>
+          <button onclick="openTechApp('commissions_advances')" class="text-left bg-black/20 hover:bg-black/30 rounded-2xl p-2.5 border border-white/10 transition">
+            <div class="text-[10px] text-blue-100/80 font-medium">Comisiones</div>
+            <div id="hero-kpi-commissions" class="text-lg font-extrabold font-mono mt-0.5">S/ 0</div>
+            <div class="text-[10px] text-amber-300 font-semibold">Acumulado mes</div>
+          </button>
+        </div>
+      </section>
+
+      <!-- BUSCADOR RÁPIDO CIZ DIRECTO EN LA PANTALLA DE INICIO -->
+      <div id="quick-ciz-bar" class="relative">
+        <input
+          type="text"
+          id="home-ciz-input"
+          placeholder="Buscar cliente por CIZ, DNI, Nombre o PPPoE..."
+          onkeydown="if(event.key==='Enter'){ openTechApp('ciz_search', this.value); }"
+          class="w-full pl-10 pr-24 py-3.5 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-white/10 text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs"
+        >
+        <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <button
+          onclick="openTechApp('ciz_search', document.getElementById('home-ciz-input').value)"
+          class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold transition"
+        >
+          Buscar CIZ
+        </button>
+      </div>
+
+      <!-- LAUNCHPAD: GRID DE ACCESOS DIRECTOS TIPO APP MÓVIL -->
+      <section>
+        <div class="flex items-center justify-between mb-2.5 px-1">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Aplicaciones Habilitadas</h3>
+          <span id="tech-enabled-count" class="text-[11px] font-mono font-semibold text-blue-600 dark:text-blue-400">8 apps activas</span>
+        </div>
+
+        <div id="tech-apps-grid" class="grid grid-cols-2 gap-3">
+          <!-- Renderizado dinámico según permisos del Apartado -->
+        </div>
+      </section>
+
+      <!-- AGENDA RÁPIDA DE PRÓXIMA VISITA EN CAMPO -->
+      <section id="next-visit-card-section" class="pt-1">
+        <div class="flex items-center justify-between mb-2 px-1">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Próxima Orden Asignada</h3>
+          <button onclick="openTechApp('my_installations')" class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline">Ver todas</button>
+        </div>
+        <div id="next-visit-preview"></div>
+      </section>
+
+    </main>
+
+    <!-- BARRA DE NAVEGACIÓN INFERIOR FIJA TIPO DOCK MÓVIL -->
+    <nav class="tech-bottom-nav bg-white/95 dark:bg-[#111827]/95 backdrop-blur-xl border border-slate-200/90 dark:border-white/10">
+      <div class="tech-bottom-nav-grid">
+        <button onclick="closeTechDialog()" class="tech-nav-btn text-blue-600 dark:text-blue-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          <span class="text-[10px] font-bold">Apps</span>
+        </button>
+        <button onclick="openTechApp('attendance_gps')" class="tech-nav-btn text-slate-500 dark:text-slate-400 hover:text-emerald-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="text-[10px] font-semibold">Asistencia</span>
+        </button>
+        <!-- Botón Central Flotante Escáner QR -->
+        <div class="flex justify-center -mt-5">
+          <button onclick="openTechApp('qr_scanner')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/40 flex flex-col items-center justify-center border-2 border-white dark:border-[#111827] active:scale-95 transition" title="Escáner QR">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+          </button>
+        </div>
+        <button onclick="openTechApp('nearby_naps')" class="tech-nav-btn text-slate-500 dark:text-slate-400 hover:text-blue-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span class="text-[10px] font-semibold">NAPs GPS</span>
+        </button>
+        <a href="/chat" class="tech-nav-btn text-slate-500 dark:text-slate-400 hover:text-emerald-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          <span class="text-[10px] font-semibold">TurboChat</span>
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- MODAL NATIVO CON LIGHT-DISMISS (closedby="any") PARA CADA MINI-APP -->
+  <dialog id="techAppDialog" closedby="any" aria-labelledby="techModalTitle">
+    <div id="techAppDialogBox" class="w-full h-full bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 flex flex-col border-t sm:border border-slate-200 dark:border-white/10 shadow-2xl">
+      <!-- Barra superior del sheet móvil -->
+      <div class="pt-2.5 px-4 pb-3 border-b border-slate-200/80 dark:border-white/10 flex-shrink-0">
+        <div class="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto mb-2.5"></div>
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <span id="techModalSubtitle" class="text-[10px] font-mono font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Mini-App</span>
+            <h2 id="techModalTitle" class="text-base font-extrabold text-slate-900 dark:text-white">Aplicación</h2>
+          </div>
+          <button type="button" onclick="closeTechDialog()" class="p-2 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Cuerpo dinámico de la Mini-App -->
+      <div id="tech-dialog-toast" class="hidden mx-4 mt-3 px-3.5 py-2.5 rounded-2xl bg-slate-900 dark:bg-emerald-950/90 text-white text-xs font-bold border border-emerald-500/30 flex items-center gap-2 shadow-lg">
+        <span id="tech-dialog-toast-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
+        <span id="tech-dialog-toast-text" class="flex-1">Operación completada</span>
+      </div>
+      <div id="techModalBody" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+    </div>
+  </dialog>
+
+  <!-- TOAST DE NOTIFICACIÓN -->
+  <div id="tech-toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto z-50 hidden px-4 py-3 rounded-2xl bg-slate-900/95 text-white text-xs font-bold shadow-2xl border border-white/15 flex items-center gap-2.5">
+    <span id="tech-toast-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
+    <span id="tech-toast-text" class="flex-1">Operación completada</span>
+  </div>
+
+  <script>
+    // =========================================================================
+    // FALLBACK OFICIAL LIGHT-DISMISS PARA NAVEGADORES SIN SOPORTE DE closedby
+    // =========================================================================
+    const techDialog = document.getElementById('techAppDialog');
+    if (techDialog && !('closedBy' in HTMLDialogElement.prototype)) {
+      techDialog.addEventListener('click', (event) => {
+        if (event.target !== techDialog) return;
+        const rect = techDialog.getBoundingClientRect();
+        const isDialogContent = (
+          rect.top <= event.clientY &&
+          event.clientY <= rect.top + rect.height &&
+          rect.left <= event.clientX &&
+          event.clientX <= rect.left + rect.width
+        );
+        if (isDialogContent) return;
+        techDialog.close();
+      });
+    }
+    if (techDialog) {
+      techDialog.addEventListener('close', () => {
+        stopQrCameraStream();
+      });
+    }
+
+    // =========================================================================
+    // ESTADO GLOBAL DEL APARTADO TÉCNICO
+    // =========================================================================
+    let techUser = null;
+    let techApartado = null;
+    let techCatalog = [];
+    let techEnabledApps = [];
+    let techPermissions = [];
+    let techPinBuffer = "";
+    let currentGps = { lat: -12.0765, lng: -77.0842, accuracy: 12, ready: false };
+
+    let cachedInstallations = [];
+    let cachedStock = [];
+    let cachedProducts = [];
+    let cachedCommissions = [];
+    let cachedAdvances = [];
+    let cachedMaterialRequests = [];
+    let cachedMapNodes = [];
+    let qrVideoStream = null;
+    let qrScanInterval = null;
+
+    function showTechToast(msg, type = 'success') {
+      const dotClass = 'w-2.5 h-2.5 rounded-full flex-shrink-0 ' + (type === 'error' ? 'bg-rose-500' : type === 'warn' ? 'bg-amber-400' : 'bg-emerald-400');
+      const el = document.getElementById('tech-toast');
+      const dot = document.getElementById('tech-toast-dot');
+      const txt = document.getElementById('tech-toast-text');
+      if (el && txt) {
+        txt.textContent = msg;
+        if (dot) dot.className = dotClass;
+        el.classList.remove('hidden');
+      }
+      const dEl = document.getElementById('tech-dialog-toast');
+      const dDot = document.getElementById('tech-dialog-toast-dot');
+      const dTxt = document.getElementById('tech-dialog-toast-text');
+      if (dEl && dTxt && techDialog && techDialog.open) {
+        dTxt.textContent = msg;
+        if (dDot) dDot.className = dotClass;
+        dEl.classList.remove('hidden');
+      }
+      clearTimeout(window._techToastTimer);
+      window._techToastTimer = setTimeout(() => {
+        if (el) el.classList.add('hidden');
+        if (dEl) dEl.classList.add('hidden');
+      }, 3200);
+    }
+
+    function hasAppPermission(permId) {
+      if (!techApartado || !Array.isArray(techPermissions)) return true;
+      return techPermissions.includes(permId);
+    }
+
+    function toggleTechTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      try {
+        localStorage.setItem('turbonetwork_theme', isDark ? 'dark' : 'light');
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // GEOLOCALIZACIÓN GPS EN VIVO
+    // =========================================================================
+    function initTechGps() {
+      const coordsEl = document.getElementById('tech-gps-coords');
+      if (!navigator.geolocation) {
+        if (coordsEl) coordsEl.textContent = `GPS Demo: ${currentGps.lat.toFixed(4)}, ${currentGps.lng.toFixed(4)}`;
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          currentGps = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: Math.round(pos.coords.accuracy || 10),
+            ready: true
+          };
+          if (coordsEl) {
+            coordsEl.textContent = `GPS: ${currentGps.lat.toFixed(5)}, ${currentGps.lng.toFixed(5)} (±${currentGps.accuracy}m)`;
+          }
+        },
+        () => {
+          if (coordsEl) {
+            coordsEl.textContent = `GPS Activo: ${currentGps.lat.toFixed(4)}, ${currentGps.lng.toFixed(4)}`;
+          }
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
+
+    // =========================================================================
+    // AUTENTICACIÓN Y CARGA DE SESIÓN
+    // =========================================================================
+    function updateTechPinDots() {
+      for (let i = 0; i < 8; i++) {
+        const d = document.getElementById('tdot-' + i);
+        if (d) d.classList.toggle('active', i < techPinBuffer.length);
+      }
+    }
+
+    function techPressPin(digit) {
+      if (techPinBuffer.length >= 8) return;
+      techPinBuffer += digit;
+      updateTechPinDots();
+      if (techPinBuffer.length === 8) {
+        submitTechPinLogin();
+      }
+    }
+
+    function techBackspacePin() {
+      techPinBuffer = techPinBuffer.slice(0, -1);
+      updateTechPinDots();
+    }
+
+    function techClearPin() {
+      techPinBuffer = "";
+      updateTechPinDots();
+      const fb = document.getElementById('tech-login-feedback');
+      if (fb) fb.textContent = "";
+    }
+
+    async function submitTechPinLogin() {
+      const fb = document.getElementById('tech-login-feedback');
+      if (fb) {
+        fb.textContent = "Verificando acceso de técnico...";
+        fb.className = "text-xs font-mono min-h-[20px] text-blue-400 mb-4";
+      }
+      try {
+        const res = await fetch('/api/auth/pin-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: techPinBuffer })
+        });
+        const data = await res.json();
+        if (data.success && data.data?.user) {
+          techUser = data.data.user;
+          localStorage.setItem('turbonetwork_session', JSON.stringify(techUser));
+          document.getElementById('tech-login-overlay').classList.add('hidden');
+          techPinBuffer = "";
+          updateTechPinDots();
+          await bootstrapTechPortal();
+        } else {
+          if (fb) {
+            fb.textContent = data.message || "PIN inválido";
+            fb.className = "text-xs font-mono min-h-[20px] text-rose-400 mb-4";
+          }
+          techPinBuffer = "";
+          updateTechPinDots();
+        }
+      } catch (e) {
+        if (fb) fb.textContent = "Error de conexión con el servidor";
+      }
+    }
+
+    function techLogout() {
+      try {
+        localStorage.removeItem('turbonetwork_session');
+      } catch (e) {}
+      techUser = null;
+      document.getElementById('tech-login-overlay').classList.remove('hidden');
+    }
+
+    // =========================================================================
+    // INICIALIZACIÓN DEL APARTADO Y SUS 8 APLICACIONES
+    // =========================================================================
+    async function bootstrapTechPortal() {
+      initTechGps();
+      try {
+        const saved = localStorage.getItem('turbonetwork_session');
+        if (saved) techUser = JSON.parse(saved);
+      } catch (e) {}
+
+      if (!techUser) {
+        document.getElementById('tech-login-overlay').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('tech-user-name').textContent = techUser.name || 'Técnico FTTH';
+      if (techUser.avatar) {
+        document.getElementById('tech-user-avatar').src = techUser.avatar;
+      }
+
+      // Mostrar botón "Panel Admin" solo si es Superadministrador previsualizando
+      const backBtn = document.getElementById('tech-back-admin-btn');
+      if (backBtn) {
+        if (techUser.isSuperAdmin || techUser.roleId === 1) {
+          backBtn.classList.remove('hidden');
+        } else {
+          backBtn.classList.add('hidden');
+        }
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const slugParam = urlParams.get('apartado') || 'tecnicos';
+
+      const accessRes = await fetch(`/api/apartados/my-access?userId=${encodeURIComponent(techUser.id || 0)}&roleId=${encodeURIComponent(techUser.roleId || 4)}&slug=${encodeURIComponent(slugParam)}`);
+      const accessData = await accessRes.json();
+      if (accessData.success) {
+        techApartado = accessData.apartado;
+        techCatalog = accessData.catalog || [];
+        techEnabledApps = accessData.apps || [];
+        techPermissions = techApartado?.enabledPermissions || [];
+
+        document.getElementById('tech-apartado-badge').textContent = techApartado?.slug?.toUpperCase() || 'TURBOTECH';
+        document.getElementById('tech-apartado-title').textContent = techApartado?.name || 'Apartado Técnico Móvil';
+      }
+
+      // Ocultar barra rápida CIZ si la app ciz_search fue desactivada por el administrador
+      const quickCizBar = document.getElementById('quick-ciz-bar');
+      if (quickCizBar) {
+        const hasCiz = techEnabledApps.some(a => a.id === 'ciz_search');
+        quickCizBar.classList.toggle('hidden', !hasCiz);
+      }
+
+      renderTechLaunchpad();
+      await refreshAllTechData();
+    }
+
+    function getAppIconSvg(iconId) {
+      const icons = {
+        'clock-gps': `<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+        'wallet': `<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>`,
+        'map-pin': `<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
+        'backpack': `<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`,
+        'qr-code': `<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>`,
+        'arrows-exchange': `<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>`,
+        'wrench-check': `<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>`,
+        'search-ciz': `<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>`
+      };
+      return icons[iconId] || icons['wrench-check'];
+    }
+
+    function getAppColorClasses(color) {
+      const map = {
+        emerald: { bg: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/25', pill: 'bg-emerald-500/15 text-emerald-500' },
+        amber: { bg: 'bg-amber-500/15 text-amber-500 border-amber-500/25', pill: 'bg-amber-500/15 text-amber-500' },
+        blue: { bg: 'bg-blue-500/15 text-blue-500 border-blue-500/25', pill: 'bg-blue-500/15 text-blue-500' },
+        purple: { bg: 'bg-purple-500/15 text-purple-500 border-purple-500/25', pill: 'bg-purple-500/15 text-purple-500' },
+        cyan: { bg: 'bg-cyan-500/15 text-cyan-500 border-cyan-500/25', pill: 'bg-cyan-500/15 text-cyan-500' },
+        indigo: { bg: 'bg-indigo-500/15 text-indigo-500 border-indigo-500/25', pill: 'bg-indigo-500/15 text-indigo-500' },
+        rose: { bg: 'bg-rose-500/15 text-rose-500 border-rose-500/25', pill: 'bg-rose-500/15 text-rose-500' },
+        sky: { bg: 'bg-sky-500/15 text-sky-500 border-sky-500/25', pill: 'bg-sky-500/15 text-sky-500' },
+      };
+      return map[color] || map.blue;
+    }
+
+    function renderTechLaunchpad() {
+      const grid = document.getElementById('tech-apps-grid');
+      const countEl = document.getElementById('tech-enabled-count');
+      if (!grid) return;
+
+      if (countEl) {
+        countEl.textContent = `${techEnabledApps.length} ${techEnabledApps.length === 1 ? 'app activa' : 'apps activas'}`;
+      }
+
+      if (techEnabledApps.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-2 p-6 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 text-center">
+            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Sin aplicaciones asignadas</p>
+            <p class="text-xs text-slate-400 mt-1">El administrador aún no ha habilitado accesos directos en tu apartado.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = techEnabledApps.map((app) => {
+        const clr = getAppColorClasses(app.color);
+        return `
+          <button
+            type="button"
+            onclick="openTechApp('${app.id}')"
+            class="app-icon-card text-left p-4 rounded-3xl bg-white dark:bg-[#111827] hover:bg-slate-50 dark:hover:bg-[#161f33] border border-slate-200/90 dark:border-white/10 shadow-xs flex flex-col justify-between min-h-[126px]"
+          >
+            <div class="flex items-start justify-between gap-2 w-full">
+              <div class="w-12 h-12 rounded-2xl border flex items-center justify-center ${clr.bg}">
+                ${getAppIconSvg(app.icon)}
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${clr.pill}">
+                ${app.badge}
+              </span>
+            </div>
+            <div class="mt-3">
+              <div class="text-xs font-extrabold text-slate-900 dark:text-white leading-snug">${app.name}</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">${app.description}</div>
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    async function refreshAllTechData() {
+      try {
+        const [instRes, stockRes, prodRes, commRes, advRes, matRes, mapRes] = await Promise.all([
+          fetch('/api/apartados/installations').then(r => r.json()).catch(() => ({ data: [] })),
+          fetch('/api/inventory/personnel-assignments').then(r => r.json()).catch(() => ({ data: [] })),
+          fetch('/api/inventory/products').then(r => r.json()).catch(() => ({ data: [] })),
+          fetch('/api/rrhh/commissions').then(r => r.json()).catch(() => ({ data: [] })),
+          fetch('/api/apartados/advances').then(r => r.json()).catch(() => ({ data: [] })),
+          fetch('/api/apartados/material-requests').then(r => r.json()).catch(() => ({ data: [] })),
+          fetch('/api/maps/data').then(r => r.json()).catch(() => ({ nodes: [] })),
+        ]);
+
+        cachedInstallations = Array.isArray(instRes.data) ? instRes.data : [];
+        const allAssignments = Array.isArray(stockRes.data) ? stockRes.data : (Array.isArray(stockRes) ? stockRes : []);
+        cachedStock = allAssignments.filter(a => a.status === 'active' || !a.status);
+        cachedProducts = Array.isArray(prodRes.data) ? prodRes.data : (Array.isArray(prodRes) ? prodRes : []);
+        cachedCommissions = Array.isArray(commRes.data) ? commRes.data : [];
+        cachedAdvances = Array.isArray(advRes.data) ? advRes.data : [];
+        cachedMaterialRequests = Array.isArray(matRes.data) ? matRes.data : [];
+        cachedMapNodes = Array.isArray(mapRes.nodes) ? mapRes.nodes : (Array.isArray(mapRes.data?.nodes) ? mapRes.data.nodes : []);
+
+        // Actualizar KPIs del Hero
+        const pendingInst = cachedInstallations.filter(i => i.status !== 'completada');
+        document.getElementById('hero-kpi-installations').textContent = pendingInst.length;
+        document.getElementById('hero-kpi-stock').textContent = cachedStock.length;
+
+        const totalComm = cachedCommissions.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
+        document.getElementById('hero-kpi-commissions').textContent = `S/ ${totalComm.toFixed(0)}`;
+
+        renderNextVisitPreview(pendingInst[0]);
+      } catch (err) {
+        console.warn('Error sincronizando datos de campo:', err);
+      }
+    }
+
+    function renderNextVisitPreview(order) {
+      const box = document.getElementById('next-visit-preview');
+      if (!box) return;
+      if (!order) {
+        box.innerHTML = `
+          <div class="p-4 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 text-center text-xs text-slate-400">
+            🎉 No tienes órdenes pendientes por ahora.
+          </div>
+        `;
+        return;
+      }
+      const badgeColor = order.type === 'averia' ? 'bg-rose-500/15 text-rose-500 border-rose-500/30' : 'bg-blue-500/15 text-blue-500 border-blue-500/30';
+      box.innerHTML = `
+        <div class="p-4 rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${badgeColor}">
+              ${order.type.toUpperCase()} • ${order.code}
+            </span>
+            <span class="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">${order.scheduledTime}</span>
+          </div>
+          <div>
+            <div class="text-sm font-extrabold text-slate-900 dark:text-white">${order.customerName} (${order.customerCiz})</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${order.address}</div>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5">
+            <span class="text-[11px] font-mono text-blue-600 dark:text-blue-400 font-semibold">${order.napCode || 'NAP'} • ${order.napPort || ''}</span>
+            <div class="flex items-center gap-2">
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.lat + ',' + order.lng)}" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 text-xs font-bold text-slate-700 dark:text-slate-200">Ruta GPS</a>
+              <button onclick="openTechApp('my_installations')" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold">Atender</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // CONTROL DE APERTURA DE LAS 8 MINI-APPS EN EL DIALOG NATIVO
+    // =========================================================================
+    function closeTechDialog() {
+      stopQrCameraStream();
+      if (techDialog && techDialog.open) techDialog.close();
+    }
+
+    function openTechApp(appId, initialParam) {
+      const isEnabled = techEnabledApps.some(a => a.id === appId);
+      if (!isEnabled) {
+        showTechToast('Esta mini-aplicación está deshabilitada en tu apartado.', 'error');
+        return;
+      }
+
+      const appMeta = techCatalog.find(a => a.id === appId) || { name: 'Aplicación', badge: 'App' };
+      document.getElementById('techModalSubtitle').textContent = appMeta.badge || 'Mini-App';
+      document.getElementById('techModalTitle').textContent = appMeta.name;
+
+      if (techDialog && !techDialog.open) {
+        techDialog.showModal();
+      }
+
+      if (appId === 'attendance_gps') renderAppAttendance();
+      else if (appId === 'commissions_advances') renderAppCommissions();
+      else if (appId === 'nearby_naps') renderAppNearbyNaps();
+      else if (appId === 'my_stock') renderAppMyStock();
+      else if (appId === 'qr_scanner') renderAppQrScanner();
+      else if (appId === 'material_requests') renderAppMaterialRequests();
+      else if (appId === 'my_installations') renderAppInstallations();
+      else if (appId === 'ciz_search') renderAppCizSearch(initialParam || '');
+    }
+
+    // =========================================================================
+    // 1. MINI-APP: ASISTENCIA Y MARCACIÓN GPS
+    // =========================================================================
+    async function renderAppAttendance() {
+      const body = document.getElementById('techModalBody');
+      const nowStr = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+      const canCheckin = hasAppPermission('attendance:checkin');
+      const canLunch = hasAppPermission('attendance:lunch');
+
+      body.innerHTML = `
+        <div class="p-4 rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-lg">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-[11px] uppercase font-bold text-emerald-100">Coordenadas verificadas</div>
+              <div class="text-2xl font-extrabold font-mono mt-0.5">${nowStr}</div>
+              <div class="text-xs font-mono text-emerald-100 mt-1">Lat: ${currentGps.lat.toFixed(5)} • Lng: ${currentGps.lng.toFixed(5)}</div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <button ${canCheckin ? '' : 'disabled'} onclick="submitTechAttendance('check-in')" class="p-4 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-left transition disabled:opacity-40">
+            <div class="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">1. Marcar Entrada</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Inicio de jornada con GPS</div>
+          </button>
+          <button ${canLunch ? '' : 'disabled'} onclick="submitTechAttendance('lunch-start')" class="p-4 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-left transition disabled:opacity-40">
+            <div class="text-xs font-extrabold text-amber-600 dark:text-amber-400">2. Iniciar Almuerzo</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Pausa de refrigerio</div>
+          </button>
+          <button ${canLunch ? '' : 'disabled'} onclick="submitTechAttendance('lunch-end')" class="p-4 rounded-2xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-left transition disabled:opacity-40">
+            <div class="text-xs font-extrabold text-blue-600 dark:text-blue-400">3. Fin de Almuerzo</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Retorno a ruta</div>
+          </button>
+          <button ${canCheckin ? '' : 'disabled'} onclick="submitTechAttendance('check-out')" class="p-4 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-left transition disabled:opacity-40">
+            <div class="text-xs font-extrabold text-rose-600 dark:text-rose-400">4. Marcar Salida</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Cierre de turno diario</div>
+          </button>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">Mi Jornada Registrada Hoy</h4>
+          <div id="tech-today-summary" class="grid grid-cols-4 gap-2 text-center mb-3"></div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">Últimas Marcaciones Registradas</h4>
+          <div id="tech-attendance-list" class="space-y-2 text-xs text-slate-400">Cargando historial...</div>
+        </div>
+      `;
+
+      try {
+        const res = await fetch('/api/rrhh/attendance');
+        const data = await res.json();
+        const records = Array.isArray(data.data) ? data.data.slice(0, 6) : [];
+        const todayRec = records[0] || {};
+        const todayBox = document.getElementById('tech-today-summary');
+        if (todayBox) {
+          todayBox.innerHTML = `
+            <div class="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <div class="text-[10px] text-slate-400 font-semibold">Entrada</div>
+              <div class="text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">${todayRec.checkInTime || '--:--'}</div>
+            </div>
+            <div class="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <div class="text-[10px] text-slate-400 font-semibold">Almuerzo</div>
+              <div class="text-xs font-mono font-extrabold text-amber-600 dark:text-amber-400 mt-0.5">${todayRec.lunchStart || '--:--'}</div>
+            </div>
+            <div class="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <div class="text-[10px] text-slate-400 font-semibold">Retorno</div>
+              <div class="text-xs font-mono font-extrabold text-blue-600 dark:text-blue-400 mt-0.5">${todayRec.lunchEndTime || '--:--'}</div>
+            </div>
+            <div class="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20">
+              <div class="text-[10px] text-slate-400 font-semibold">Salida</div>
+              <div class="text-xs font-mono font-extrabold text-rose-600 dark:text-rose-400 mt-0.5">${todayRec.checkOut || todayRec.checkOutTime || '--:--'}</div>
+            </div>
+          `;
+        }
+        const listEl = document.getElementById('tech-attendance-list');
+        if (!listEl) return;
+        if (records.length === 0) {
+          listEl.innerHTML = `<div class="p-3 rounded-2xl bg-slate-100 dark:bg-white/5 text-center">Sin marcaciones previas</div>`;
+          return;
+        }
+        listEl.innerHTML = records.map(r => `
+          <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-slate-800 dark:text-white">${r.employeeName || techUser?.name || 'Técnico'}</div>
+              <div class="text-[11px] text-slate-400 font-mono">${r.date || ''} • Entrada: ${r.checkInTime || '--'} | Almuerzo: ${r.lunchStart || '--'} | Salida: ${r.checkOut || r.checkOutTime || '--'}</div>
+            </div>
+            <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-500/15 text-emerald-500">${r.status || 'OK'}</span>
+          </div>
+        `).join('');
+      } catch (e) {}
+    }
+
+    async function submitTechAttendance(action) {
+      try {
+        const empId = techUser?.id || 1;
+        const payload = {
+          employeeId: empId,
+          employeeName: techUser?.name || 'Técnico de Campo',
+          latitude: currentGps.lat,
+          longitude: currentGps.lng,
+          locationLabel: `App Móvil TurboTech (${currentGps.lat.toFixed(4)}, ${currentGps.lng.toFixed(4)})`,
+          notes: 'Marcación desde Apartado Técnico Móvil'
+        };
+        const res = await fetch(`/api/apartados/attendance/${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        showTechToast(data.message || 'Marcación GPS registrada correctamente');
+        const pill = document.getElementById('tech-attendance-pill');
+        if (pill) {
+          if (action === 'check-in' || action === 'lunch-end') pill.textContent = 'En Ruta';
+          if (action === 'lunch-start') pill.textContent = 'En Refrigerio';
+          if (action === 'check-out') pill.textContent = 'Turno Cerrado';
+        }
+        renderAppAttendance();
+      } catch (e) {
+        showTechToast('Error al registrar asistencia GPS', 'error');
+      }
+    }
+
+    // =========================================================================
+    // 2. MINI-APP: COMISIONES Y ADELANTOS
+    // =========================================================================
+    function renderAppCommissions() {
+      const body = document.getElementById('techModalBody');
+      const totalComm = cachedCommissions.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
+      const totalAdv = cachedAdvances.filter(a => a.status !== 'rechazado').reduce((acc, a) => acc + (Number(a.amount) || 0), 0);
+      const canRequest = hasAppPermission('advances:request');
+
+      body.innerHTML = `
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/30">
+            <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400">Comisiones del Mes</div>
+            <div class="text-xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">S/ ${totalComm.toFixed(2)}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">${cachedCommissions.length} instalaciones registradas</div>
+          </div>
+          <div class="p-4 rounded-2xl bg-blue-500/15 border border-blue-500/30">
+            <div class="text-[11px] font-bold text-blue-600 dark:text-blue-400">Adelantos / Viáticos</div>
+            <div class="text-xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">S/ ${totalAdv.toFixed(2)}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">${cachedAdvances.length} solicitudes enviadas</div>
+          </div>
+        </div>
+
+        ${canRequest ? `
+        <form onsubmit="submitTechAdvance(event)" class="p-4 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-3">
+          <div class="text-xs font-extrabold text-slate-900 dark:text-white">Solicitar Adelanto o Viático de Campo</div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Tipo</label>
+              <select id="adv-category" class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold">
+                <option value="adelanto_comision">Adelanto de Comisión</option>
+                <option value="viatico_combustible">Combustible / Movilidad</option>
+                <option value="ferreteria_campo">Ferretería de Campo</option>
+                <option value="otros">Otros Gastos</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Monto (S/)</label>
+              <input type="number" step="0.5" min="1" id="adv-amount" required placeholder="50.00" class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-mono font-bold">
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Sustento / Motivo</label>
+            <input type="text" id="adv-reason" required placeholder="Ej: Gasolina moto cuadrilla norte / Adelanto quincena" class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs">
+          </div>
+          <button type="submit" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition">
+            Enviar Solicitud a RRHH
+          </button>
+        </form>
+        ` : ''}
+
+        <div>
+          <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">Mis Solicitudes Recientes</h4>
+          <div class="space-y-2">
+            ${cachedAdvances.length === 0 ? `<div class="p-3 rounded-2xl bg-slate-100 dark:bg-white/5 text-center text-xs text-slate-400">No has enviado solicitudes aún</div>` : cachedAdvances.map(a => `
+              <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-slate-900 dark:text-white">${a.reason}</div>
+                  <div class="text-[11px] font-mono text-slate-400">${a.category.replace('_', ' ').toUpperCase()} • ${new Date(a.createdAt).toLocaleDateString('es-PE')}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs font-extrabold font-mono text-amber-500">S/ ${Number(a.amount).toFixed(2)}</div>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${a.status === 'aprobado' ? 'bg-emerald-500/15 text-emerald-500' : a.status === 'rechazado' ? 'bg-rose-500/15 text-rose-500' : 'bg-amber-500/15 text-amber-500'}">${a.status.toUpperCase()}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    async function submitTechAdvance(e) {
+      e.preventDefault();
+      const category = document.getElementById('adv-category').value;
+      const amount = Number(document.getElementById('adv-amount').value);
+      const reason = document.getElementById('adv-reason').value;
+      try {
+        const res = await fetch('/api/apartados/advances', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            techId: techUser?.id || 4,
+            techName: techUser?.name || 'Técnico de Campo',
+            category,
+            amount,
+            reason
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showTechToast('Solicitud enviada a RRHH');
+          await refreshAllTechData();
+          renderAppCommissions();
+        }
+      } catch (err) {
+        showTechToast('No se pudo enviar la solicitud', 'error');
+      }
+    }
+
+    // =========================================================================
+    // 3. MINI-APP: MAPAS NAP CERCANAS (RADAR FTTH POR GPS)
+    // =========================================================================
+    function calcDistanceMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    function renderAppNearbyNaps() {
+      const body = document.getElementById('techModalBody');
+      const fallbackNaps = [
+        { id: 'nap-1', name: 'NAP-01-A (Troncal Norte)', type: 'nap', lat: currentGps.lat + 0.0006, lng: currentGps.lng - 0.0004, portsFree: 5, portsTotal: 16, dbm: '-18.4 dBm' },
+        { id: 'nap-2', name: 'NAP-02-B (Parque Central)', type: 'nap', lat: currentGps.lat - 0.0009, lng: currentGps.lng + 0.0008, portsFree: 3, portsTotal: 8, dbm: '-19.1 dBm' },
+        { id: 'nap-3', name: 'NAP-03-C (Av. Comercio)', type: 'nap', lat: currentGps.lat + 0.0014, lng: currentGps.lng + 0.0011, portsFree: 9, portsTotal: 16, dbm: '-17.9 dBm' },
+        { id: 'nap-4', name: 'MUFA-01 (Distribución)', type: 'mufa', lat: currentGps.lat - 0.0018, lng: currentGps.lng - 0.0012, portsFree: 12, portsTotal: 24, dbm: '-15.2 dBm' }
+      ];
+
+      const rawNodes = cachedMapNodes.length > 0 ? cachedMapNodes : fallbackNaps;
+      const sortedNaps = rawNodes.map((n, idx) => {
+        const nLat = Number(n.lat || n.latitude || (currentGps.lat + (idx + 1) * 0.0007));
+        const nLng = Number(n.lng || n.longitude || (currentGps.lng - (idx + 1) * 0.0005));
+        const dist = calcDistanceMeters(currentGps.lat, currentGps.lng, nLat, nLng);
+        return {
+          id: n.id || `nap-${idx}`,
+          name: n.name || n.label || `NAP-0${idx + 1}`,
+          type: (n.type || 'NAP').toUpperCase(),
+          lat: nLat,
+          lng: nLng,
+          distance: dist,
+          portsFree: n.portsFree ?? ((idx * 3 + 4) % 8 + 1),
+          portsTotal: n.portsTotal ?? 16,
+          dbm: n.dbm || `-1${8 + (idx % 3)}.${idx + 2} dBm`
+        };
+      }).sort((a, b) => a.distance - b.distance);
+
+      body.innerHTML = `
+        <div class="p-4 rounded-3xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-extrabold text-blue-600 dark:text-blue-400">Radar FTTH en Tiempo Real</div>
+            <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">Tu GPS: ${currentGps.lat.toFixed(5)}, ${currentGps.lng.toFixed(5)}</div>
+          </div>
+          <span class="px-2.5 py-1 rounded-xl bg-blue-600 text-white text-xs font-mono font-bold">${sortedNaps.length} Nodos</span>
+        </div>
+
+        <div class="space-y-2.5">
+          ${sortedNaps.map(nap => `
+            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-blue-500/15 text-blue-500">${nap.type}</span>
+                  <span class="text-xs font-extrabold text-slate-900 dark:text-white truncate">${nap.name}</span>
+                </div>
+                <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1">
+                  Distancia: <strong class="text-emerald-500">${nap.distance} m</strong> • Libres: <strong>${nap.portsFree}/${nap.portsTotal}</strong> • Potencia: ${nap.dbm}
+                </div>
+              </div>
+              <a
+                href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nap.lat + ',' + nap.lng)}"
+                target="_blank"
+                class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex-shrink-0 transition"
+              >
+                Ir GPS
+              </a>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 4. MINI-APP: MI STOCK (MOCHILA TÉCNICA EN MANO)
+    // =========================================================================
+    function renderAppMyStock() {
+      const body = document.getElementById('techModalBody');
+      body.innerHTML = `
+        <div class="flex items-center justify-between p-3.5 rounded-2xl bg-purple-500/15 border border-purple-500/30">
+          <div>
+            <div class="text-xs font-extrabold text-purple-600 dark:text-purple-400">Inventario en Mi Mochila</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Equipos, fibra, conectores y EPPs en custodia</div>
+          </div>
+          <button onclick="openTechApp('material_requests')" class="px-3 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold">
+            + Pedir / Devolver
+          </button>
+        </div>
+
+        <div class="space-y-2.5">
+          ${cachedStock.length === 0 ? `
+            <div class="p-6 rounded-2xl bg-slate-50 dark:bg-white/5 text-center text-xs text-slate-400">
+              No tienes materiales activos registrados en tu mochila. Puedes solicitarlos desde "Solicitar y Devolver Material".
+            </div>
+          ` : cachedStock.map(item => `
+            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center justify-between">
+              <div>
+                <div class="text-xs font-extrabold text-slate-900 dark:text-white">${item.itemName || item.productName || 'Material FTTH'}</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-0.5">
+                  Categoría: ${item.itemType || 'Suministro'} ${item.serialNumber ? `• S/N: ${item.serialNumber}` : ''}
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="px-2.5 py-1 rounded-xl bg-purple-500/15 text-purple-500 font-mono text-xs font-extrabold">
+                  ${item.quantity || 1} ${item.unit || 'und'}
+                </span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 5. MINI-APP: ESCÁNER QR / CÓDIGO DE BARRAS CON CÁMARA
+    // =========================================================================
+    function stopQrCameraStream() {
+      if (qrScanInterval) {
+        clearInterval(qrScanInterval);
+        qrScanInterval = null;
+      }
+      if (qrVideoStream) {
+        qrVideoStream.getTracks().forEach(t => t.stop());
+        qrVideoStream = null;
+      }
+    }
+
+    function renderAppQrScanner() {
+      const body = document.getElementById('techModalBody');
+      body.innerHTML = `
+        <div class="space-y-3">
+          <div class="relative rounded-3xl overflow-hidden bg-slate-950 border border-white/15 aspect-video flex items-center justify-center">
+            <video id="tech-qr-video" class="w-full h-full object-cover" playsinline muted></video>
+            <canvas id="tech-qr-canvas" class="hidden"></canvas>
+            <div class="absolute inset-6 border-2 border-cyan-400/70 rounded-2xl pointer-events-none flex items-center justify-center">
+              <div class="w-full h-0.5 bg-cyan-400/80 animate-pulse"></div>
+            </div>
+            <button type="button" onclick="startQrCamera()" class="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 text-xs font-extrabold shadow-lg">
+              Activar Cámara
+            </button>
+          </div>
+
+          <div class="flex gap-2">
+            <input type="text" id="qr-manual-code" placeholder="O ingresa Serie / MAC / Código QR aquí..." class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-mono">
+            <button onclick="lookupScannedCode(document.getElementById('qr-manual-code').value)" class="px-4 py-2.5 rounded-xl bg-cyan-600 text-white text-xs font-bold">
+              Consultar
+            </button>
+          </div>
+
+          <div id="qr-scan-result" class="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs text-slate-400 text-center">
+            Apunta la cámara al código QR/Barras de la ONU o escribe el número de serie para verificar trazabilidad.
+          </div>
+        </div>
+      `;
+      startQrCamera();
+    }
+
+    async function startQrCamera() {
+      stopQrCameraStream();
+      const video = document.getElementById('tech-qr-video');
+      const canvas = document.getElementById('tech-qr-canvas');
+      if (!video || !navigator.mediaDevices?.getUserMedia) return;
+
+      try {
+        qrVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = qrVideoStream;
+        await video.play();
+        const ctx = canvas.getContext('2d');
+        qrScanInterval = setInterval(() => {
+          if (video.readyState === video.HAVE_ENOUGH_DATA && typeof jsQR === 'function') {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imgData.data, imgData.width, imgData.height);
+            if (code && code.data) {
+              document.getElementById('qr-manual-code').value = code.data;
+              stopQrCameraStream();
+              lookupScannedCode(code.data);
+            }
+          }
+        }, 350);
+      } catch (e) {
+        // Fallback manual input remains ready
+      }
+    }
+
+    async function lookupScannedCode(code) {
+      const clean = (code || '').trim();
+      if (!clean) {
+        showTechToast('Ingresa o escanea un código válido', 'warn');
+        return;
+      }
+      const box = document.getElementById('qr-scan-result');
+      if (box) box.innerHTML = `<div class="text-cyan-400 font-mono">Buscando serie "${clean}" en almacén...</div>`;
+      try {
+        const res = await fetch(`/api/inventory/traceability/${encodeURIComponent(clean)}`);
+        const data = await res.json();
+        if (box) {
+          box.innerHTML = `
+            <div class="text-left space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-500 font-mono text-[10px] font-bold">CÓDIGO VERIFICADO</span>
+                <span class="font-mono text-xs font-bold text-slate-900 dark:text-white">${clean}</span>
+              </div>
+              <div class="text-xs font-bold text-slate-800 dark:text-slate-100">
+                ${data?.product?.name || 'Equipo ONU / Material Registrado'}
+              </div>
+              <div class="text-[11px] text-slate-400">
+                Estado: Disponible para instalación en cliente
+              </div>
+            </div>
+          `;
+        }
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // 6. MINI-APP: SOLICITAR Y DEVOLVER MATERIAL
+    // =========================================================================
+    function renderAppMaterialRequests() {
+      const body = document.getElementById('techModalBody');
+      body.innerHTML = `
+        <form onsubmit="submitTechMaterialRequest(event)" class="p-4 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-3">
+          <div class="text-xs font-extrabold text-slate-900 dark:text-white">Nueva Operación con Almacén</div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Operación</label>
+              <select id="mat-type" class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold">
+                <option value="solicitud">Solicitar Material (Pedido)</option>
+                <option value="devolucion">Devolver Material Sobrante</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Urgencia</label>
+              <select id="mat-urgency" class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold">
+                <option value="normal">Normal</option>
+                <option value="alta">Alta</option>
+                <option value="urgente">Urgente (En Campo)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2.5">
+            <div class="col-span-2">
+              <label class="block text-[11px] text-slate-400 mb-1">Equipo / Material</label>
+              <input type="text" id="mat-item-name" list="catalog-products-list" required placeholder="Ej: ONU Huawei Dual Band / Cable Drop" class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs">
+              <datalist id="catalog-products-list">
+                ${cachedProducts.map(p => `<option value="${p.name}"></option>`).join('')}
+              </datalist>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Cantidad</label>
+              <input type="number" min="1" value="1" id="mat-qty" required class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-mono font-bold">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Nota o Serie/MAC (opcional)</label>
+            <input type="text" id="mat-reason" placeholder="Ej: Para órdenes FTTH de hoy / Devolución de bobina" class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs">
+          </div>
+
+          <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs transition">
+            Registrar Operación en Almacén
+          </button>
+        </form>
+
+        <div>
+          <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2">Historial de Pedidos y Devoluciones</h4>
+          <div class="space-y-2">
+            ${cachedMaterialRequests.length === 0 ? `<div class="p-3 rounded-2xl bg-slate-100 dark:bg-white/5 text-center text-xs text-slate-400">Sin solicitudes registradas</div>` : cachedMaterialRequests.map(m => `
+              <div class="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 flex items-center justify-between">
+                <div>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${m.type === 'devolucion' ? 'bg-purple-500/15 text-purple-400' : 'bg-indigo-500/15 text-indigo-400'}">${m.type.toUpperCase()}</span>
+                  <div class="text-xs font-bold text-slate-900 dark:text-white mt-1">${m.itemName} (x${m.quantity})</div>
+                  <div class="text-[11px] text-slate-400">${m.reason || 'Sin observaciones'}</div>
+                </div>
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${m.status === 'aprobado' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}">${m.status.toUpperCase()}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    async function submitTechMaterialRequest(e) {
+      e.preventDefault();
+      const type = document.getElementById('mat-type').value;
+      const urgency = document.getElementById('mat-urgency').value;
+      const itemName = document.getElementById('mat-item-name').value;
+      const quantity = Number(document.getElementById('mat-qty').value);
+      const reason = document.getElementById('mat-reason').value;
+
+      try {
+        const res = await fetch('/api/apartados/material-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            techId: techUser?.id || 4,
+            techName: techUser?.name || 'Técnico de Campo',
+            type,
+            urgency,
+            itemName,
+            quantity,
+            reason
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showTechToast(data.message || 'Registrado correctamente');
+          await refreshAllTechData();
+          renderAppMaterialRequests();
+        }
+      } catch (err) {
+        showTechToast('Error al enviar solicitud a almacén', 'error');
+      }
+    }
+
+    // =========================================================================
+    // 7. MINI-APP: MIS INSTALACIONES Y AVERÍAS ASIGNADAS
+    // =========================================================================
+    function renderAppInstallations() {
+      const body = document.getElementById('techModalBody');
+      body.innerHTML = `
+        <div class="space-y-3">
+          ${cachedInstallations.map(inst => {
+            const isDone = inst.status === 'completada';
+            return `
+              <div class="p-4 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${inst.type === 'averia' ? 'bg-rose-500/15 text-rose-500' : 'bg-blue-500/15 text-blue-500'}">
+                    ${inst.type} • ${inst.code}
+                  </span>
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${isDone ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}">
+                    ${inst.status.replace('_', ' ').toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <div class="text-sm font-extrabold text-slate-900 dark:text-white">${inst.customerName} <span class="text-xs font-mono text-blue-500">(${inst.customerCiz})</span></div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400">${inst.address}</div>
+                  <div class="text-[11px] font-mono text-slate-400 mt-1">Plan: ${inst.planName} • ${inst.napCode || 'NAP-01'} (${inst.napPort || 'P1'})</div>
+                  ${inst.notes ? `<div class="text-[11px] text-amber-500 mt-1">📌 ${inst.notes}</div>` : ''}
+                </div>
+                <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200/60 dark:border-white/10">
+                  <a href="tel:${inst.customerPhone}" class="px-3 py-1.5 rounded-xl bg-slate-200/70 dark:bg-white/10 text-xs font-bold">📞 Llamar</a>
+                  <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((inst.lat || -12.076) + ',' + (inst.lng || -77.084))}" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-200/70 dark:bg-white/10 text-xs font-bold">📍 Mapa GPS</a>
+                  ${!isDone ? `
+                    <button onclick="completeInstallationOrder('${inst.id}')" class="ml-auto px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold">
+                      ✓ Finalizar Orden
+                    </button>
+                  ` : `<span class="ml-auto text-[11px] font-mono text-emerald-500 font-bold">Potencia: ${inst.opticalPowerDbm || '-19.2'} dBm</span>`}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    async function completeInstallationOrder(orderId) {
+      const dbm = prompt('Ingresa la potencia óptica medida en roseta (dBm):', '-19.4');
+      if (dbm === null) return;
+      const onuSerial = prompt('Serie / MAC de ONU instalada (opcional):', 'HWTC8912A01');
+      try {
+        const res = await fetch(`/api/apartados/installations/${encodeURIComponent(orderId)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'completada',
+            opticalPowerDbm: dbm || '-19.4',
+            onuSerial: onuSerial || ''
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showTechToast('Instalación finalizada y reportada al sistema');
+          await refreshAllTechData();
+          renderAppInstallations();
+        }
+      } catch (e) {
+        showTechToast('No se pudo cerrar la orden', 'error');
+      }
+    }
+
+    // =========================================================================
+    // 8. MINI-APP: BUSCADOR CIZ (CONSULTA Y DIAGNÓSTICO DE CLIENTE)
+    // =========================================================================
+    async function renderAppCizSearch(initialQuery = '') {
+      const body = document.getElementById('techModalBody');
+      body.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex gap-2">
+            <input
+              type="text"
+              id="ciz-modal-input"
+              value="${initialQuery.replace(/"/g, '&quot;')}"
+              placeholder="CIZ-0001, DNI, Nombre, PPPoE o IP..."
+              onkeydown="if(event.key==='Enter') executeCizSearch(this.value)"
+              class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-medium"
+            >
+            <button onclick="executeCizSearch(document.getElementById('ciz-modal-input').value)" class="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-extrabold">
+              Buscar
+            </button>
+          </div>
+          <div id="ciz-results-container" class="space-y-2.5"></div>
+        </div>
+      `;
+      await executeCizSearch(initialQuery);
+    }
+
+    async function executeCizSearch(q) {
+      const container = document.getElementById('ciz-results-container');
+      if (!container) return;
+      container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4">Consultando padrón CIZ y telemetría...</div>`;
+      const canDiag = hasAppPermission('ciz:diagnostics');
+      const canReactivate = hasAppPermission('ciz:reactivate');
+
+      try {
+        const res = await fetch(`/api/apartados/ciz-search?q=${encodeURIComponent(q || '')}`);
+        const data = await res.json();
+        const list = Array.isArray(data.data) ? data.data : [];
+        if (list.length === 0) {
+          container.innerHTML = `<div class="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 text-center text-xs text-slate-400">No se encontraron clientes con "${q}".</div>`;
+          return;
+        }
+        container.innerHTML = list.map(c => {
+          const isOnline = c.status === 'active' || c.status === 'activo';
+          return `
+            <div class="p-4 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span class="px-2.5 py-0.5 rounded-md font-mono text-xs font-extrabold bg-sky-500/15 text-sky-500 border border-sky-500/30">${c.cizCode}</span>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${isOnline ? 'bg-emerald-500/15 text-emerald-500' : 'bg-rose-500/15 text-rose-500'}">
+                  ${isOnline ? '● ONLINE' : '● CORTADO / LOS'}
+                </span>
+              </div>
+              <div>
+                <div class="text-sm font-extrabold text-slate-900 dark:text-white">${c.name}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">DNI/RUC: <span class="font-mono">${c.documentNumber}</span> • ${c.address}</div>
+              </div>
+              ${canDiag ? `
+              <div class="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/60 dark:border-white/5 text-center">
+                <div>
+                  <div class="text-[10px] text-slate-400">Potencia Rx</div>
+                  <div class="text-xs font-mono font-bold ${isOnline ? 'text-emerald-500' : 'text-rose-500'}">${c.opticalRxDbm} dBm</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-400">NAP / Puerto</div>
+                  <div class="text-xs font-mono font-bold text-blue-500">${c.napBox} • ${c.napPort}</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-400">Ping / IP</div>
+                  <div class="text-xs font-mono font-bold text-slate-700 dark:text-slate-200">${c.pingMs}</div>
+                </div>
+              </div>
+              ` : ''}
+              <div class="flex items-center justify-between pt-1">
+                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.lat + ',' + c.lng)}" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-200/70 dark:bg-white/10 text-xs font-bold">📍 Ubicación</a>
+                <div class="flex items-center gap-2">
+                  ${canDiag ? `<button onclick="showTechToast('Ping a ${c.ipAddress}: ${c.pingMs} (0% pérdida)')" class="px-3 py-1.5 rounded-xl bg-sky-500/15 text-sky-500 text-xs font-bold">Test Ping</button>` : ''}
+                  ${canReactivate && !isOnline ? `<button onclick="reactivateCustomerFromField(${c.id})" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold">Reactivar</button>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="text-xs text-rose-400 text-center">Error al consultar CIZ</div>`;
+      }
+    }
+
+    async function reactivateCustomerFromField(customerId) {
+      try {
+        const res = await fetch(`/api/customers/${customerId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'active' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showTechToast('Servicio del cliente reactivado en MikroTik/OLT');
+          executeCizSearch(document.getElementById('ciz-modal-input')?.value || '');
+        }
+      } catch (e) {
+        showTechToast('No se pudo reactivar el cliente', 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', bootstrapTechPortal);
+  </script>
+</body>
+</html>

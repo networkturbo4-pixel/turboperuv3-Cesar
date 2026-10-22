@@ -1,0 +1,52 @@
+[
+  {
+    "id": "apt-tecnicos",
+    "slug": "tecnicos",
+    "name": "Apartado Técnico Móvil (TurboTech)",
+    "subtitle": "Super-App de Campo FTTH & Soporte",
+    "description": "Portal móvil exclusivo con accesos directos rápidos para técnicos instaladores y cuadrillas de planta externa, sin acceso al panel administrativo general.",
+    "icon": " smartphone",
+    "themeColor": "#2563eb",
+    "routePath": "/tech",
+    "isActive": true,
+    "exclusiveAccess": true,
+    "assignedRoleIds": [
+      4
+    ],
+    "assignedUserIds": [],
+    "enabledApps": [
+      "attendance_gps",
+      "commissions_advances",
+      "nearby_naps",
+      "my_stock",
+      "qr_scanner",
+      "material_requests",
+      "my_installations",
+      "ciz_search"
+    ],
+    "enabledPermissions": [
+      "attendance:checkin",
+      "attendance:lunch",
+      "attendance:history",
+      "commissions:view",
+      "advances:request",
+      "advances:history",
+      "naps:view",
+      "naps:ports",
+      "naps:navigate",
+      "stock:view",
+      "stock:serials",
+      "qr:scan_verify",
+      "qr:assign_client",
+      "materials:request",
+      "materials:return",
+      "installations:view",
+      "installations:complete",
+      "installations:consume_stock",
+      "ciz:search",
+      "ciz:diagnostics",
+      "ciz:reactivate"
+    ],
+    "updatedAt": "2026-10-22T03:38:10.511Z"
+  }
+]
