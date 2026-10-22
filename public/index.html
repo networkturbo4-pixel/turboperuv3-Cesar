@@ -7417,9 +7417,7 @@
                 <span class="px-2.5 py-0.5 rounded-lg dynamic-primary-subtle border text-[10px] font-bold tracking-wider uppercase font-mono">
                   Talento Humano, Nómina & Comisiones
                 </span>
-                <span id="rrhh-alerts-header-badge" class="hidden px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[10px] font-bold animate-pulse">
-                  ⚠️ Alertas Activas
-                </span>
+                
               </div>
               <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mt-1">Recursos Humanos, Asistencia, Planilla & Comisiones</h2>
               <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Asistencia (Huella / GPS / Campo), Planilla automática, Comisiones sobre margen, Expediente con alertas a 15 días y Permisos en 1 clic</p>
@@ -7451,17 +7449,7 @@
             </div>
           </div>
 
-          <!-- Banner de Alertas Automáticas de Vencimiento de Contratos (15 días) -->
-          <div id="rrhh-alerts-banner" class="hidden pro-card p-3.5 sm:p-4 rounded-2xl border border-amber-500/30 bg-amber-500/[0.04] dark:bg-amber-500/[0.07] space-y-2.5">
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-300">
-                <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                <span>Alertas Automáticas de Expediente (Vencimiento de Contratos ≤ 15 días)</span>
-              </div>
-              <span id="rrhh-alerts-count-text" class="text-[11px] font-mono font-bold text-amber-600 dark:text-amber-400"></span>
-            </div>
-            <div id="rrhh-alerts-list" class="grid grid-cols-1 md:grid-cols-2 gap-2.5"></div>
-          </div>
+          
 
           <!-- ======================================================== -->
           <!-- SUBTAB 1: ASISTENCIAS (HUELLA, GEOLOCALIZACIÓN, CAMPO)    -->
@@ -7522,7 +7510,10 @@
                   />
                 </div>
                 <div class="flex items-center flex-wrap gap-2">
-                  <button type="button" onclick="syncBiometricFingerprintClock()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs whitespace-nowrap" title="Sincronizar marcaciones de huella dactilar (Oficina)">
+                  <button type="button" onclick="syncUsersToZktecoDevice(event)" class="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs whitespace-nowrap" title="Enviar automáticamente los colaboradores del sistema a la memoria del ZKTeco">
+                      <span>📤 Enviar Personal a ZKTeco</span>
+                    </button>
+                    <button type="button" onclick="syncBiometricFingerprintClock()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs whitespace-nowrap" title="Sincronizar marcaciones de huella dactilar (Oficina)">
                     <span>🖐️ Sincronizar Reloj Huella</span>
                   </button>
                   <button type="button" onclick="openManualAttendanceModal()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs whitespace-nowrap" title="Autorización directa del jefe para trabajo en campo o situaciones especiales">
@@ -13503,7 +13494,11 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-end pt-3 border-t border-slate-200 dark:border-white/10">
+      <div class="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/10">
+        <button type="button" onclick="deleteActiveDossierEmployee()" class="px-3.5 py-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer" title="Eliminar este expediente">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <span>Eliminar Expediente</span>
+        </button>
         <button type="button" onclick="closeEmployeeDossierModal()" class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-white/10 text-xs font-bold text-slate-700 dark:text-white">Cerrar Expediente</button>
       </div>
     </div>
@@ -28931,46 +28926,13 @@ Estamos atentos para brindarle asistencia inmediata.
     }
 
     function renderHRAlertsBanner(alerts) {
-      currentHRAlerts = Array.isArray(alerts) ? alerts : [];
+      currentHRAlerts = [];
       const banner = document.getElementById('rrhh-alerts-banner');
-      const listEl = document.getElementById('rrhh-alerts-list');
+      if (banner) banner.remove();
       const badgeEl = document.getElementById('rrhh-exp-alert-badge');
+      if (badgeEl) badgeEl.classList.add('hidden');
       const kpiAlerts = document.getElementById('kpi-exp-alerts');
-
-      if (kpiAlerts) kpiAlerts.textContent = currentHRAlerts.length;
-      if (badgeEl) {
-        if (currentHRAlerts.length > 0) {
-          badgeEl.textContent = currentHRAlerts.length;
-          badgeEl.classList.remove('hidden');
-        } else {
-          badgeEl.classList.add('hidden');
-        }
-      }
-
-      if (!banner || !listEl) return;
-      if (currentHRAlerts.length === 0) {
-        banner.classList.add('hidden');
-        return;
-      }
-
-      banner.classList.remove('hidden');
-      listEl.innerHTML = currentHRAlerts.map(a => {
-        const isCritical = a.severity === 'critical' || a.daysRemaining <= 5;
-        return `
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl ${isCritical ? 'bg-rose-500/15 border border-rose-500/30' : 'bg-amber-500/10 border border-amber-500/20'} text-xs">
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase ${isCritical ? 'bg-rose-600 text-white' : 'bg-amber-500 text-slate-950'}">
-                ${a.daysRemaining < 0 ? 'VENCIDO' : `VENCE EN ${a.daysRemaining} DÍAS`}
-              </span>
-              <span class="font-bold text-slate-900 dark:text-white">${escapeHtml(a.employeeName)}</span>
-              <span class="text-slate-600 dark:text-slate-300">— ${escapeHtml(a.message)}</span>
-            </div>
-            <button type="button" onclick="openEmployeeDossierModal(${a.employeeId})" class="px-3 py-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-bold self-start sm:self-auto flex-shrink-0 cursor-pointer">
-              📁 Ver Expediente / Renovar
-            </button>
-          </div>
-        `;
-      }).join('');
+      if (kpiAlerts) kpiAlerts.textContent = '0';
     }
 
     // 3. Asistencias: Carga, Métricas y Renderizado Multi-Tenant
@@ -29023,7 +28985,7 @@ Estamos atentos para brindarle asistencia inmediata.
         const data = await res.json();
         let list = data.data || [];
         currentAttendance = list;
-        if (modEl && modEl.value) {
+        if (modEl && modEl.value && modEl.value !== 'all') {
           list = list.filter(a => (a.modality || 'geolocation') === modEl.value);
         }
         renderAttendance(list);
@@ -29531,7 +29493,7 @@ Estamos atentos para brindarle asistencia inmediata.
                 <button type="button" onclick="openEditEmployeeModal(${emp.id})" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition cursor-pointer" title="Editar">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </button>
-                <button type="button" onclick="deleteEmployee(${emp.id}, '${(emp.name || '').replace(/'/g, "\\'")}')" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition cursor-pointer" title="Eliminar">
+                <button type="button" onclick="deleteEmployee(${emp.id})" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition cursor-pointer" title="Eliminar">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
               </div>
@@ -29671,12 +29633,15 @@ Estamos atentos para brindarle asistencia inmediata.
     }
 
     async function deleteEmployee(id, name) {
-      if (!confirm(`¿Eliminar definitivamente el acta de personal de "${name}"?`)) return;
+      const emp = (currentEmployees || []).find(e => Number(e.id) === Number(id));
+      const empName = name || (emp ? emp.name : 'este colaborador');
+      if (!confirm(`¿Eliminar definitivamente el expediente y acta de personal de "${empName}"?`)) return;
       try {
         const res = await fetch(`/api/rrhh/employees/${id}`, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) {
-          showToast(`Colaborador "${name}" eliminado`);
+          showToast(`Expediente de "${empName}" eliminado exitosamente`);
+          closeEmployeeDossierModal();
           await loadEmployees();
         } else {
           showToast(data.message || 'Error al eliminar', true);
@@ -29684,6 +29649,12 @@ Estamos atentos para brindarle asistencia inmediata.
       } catch (err) {
         showToast('Error de red al eliminar colaborador', true);
       }
+    }
+
+    async function deleteActiveDossierEmployee() {
+      const empId = Number(document.getElementById('dossier-emp-id')?.value || activeDossierEmployeeId);
+      if (!empId) return;
+      await deleteEmployee(empId);
     }
 
     // 5. Vista de Ficha Técnica & Expediente de Personal A4
@@ -31102,6 +31073,32 @@ Estamos atentos para brindarle asistencia inmediata.
       showToast('Huella dactilar verificada en lector biométrico');
     }
 
+    async function syncUsersToZktecoDevice(e) {
+      const btn = e ? e.currentTarget : null;
+      const originalText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Enviando...</span>';
+      }
+      try {
+        const res = await fetch('/api/rrhh/zkteco/sync-users', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || '¡Personal enviado al ZKTeco con éxito!', 'success');
+        } else {
+          showToast(data.message || 'No se pudo sincronizar con el ZKTeco.', true);
+        }
+      } catch (err) {
+        console.error('Error al sincronizar usuarios con ZKTeco:', err);
+        showToast('Error de conexión al sincronizar con el ZKTeco.', true);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      }
+    }
+
     function syncBiometricFingerprintClock() {
       openBiometricSyncModal();
     }
@@ -31971,7 +31968,14 @@ Estamos atentos para brindarle asistencia inmediata.
         if (data.success) {
           showToast('Documento eliminado del legajo');
           await loadEmployees();
-          openEmployeeDossierModal(empId);
+          const emp = (currentEmployees || []).find(e => Number(e.id) === Number(empId));
+          if (emp) {
+            renderDossierDocuments(emp);
+          } else {
+            closeEmployeeDossierModal();
+          }
+        } else {
+          showToast(data.message || 'Error al retirar documento', true);
         }
       } catch (err) {
         showToast('Error al eliminar documento', true);

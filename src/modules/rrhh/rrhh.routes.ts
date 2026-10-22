@@ -233,88 +233,7 @@ export function getSystemMasterTotpSecret(): string {
 // 3. DATOS INICIALES Y PERSISTENCIA
 // ==========================================
 
-const defaultEmployees: Employee[] = [
-  {
-    id: 1,
-    name: "César Administrador",
-    position: "Director General de Operaciones & NOC",
-    dni: "70891234",
-    phone: "+51 987 654 321",
-    email: "cesar@turbonetwork.com",
-    workSchedule: "08:00 - 17:00",
-    expectedCheckInTime: "08:00",
-    salary: "4500.00",
-    currency: "$",
-    hireDate: "2024-01-15",
-    birthDate: "1988-06-12",
-    emergencyContact: "+51 999 111 222 (Hermano)",
-    status: "active",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
-    publicToken: "emp-cesar-adm-9841",
-    totpSecret: "JBSWY3DPEHPK3PXP",
-    createdAt: "2024-01-15T08:00:00Z",
-  },
-  {
-    id: 2,
-    name: "Ing. Alejandro Torres",
-    position: "Ingeniero Principal de Redes & MikroTik",
-    dni: "45981273",
-    phone: "+51 912 345 678",
-    email: "alejandro.redes@turbonetwork.com",
-    workSchedule: "08:30 - 17:30",
-    expectedCheckInTime: "08:30",
-    salary: "3800.00",
-    currency: "$",
-    hireDate: "2024-03-01",
-    birthDate: "1991-09-24",
-    emergencyContact: "+51 988 222 333 (Esposa)",
-    status: "active",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
-    publicToken: "emp-ale-torres-5521",
-    totpSecret: "MZXW6YTBOJUW4ZY=",
-    createdAt: "2024-03-01T08:30:00Z",
-  },
-  {
-    id: 3,
-    name: "Ana Morales",
-    position: "Coordinadora de Cobranzas y Atención al Abonado",
-    dni: "72109845",
-    phone: "+51 945 678 123",
-    email: "ana.caja@turbonetwork.com",
-    workSchedule: "08:00 - 16:30",
-    expectedCheckInTime: "08:00",
-    salary: "2400.00",
-    currency: "$",
-    hireDate: "2024-06-10",
-    birthDate: "1995-11-03",
-    emergencyContact: "+51 977 333 444 (Madre)",
-    status: "active",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
-    publicToken: "emp-ana-morales-3341",
-    totpSecret: "NBSWY3DPEHPK3PXP",
-    createdAt: "2024-06-10T08:00:00Z",
-  },
-  {
-    id: 4,
-    name: "Luis Lopez",
-    position: "Especialista en Infraestructura FTTH & Soporte",
-    dni: "41982734",
-    phone: "+51 933 444 555",
-    email: "cesarestudio2395@gmail.com",
-    workSchedule: "09:00 - 18:00",
-    expectedCheckInTime: "09:00",
-    salary: "3100.00",
-    currency: "$",
-    hireDate: "2024-08-01",
-    birthDate: "1993-04-18",
-    emergencyContact: "+51 966 555 666 (Padre)",
-    status: "active",
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Luis%20Lopez",
-    publicToken: "emp-luis-lopez-7712",
-    totpSecret: "JBSWY3DPEHPK3PXP",
-    createdAt: "2024-08-01T09:00:00Z",
-  },
-];
+const defaultEmployees: Employee[] = [];
 
 function loadEmployeesFromDisk(): Employee[] {
   try {
@@ -322,10 +241,10 @@ function loadEmployeesFromDisk(): Employee[] {
     if (fs.existsSync(EMPLOYEES_FILE)) {
       const raw = fs.readFileSync(EMPLOYEES_FILE, "utf-8");
       const list = JSON.parse(raw);
-      if (Array.isArray(list) && list.length > 0) return list;
+      if (Array.isArray(list)) return list;
     }
-    fs.writeFileSync(EMPLOYEES_FILE, JSON.stringify(defaultEmployees, null, 2), "utf-8");
-    return defaultEmployees;
+    fs.writeFileSync(EMPLOYEES_FILE, JSON.stringify([], null, 2), "utf-8");
+    return [];
   } catch {
     return defaultEmployees;
   }
@@ -976,8 +895,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     const leaves = loadLeavesFromDisk();
     const { peruDate } = getPeruDateTime();
-    const enriched = enrichEmployeeExpediente(employeesStore[idx], leaves, peruDate);
-    const docs: EmployeeDocument[] = Array.isArray(enriched.documents) ? [...enriched.documents] : [];
+    const docs: EmployeeDocument[] = Array.isArray(employeesStore[idx].documents)
+      ? [...employeesStore[idx].documents]
+      : [];
 
     const newDoc: EmployeeDocument = {
       id: `doc-${Date.now()}-${crypto.randomBytes(2).toString("hex")}`,
@@ -1017,10 +937,10 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(404).send({ success: false, message: "Colaborador no encontrado" });
     }
 
-    const leaves = loadLeavesFromDisk();
-    const { peruDate } = getPeruDateTime();
-    const enriched = enrichEmployeeExpediente(employeesStore[idx], leaves, peruDate);
-    const docs: EmployeeDocument[] = (enriched.documents || []).filter((d: EmployeeDocument) => d.id !== docId);
+    const currentDocs: EmployeeDocument[] = Array.isArray(employeesStore[idx].documents)
+      ? employeesStore[idx].documents
+      : [];
+    const docs: EmployeeDocument[] = currentDocs.filter((d: EmployeeDocument) => String(d.id) !== String(docId));
 
     employeesStore[idx] = {
       ...employeesStore[idx],
@@ -1028,6 +948,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       updatedAt: new Date().toISOString(),
     };
     saveEmployeesToDisk(employeesStore);
+    const leaves = loadLeavesFromDisk();
+    const { peruDate } = getPeruDateTime();
 
     return reply.send({
       success: true,
@@ -2970,6 +2892,60 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
+  fastify.post("/rrhh/zkteco/sync-users", async (request, reply) => {
+    const emps = loadEmployeesFromDisk();
+    const activeDevices = Object.keys(zktecoAdmsDevices);
+
+    if (activeDevices.length === 0) {
+      return reply.status(400).send({
+        success: false,
+        message: "No hay terminales ZKTeco conectados actualmente. Verifica que el icono de nube esté en verde en el reloj.",
+      });
+    }
+
+    let enqueued = 0;
+    const syncedEmployees: Array<{ id: number; name: string; pin: string }> = [];
+
+    for (const sn of activeDevices) {
+      if (!zktecoDeviceCommands[sn]) {
+        zktecoDeviceCommands[sn] = [];
+      }
+
+      for (const emp of emps) {
+        if (emp.status && emp.status !== "active") continue;
+        const cmdId = ++zktecoCommandIdSeq;
+        const pin = emp.biometricPin || String(emp.id);
+        const cleanName = (emp.name || `Empleado ${emp.id}`)
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9\s.-]/g, "")
+          .trim()
+          .slice(0, 24);
+
+        const isSuperAdmin =
+          (emp.position || "").toLowerCase().includes("director") ||
+          (emp.position || "").toLowerCase().includes("admin") ||
+          (emp.name || "").toLowerCase().includes("admin");
+        const pri = isSuperAdmin ? 14 : 0;
+
+        const cmd = `C:${cmdId}:DATA UPDATE USERINFO PIN=${pin}\tName=${cleanName}\tPri=${pri}\tPasswd=\tCard=\tGrp=1\tTZ=1`;
+        zktecoDeviceCommands[sn].push(cmd);
+        enqueued++;
+        if (!syncedEmployees.some((e) => e.id === emp.id)) {
+          syncedEmployees.push({ id: emp.id, name: cleanName, pin });
+        }
+      }
+    }
+
+    return reply.send({
+      success: true,
+      devices: activeDevices,
+      totalEnqueued: enqueued,
+      employees: syncedEmployees,
+      message: `¡Comandos generados! Se enviaron ${syncedEmployees.length} colaboradores al terminal ZKTeco. En los próximos segundos se agregarán automáticamente a la memoria del reloj.`,
+    });
+  });
+
   fastify.post("/rrhh/payroll/status", async (request, reply) => {
     const body = (request.body as any) || {};
     const { peruDate } = getPeruDateTime();
@@ -3005,6 +2981,10 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
 
 // Registro en memoria de terminales ZKTeco conectados por ADMS (Servidor de Nube)
+// Cola de comandos pendientes para enviar al reloj ZKTeco
+const zktecoDeviceCommands: Record<string, string[]> = {};
+let zktecoCommandIdSeq = 1000;
+
 const zktecoAdmsDevices: Record<
   string,
   { sn: string; ip: string; lastSeen: string; pushVersion?: string; totalSynced: number }

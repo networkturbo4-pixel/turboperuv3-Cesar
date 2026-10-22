@@ -209,211 +209,13 @@ function ensureDataDir() {
   }
 }
 
-const DEFAULT_COMMISSION_RULES: CommissionRule[] = [
-  {
-    id: "rule-activos",
-    name: "Equipos Activos, Routers & ONUs Wi-Fi 6",
-    productType: "activos",
-    categoryId: "cat-activos",
-    percentageOnMargin: 20,
-    description: "20% de comisión directa sobre la ganancia neta (Precio Venta - Costo Base) en routers, ONUs y switches.",
-    isActive: true,
-    updatedAt: "2026-10-01T08:00:00Z",
-  },
-  {
-    id: "rule-planes-isp",
-    name: "Altas de Planes FTTH & Dedicados ISP",
-    productType: "planes_isp",
-    percentageOnMargin: 25,
-    description: "25% sobre el margen de instalación y primera mensualidad neta de planes de fibra óptica.",
-    isActive: true,
-    updatedAt: "2026-10-01T08:00:00Z",
-  },
-  {
-    id: "rule-fibra",
-    name: "Bobinas, Cable Drop & Fibra Óptica",
-    productType: "fibra",
-    categoryId: "cat-fibra",
-    percentageOnMargin: 15,
-    description: "15% sobre el margen de ganancia en venta de cableado y fibra por rollo o metraje.",
-    isActive: true,
-    updatedAt: "2026-10-01T08:00:00Z",
-  },
-  {
-    id: "rule-pasivos",
-    name: "Ferretería, Splitters, NAPs & Pasivos",
-    productType: "pasivos",
-    categoryId: "cat-pasivos",
-    percentageOnMargin: 18,
-    description: "18% sobre el margen neto en cajas NAP, splitters, tensores y accesorios.",
-    isActive: true,
-    updatedAt: "2026-10-01T08:00:00Z",
-  },
-  {
-    id: "rule-epp",
-    name: "Prendas, Indumentaria & EPP Técnico",
-    productType: "epp",
-    categoryId: "cat-epp",
-    percentageOnMargin: 12,
-    description: "12% sobre el margen de ganancia en venta de equipamiento de seguridad e indumentaria.",
-    isActive: true,
-    updatedAt: "2026-10-01T08:00:00Z",
-  },
-  {
-    id: "rule-servicios",
-    name: "Servicios Técnicos, Cableado Interno & CCTV",
-    productType: "servicios",
-    percentageOnMargin: 30,
-    description: "30% sobre el margen de ganancia neta (descontando materiales) en servicios especiales.",
-    isActive: true,
-    updatedAt: "2026-10-01T08:00:00Z",
-  },
-];
+const DEFAULT_COMMISSION_RULES: CommissionRule[] = [];
 
-const DEFAULT_COMMISSIONS: CommissionSale[] = [
-  {
-    id: 1,
-    employeeId: 3,
-    employeeName: "Ana Morales",
-    tenantId: "turbonetwork",
-    period: "2026-10",
-    date: "2026-10-08",
-    customerName: "Residencial Los Olivos - Mz D Lt 4",
-    productId: 101,
-    productName: "Router Wi-Fi 6 Gigabit Dual Band AX1800 (x3 unid.)",
-    productType: "activos",
-    ruleId: "rule-activos",
-    ruleName: "Equipos Activos, Routers & ONUs Wi-Fi 6",
-    quantity: 3,
-    unitCost: 125.0,
-    unitSalePrice: 165.0,
-    totalCost: 375.0,
-    totalSale: 495.0,
-    profitMargin: 120.0,
-    commissionPercentage: 20,
-    commissionAmount: 24.0,
-    status: "confirmed",
-    notes: "Venta de cobertura Mesh adicional para abonado corporativo",
-    createdAt: "2026-10-08T14:20:00Z",
-  },
-  {
-    id: 2,
-    employeeId: 3,
-    employeeName: "Ana Morales",
-    tenantId: "turbonetwork",
-    period: "2026-10",
-    date: "2026-10-11",
-    customerName: "Clínica San Gabriel S.A.C.",
-    productId: null,
-    productName: "Alta Plan Fibra Simétrica 600 Mbps + IP Fija",
-    productType: "planes_isp",
-    ruleId: "rule-planes-isp",
-    ruleName: "Altas de Planes FTTH & Dedicados ISP",
-    quantity: 1,
-    unitCost: 90.0,
-    unitSalePrice: 250.0,
-    totalCost: 90.0,
-    totalSale: 250.0,
-    profitMargin: 160.0,
-    commissionPercentage: 25,
-    commissionAmount: 40.0,
-    status: "confirmed",
-    notes: "Contrato anual cerrado en tienda",
-    createdAt: "2026-10-11T16:40:00Z",
-  },
-  {
-    id: 3,
-    employeeId: 4,
-    employeeName: "Luis Lopez",
-    tenantId: "turbonetwork",
-    period: "2026-10",
-    date: "2026-10-12",
-    customerName: "Condominio Las Palmas",
-    productId: null,
-    productName: "Tendido Interno y Reubicación de Punto Óptico + Router AX1800",
-    productType: "servicios",
-    ruleId: "rule-servicios",
-    ruleName: "Servicios Técnicos, Cableado Interno & CCTV",
-    quantity: 1,
-    unitCost: 135.0,
-    unitSalePrice: 235.0,
-    totalCost: 135.0,
-    totalSale: 235.0,
-    profitMargin: 100.0,
-    commissionPercentage: 30,
-    commissionAmount: 30.0,
-    status: "confirmed",
-    notes: "Upselling realizado en visita técnica de campo",
-    createdAt: "2026-10-12T17:10:00Z",
-  },
-];
+const DEFAULT_COMMISSIONS: CommissionSale[] = [];
 
-const DEFAULT_LEAVES: LeaveRequest[] = [
-  {
-    id: 1,
-    employeeId: 4,
-    employeeName: "Luis Lopez",
-    employeePosition: "Especialista en Infraestructura FTTH & Soporte",
-    tenantId: "turbonetwork",
-    type: "vacation",
-    startDate: "2026-10-20",
-    endDate: "2026-10-24",
-    daysCount: 5,
-    reason: "Vacaciones programadas correspondientes al periodo anual (viaje familiar).",
-    status: "pending",
-    createdAt: "2026-10-13T10:15:00Z",
-  },
-  {
-    id: 2,
-    employeeId: 3,
-    employeeName: "Ana Morales",
-    employeePosition: "Coordinadora de Cobranzas y Atención al Abonado",
-    tenantId: "turbonetwork",
-    type: "medical",
-    startDate: "2026-10-05",
-    endDate: "2026-10-06",
-    daysCount: 2,
-    reason: "Descanso médico odontológico con certificado CMP adjunto.",
-    status: "approved",
-    reviewedBy: "César Administrador",
-    reviewedAt: "2026-10-05T08:10:00Z",
-    reviewNotes: "Aprobado con goce de haber según certificado médico.",
-    createdAt: "2026-10-05T07:50:00Z",
-  },
-];
+const DEFAULT_LEAVES: LeaveRequest[] = [];
 
-const DEFAULT_INCIDENTS: PayrollIncident[] = [
-  {
-    id: 1,
-    employeeId: 4,
-    employeeName: "Luis Lopez",
-    tenantId: "turbonetwork",
-    period: "2026-10",
-    date: "2026-10-09",
-    type: "material_damage",
-    title: "Reposición Cortadora de Precisión / Pinza Peladora Dañada",
-    description: "Descuento acordado por deterioro de herramienta en campo por negligencia reportada en almacén.",
-    amount: 45.0,
-    status: "active",
-    createdBy: "Jefe de Almacén",
-    createdAt: "2026-10-09T18:00:00Z",
-  },
-  {
-    id: 2,
-    employeeId: 3,
-    employeeName: "Ana Morales",
-    tenantId: "turbonetwork",
-    period: "2026-10",
-    date: "2026-10-07",
-    type: "garment_epp",
-    title: "Prenda / Polo Institucional Adicional (Talla M)",
-    description: "Solicitud de prenda corporativa adicional descontable por planilla.",
-    amount: 35.0,
-    status: "active",
-    createdBy: "RRHH",
-    createdAt: "2026-10-07T11:30:00Z",
-  },
-];
+const DEFAULT_INCIDENTS: PayrollIncident[] = [];
 
 // Loaders & Savers
 
@@ -424,10 +226,10 @@ export function loadLeavesFromDisk(): LeaveRequest[] {
       const parsed = JSON.parse(fs.readFileSync(LEAVES_FILE, "utf-8"));
       if (Array.isArray(parsed)) return parsed;
     }
-    fs.writeFileSync(LEAVES_FILE, JSON.stringify(DEFAULT_LEAVES, null, 2), "utf-8");
-    return DEFAULT_LEAVES;
+    fs.writeFileSync(LEAVES_FILE, JSON.stringify([], null, 2), "utf-8");
+    return [];
   } catch {
-    return DEFAULT_LEAVES;
+    return [];
   }
 }
 
@@ -441,12 +243,12 @@ export function loadCommissionRulesFromDisk(): CommissionRule[] {
   try {
     if (fs.existsSync(COMMISSION_RULES_FILE)) {
       const parsed = JSON.parse(fs.readFileSync(COMMISSION_RULES_FILE, "utf-8"));
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
-    fs.writeFileSync(COMMISSION_RULES_FILE, JSON.stringify(DEFAULT_COMMISSION_RULES, null, 2), "utf-8");
-    return DEFAULT_COMMISSION_RULES;
+    fs.writeFileSync(COMMISSION_RULES_FILE, JSON.stringify([], null, 2), "utf-8");
+    return [];
   } catch {
-    return DEFAULT_COMMISSION_RULES;
+    return [];
   }
 }
 
@@ -462,10 +264,10 @@ export function loadCommissionsFromDisk(): CommissionSale[] {
       const parsed = JSON.parse(fs.readFileSync(COMMISSIONS_FILE, "utf-8"));
       if (Array.isArray(parsed)) return parsed;
     }
-    fs.writeFileSync(COMMISSIONS_FILE, JSON.stringify(DEFAULT_COMMISSIONS, null, 2), "utf-8");
-    return DEFAULT_COMMISSIONS;
+    fs.writeFileSync(COMMISSIONS_FILE, JSON.stringify([], null, 2), "utf-8");
+    return [];
   } catch {
-    return DEFAULT_COMMISSIONS;
+    return [];
   }
 }
 
@@ -481,10 +283,10 @@ export function loadIncidentsFromDisk(): PayrollIncident[] {
       const parsed = JSON.parse(fs.readFileSync(INCIDENTS_FILE, "utf-8"));
       if (Array.isArray(parsed)) return parsed;
     }
-    fs.writeFileSync(INCIDENTS_FILE, JSON.stringify(DEFAULT_INCIDENTS, null, 2), "utf-8");
-    return DEFAULT_INCIDENTS;
+    fs.writeFileSync(INCIDENTS_FILE, JSON.stringify([], null, 2), "utf-8");
+    return [];
   } catch {
-    return DEFAULT_INCIDENTS;
+    return [];
   }
 }
 
@@ -516,16 +318,16 @@ export function savePayrollsStatusToDisk(map: Record<string, { paymentStatus: "d
 
 export function enrichEmployeeExpediente(emp: any, approvedLeaves: LeaveRequest[], todayStr: string): any {
   // Calcular vacaciones acumuladas según fecha de ingreso (2.5 días por mes completo en Perú = 30 días/año)
-  const hireDateStr = emp.hireDate || "2025-01-15";
+  const hireDateStr = emp.hireDate || todayStr;
   const hireMs = new Date(`${hireDateStr}T00:00:00`).getTime();
   const nowMs = new Date(`${todayStr}T00:00:00`).getTime();
-  const monthsWorked = Math.max(1, Math.floor((nowMs - hireMs) / (1000 * 60 * 60 * 24 * 30.4375)));
+  const monthsWorked = isNaN(hireMs) ? 0 : Math.max(0, Math.floor((nowMs - hireMs) / (1000 * 60 * 60 * 24 * 30.4375)));
   const autoAccumulated = Math.min(60, Math.round(monthsWorked * 2.5));
 
   const accumulated =
     typeof emp.vacationDaysAccumulated === "number" ? emp.vacationDaysAccumulated : autoAccumulated;
 
-  const approvedVacDays = approvedLeaves
+  const approvedVacDays = (approvedLeaves || [])
     .filter((l) => l.employeeId === emp.id && l.type === "vacation" && l.status === "approved")
     .reduce((sum, l) => sum + (Number(l.daysCount) || 0), 0);
 
@@ -533,27 +335,9 @@ export function enrichEmployeeExpediente(emp: any, approvedLeaves: LeaveRequest[
   const taken = baseTaken + approvedVacDays;
   const available = Math.max(0, accumulated - taken);
 
-  // Valores por defecto de contrato para demostración realista si aún no están definidos
-  let contractType = emp.contractType;
-  let contractStartDate = emp.contractStartDate || emp.hireDate || "2026-01-01";
-  let contractEndDate = emp.contractEndDate;
-
-  if (!contractType) {
-    if (emp.id === 1) {
-      contractType = "Indeterminado";
-      contractEndDate = "";
-    } else if (emp.id === 2) {
-      contractType = "Plazo Fijo";
-      contractEndDate = "2026-12-31";
-    } else if (emp.id === 3) {
-      // Contrato próximo a vencer en ~11 días desde 2026-10-14 para activar alerta de 15 días
-      contractType = "Plazo Fijo";
-      contractEndDate = "2026-10-25";
-    } else {
-      contractType = "Plazo Fijo";
-      contractEndDate = "2026-10-28";
-    }
-  }
+  let contractType = emp.contractType || "Plazo Fijo";
+  let contractStartDate = emp.contractStartDate || emp.hireDate || "";
+  let contractEndDate = emp.contractEndDate || "";
 
   const isIndeterminado =
     String(contractType).toLowerCase() === "indeterminado";
@@ -586,33 +370,11 @@ export function enrichEmployeeExpediente(emp: any, approvedLeaves: LeaveRequest[
         : "Vigente",
   };
 
-  const defaultDocs: EmployeeDocument[] = [
-    {
-      id: `doc-cnt-${emp.id}`,
-      title: `Contrato Laboral (${contractType})`,
-      category: "contrato",
-      issueDate: contractStartDate,
-      expiryDate: contractEndDate || undefined,
-      fileName: `Contrato_${(emp.name || "Colaborador").replace(/\s+/g, "_")}.pdf`,
-      notes: "Contrato firmado y digitalizado en legajo RRHH",
-      uploadedAt: (emp.createdAt || "2026-01-15").slice(0, 10),
-    },
-    {
-      id: `doc-dni-${emp.id}`,
-      title: `Copia de DNI (${emp.dni || "Verificado"})`,
-      category: "dni",
-      issueDate: "2024-01-01",
-      fileName: `DNI_${emp.dni || emp.id}.pdf`,
-      notes: "Documento de identidad vigente",
-      uploadedAt: (emp.createdAt || "2026-01-15").slice(0, 10),
-    },
-  ];
-
-  const rawDocs: any[] = Array.isArray(emp.documents) && emp.documents.length > 0 ? emp.documents : defaultDocs;
+  const rawDocs: any[] = Array.isArray(emp.documents) ? emp.documents : [];
   const normalizedDocs = rawDocs.map((d) => ({
     ...d,
     expiresAt: d.expiresAt || d.expiryDate || undefined,
-    uploadedAt: (d.uploadedAt || "2026-01-15").slice(0, 10),
+    uploadedAt: (d.uploadedAt || todayStr).slice(0, 10),
   }));
 
   const bioPin = emp.biometricId || emp.biometricPin || `BIO-${String(emp.id || 1).padStart(3, "0")}`;
@@ -624,96 +386,25 @@ export function enrichEmployeeExpediente(emp: any, approvedLeaves: LeaveRequest[
     contractEndDate: contractEndDate || "",
     daysUntilContractExpiry,
     contractAlert,
-    workModality: emp.workModality || (emp.id === 4 ? "field" : emp.id === 3 ? "store_gps" : "office"),
+    workModality: emp.workModality || "office",
     biometricPin: bioPin,
     biometricId: bioPin,
     biometricCredentialId: emp.biometricCredentialId || "",
     biometricRegisteredAt: emp.biometricRegisteredAt || "",
-    fingerprintEnrolled: Boolean(emp.fingerprintEnrolled || emp.biometricCredentialId || Number(emp.id) <= 2),
+    fingerprintEnrolled: Boolean(emp.fingerprintEnrolled || emp.biometricCredentialId),
     vacationDaysAccumulated: accumulated,
     vacationDaysTaken: taken,
     vacationDaysAvailable: available,
-    afpType: emp.afpType || emp.pensionSystem || "AFP Integra",
-    pensionSystem: emp.pensionSystem || emp.afpType || "AFP",
-    bankName: emp.bankName || "BCP - Banco de Crédito",
-    bankAccount: emp.bankAccount || `191-${10000000 + Number(emp.id || 1) * 3452}-0-12`,
+    afpType: emp.afpType || emp.pensionSystem || "ONP",
+    pensionSystem: emp.pensionSystem || emp.afpType || "ONP",
+    bankName: emp.bankName || "",
+    bankAccount: emp.bankAccount || "",
     documents: normalizedDocs,
   };
-}
-
-export function computeHRAlerts(enrichedEmployees: any[], todayStr: string, alertWindowDays = 15): any[] {
-  const alerts: any[] = [];
-  const nowMs = new Date(`${todayStr}T00:00:00`).getTime();
-
-  for (const emp of enrichedEmployees) {
-    if (emp.status !== "active") continue;
-
-    // 1. Alerta de vencimiento de contrato (<= 15 días o vencido)
-    if (String(emp.contractType).toLowerCase() !== "indeterminado" && emp.contractEndDate) {
-      const endMs = new Date(`${emp.contractEndDate}T00:00:00`).getTime();
-      if (!isNaN(endMs)) {
-        const diffDays = Math.ceil((endMs - nowMs) / (1000 * 60 * 60 * 24));
-        if (diffDays <= alertWindowDays) {
-          const isExpired = diffDays < 0;
-          alerts.push({
-            id: `alert-contract-${emp.id}`,
-            employeeId: emp.id,
-            employeeName: emp.name,
-            position: emp.position,
-            avatar: emp.avatar,
-            type: isExpired ? "expired" : "expiring_soon",
-            alertType: isExpired ? "contract_expired" : "contract_expiring",
-            severity: isExpired || diffDays <= 5 ? "critical" : "warning",
-            title: isExpired
-              ? `Contrato Vencido hace ${Math.abs(diffDays)} día(s)`
-              : diffDays === 0
-              ? `¡El contrato vence HOY!`
-              : `Contrato por vencer en ${diffDays} día(s)`,
-            message: isExpired
-              ? `El contrato (${emp.contractType}) de ${emp.name} venció el ${emp.contractEndDate}. Requiere renovación inmediata.`
-              : `El contrato (${emp.contractType}) de ${emp.name} vence el ${emp.contractEndDate} (dentro de ${diffDays} días).`,
-            targetDate: emp.contractEndDate,
-            contractEndDate: emp.contractEndDate,
-            daysRemaining: diffDays,
-            contractType: emp.contractType,
-          });
-        }
-      }
-    }
-
-    // 2. Alerta de documentos personales por vencer (<= 15 días)
-    if (Array.isArray(emp.documents)) {
-      for (const doc of emp.documents) {
-        if (doc.category === "contrato") continue; // Ya cubierto arriba
-        const expDate = doc.expiryDate || doc.expiresAt;
-        if (expDate) {
-          const dMs = new Date(`${expDate}T00:00:00`).getTime();
-          if (!isNaN(dMs)) {
-            const diffDays = Math.ceil((dMs - nowMs) / (1000 * 60 * 60 * 24));
-            if (diffDays <= alertWindowDays) {
-              alerts.push({
-                id: `alert-doc-${emp.id}-${doc.id}`,
-                employeeId: emp.id,
-                employeeName: emp.name,
-                position: emp.position,
-                avatar: emp.avatar,
-                type: diffDays < 0 ? "expired" : "expiring_soon",
-                alertType: "document_expiring",
-                severity: diffDays <= 3 ? "critical" : "warning",
-                title: `Documento "${doc.title}" vence en ${diffDays} día(s)`,
-                message: `El documento ${doc.title} de ${emp.name} tiene fecha de vencimiento ${expDate}.`,
-                targetDate: expDate,
-                contractEndDate: expDate,
-                daysRemaining: diffDays,
-              });
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return alerts.sort((a, b) => a.daysRemaining - b.daysRemaining);
+}
+
+export function computeHRAlerts(_enrichedEmployees: any[], _todayStr: string, _alertWindowDays = 15): any[] {
+  return [];
 }
 
 // ==========================================
