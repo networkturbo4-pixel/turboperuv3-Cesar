@@ -2584,6 +2584,15 @@
   // 12. EVENTOS DEL MAPA SEGÚN HERRAMIENTA ACTIVA
   function handleMapClick(e) {}
 
+  function updateMapCursor() {
+    if (state.map && typeof state.map.getCanvas === 'function') {
+      const canvas = state.map.getCanvas();
+      if (canvas && canvas.style) {
+        canvas.style.cursor = state.activeTool === 'select' ? '' : 'crosshair';
+      }
+    }
+  }
+
   function setupMapEvents() {
     const map = state.map;
 
@@ -3232,7 +3241,7 @@
     const customImageData = document.getElementById('maps-node-custom-image-data')?.value?.trim();
     const lat = parseFloat(document.getElementById('maps-node-lat')?.value);
     const lng = parseFloat(document.getElementById('maps-node-lng')?.value);
-    const capacity = document.getElementById('maps-node-capacity')?.value?.trim();
+    let capacity = document.getElementById('maps-node-capacity')?.value?.trim();
     const address = document.getElementById('maps-node-address')?.value?.trim();
     const notes = document.getElementById('maps-node-notes')?.value?.trim();
 
@@ -6217,6 +6226,7 @@
     loadFreeMapStyle,
     saveInlineMapboxToken,
     calculateProjectBounds,
+    updateMapCursor,
   };
 
   // Compatibilidad global directa para eventos onclick y acceso directo
