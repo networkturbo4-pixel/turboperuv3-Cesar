@@ -4157,9 +4157,14 @@
                   <kbd class="hidden md:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-slate-100 dark:bg-white/10 border border-slate-300 dark:border-white/10 text-slate-500 dark:text-slate-400 flex-shrink-0">Ctrl+M</kbd>
                 </button>
 
-                <!-- Acciones: Exportar GeoJSON + Nuevo Mapa -->
-                <div class="grid grid-cols-2 sm:flex sm:items-center gap-2">
-                  <button type="button" onclick="mapsModule.exportGeoJson()" class="w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-white/10 transition flex items-center space-x-1.5 shadow-2xs cursor-pointer">
+                                <!-- Acciones: Subir KML + Exportar GeoJSON + Nuevo Mapa -->
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                  <button type="button" onclick="mapsModule.openKmlUploadModal()" class="flex-1 sm:flex-none justify-center px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center space-x-1.5 shadow-2xs active:scale-95 cursor-pointer" title="Subir archivo .kml desde Google Earth o QGIS">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span class="truncate">Subir KML</span>
+                  </button>
+
+                  <button type="button" onclick="mapsModule.exportGeoJson()" class="flex-1 sm:flex-none justify-center px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-white/10 transition flex items-center space-x-1.5 shadow-2xs cursor-pointer">
                     <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     <span class="truncate">Exportar GeoJSON</span>
                   </button>
@@ -4982,6 +4987,156 @@
               <!-- Footer -->
               <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-end flex-shrink-0">
                 <button type="button" onclick="mapsModule.closeModal('maps-photos-modal')" class="px-5 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Cerrar</button>
+              </div>
+
+            </div>
+          </div>
+
+          
+          <!-- MODAL: SUBIR E IMPORTAR ARCHIVO KML (GOOGLE EARTH / QGIS) -->
+          <div id="maps-kml-modal" class="hidden fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm" onclick="if(event.target === this) mapsModule.closeKmlModal()">
+            <div class="w-full max-w-xl pro-card rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl p-5 sm:p-6 space-y-4 max-h-[92vh] overflow-y-auto sidebar-scroll" onclick="event.stopPropagation()">
+              
+              <!-- Header -->
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white leading-tight">Subir Archivo KML</h3>
+                    <p class="text-[11.5px] text-slate-500 dark:text-slate-400">Importa postes, cajas NAP, cables de fibra óptica y polígonos de cobertura</p>
+                  </div>
+                </div>
+                <button type="button" onclick="mapsModule.closeKmlModal()" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              <!-- Input invisible para archivo KML -->
+              <input type="file" id="maps-kml-file-input" accept=".kml,text/xml,application/vnd.google-earth.kml+xml" class="hidden" onchange="mapsModule.handleKmlFileSelect(event)">
+
+              <!-- Dropzone Drag & Drop -->
+              <div id="maps-kml-dropzone" 
+                   onclick="mapsModule.triggerKmlFileInput()" 
+                   ondragover="mapsModule.handleKmlDragOver(event)" 
+                   ondragleave="mapsModule.handleKmlDragLeave(event)" 
+                   ondrop="mapsModule.handleKmlDrop(event)"
+                   class="border-2 border-dashed border-slate-300 dark:border-white/20 hover:border-emerald-500 dark:hover:border-emerald-400 bg-slate-50/70 dark:bg-white/[0.02] hover:bg-emerald-50/40 dark:hover:bg-emerald-500/[0.04] rounded-2xl p-6 sm:p-7 text-center cursor-pointer transition-all duration-200 group">
+                <div class="flex flex-col items-center justify-center space-y-2.5">
+                  <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 group-hover:bg-emerald-500/20 transition-all duration-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-white block group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                      Arrastra tu archivo .kml aquí o haz clic para explorar
+                    </span>
+                    <span class="text-[11px] text-slate-400 dark:text-slate-500 block mt-0.5">
+                      Archivos Keyhole Markup Language (.kml) exportados de Google Earth Pro, QGIS o ArcGIS
+                    </span>
+                  </div>
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10.5px] font-mono font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                    Soporta Puntos, Rutas/Cables y Polígonos de Cobertura
+                  </span>
+                </div>
+              </div>
+
+              <!-- Vista previa de archivo cargado (se muestra al elegir archivo) -->
+              <div id="maps-kml-preview-card" class="hidden space-y-3.5 bg-slate-100/70 dark:bg-white/[0.03] p-4 rounded-2xl border border-slate-200/80 dark:border-white/10">
+                <!-- Fila resumen de archivo -->
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 font-bold text-xs">
+                      KML
+                    </div>
+                    <div class="min-w-0">
+                      <p id="maps-kml-file-name" class="text-xs font-bold text-slate-900 dark:text-white truncate">archivo.kml</p>
+                      <p id="maps-kml-file-size" class="text-[10.5px] text-slate-500 dark:text-slate-400">0 KB</p>
+                    </div>
+                  </div>
+                  <button type="button" onclick="mapsModule.triggerKmlFileInput()" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
+                    Cambiar archivo
+                  </button>
+                </div>
+
+                <!-- Grid de contadores de elementos detectados -->
+                <div class="grid grid-cols-3 gap-2 pt-1">
+                  <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 text-center">
+                    <span class="text-[10px] font-bold uppercase text-slate-400 block">Puntos / Nodos</span>
+                    <span id="maps-kml-count-nodes" class="text-base font-extrabold text-blue-600 dark:text-blue-400">0</span>
+                    <span class="text-[9.5px] text-slate-500 block truncate">Postes, NAPs, OLT</span>
+                  </div>
+                  <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 text-center">
+                    <span class="text-[10px] font-bold uppercase text-slate-400 block">Trazados / Líneas</span>
+                    <span id="maps-kml-count-lines" class="text-base font-extrabold text-emerald-600 dark:text-emerald-400">0</span>
+                    <span class="text-[9.5px] text-slate-500 block truncate">Troncal, Distribución</span>
+                  </div>
+                  <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 text-center">
+                    <span class="text-[10px] font-bold uppercase text-slate-400 block">Zonas / Polígonos</span>
+                    <span id="maps-kml-count-areas" class="text-base font-extrabold text-purple-600 dark:text-purple-400">0</span>
+                    <span class="text-[9.5px] text-slate-500 block truncate">Sectores Cobertura</span>
+                  </div>
+                </div>
+
+                <!-- Destino de importación -->
+                <div class="space-y-2 pt-2 border-t border-slate-200/80 dark:border-white/10">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">¿Dónde desea importar estos elementos?</span>
+                  
+                  <!-- Opción 1: Crear nuevo mapa -->
+                  <label class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 cursor-pointer transition hover:border-emerald-500">
+                    <input type="radio" name="maps-kml-target" id="maps-kml-opt-new" value="new" checked onchange="mapsModule.toggleKmlTargetInputs()" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+                    <div class="flex-1 text-xs">
+                      <span class="font-bold text-slate-900 dark:text-white block">Crear un Nuevo Proyecto / Mapa</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px]">Genera un mapa aislado independiente con estos elementos</span>
+                      <div id="maps-kml-new-map-fields" class="mt-2 space-y-2">
+                        <input type="text" id="maps-kml-new-name" placeholder="Nombre del nuevo mapa (ej: Mapa Red Carabayllo)" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        <input type="text" id="maps-kml-new-district" placeholder="Distrito / Sector (opcional)" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                      </div>
+                    </div>
+                  </label>
+
+                  <!-- Opción 2: Añadir al mapa actual -->
+                  <label class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 cursor-pointer transition hover:border-emerald-500">
+                    <input type="radio" name="maps-kml-target" id="maps-kml-opt-current" value="current" onchange="mapsModule.toggleKmlTargetInputs()" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+                    <div class="flex-1 text-xs">
+                      <span class="font-bold text-slate-900 dark:text-white block">Fusionar en Mapa Existente</span>
+                      <span id="maps-kml-current-map-label" class="text-slate-500 dark:text-slate-400 text-[11px]">Incorporar en el mapa seleccionado</span>
+                      <div id="maps-kml-current-map-fields" class="hidden mt-2 space-y-2">
+                        <select id="maps-kml-target-select" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                          <!-- Opciones de mapas existentes -->
+                        </select>
+                        <div class="flex items-center space-x-4 pt-1">
+                          <label class="flex items-center space-x-1.5 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer">
+                            <input type="radio" name="maps-kml-mode" id="maps-kml-mode-append" value="append" checked class="text-emerald-600">
+                            <span>Añadir (Conservar existentes)</span>
+                          </label>
+                          <label class="flex items-center space-x-1.5 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer">
+                            <input type="radio" name="maps-kml-mode" id="maps-kml-mode-replace" value="replace" class="text-rose-600">
+                            <span class="text-rose-600 dark:text-rose-400">Reemplazar mapa</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Footer de Acciones -->
+              <div class="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/10">
+                <span id="maps-kml-status-text" class="text-xs text-slate-500">Seleccione un archivo KML para comenzar.</span>
+                <div class="flex items-center space-x-2">
+                  <button type="button" onclick="mapsModule.closeKmlModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">
+                    Cancelar
+                  </button>
+                  <button type="button" id="maps-kml-submit-btn" disabled onclick="mapsModule.submitKmlImport()" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition flex items-center space-x-1.5 cursor-pointer">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span>Importar KML</span>
+                  </button>
+                </div>
               </div>
 
             </div>

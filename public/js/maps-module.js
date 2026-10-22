@@ -1308,6 +1308,309 @@
     }
   }
 
+
+  // =========================================================================
+  // GESTIÓN DE SUBIDA E IMPORTACIÓN DE ARCHIVOS KML (Google Earth & QGIS)
+  // =========================================================================
+  function openKmlUploadModal(targetMapId) {
+    state.pendingKml = null;
+
+    const modal = document.getElementById('maps-kml-modal');
+    if (!modal) return;
+
+    // Reset input y cards
+    const fileInput = document.getElementById('maps-kml-file-input');
+    if (fileInput) fileInput.value = '';
+
+    const dropzone = document.getElementById('maps-kml-dropzone');
+    if (dropzone) dropzone.classList.remove('hidden');
+
+    const previewCard = document.getElementById('maps-kml-preview-card');
+    if (previewCard) previewCard.classList.add('hidden');
+
+    const submitBtn = document.getElementById('maps-kml-submit-btn');
+    if (submitBtn) {
+      submitBtn.setAttribute('disabled', 'true');
+      submitBtn.innerHTML = `
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        <span>Importar KML</span>
+      `;
+    }
+
+    const statusText = document.getElementById('maps-kml-status-text');
+    if (statusText) statusText.textContent = 'Seleccione o arrastre un archivo .kml para comenzar.';
+
+    // Poblar selector de mapas existentes
+    const targetSelect = document.getElementById('maps-kml-target-select');
+    if (targetSelect) {
+      targetSelect.innerHTML = '';
+      (state.projects || []).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.name} (${p.district || 'General'})`;
+        targetSelect.appendChild(opt);
+      });
+      if (targetMapId) {
+        targetSelect.value = targetMapId;
+      } else if (state.activeMapId) {
+        targetSelect.value = state.activeMapId;
+      }
+    }
+
+    // Configurar destino predeterminado según modo actual
+    const optNew = document.getElementById('maps-kml-opt-new');
+    const optCurrent = document.getElementById('maps-kml-opt-current');
+    const currentMapLabel = document.getElementById('maps-kml-current-map-label');
+
+    const activeMap = getActiveMap();
+    if (currentMapLabel && activeMap) {
+      currentMapLabel.textContent = `Añadir a: ${activeMap.name}`;
+    }
+
+    if (state.activeMode === 'map' && optCurrent) {
+      optCurrent.checked = true;
+    } else if (optNew) {
+      optNew.checked = true;
+    }
+
+    toggleKmlTargetInputs();
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeKmlModal() {
+    const modal = document.getElementById('maps-kml-modal');
+    if (modal) modal.classList.add('hidden');
+    state.pendingKml = null;
+  }
+
+  function triggerKmlFileInput() {
+    const fileInput = document.getElementById('maps-kml-file-input');
+    if (fileInput) fileInput.click();
+  }
+
+  function handleKmlDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropzone = document.getElementById('maps-kml-dropzone');
+    if (dropzone) {
+      dropzone.classList.add('border-emerald-500', 'bg-emerald-500/10', 'scale-[1.01]');
+    }
+  }
+
+  function handleKmlDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropzone = document.getElementById('maps-kml-dropzone');
+    if (dropzone) {
+      dropzone.classList.remove('border-emerald-500', 'bg-emerald-500/10', 'scale-[1.01]');
+    }
+  }
+
+  function handleKmlDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleKmlDragLeave(e);
+
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processKmlFile(e.dataTransfer.files[0]);
+    }
+  }
+
+  function handleKmlFileSelect(e) {
+    if (e.target && e.target.files && e.target.files.length > 0) {
+      processKmlFile(e.target.files[0]);
+    }
+  }
+
+  async function processKmlFile(file) {
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.kml') && !file.type.includes('xml') && !file.type.includes('kml')) {
+      showToast('Por favor seleccione un archivo con extensión .kml', 'warning');
+    }
+
+    if (file.size > 35 * 1024 * 1024) {
+      showToast('El archivo supera el límite de 35 MB.', 'error');
+      return;
+    }
+
+    const statusText = document.getElementById('maps-kml-status-text');
+    if (statusText) statusText.textContent = 'Leyendo y analizando archivo KML...';
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target.result;
+      if (!text || typeof text !== 'string') {
+        showToast('No se pudo leer el contenido del archivo KML.', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/maps/preview-kml?tenantId=${encodeURIComponent(state.tenantId)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kmlContent: text }),
+        });
+        const preview = await res.json();
+
+        if (!preview.success) {
+          showToast(preview.message || 'Error al procesar archivo KML.', 'error');
+          if (statusText) statusText.textContent = 'Error al analizar archivo KML.';
+          return;
+        }
+
+        state.pendingKml = {
+          file,
+          text,
+          preview,
+        };
+
+        // Actualizar UI
+        const nameEl = document.getElementById('maps-kml-file-name');
+        if (nameEl) nameEl.textContent = file.name;
+
+        const sizeEl = document.getElementById('maps-kml-file-size');
+        if (sizeEl) sizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+
+        const countNodes = document.getElementById('maps-kml-count-nodes');
+        if (countNodes) countNodes.textContent = preview.counts.nodes;
+
+        const countLines = document.getElementById('maps-kml-count-lines');
+        if (countLines) countLines.textContent = preview.counts.lines;
+
+        const countAreas = document.getElementById('maps-kml-count-areas');
+        if (countAreas) countAreas.textContent = preview.counts.areas;
+
+        // Sugerir nombre para nuevo mapa
+        const newNameInput = document.getElementById('maps-kml-new-name');
+        if (newNameInput) {
+          newNameInput.value = preview.docName || file.name.replace(/\.kml$/i, '');
+        }
+
+        // Mostrar vista previa y ocultar dropzone
+        const dropzone = document.getElementById('maps-kml-dropzone');
+        if (dropzone) dropzone.classList.add('hidden');
+
+        const previewCard = document.getElementById('maps-kml-preview-card');
+        if (previewCard) previewCard.classList.remove('hidden');
+
+        // Habilitar botón de importación
+        const submitBtn = document.getElementById('maps-kml-submit-btn');
+        if (submitBtn) submitBtn.removeAttribute('disabled');
+
+        if (statusText) {
+          statusText.textContent = `Archivo analizado: ${preview.counts.total} elementos listos para importar.`;
+        }
+      } catch (err) {
+        console.error('[MAPS] Error en preview KML:', err);
+        showToast('Error al conectar con el servidor para analizar el KML.', 'error');
+        if (statusText) statusText.textContent = 'Error al conectar con el servidor.';
+      }
+    };
+
+    reader.onerror = () => {
+      showToast('Error al leer el archivo desde el dispositivo.', 'error');
+    };
+
+    reader.readAsText(file, 'utf-8');
+  }
+
+  function toggleKmlTargetInputs() {
+    const isNew = document.getElementById('maps-kml-opt-new')?.checked;
+    const newFields = document.getElementById('maps-kml-new-map-fields');
+    const currentFields = document.getElementById('maps-kml-current-map-fields');
+
+    if (newFields) {
+      if (isNew) newFields.classList.remove('hidden');
+      else newFields.classList.add('hidden');
+    }
+
+    if (currentFields) {
+      if (!isNew) currentFields.classList.remove('hidden');
+      else currentFields.classList.add('hidden');
+    }
+  }
+
+  async function submitKmlImport() {
+    if (!state.pendingKml || !state.pendingKml.text) {
+      showToast('Por favor seleccione un archivo KML válido.', 'warning');
+      return;
+    }
+
+    const createNewMap = document.getElementById('maps-kml-opt-new')?.checked || false;
+    const newMapName = document.getElementById('maps-kml-new-name')?.value?.trim() || '';
+    const district = document.getElementById('maps-kml-new-district')?.value?.trim() || '';
+    const targetMapId = document.getElementById('maps-kml-target-select')?.value || '';
+    const mode = document.getElementById('maps-kml-mode-replace')?.checked ? 'replace' : 'append';
+
+    const submitBtn = document.getElementById('maps-kml-submit-btn');
+    const statusText = document.getElementById('maps-kml-status-text');
+
+    if (submitBtn) {
+      submitBtn.setAttribute('disabled', 'true');
+      submitBtn.innerHTML = `
+        <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin flex-shrink-0"></span>
+        <span>Importando...</span>
+      `;
+    }
+    if (statusText) statusText.textContent = 'Importando elementos hacia la base de datos GIS...';
+
+    try {
+      const res = await fetch(`/api/maps/import-kml?tenantId=${encodeURIComponent(state.tenantId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kmlContent: state.pendingKml.text,
+          createNewMap,
+          newMapName,
+          district,
+          targetMapId,
+          mode,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!json.success) {
+        showToast(json.message || 'Error al importar archivo KML.', 'error');
+        if (submitBtn) {
+          submitBtn.removeAttribute('disabled');
+          submitBtn.innerHTML = `<span>Importar KML</span>`;
+        }
+        if (statusText) statusText.textContent = 'Error en la importación.';
+        return;
+      }
+
+      showToast(`¡KML importado con éxito! (${json.importedCounts?.nodes || 0} nodos, ${json.importedCounts?.lines || 0} líneas, ${json.importedCounts?.areas || 0} áreas)`, 'success');
+      closeKmlModal();
+
+      // Recargar módulo y entrar directamente al mapa importado
+      await loadMapsModule();
+      if (json.activeMapId) {
+        await enterMapMode(json.activeMapId);
+
+        // Si tenemos bounding box, ajustar la cámara del mapa
+        if (json.bounds && state.map) {
+          setTimeout(() => {
+            try {
+              state.map.fitBounds(json.bounds, { padding: 65, maxZoom: 16.5, duration: 1500 });
+            } catch (e) {
+              console.warn('[MAPS] fitBounds error:', e);
+            }
+          }, 350);
+        }
+      }
+    } catch (err) {
+      console.error('[MAPS] Error en submitKmlImport:', err);
+      showToast('Error de red al enviar el archivo KML.', 'error');
+      if (submitBtn) {
+        submitBtn.removeAttribute('disabled');
+        submitBtn.innerHTML = `<span>Importar KML</span>`;
+      }
+    }
+  }
+
   // 5. ENTRAR AL MODO MAPA EXPANDIDO (AISLADO POR PROYECTO)
   async function enterMapMode(mapId, openLibrary = false) {
     if (mapId) {

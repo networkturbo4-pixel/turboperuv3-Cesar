@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { getTenantFilePath } from "../tenants/tenants.service";
-import { MapTenantData, MapNode, MapLine, MapArea, MapStats, MapProject, MapProjectStats } from "./maps.types";
+import { MapTenantData, MapNode, MapLine, MapArea, MapStats, MapProject, MapProjectStats, NodeType, LineType } from "./maps.types";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 
@@ -793,4 +793,501 @@ export function getTenantCustomersWithCoordinates(tenantId: string): any[] {
   }
 
   return [];
+}
+
+
+// =========================================================================
+// MÓDULO DE IMPORTACIÓN Y PARSEO DE ARCHIVOS KML (Google Earth & QGIS)
+// =========================================================================
+
+export interface KmlStyleInfo {
+  lineColor?: string;
+  lineWidth?: number;
+  polyColor?: string;
+  polyOpacity?: number;
+  iconColor?: string;
+}
+
+export interface KmlParseResult {
+  docName: string;
+  nodes: MapNode[];
+  lines: MapLine[];
+  areas: MapArea[];
+  center: [number, number];
+  zoom: number;
+  bounds?: [[number, number], [number, number]];
+  counts: {
+    nodes: number;
+    lines: number;
+    areas: number;
+    total: number;
+  };
+}
+
+export interface KmlImportOptions {
+  kmlContent: string;
+  targetMapId?: string;
+  createNewMap?: boolean;
+  newMapName?: string;
+  mode?: "append" | "replace";
+  district?: string;
+  color?: string;
+}
+
+function cleanKmlText(text?: string): string {
+  if (!text) return "";
+  return text
+    .replace(/<!\[CDATA\[(.*?)\]\]>/gs, "$1")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseKmlColor(colorStr?: string): { hex: string; opacity?: number } {
+  if (!colorStr) return { hex: "#2563eb", opacity: 0.8 };
+  const clean = colorStr.trim().replace(/^#/, "");
+  if (clean.length === 8) {
+    const a = parseInt(clean.substring(0, 2), 16) / 255;
+    const b = clean.substring(2, 4);
+    const g = clean.substring(4, 6);
+    const r = clean.substring(6, 8);
+    return {
+      hex: `#${r}${g}${b}`.toLowerCase(),
+      opacity: Number(Math.max(0.05, Math.min(1, a)).toFixed(2)),
+    };
+  } else if (clean.length === 6) {
+    return { hex: `#${clean}`.toLowerCase(), opacity: 1 };
+  }
+  return { hex: "#2563eb", opacity: 0.8 };
+}
+
+function inferNodeType(name: string, description: string): { type: NodeType; icon: string; defaultColor: string } {
+  const text = `${name} ${description}`.toLowerCase();
+  if (/mufa|nap|caja|splitter|cto|fdb|fat|empalme|roseta/.test(text)) {
+    return { type: "nap", icon: "box", defaultColor: "#2563eb" };
+  }
+  if (/torre|tower|mastil|torreta|sitio/.test(text)) {
+    return { type: "tower", icon: "tower", defaultColor: "#059669" };
+  }
+  if (/olt|gpon|epon|dslam|central/.test(text)) {
+    return { type: "olt", icon: "server", defaultColor: "#7c3aed" };
+  }
+  if (/switch|sw|distribucion|hub/.test(text)) {
+    return { type: "switch", icon: "server", defaultColor: "#0891b2" };
+  }
+  if (/antena|antenna|ap|sector|cpe|radio|wireless|enlace|dish|litebeam|powerbeam|mimosa/.test(text)) {
+    return { type: "antenna", icon: "antenna", defaultColor: "#ea580c" };
+  }
+  if (/cliente|abonado|subscriber|user|casa|abonad|ont|onu/.test(text)) {
+    return { type: "customer", icon: "customer", defaultColor: "#10b981" };
+  }
+  if (/poste|post|pole|cruceta|camara/.test(text)) {
+    return { type: "pole", icon: "pole", defaultColor: "#eab308" };
+  }
+  if (/servidor|server|datacenter|rack|core|noc/.test(text)) {
+    return { type: "server", icon: "server", defaultColor: "#dc2626" };
+  }
+  return { type: "custom", icon: "custom", defaultColor: "#3b82f6" };
+}
+
+function inferLineType(name: string, description: string): { type: LineType; defaultColor: string; defaultWidth: number } {
+  const text = `${name} ${description}`.toLowerCase();
+  if (/troncal|feeder|backbone|core|principal|24fo|48fo|96fo|144fo/.test(text)) {
+    return { type: "trunk", defaultColor: "#059669", defaultWidth: 4 };
+  }
+  if (/drop|bajada|acometida|1fo|2fo|cliente/.test(text)) {
+    return { type: "drop", defaultColor: "#3b82f6", defaultWidth: 2 };
+  }
+  if (/ptp|radio|wireless|enlace|microondas|airmax/.test(text)) {
+    return { type: "wireless_ptp", defaultColor: "#ea580c", defaultWidth: 3 };
+  }
+  if (/cobre|utp|copper|coaxial/.test(text)) {
+    return { type: "copper", defaultColor: "#eab308", defaultWidth: 2 };
+  }
+  return { type: "distribution", defaultColor: "#10b981", defaultWidth: 3 };
+}
+
+function parseCoordinatesString(coordString: string): [number, number][] {
+  const result: [number, number][] = [];
+  const normalized = coordString.replace(/,\s+/g, ",");
+  const tokens = normalized.trim().split(/\s+/);
+  for (const token of tokens) {
+    if (!token) continue;
+    const parts = token.split(",");
+    if (parts.length >= 2) {
+      const lng = parseFloat(parts[0]);
+      const lat = parseFloat(parts[1]);
+      if (!isNaN(lng) && !isNaN(lat) && isFinite(lng) && isFinite(lat)) {
+        if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
+          result.push([Number(lng.toFixed(6)), Number(lat.toFixed(6))]);
+        }
+      }
+    }
+  }
+  return result;
+}
+
+export function parseKmlContent(kmlContent: string): KmlParseResult {
+  if (!kmlContent || typeof kmlContent !== "string") {
+    throw new Error("El contenido del archivo KML está vacío o no es válido.");
+  }
+
+  // Quitar prefijos de namespace XML (ej: <kml:Placemark> -> <Placemark>)
+  const cleanXml = kmlContent.replace(/<(\/)?([a-zA-Z0-9_-]+:)/g, "<$1");
+
+  // 1. Extraer nombre general del Documento o Proyecto
+  let docName = "Mapa Importado KML";
+  const docNameMatch = cleanXml.match(/<Document[\s\S]*?<name>([\s\S]*?)<\/name>/i) || cleanXml.match(/<name>([\s\S]*?)<\/name>/i);
+  if (docNameMatch && docNameMatch[1]) {
+    const extracted = cleanKmlText(docNameMatch[1]);
+    if (extracted && extracted.length > 1) docName = extracted;
+  }
+
+  // 2. Extraer mapa de Estilos (<Style id="...">)
+  const stylesMap = new Map<string, KmlStyleInfo>();
+  const styleBlocks = cleanXml.match(/<Style\s+id="([^"]+)"[\s\S]*?<\/Style>/gi) || [];
+  for (const block of styleBlocks) {
+    const idMatch = block.match(/<Style\s+id="([^"]+)"/i);
+    if (!idMatch) continue;
+    const styleId = idMatch[1];
+    const info: KmlStyleInfo = {};
+
+    const lineColMatch = block.match(/<LineStyle[\s\S]*?<color>([a-fA-F0-9]+)<\/color>/i);
+    const lineWidMatch = block.match(/<LineStyle[\s\S]*?<width>([0-9.]+)<\/width>/i);
+    if (lineColMatch) {
+      const c = parseKmlColor(lineColMatch[1]);
+      info.lineColor = c.hex;
+    }
+    if (lineWidMatch) {
+      const w = parseFloat(lineWidMatch[1]);
+      if (!isNaN(w) && w > 0) info.lineWidth = Math.min(8, Math.max(1, Math.round(w)));
+    }
+
+    const polyColMatch = block.match(/<PolyStyle[\s\S]*?<color>([a-fA-F0-9]+)<\/color>/i);
+    if (polyColMatch) {
+      const c = parseKmlColor(polyColMatch[1]);
+      info.polyColor = c.hex;
+      info.polyOpacity = c.opacity;
+    }
+
+    const iconColMatch = block.match(/<IconStyle[\s\S]*?<color>([a-fA-F0-9]+)<\/color>/i);
+    if (iconColMatch) {
+      const c = parseKmlColor(iconColMatch[1]);
+      info.iconColor = c.hex;
+    }
+
+    stylesMap.set(styleId, info);
+  }
+
+  // También mapear <StyleMap> a su estilo normal si existe
+  const styleMaps = cleanXml.match(/<StyleMap\s+id="([^"]+)"[\s\S]*?<\/StyleMap>/gi) || [];
+  for (const sm of styleMaps) {
+    const idMatch = sm.match(/<StyleMap\s+id="([^"]+)"/i);
+    const targetMatch = sm.match(/<Pair>[\s\S]*?<key>normal<\/key>[\s\S]*?<styleUrl>#?([^<]+)<\/styleUrl>[\s\S]*?<\/Pair>/i) ||
+      sm.match(/<styleUrl>#?([^<]+)<\/styleUrl>/i);
+    if (idMatch && targetMatch) {
+      const targetStyle = stylesMap.get(targetMatch[1].trim());
+      if (targetStyle) {
+        stylesMap.set(idMatch[1], targetStyle);
+      }
+    }
+  }
+
+  const nodes: MapNode[] = [];
+  const lines: MapLine[] = [];
+  const areas: MapArea[] = [];
+
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+
+  function updateBounds(coords: [number, number][]) {
+    for (const [lng, lat] of coords) {
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+    }
+  }
+
+  // 3. Extraer todos los Placemarks
+  const placemarks = cleanXml.match(/<Placemark\b[\s\S]*?<\/Placemark>/gi) || [];
+  const now = new Date().toISOString();
+  let counter = 1;
+
+  for (const pm of placemarks) {
+    // Nombre
+    const nMatch = pm.match(/<name>([\s\S]*?)<\/name>/i);
+    const name = nMatch ? cleanKmlText(nMatch[1]) : `Elemento KML ${counter}`;
+
+    // Descripción
+    const dMatch = pm.match(/<description>([\s\S]*?)<\/description>/i);
+    let description = dMatch ? cleanKmlText(dMatch[1]) : "";
+
+    // ExtendedData
+    const extDataMatches = pm.matchAll(/<(?:Data|SimpleData)\s+name="([^"]+)">[\s\S]*?(?:<value>)?([\s\S]*?)(?:<\/value>)?<\/(?:Data|SimpleData)>/gi);
+    const extPairs: string[] = [];
+    for (const m of extDataMatches) {
+      const key = cleanKmlText(m[1]);
+      const val = cleanKmlText(m[2]);
+      if (key && val) extPairs.push(`${key}: ${val}`);
+    }
+    if (extPairs.length > 0) {
+      description = description ? `${description} | ${extPairs.join(" • ")}` : extPairs.join(" • ");
+    }
+
+    // Estilo referenciado
+    const sMatch = pm.match(/<styleUrl>#?([^<]+)<\/styleUrl>/i);
+    const styleId = sMatch ? sMatch[1].trim() : "";
+    const styleInfo = stylesMap.get(styleId) || {};
+
+    // A. Detectar Puntos (<Point>)
+    const pointMatches = pm.match(/<Point\b[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>[\s\S]*?<\/Point>/gi) || [];
+    for (const pBlock of pointMatches) {
+      const coordMatch = pBlock.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);
+      if (coordMatch) {
+        const coords = parseCoordinatesString(coordMatch[1]);
+        if (coords.length > 0) {
+          const [lng, lat] = coords[0];
+          updateBounds([[lng, lat]]);
+          const inferred = inferNodeType(name, description);
+          const color = styleInfo.iconColor || inferred.defaultColor;
+
+          nodes.push({
+            id: `kml_node_${Date.now()}_${counter++}_${Math.random().toString(36).substr(2, 4)}`,
+            name,
+            type: inferred.type,
+            icon: inferred.icon,
+            color,
+            lat,
+            lng,
+            notes: description,
+            address: "",
+            capacity: "",
+            status: "active",
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      }
+    }
+
+    // B. Detectar Líneas (<LineString>)
+    const lineMatches = pm.match(/<LineString\b[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>[\s\S]*?<\/LineString>/gi) || [];
+    for (const lBlock of lineMatches) {
+      const coordMatch = lBlock.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);
+      if (coordMatch) {
+        const coords = parseCoordinatesString(coordMatch[1]);
+        if (coords.length >= 2) {
+          updateBounds(coords);
+          const inferred = inferLineType(name, description);
+          let totalDist = 0;
+          for (let i = 0; i < coords.length - 1; i++) {
+            totalDist += calculateHaversineDistance(coords[i], coords[i + 1]);
+          }
+
+          lines.push({
+            id: `kml_line_${Date.now()}_${counter++}_${Math.random().toString(36).substr(2, 4)}`,
+            name,
+            type: inferred.type,
+            coordinates: coords,
+            color: styleInfo.lineColor || inferred.defaultColor,
+            width: styleInfo.lineWidth || inferred.defaultWidth,
+            style: "solid",
+            distanceMeters: Math.round(totalDist),
+            status: "active",
+            notes: description,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      }
+    }
+
+    // C. Detectar Polígonos (<Polygon>)
+    const polyMatches = pm.match(/<Polygon\b[\s\S]*?<\/Polygon>/gi) || [];
+    for (const pyBlock of polyMatches) {
+      const coordMatch = pyBlock.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);
+      if (coordMatch) {
+        const coords = parseCoordinatesString(coordMatch[1]);
+        if (coords.length >= 3) {
+          updateBounds(coords);
+          const surface = calculatePolygonAreaKm2(coords);
+          const fillColor = styleInfo.polyColor || "#3b82f6";
+          const strokeColor = styleInfo.lineColor || "#1d4ed8";
+          const fillOpacity = typeof styleInfo.polyOpacity === "number" ? styleInfo.polyOpacity : 0.22;
+
+          areas.push({
+            id: `kml_area_${Date.now()}_${counter++}_${Math.random().toString(36).substr(2, 4)}`,
+            name,
+            coordinates: coords,
+            fillColor,
+            strokeColor,
+            fillOpacity,
+            surfaceAreaKm2: surface,
+            status: "active",
+            notes: description,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      }
+    }
+  }
+
+  // Calcular centro y zoom
+  let center: [number, number] = [-77.0345, -11.8755];
+  let zoom = 14.5;
+  let bounds: [[number, number], [number, number]] | undefined;
+
+  if (minLng !== Infinity && maxLng !== -Infinity && minLat !== Infinity && maxLat !== -Infinity) {
+    center = [
+      Number(((minLng + maxLng) / 2).toFixed(6)),
+      Number(((minLat + maxLat) / 2).toFixed(6)),
+    ];
+    bounds = [
+      [minLng, minLat],
+      [maxLng, maxLat],
+    ];
+
+    const maxSpan = Math.max(maxLng - minLng, maxLat - minLat);
+    if (maxSpan > 2.0) zoom = 9;
+    else if (maxSpan > 0.8) zoom = 11;
+    else if (maxSpan > 0.3) zoom = 12;
+    else if (maxSpan > 0.08) zoom = 13.5;
+    else if (maxSpan > 0.02) zoom = 15;
+    else zoom = 16.5;
+  }
+
+  return {
+    docName,
+    nodes,
+    lines,
+    areas,
+    center,
+    zoom,
+    bounds,
+    counts: {
+      nodes: nodes.length,
+      lines: lines.length,
+      areas: areas.length,
+      total: nodes.length + lines.length + areas.length,
+    },
+  };
+}
+
+// Previsualizar datos de un archivo KML sin guardar
+export function previewKmlData(kmlContent: string): {
+  success: boolean;
+  docName: string;
+  counts: { nodes: number; lines: number; areas: number; total: number };
+  center: [number, number];
+  zoom: number;
+  bounds?: [[number, number], [number, number]];
+  sampleNodes: Array<{ name: string; type: string; color: string; lat: number; lng: number }>;
+  sampleLines: Array<{ name: string; type: string; color: string; distanceMeters: number }>;
+  sampleAreas: Array<{ name: string; surfaceAreaKm2?: number; fillColor: string }>;
+} {
+  const parsed = parseKmlContent(kmlContent);
+  return {
+    success: true,
+    docName: parsed.docName,
+    counts: parsed.counts,
+    center: parsed.center,
+    zoom: parsed.zoom,
+    bounds: parsed.bounds,
+    sampleNodes: parsed.nodes.slice(0, 5).map((n) => ({ name: n.name, type: n.type, color: n.color, lat: n.lat, lng: n.lng })),
+    sampleLines: parsed.lines.slice(0, 5).map((l) => ({ name: l.name, type: l.type, color: l.color, distanceMeters: l.distanceMeters })),
+    sampleAreas: parsed.areas.slice(0, 5).map((a) => ({ name: a.name, surfaceAreaKm2: a.surfaceAreaKm2, fillColor: a.fillColor })),
+  };
+}
+
+// Importar datos de un archivo KML hacia el mapa del tenant
+export function importKmlData(
+  tenantId: string,
+  options: KmlImportOptions
+): {
+  success: boolean;
+  message: string;
+  project: MapProject;
+  activeMapId: string;
+  importedCounts: { nodes: number; lines: number; areas: number; total: number };
+  bounds?: [[number, number], [number, number]];
+  data: MapTenantData;
+  stats: MapStats;
+} {
+  const current = loadMapData(tenantId);
+  const parsed = parseKmlContent(options.kmlContent);
+
+  if (parsed.counts.total === 0) {
+    throw new Error("No se encontraron puntos, líneas ni polígonos válidos en el archivo KML.");
+  }
+
+  const now = new Date().toISOString();
+  let targetProject: MapProject;
+
+  if (options.createNewMap || current.maps.length === 0) {
+    const id = `map_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    targetProject = {
+      id,
+      name: (options.newMapName || parsed.docName || "Mapa Importado KML").trim(),
+      district: (options.district || "").trim(),
+      description: `Importado desde archivo KML (${parsed.counts.nodes} nodos, ${parsed.counts.lines} líneas, ${parsed.counts.areas} áreas).`,
+      color: options.color || "#059669",
+      center: parsed.center,
+      zoom: parsed.zoom,
+      style: "mapbox://styles/mapbox/satellite-streets-v12",
+      nodes: parsed.nodes,
+      lines: parsed.lines,
+      areas: parsed.areas,
+      createdAt: now,
+      updatedAt: now,
+    };
+    current.maps.push(targetProject);
+    current.activeMapId = targetProject.id;
+  } else {
+    const findId = options.targetMapId || current.activeMapId;
+    targetProject = current.maps.find((m) => m.id === findId) || current.maps[0];
+    current.activeMapId = targetProject.id;
+
+    if (options.mode === "replace") {
+      targetProject.nodes = parsed.nodes;
+      targetProject.lines = parsed.lines;
+      targetProject.areas = parsed.areas;
+      targetProject.center = parsed.center;
+      targetProject.zoom = parsed.zoom;
+    } else {
+      // mode === 'append' (predeterminado)
+      targetProject.nodes.push(...parsed.nodes);
+      targetProject.lines.push(...parsed.lines);
+      targetProject.areas.push(...parsed.areas);
+      // Si el mapa estaba vacío de coordenadas, re-centrar
+      if (targetProject.nodes.length === parsed.nodes.length && targetProject.lines.length === parsed.lines.length) {
+        targetProject.center = parsed.center;
+        targetProject.zoom = parsed.zoom;
+      }
+    }
+    targetProject.updatedAt = now;
+  }
+
+  syncActiveMapFields(current);
+  saveMapData(current, tenantId);
+  const stats = calculateMapStats(current);
+
+  return {
+    success: true,
+    message: `Archivo KML importado exitosamente (${parsed.counts.nodes} nodos, ${parsed.counts.lines} líneas, ${parsed.counts.areas} áreas).`,
+    project: targetProject,
+    activeMapId: current.activeMapId,
+    importedCounts: parsed.counts,
+    bounds: parsed.bounds,
+    data: current,
+    stats,
+  };
 }

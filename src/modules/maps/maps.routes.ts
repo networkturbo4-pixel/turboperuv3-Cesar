@@ -12,6 +12,8 @@ import {
   deleteMapProject,
   setActiveMapProject,
   syncActiveMapFields,
+  previewKmlData,
+  importKmlData,
 } from "./maps.service";
 import { MapNode, MapLine, MapArea } from "./maps.types";
 
@@ -705,6 +707,61 @@ export const mapsRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(500).send({
         success: false,
         message: `Error al conectar con los servidores de Mapbox: ${err.message}`,
+      });
+    }
+  });
+  // 14. Previsualizar archivo KML antes de importar
+  fastify.post("/maps/preview-kml", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const kmlContent = (body.kmlContent || "").trim();
+
+    if (!kmlContent) {
+      return reply.status(400).send({
+        success: false,
+        message: "El contenido del archivo KML es requerido.",
+      });
+    }
+
+    try {
+      const preview = previewKmlData(kmlContent);
+      return reply.send(preview);
+    } catch (err: any) {
+      return reply.status(400).send({
+        success: false,
+        message: `Error al procesar archivo KML: ${err.message}`,
+      });
+    }
+  });
+
+  // 15. Importar archivo KML hacia el mapa activo o crear un nuevo mapa
+  fastify.post("/maps/import-kml", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const body = (request.body as any) || {};
+    const kmlContent = (body.kmlContent || "").trim();
+
+    if (!kmlContent) {
+      return reply.status(400).send({
+        success: false,
+        message: "El contenido del archivo KML es requerido para la importación.",
+      });
+    }
+
+    try {
+      const result = importKmlData(tenantId, {
+        kmlContent,
+        targetMapId: body.targetMapId,
+        createNewMap: body.createNewMap === true || body.createNewMap === "true",
+        newMapName: body.newMapName,
+        mode: body.mode === "replace" ? "replace" : "append",
+        district: body.district,
+        color: body.color,
+      });
+
+      return reply.send(result);
+    } catch (err: any) {
+      return reply.status(400).send({
+        success: false,
+        message: `Error al importar archivo KML: ${err.message}`,
       });
     }
   });
