@@ -6017,10 +6017,10 @@
           <div id="config-subtab-updates" class="space-y-6 hidden">
             
             <!-- Encabezado Principal con Estado en Vivo y Acciones Rápidas -->
-            <div class="p-5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-800/80 to-slate-900/90 dark:bg-white/[0.03] border border-slate-700/60 dark:border-white/10 shadow-xl backdrop-blur-md">
+            <div class="pro-card p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-sm backdrop-blur-md">
               <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                 <div class="flex items-start sm:items-center space-x-4">
-                  <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-emerald-600/30 to-teal-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/10">
+                  <div class="w-13 h-13 rounded-2xl bg-emerald-500/10 dark:bg-emerald-600/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 dark:border-emerald-500/30 flex items-center justify-center flex-shrink-0 shadow-sm">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
@@ -6028,29 +6028,29 @@
                   <div>
                     <div class="flex items-center space-x-2.5 flex-wrap gap-y-1">
                       <h3 class="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Centro de Control de Actualizaciones & Respaldo</h3>
-                      <span id="update-badge-status" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm flex items-center space-x-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span id="update-badge-status" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-xs flex items-center space-x-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
                         <span>Sincronizado</span>
                       </span>
-                      <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
                         cPanel Zero-Downtime
                       </span>
                     </div>
-                    <p class="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
                       Sincronización automatizada con GitHub: descarga cambios, aplica migraciones estructurales y compila en caliente para Phusion Passenger y PM2.
                     </p>
                   </div>
                 </div>
 
                 <div class="flex items-center space-x-2.5 flex-wrap gap-y-2">
-                  <button type="button" onclick="checkSystemUpdatesNow()" id="btn-check-updates-main" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 transition flex items-center space-x-2 shadow-sm">
-                    <svg class="w-4 h-4 text-blue-400" id="icon-check-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <button type="button" onclick="checkSystemUpdatesNow()" id="btn-check-updates-main" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition flex items-center space-x-2 shadow-xs">
+                    <svg class="w-4 h-4 text-blue-500 dark:text-blue-400" id="icon-check-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                     <span>Buscar Actualizaciones</span>
                   </button>
-                  <button type="button" onclick="openCreateBackupModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 transition flex items-center space-x-2 shadow-sm">
-                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <button type="button" onclick="openCreateBackupModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition flex items-center space-x-2 shadow-xs">
+                    <svg class="w-4 h-4 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                     </svg>
                     <span>Crear Respaldo</span>
@@ -6069,129 +6069,129 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               
               <!-- Card 1: Versión Actual & Detalles de Subida -->
-              <div class="p-4 rounded-2xl bg-slate-900/70 dark:bg-white/[0.03] border border-slate-800 dark:border-white/10 hover:border-blue-500/40 transition-all shadow-sm flex flex-col justify-between space-y-3 group">
+              <div class="p-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 hover:border-blue-500/40 transition-all shadow-xs flex flex-col justify-between space-y-3 group">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
                     </div>
                     <div>
-                      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Versión Instalada</span>
+                      <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Versión Instalada</span>
                       <div class="flex items-center space-x-1.5 mt-0.5">
-                        <span class="text-base font-bold font-mono text-white" id="sys-version-display">v1.0.0</span>
-                        <a id="sys-commit-link" href="#" target="_blank" rel="noopener noreferrer" title="Ver en GitHub" class="text-[11px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-300 border border-purple-500/25 hover:bg-purple-500/25 transition">
+                        <span class="text-base font-bold font-mono text-slate-900 dark:text-white" id="sys-version-display">v1.0.0</span>
+                        <a id="sys-commit-link" href="#" target="_blank" rel="noopener noreferrer" title="Ver en GitHub" class="text-[11px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25 hover:bg-purple-500/25 transition">
                           <span id="sys-commit-display">#731a224</span>
                         </a>
                       </div>
                     </div>
                   </div>
-                  <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold" id="sys-branch-badge">main</span>
+                  <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold" id="sys-branch-badge">main</span>
                 </div>
 
-                <div class="pt-2 border-t border-white/5 space-y-1.5 text-xs">
-                  <div class="flex items-center justify-between text-slate-300">
-                    <span class="text-[11px] text-slate-400">Subido por:</span>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/5 space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400">Subido por:</span>
                     <div class="flex items-center space-x-1.5 min-w-0">
-                      <span class="w-4 h-4 rounded-full bg-blue-500/20 text-blue-300 text-[9px] font-bold inline-flex items-center justify-center flex-shrink-0" id="sys-author-avatar">CM</span>
-                      <span class="font-semibold text-slate-200 truncate max-w-[130px]" id="sys-commit-author">Cesar Mendoza</span>
+                      <span class="w-4 h-4 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-300 text-[9px] font-bold inline-flex items-center justify-center flex-shrink-0" id="sys-author-avatar">CM</span>
+                      <span class="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[130px]" id="sys-commit-author">Cesar Mendoza</span>
                     </div>
                   </div>
-                  <div class="flex items-center justify-between text-[11px] text-slate-400">
-                    <span class="text-slate-400">Fecha y hora:</span>
-                    <span class="font-mono text-slate-300 flex items-center space-x-1">
+                  <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>Fecha y hora:</span>
+                    <span class="font-mono text-slate-700 dark:text-slate-300 flex items-center space-x-1">
                       <span id="sys-commit-date">14 oct. 2026, 17:49</span>
-                      <span class="text-[9.5px] text-slate-400 font-sans px-1 rounded bg-white/5" id="sys-commit-relative">hace 4 d</span>
+                      <span class="text-[9.5px] text-slate-500 dark:text-slate-400 font-sans px-1 rounded bg-slate-100 dark:bg-white/5" id="sys-commit-relative">hace 4 d</span>
                     </span>
                   </div>
                 </div>
               </div>
 
               <!-- Card 2: Repositorio Remoto GitHub -->
-              <div class="p-4 rounded-2xl bg-slate-900/70 dark:bg-white/[0.03] border border-slate-800 dark:border-white/10 hover:border-purple-500/40 transition-all shadow-sm flex flex-col justify-between space-y-3 group">
+              <div class="p-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 hover:border-purple-500/40 transition-all shadow-xs flex flex-col justify-between space-y-3 group">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
                       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
                     </div>
                     <div>
-                      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Repositorio GitHub</span>
-                      <a id="sys-repo-link" href="https://github.com/networkturbo4-pixel/turboperuv3-Cesar.git" target="_blank" rel="noopener noreferrer" class="text-sm font-bold text-blue-400 hover:text-blue-300 transition flex items-center space-x-1 mt-0.5 truncate max-w-[170px]" title="Ver repositorio">
+                      <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Repositorio GitHub</span>
+                      <a id="sys-repo-link" href="https://github.com/networkturbo4-pixel/turboperuv3-Cesar.git" target="_blank" rel="noopener noreferrer" class="text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition flex items-center space-x-1 mt-0.5 truncate max-w-[170px]" title="Ver repositorio">
                         <span class="truncate">turboperuv3-Cesar</span>
                         <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                       </a>
                     </div>
                   </div>
-                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold">Conectado</span>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold">Conectado</span>
                 </div>
 
-                <div class="pt-2 border-t border-white/5 space-y-1.5 text-xs">
-                  <div class="flex items-center justify-between text-slate-300">
-                    <span class="text-[11px] text-slate-400">Estado:</span>
-                    <span class="font-medium text-emerald-400 flex items-center space-x-1.5">
-                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" id="sys-behind-dot"></span>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/5 space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400">Estado:</span>
+                    <span class="font-medium text-emerald-600 dark:text-emerald-400 flex items-center space-x-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 flex-shrink-0" id="sys-behind-dot"></span>
                       <span id="sys-behind-info">0 pendientes</span>
                     </span>
                   </div>
-                  <div class="flex items-center justify-between text-[11px] text-slate-400">
-                    <span class="text-slate-400">Verificado:</span>
-                    <span class="font-mono text-slate-300" id="sys-last-check-time">Recién</span>
+                  <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>Verificado:</span>
+                    <span class="font-mono text-slate-700 dark:text-slate-300" id="sys-last-check-time">Recién</span>
                   </div>
                 </div>
               </div>
 
               <!-- Card 3: Compilación cPanel -->
-              <div class="p-4 rounded-2xl bg-slate-900/70 dark:bg-white/[0.03] border border-slate-800 dark:border-white/10 hover:border-emerald-500/40 transition-all shadow-sm flex flex-col justify-between space-y-3 group">
+              <div class="p-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 transition-all shadow-xs flex flex-col justify-between space-y-3 group">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </div>
                     <div>
-                      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Compilación cPanel</span>
-                      <div class="text-sm font-bold font-mono text-white mt-0.5">dist/server.js <span class="text-[11px] text-slate-400 font-normal">(~170 KB)</span></div>
+                      <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Compilación cPanel</span>
+                      <div class="text-sm font-bold font-mono text-slate-900 dark:text-white mt-0.5">dist/server.js <span class="text-[11px] text-slate-500 dark:text-slate-400 font-normal">(~170 KB)</span></div>
                     </div>
                   </div>
-                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-semibold">TSUP V8</span>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-semibold">TSUP V8</span>
                 </div>
 
-                <div class="pt-2 border-t border-white/5 space-y-1.5 text-xs">
-                  <div class="flex items-center justify-between text-slate-300">
-                    <span class="text-[11px] text-slate-400">Motor web:</span>
-                    <span class="font-medium text-purple-400">Zero-Downtime</span>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/5 space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400">Motor web:</span>
+                    <span class="font-medium text-purple-600 dark:text-purple-400">Zero-Downtime</span>
                   </div>
-                  <div class="flex items-center justify-between text-[11px] text-slate-400">
-                    <span class="text-slate-400">Último build:</span>
-                    <span class="font-mono text-slate-300" id="sys-last-build-time">Activa</span>
+                  <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>Último build:</span>
+                    <span class="font-mono text-slate-700 dark:text-slate-300" id="sys-last-build-time">Activa</span>
                   </div>
                 </div>
               </div>
 
               <!-- Card 4: Copias de Seguridad (Backups) -->
-              <div class="p-4 rounded-2xl bg-slate-900/70 dark:bg-white/[0.03] border border-slate-800 dark:border-white/10 hover:border-amber-500/40 transition-all shadow-sm flex flex-col justify-between space-y-3 group">
+              <div class="p-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 hover:border-amber-500/40 transition-all shadow-xs flex flex-col justify-between space-y-3 group">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
                     </div>
                     <div>
-                      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Copias de Seguridad</span>
+                      <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Copias de Seguridad</span>
                       <div class="flex items-baseline space-x-1.5 mt-0.5">
-                        <span class="text-base font-bold font-mono text-white" id="sys-backups-total">1</span>
-                        <span class="text-xs text-slate-400" id="sys-backups-count-badge">snapshot</span>
+                        <span class="text-base font-bold font-mono text-slate-900 dark:text-white" id="sys-backups-total">1</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400" id="sys-backups-count-badge">snapshot</span>
                       </div>
                     </div>
                   </div>
-                  <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold">Seguro</span>
+                  <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10px] font-semibold">Seguro</span>
                 </div>
 
-                <div class="pt-2 border-t border-white/5 space-y-1.5 text-xs">
-                  <div class="flex items-center justify-between text-slate-300">
-                    <span class="text-[11px] text-slate-400">Último:</span>
-                    <span class="font-medium text-slate-200 truncate max-w-[150px]" id="sys-latest-backup-desc">19 oct., 09:16 a. m.</span>
+                <div class="pt-2 border-t border-slate-100 dark:border-white/5 space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400">Último:</span>
+                    <span class="font-medium text-slate-800 dark:text-slate-200 truncate max-w-[150px]" id="sys-latest-backup-desc">19 oct., 09:16 a. m.</span>
                   </div>
-                  <div class="flex items-center justify-between text-[11px] text-slate-400">
-                    <span class="text-slate-400">Almacén:</span>
-                    <span class="text-emerald-400 font-medium">JSON + Tenants</span>
+                  <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>Almacén:</span>
+                    <span class="text-emerald-600 dark:text-emerald-400 font-medium">JSON + Tenants</span>
                   </div>
                 </div>
               </div>
@@ -6199,7 +6199,7 @@
             </div>
 
             <!-- BARRA DE NAVEGACIÓN SEGMENTADA PARA ORDEN VISUAL SUPERIOR -->
-            <div class="p-1.5 rounded-2xl bg-slate-900/80 dark:bg-white/[0.03] border border-slate-800 dark:border-white/10 flex items-center space-x-1.5 overflow-x-auto shadow-inner">
+            <div class="p-1.5 rounded-2xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center space-x-1.5 overflow-x-auto shadow-2xs">
               <button type="button" onclick="switchUpdatesInnerTab('pipeline')" id="tab-btn-updates-pipeline" class="px-4 py-2.5 rounded-xl text-xs font-bold flex items-center space-x-2 transition bg-blue-600 text-white shadow-sm flex-shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -6207,23 +6207,23 @@
                 <span>Pipeline de Actualización</span>
               </button>
               
-              <button type="button" onclick="switchUpdatesInnerTab('history')" id="tab-btn-updates-history" class="px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition text-slate-400 hover:text-white hover:bg-white/5 flex-shrink-0">
+              <button type="button" onclick="switchUpdatesInnerTab('history')" id="tab-btn-updates-history" class="px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/5 flex-shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>Historial Detallado de Actualizaciones</span>
-                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white/10 text-slate-300 font-mono" id="updates-history-count-badge">0</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 font-mono" id="updates-history-count-badge">0</span>
               </button>
 
-              <button type="button" onclick="switchUpdatesInnerTab('backups')" id="tab-btn-updates-backups" class="px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition text-slate-400 hover:text-white hover:bg-white/5 flex-shrink-0">
+              <button type="button" onclick="switchUpdatesInnerTab('backups')" id="tab-btn-updates-backups" class="px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/5 flex-shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                 </svg>
                 <span>Copias de Seguridad (Backups)</span>
-                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white/10 text-slate-300 font-mono" id="backups-tab-count-badge">0</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 font-mono" id="backups-tab-count-badge">0</span>
               </button>
 
-              <button type="button" onclick="switchUpdatesInnerTab('performance')" id="tab-btn-updates-performance" class="px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition text-slate-400 hover:text-white hover:bg-white/5 flex-shrink-0">
+              <button type="button" onclick="switchUpdatesInnerTab('performance')" id="tab-btn-updates-performance" class="px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/5 flex-shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
@@ -6234,14 +6234,14 @@
             <!-- VISTA 1: PIPELINE DE ACTUALIZACIÓN DESDE GITHUB & TERMINAL -->
             <div id="updates-view-pipeline" class="space-y-6">
               
-              <div class="pro-card p-6 rounded-2xl space-y-6 border border-slate-800 dark:border-white/10 bg-slate-900/60 dark:bg-white/[0.02]">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+              <div class="pro-card p-6 rounded-2xl space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-4">
                   <div>
                     <div class="flex items-center space-x-2">
                       <h3 class="text-base font-bold tracking-tight text-slate-900 dark:text-white">Pipeline de Despliegue Automatizado</h3>
-                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/25">Producción cPanel</span>
+                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25">Producción cPanel</span>
                     </div>
-                    <p class="text-xs text-slate-400 mt-1">Sincroniza el código remoto de GitHub, valida migraciones Drizzle ORM y reconstruye el bundle sin caídas de servicio.</p>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">Sincroniza el código remoto de GitHub, valida migraciones Drizzle ORM y reconstruye el bundle sin caídas de servicio.</p>
                   </div>
 
                   <div class="flex items-center space-x-2">
@@ -6255,73 +6255,73 @@
                 </div>
 
                 <!-- Banner de Commits Pendientes -->
-                <div id="pending-commits-banner" class="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4.5 flex items-center justify-between">
+                <div id="pending-commits-banner" class="rounded-xl border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/5 p-4.5 flex items-center justify-between">
                   <div class="flex items-center space-x-3.5">
-                    <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 shadow-inner">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 shadow-inner">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     </div>
                     <div>
                       <div class="text-xs font-bold text-slate-900 dark:text-white" id="pending-banner-title">Sistema al día con GitHub</div>
-                      <div class="text-[11px] text-slate-400 mt-0.5" id="pending-banner-subtitle">No hay cambios pendientes en la rama main del repositorio remoto.</div>
+                      <div class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5" id="pending-banner-subtitle">No hay cambios pendientes en la rama main del repositorio remoto.</div>
                     </div>
                   </div>
-                  <button type="button" onclick="checkSystemUpdatesNow()" class="px-3 py-1.5 rounded-lg text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 font-bold transition">Reverificar</button>
+                  <button type="button" onclick="checkSystemUpdatesNow()" class="px-3 py-1.5 rounded-lg text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-500/10 font-bold transition">Reverificar</button>
                 </div>
 
                 <!-- Resumen Detallado de la Versión Actualmente Desplegada -->
-                <div class="p-4 rounded-xl bg-slate-800/50 dark:bg-white/[0.03] border border-slate-700/60 dark:border-white/10 space-y-3">
-                  <div class="flex items-center justify-between border-b border-white/5 pb-2.5">
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-3">
+                  <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2.5">
                     <div class="flex items-center space-x-2">
-                      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                      <span class="text-xs font-bold text-slate-200 uppercase tracking-wide">Última Actualización Desplegada en Servidor</span>
+                      <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
+                      <span class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">Última Actualización Desplegada en Servidor</span>
                     </div>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">En Producción</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">En Producción</span>
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                     <!-- Usuario que subió la actualización -->
-                    <div class="p-3 rounded-lg bg-black/30 border border-white/5 space-y-1">
-                      <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider flex items-center space-x-1.5">
-                        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <div class="p-3 rounded-lg bg-white dark:bg-black/30 border border-slate-200 dark:border-white/5 space-y-1 shadow-2xs">
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider flex items-center space-x-1.5">
+                        <svg class="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                         <span>Usuario que Subió</span>
                       </div>
-                      <div class="font-bold text-slate-100 flex items-center space-x-2" id="pipeline-active-author">
-                        <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] flex items-center justify-center font-bold">CM</span>
+                      <div class="font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-2" id="pipeline-active-author">
+                        <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-300 text-[10px] flex items-center justify-center font-bold">CM</span>
                         <span class="truncate">Cesar Mendoza</span>
                       </div>
-                      <div class="text-[10px] text-slate-400 truncate" id="pipeline-active-author-email">cesarestudio2395@gmail.com</div>
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate" id="pipeline-active-author-email">cesarestudio2395@gmail.com</div>
                     </div>
 
                     <!-- Fecha y Hora exacta -->
-                    <div class="p-3 rounded-lg bg-black/30 border border-white/5 space-y-1">
-                      <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider flex items-center space-x-1.5">
-                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <div class="p-3 rounded-lg bg-white dark:bg-black/30 border border-slate-200 dark:border-white/5 space-y-1 shadow-2xs">
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider flex items-center space-x-1.5">
+                        <svg class="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         <span>Fecha y Hora de Subida</span>
                       </div>
-                      <div class="font-bold font-mono text-slate-100" id="pipeline-active-date">--</div>
-                      <div class="text-[10px] text-emerald-400 font-mono" id="pipeline-active-relative">--</div>
+                      <div class="font-bold font-mono text-slate-900 dark:text-slate-100" id="pipeline-active-date">--</div>
+                      <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono" id="pipeline-active-relative">--</div>
                     </div>
 
                     <!-- Commit y Mensaje -->
-                    <div class="p-3 rounded-lg bg-black/30 border border-white/5 space-y-1">
-                      <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider flex items-center space-x-1.5">
-                        <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+                    <div class="p-3 rounded-lg bg-white dark:bg-black/30 border border-slate-200 dark:border-white/5 space-y-1 shadow-2xs">
+                      <div class="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider flex items-center space-x-1.5">
+                        <svg class="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
                         <span>Commit & Detalle</span>
                       </div>
-                      <div class="font-mono text-purple-300 font-bold" id="pipeline-active-hash">#...</div>
-                      <div class="text-[11px] text-slate-300 italic truncate" id="pipeline-active-message">--</div>
+                      <div class="font-mono text-purple-700 dark:text-purple-300 font-bold" id="pipeline-active-hash">#...</div>
+                      <div class="text-[11px] text-slate-700 dark:text-slate-300 italic truncate" id="pipeline-active-message">--</div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Lista desplegable de commits pendientes (si existen) -->
                 <div id="pending-commits-list-wrap" class="hidden space-y-2.5">
-                  <div class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                  <div class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
                     <span class="flex items-center space-x-1.5">
                       <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
                       <span>Commits por descargar desde origin/main:</span>
                     </span>
-                    <span class="text-[11px] font-mono text-amber-400 font-bold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20" id="pending-count-label">0 pendientes</span>
+                    <span class="text-[11px] font-mono text-amber-600 dark:text-amber-400 font-bold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20" id="pending-count-label">0 pendientes</span>
                   </div>
                   <div id="pending-commits-list" class="max-h-60 overflow-y-auto space-y-2 pr-1 text-xs">
                     <!-- Inyectado dinámicamente con autor, fecha, hora y mensaje -->
@@ -6329,26 +6329,26 @@
                 </div>
 
                 <!-- Opciones del Pipeline de Actualización -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 p-4 rounded-xl bg-slate-800/40 dark:bg-white/5 border border-slate-700/60 dark:border-white/5 text-xs">
-                  <label class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white/[0.02] transition">
-                    <input type="checkbox" id="update-opt-backup" checked class="w-4 h-4 rounded border-slate-700 text-emerald-600 focus:ring-emerald-500">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-xs">
+                  <label class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white dark:hover:bg-white/[0.02] transition">
+                    <input type="checkbox" id="update-opt-backup" checked class="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-emerald-600 focus:ring-emerald-500">
                     <div>
-                      <span class="font-bold text-slate-200">Copia de Seguridad Previa</span>
-                      <p class="text-[10px] text-slate-400 mt-0.5">Snapshot completo de datos antes de actualizar</p>
+                      <span class="font-bold text-slate-800 dark:text-slate-200">Copia de Seguridad Previa</span>
+                      <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Snapshot completo de datos antes de actualizar</p>
                     </div>
                   </label>
-                  <label class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white/[0.02] transition">
-                    <input type="checkbox" id="update-opt-migrate" checked class="w-4 h-4 rounded border-slate-700 text-blue-600 focus:ring-blue-500">
+                  <label class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white dark:hover:bg-white/[0.02] transition">
+                    <input type="checkbox" id="update-opt-migrate" checked class="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500">
                     <div>
-                      <span class="font-bold text-slate-200">Migración de Base de Datos</span>
-                      <p class="text-[10px] text-slate-400 mt-0.5">Aplica migraciones Drizzle ORM y esquemas</p>
+                      <span class="font-bold text-slate-800 dark:text-slate-200">Migración de Base de Datos</span>
+                      <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Aplica migraciones Drizzle ORM y esquemas</p>
                     </div>
                   </label>
-                  <label class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white/[0.02] transition">
-                    <input type="checkbox" id="update-opt-build" checked class="w-4 h-4 rounded border-slate-700 text-purple-600 focus:ring-purple-500">
+                  <label class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white dark:hover:bg-white/[0.02] transition">
+                    <input type="checkbox" id="update-opt-build" checked class="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-purple-600 focus:ring-purple-500">
                     <div>
-                      <span class="font-bold text-slate-200">Compilación TSUP en cPanel</span>
-                      <p class="text-[10px] text-slate-400 mt-0.5">Recompila dist/server.js y recarga Passenger</p>
+                      <span class="font-bold text-slate-800 dark:text-slate-200">Compilación TSUP en cPanel</span>
+                      <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Recompila dist/server.js y recarga Passenger</p>
                     </div>
                   </label>
                 </div>
@@ -6382,25 +6382,25 @@
 
             <!-- VISTA 2: HISTORIAL DETALLADO DE ACTUALIZACIONES (CHANGELOG & TIMELINE) -->
             <div id="updates-view-history" class="space-y-6 hidden">
-              <div class="pro-card p-6 rounded-2xl space-y-6 border border-slate-800 dark:border-white/10 bg-slate-900/60 dark:bg-white/[0.02]">
+              <div class="pro-card p-6 rounded-2xl space-y-6">
                 
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-4">
                   <div>
                     <div class="flex items-center space-x-2">
                       <h3 class="text-base font-bold tracking-tight text-slate-900 dark:text-white">Registro Detallado de Actualizaciones Subidas</h3>
-                      <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/25" id="history-total-count-badge">0 registros</span>
+                      <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25" id="history-total-count-badge">0 registros</span>
                     </div>
-                    <p class="text-xs text-slate-400 mt-1">
+                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
                       Información pormenorizada de cada actualización: usuario que subió el cambio, fecha, hora exacta y descripción de mejoras o correcciones.
                     </p>
                   </div>
 
                   <div class="flex items-center space-x-3">
                     <div class="relative">
-                      <input type="text" id="input-search-updates" oninput="filterUpdatesHistoryList(this.value)" placeholder="Filtrar por autor o texto..." class="px-3.5 py-2 pl-9 rounded-xl text-xs bg-slate-800/80 dark:bg-white/5 border border-slate-700 dark:border-white/10 text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 w-56">
+                      <input type="text" id="input-search-updates" oninput="filterUpdatesHistoryList(this.value)" placeholder="Filtrar por autor o texto..." class="px-3.5 py-2 pl-9 rounded-xl text-xs bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-slate-200 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 w-56">
                       <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </div>
-                    <button type="button" onclick="loadSystemUpdateInfo()" title="Recargar historial" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                    <button type="button" onclick="loadSystemUpdateInfo()" title="Recargar historial" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     </button>
                   </div>
@@ -6408,8 +6408,8 @@
 
                 <!-- Contenedor del Feed de Actualizaciones -->
                 <div id="updates-history-feed-container" class="space-y-3.5">
-                  <div class="py-12 text-center text-slate-400">
-                    <div class="w-10 h-10 mx-auto rounded-full bg-white/5 flex items-center justify-center text-slate-500 mb-2">
+                  <div class="py-12 text-center text-slate-500 dark:text-slate-400">
+                    <div class="w-10 h-10 mx-auto rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 mb-2">
                       <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     </div>
                     <span class="text-xs">Cargando historial detallado de actualizaciones...</span>
@@ -6421,23 +6421,23 @@
 
             <!-- VISTA 3: COPIAS DE SEGURIDAD (BACKUPS) & RESTAURACIÓN -->
             <div id="updates-view-backups" class="space-y-6 hidden">
-              <div class="pro-card p-6 rounded-2xl space-y-6 border border-slate-800 dark:border-white/10 bg-slate-900/60 dark:bg-white/[0.02]">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+              <div class="pro-card p-6 rounded-2xl space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-4">
                   <div>
                     <div class="flex items-center space-x-2">
                       <h3 class="text-base font-bold tracking-tight text-slate-900 dark:text-white">Instantáneas de Seguridad & Restauración</h3>
-                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">Disaster Recovery</span>
+                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">Disaster Recovery</span>
                     </div>
-                    <p class="text-xs text-slate-400 mt-1">Respaldos completos en formato snapshot JSON conteniendo todas las empresas, usuarios, asistencias, clientes y configuraciones.</p>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">Respaldos completos en formato snapshot JSON conteniendo todas las empresas, usuarios, asistencias, clientes y configuraciones.</p>
                   </div>
 
                   <div class="flex items-center space-x-2.5">
-                    <label class="px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 transition flex items-center space-x-2 cursor-pointer shadow-sm">
-                      <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <label class="px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition flex items-center space-x-2 cursor-pointer shadow-xs">
+                      <svg class="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                       <span>Subir & Restaurar</span>
                       <input type="file" id="upload-backup-file-input" accept=".json" class="hidden" onchange="handleUploadBackupFile(this)">
                     </label>
-                    <button type="button" onclick="openCreateBackupModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold btn-brand-primary transition flex items-center space-x-2 shadow-sm">
+                    <button type="button" onclick="openCreateBackupModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold btn-brand-primary transition flex items-center space-x-2 shadow-xs">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                       <span>Nuevo Respaldo</span>
                     </button>
@@ -6446,9 +6446,9 @@
 
                 <!-- Tabla de Backups -->
                 <div class="overflow-x-auto">
-                  <table class="w-full text-left text-xs text-slate-300">
+                  <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
                     <thead>
-                      <tr class="border-b border-white/5 text-slate-400 text-[11px] uppercase tracking-wider">
+                      <tr class="border-b border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider">
                         <th class="pb-3.5 font-bold">Archivo & Tipo</th>
                         <th class="pb-3.5 font-bold">Fecha y Hora</th>
                         <th class="pb-3.5 font-bold">Tamaño</th>
@@ -6457,7 +6457,7 @@
                         <th class="pb-3.5 font-bold text-right">Acciones</th>
                       </tr>
                     </thead>
-                    <tbody id="backups-table-body" class="divide-y divide-white/5 font-sans">
+                    <tbody id="backups-table-body" class="divide-y divide-slate-100 dark:divide-white/5 font-sans">
                       <tr>
                         <td colspan="6" class="py-8 text-center text-slate-500">Cargando lista de copias de seguridad...</td>
                       </tr>
@@ -6469,76 +6469,75 @@
 
             <!-- VISTA 4: RENDIMIENTO CPANEL & ARQUITECTURA -->
             <div id="updates-view-performance" class="space-y-6 hidden">
-              <div class="pro-card p-6 rounded-2xl space-y-6 border border-slate-800 dark:border-white/10 bg-slate-900/60 dark:bg-white/[0.02]">
-                <div class="flex items-center space-x-3.5 border-b border-white/5 pb-4">
-                  <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center flex-shrink-0 shadow-inner">
+              <div class="pro-card p-6 rounded-2xl space-y-6">
+                <div class="flex items-center space-x-3.5 border-b border-slate-200 dark:border-white/5 pb-4">
+                  <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center flex-shrink-0 shadow-inner">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
                     <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Arquitectura de Alto Rendimiento en cPanel</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Empaquetado TypeScript optimizado a V8 CommonJS con reinicio Zero-Downtime y huella RAM mínima.</p>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Empaquetado TypeScript optimizado a V8 CommonJS con reinicio Zero-Downtime y huella RAM mínima.</p>
                   </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div class="p-4 rounded-xl bg-slate-800/40 dark:bg-white/5 border border-slate-700/60 dark:border-white/5 space-y-2">
-                    <div class="flex items-center space-x-2 text-xs font-bold text-emerald-400">
+                  <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 space-y-2">
+                    <div class="flex items-center space-x-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                       <span>1. Compilación Única TSUP</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 leading-relaxed">
-                      <code class="text-blue-400 font-mono">tsup</code> compila todo TypeScript y dependencias en un solo archivo <code class="text-slate-300 font-mono">dist/server.js</code> de apenas <strong>~170 KB</strong>. Evita lecturas I/O lentas en disco al levantar la aplicación.
+                    <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                      <code class="text-blue-600 dark:text-blue-400 font-mono">tsup</code> compila todo TypeScript y dependencias en un solo archivo <code class="text-slate-800 dark:text-slate-300 font-mono">dist/server.js</code> de apenas <strong>~170 KB</strong>. Evita lecturas I/O lentas en disco al levantar la aplicación.
                     </p>
                   </div>
 
-                  <div class="p-4 rounded-xl bg-slate-800/40 dark:bg-white/5 border border-slate-700/60 dark:border-white/5 space-y-2">
-                    <div class="flex items-center space-x-2 text-xs font-bold text-blue-400">
+                  <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 space-y-2">
+                    <div class="flex items-center space-x-2 text-xs font-bold text-blue-600 dark:text-blue-400">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                       <span>2. Huella RAM Ultra-Baja (&lt;50MB)</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                    <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                       En cPanel (CloudLinux LVE), la RAM por cuenta suele tener límites (512MB-1GB). Nuestro bundle corre en V8 puro consumiendo tan solo <strong>~35 a 45 MB</strong>, permitiendo cientos de solicitudes simultáneas sin saturar el servidor.
                     </p>
                   </div>
 
-                  <div class="p-4 rounded-xl bg-slate-800/40 dark:bg-white/5 border border-slate-700/60 dark:border-white/5 space-y-2">
-                    <div class="flex items-center space-x-2 text-xs font-bold text-purple-400">
+                  <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 space-y-2">
+                    <div class="flex items-center space-x-2 text-xs font-bold text-purple-600 dark:text-purple-400">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                       <span>3. Zero-Downtime Passenger</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 leading-relaxed">
-                      Phusion Passenger vigila el archivo <code class="text-purple-400 font-mono">tmp/restart.txt</code>. Al actualizarlo tras la compilación, reinicia los workers en milisegundos sin desconectar llamadas ni usuarios activos.
+                    <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Phusion Passenger vigila el archivo <code class="text-purple-600 dark:text-purple-400 font-mono">tmp/restart.txt</code>. Al actualizarlo tras la compilación, reinicia los workers en milisegundos sin desconectar llamadas ni usuarios activos.
                     </p>
                   </div>
                 </div>
 
                 <!-- Telemetría en vivo del entorno Node.js -->
-                <div class="p-4 rounded-xl bg-slate-800/20 border border-white/5 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/20 border border-slate-200 dark:border-white/5 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
                   <div>
                     <span class="text-[10px] text-slate-500 uppercase font-sans">Node.js Runtime</span>
-                    <div class="font-bold text-slate-200 mt-0.5" id="sys-node-version">v20+</div>
+                    <div class="font-bold text-slate-800 dark:text-slate-200 mt-0.5" id="sys-node-version">v20+</div>
                   </div>
                   <div>
                     <span class="text-[10px] text-slate-500 uppercase font-sans">Plataforma</span>
-                    <div class="font-bold text-slate-200 mt-0.5" id="sys-platform-os">Linux / cPanel</div>
+                    <div class="font-bold text-slate-800 dark:text-slate-200 mt-0.5" id="sys-platform-os">Linux / cPanel</div>
                   </div>
                   <div>
                     <span class="text-[10px] text-slate-500 uppercase font-sans">Tiempo en Línea</span>
-                    <div class="font-bold text-emerald-400 mt-0.5" id="sys-uptime-display">--</div>
+                    <div class="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5" id="sys-uptime-display">--</div>
                   </div>
                   <div>
                     <span class="text-[10px] text-slate-500 uppercase font-sans">Entorno</span>
-                    <div class="font-bold text-blue-400 mt-0.5" id="sys-env-display">production</div>
+                    <div class="font-bold text-blue-600 dark:text-blue-400 mt-0.5" id="sys-env-display">production</div>
                   </div>
                 </div>
               </div>
             </div>
 
           </div>
-
-          <!-- ======================================================== -->
+          
           <!-- SUBTAB 5: CONEXIONES & PASARELAS DE INTEGRACIÓN           -->
           <!-- ======================================================== -->
           <div id="config-subtab-connections" class="space-y-6 hidden">
@@ -14847,7 +14846,7 @@
             <p class="text-xs text-slate-400">Reemplazo seguro del estado de la base de datos</p>
           </div>
         </div>
-        <button type="button" onclick="closeRestoreBackupModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition">
+        <button type="button" onclick="closeRestoreBackupModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 transition border border-slate-200 dark:border-white/5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
@@ -14859,7 +14858,7 @@
             <span>Advertencia de Restauración:</span>
           </div>
           <p class="leading-relaxed">
-            Se restaurará el snapshot: <strong id="restore-target-filename" class="font-mono text-white"></strong>. Los datos actuales serán sustituidos.
+            Se restaurará el snapshot: <strong id="restore-target-filename" class="font-mono text-slate-900 dark:text-white"></strong>. Los datos actuales serán sustituidos.
           </p>
           <p class="text-[10px] text-amber-300/80">
             * Se generará automáticamente un respaldo preventivo de seguridad del estado actual antes de aplicar los datos.
@@ -26726,7 +26725,7 @@ Estamos atentos para brindarle asistencia inmediata.
           if (t === tabName) {
             btn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center space-x-2 transition bg-blue-600 text-white shadow-sm flex-shrink-0';
           } else {
-            btn.className = 'px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition text-slate-400 hover:text-white hover:bg-white/5 flex-shrink-0';
+            btn.className = 'px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/5 flex-shrink-0';
           }
         }
       });
@@ -26917,7 +26916,7 @@ Estamos atentos para brindarle asistencia inmediata.
         }
 
         return `
-          <div class="p-4 rounded-xl ${isCurrent ? 'bg-emerald-500/[0.04] border-emerald-500/30 shadow-md ring-1 ring-emerald-500/20' : 'bg-slate-800/40 dark:bg-white/[0.02] border-slate-700/60 dark:border-white/5 hover:border-slate-600'} border space-y-3 transition">
+          <div class="p-4 rounded-xl ${isCurrent ? 'bg-emerald-500/[0.05] border-emerald-500/30 shadow-xs ring-1 ring-emerald-500/20' : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-slate-600'} border space-y-3 transition">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div class="flex items-start sm:items-center space-x-3">
                 <!-- Avatar con Iniciales del Usuario que subió la actualización -->
@@ -26927,13 +26926,13 @@ Estamos atentos para brindarle asistencia inmediata.
                 <div>
                   <div class="flex items-center space-x-2 flex-wrap gap-y-1">
                     <!-- Nombre del usuario que subió la actualización -->
-                    <span class="text-xs font-bold text-slate-100">${escapeHtml(author)}</span>
+                    <span class="text-xs font-bold text-slate-900 dark:text-slate-100">${escapeHtml(author)}</span>
                     ${item.authorEmail ? `<span class="text-[10px] text-slate-400 font-mono hidden md:inline">&lt;${escapeHtml(item.authorEmail)}&gt;</span>` : ''}
                     ${badgeStatus}
                   </div>
                   <div class="flex items-center space-x-2 text-[11px] text-slate-400 mt-1">
                     <!-- Fecha y Hora exacta -->
-                    <span class="flex items-center space-x-1.5 font-mono text-slate-300">
+                    <span class="flex items-center space-x-1.5 font-mono text-slate-700 dark:text-slate-300">
                       <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -26958,7 +26957,7 @@ Estamos atentos para brindarle asistencia inmediata.
             </div>
 
             <!-- Descripción de la actualización / Mensaje del commit -->
-            <div class="p-3 rounded-lg bg-black/30 border border-white/5 text-xs text-slate-200 leading-relaxed font-sans">
+            <div class="p-3 rounded-lg bg-white dark:bg-black/30 border border-slate-200 dark:border-white/5 text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-sans shadow-2xs">
               ${formatCommitMessage(item.message)}
             </div>
 
