@@ -77,6 +77,7 @@ export const ALL_MODULE_IDS = [
   "billing",
   "inventory",
   "mochila",
+  "apartados",
   "network",
   "maps",
   "plans",
