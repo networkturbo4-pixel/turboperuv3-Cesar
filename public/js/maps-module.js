@@ -1664,6 +1664,76 @@
     }
   }
 
+  // 4b. CALCULAR LÍMITES (BOUNDS) DE UN PROYECTO PARA AUTO-ENCUADRE
+  function calculateProjectBounds(mapObj) {
+    if (!mapObj) return null;
+    let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+    let count = 0;
+    const nodes = mapObj.nodes || [];
+    const lines = mapObj.lines || [];
+    const areas = mapObj.areas || [];
+
+    nodes.forEach(n => {
+      if (Array.isArray(n.coordinates) && n.coordinates.length >= 2) {
+        const lng = Number(n.coordinates[0]);
+        const lat = Number(n.coordinates[1]);
+        if (!isNaN(lng) && !isNaN(lat)) {
+          minLng = Math.min(minLng, lng);
+          maxLng = Math.max(maxLng, lng);
+          minLat = Math.min(minLat, lat);
+          maxLat = Math.max(maxLat, lat);
+          count++;
+        }
+      }
+    });
+
+    lines.forEach(l => {
+      (l.coordinates || []).forEach(coord => {
+        if (Array.isArray(coord) && coord.length >= 2) {
+          const lng = Number(coord[0]);
+          const lat = Number(coord[1]);
+          if (!isNaN(lng) && !isNaN(lat)) {
+            minLng = Math.min(minLng, lng);
+            maxLng = Math.max(maxLng, lng);
+            minLat = Math.min(minLat, lat);
+            maxLat = Math.max(maxLat, lat);
+            count++;
+          }
+        }
+      });
+    });
+
+    areas.forEach(a => {
+      (a.coordinates || []).forEach(coord => {
+        if (Array.isArray(coord) && coord.length >= 2) {
+          const lng = Number(coord[0]);
+          const lat = Number(coord[1]);
+          if (!isNaN(lng) && !isNaN(lat)) {
+            minLng = Math.min(minLng, lng);
+            maxLng = Math.max(maxLng, lng);
+            minLat = Math.min(minLat, lat);
+            maxLat = Math.max(maxLat, lat);
+            count++;
+          }
+        }
+      });
+    });
+
+    if (count > 0 && minLng !== Infinity && maxLng !== -Infinity) {
+      if (minLng === maxLng && minLat === maxLat) {
+        return [
+          [minLng - 0.005, minLat - 0.005],
+          [maxLng + 0.005, maxLat + 0.005],
+        ];
+      }
+      return [
+        [minLng, minLat],
+        [maxLng, maxLat],
+      ];
+    }
+    return null;
+  }
+
   // 5. ENTRAR AL MODO MAPA EXPANDIDO (AISLADO POR PROYECTO)
   async function enterMapMode(mapId, openLibrary = false) {
     if (mapId) {
@@ -1721,11 +1791,21 @@
       window.applySidebarState(true);
     }
 
+    // Auto-encuadrar vista a los límites de la red importada
+    const projectBounds = calculateProjectBounds(activeMap || state.data);
+    if (projectBounds) {
+      state.pendingFitBounds = projectBounds;
+    }
+
     // Inicializar Mapbox si no está montado
     initMapbox();
 
     if (state.map) {
-      if (activeMap && activeMap.center && Array.isArray(activeMap.center)) {
+      if (projectBounds) {
+        try {
+          state.map.fitBounds(projectBounds, { padding: 60, maxZoom: 16.5, duration: 1200 });
+        } catch (e) {}
+      } else if (activeMap && activeMap.center && Array.isArray(activeMap.center)) {
         state.map.flyTo({
           center: activeMap.center,
           zoom: activeMap.zoom || 14,
@@ -1860,9 +1940,17 @@
 
   function loadFreeMapStyle(styleType) {
     state.freeMapStyle = styleType || 'esri';
-    initMapbox();
-    showToast(styleType === 'osm' ? 'Cargando mapa con OpenStreetMap (Modo Libre)' : 'Cargando mapa con Satélite Esri (Modo Libre)', 'info');
+    if (state.map) {
+      setMapStyle(styleType);
+    } else {
+      initMapbox();
+    }
+    showToast(styleType === 'osm' ? 'Cargando OpenStreetMap (Modo Libre)...' : 'Cargando Satélite Esri (Modo Libre)...', 'info');
   }
+
+  // Exposición inmediata en window para llamadas inline onclick
+  window.loadFreeMapStyle = loadFreeMapStyle;
+  window.saveInlineMapboxToken = saveInlineMapboxToken;
 
   function initMapbox() {
     const container = document.getElementById('mapbox-container');
@@ -1887,66 +1975,12 @@
 
     const hasValidToken = Boolean(state.mapboxToken && state.mapboxToken.trim().startsWith('pk.'));
 
-    // Si no hay token de Mapbox y aún no ha seleccionado estilo libre:
-    if (!hasValidToken && !state.freeMapStyle) {
-      const projectName = state.data?.name || 'LOA NETWORK RESIDENCIAL';
-      container.innerHTML = `
-        <div class="flex flex-col items-center justify-center h-full p-6 text-center max-w-lg mx-auto space-y-4">
-          <div class="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center shadow-inner">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Activar Visualizador de Mapa</h3>
-            <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-              El mapa <strong>"${escapeHtml(projectName)}"</strong> se importó con éxito. Para cargar la capa satelital en alta definición, activa tu token de Mapbox o visualízalo al instante con mapas libres:
-            </p>
-          </div>
-
-          <!-- Opciones Rápidas Sin Token (Instantáneo) -->
-          <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-            <button type="button" onclick="mapsModule.loadFreeMapStyle('esri')" class="p-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md transition flex items-center justify-center space-x-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <span>🛰️ Ver Satélite Esri (Gratis)</span>
-            </button>
-            <button type="button" onclick="mapsModule.loadFreeMapStyle('osm')" class="p-3 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/15 text-slate-800 dark:text-white font-semibold text-xs border border-slate-300 dark:border-white/10 transition flex items-center justify-center space-x-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-              <span>🗺️ Ver OpenStreetMap</span>
-            </button>
-          </div>
-
-          <!-- Formulario Directo de Token Mapbox -->
-          <div class="w-full bg-slate-100 dark:bg-white/5 p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-2.5 text-left shadow-2xs">
-            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">O ingresa tu Access Token de Mapbox (pk....)</label>
-            <div class="flex items-center space-x-2">
-              <input type="password" id="inline-mapbox-token-input" placeholder="pk.eyJ1Ijoi..." class="flex-1 bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-              <button type="button" onclick="mapsModule.saveInlineMapboxToken()" class="px-4 py-2 rounded-xl text-xs font-bold btn-brand-primary whitespace-nowrap shadow-sm">Activar Mapbox</button>
-            </div>
-            <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-              <a href="https://account.mapbox.com/access-tokens/" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline flex items-center space-x-1">
-                <span>Crear cuenta gratuita en Mapbox</span>
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-              </a>
-              <span>50,000 cargas/mes gratis</span>
-            </div>
-          </div>
-
-          <div class="flex items-center space-x-3 pt-1">
-            <button type="button" onclick="switchTab('config'); switchConfigSubTab('connections');" class="text-xs text-blue-500 hover:underline font-semibold">
-              Ir a Configuración > Conexiones
-            </button>
-            <span class="text-slate-400">•</span>
-            <button type="button" onclick="mapsModule.exitMapMode()" class="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition">
-              Volver a Mis Mapas
-            </button>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    // Configurar Token y Estilo
+    // Configurar Token y Estilo:
+    // Si no hay token de Mapbox, utilizar automáticamente Satélite Esri de alta resolución (Gratis / Sin Token).
+    // ¡El usuario nunca verá una pantalla de bloqueo ni requerirá pasos técnicos complejos!
     let effectiveStyle = state.mapStyle || 'mapbox://styles/mapbox/satellite-streets-v12';
     if (!hasValidToken) {
+      state.freeMapStyle = state.freeMapStyle || 'esri';
       mapboxgl.accessToken = 'pk.eyJ1IjoiZHVtbXkiLCJhIjoiZHVtbXkifQ.dummy';
       effectiveStyle = state.freeMapStyle === 'osm' ? OPEN_STREETS_STYLE : OPEN_SATELLITE_STYLE;
     } else {
@@ -2050,6 +2084,8 @@
   function initTerrainAnd3DLayers() {
     const map = state.map;
     if (!map) return;
+    const hasValidToken = Boolean(state.mapboxToken && state.mapboxToken.trim().startsWith('pk.'));
+    if (!hasValidToken) return;
 
     try {
       // 1. Fuente DEM oficial de Mapbox para elevación 3D de cerros y quebradas
@@ -3656,17 +3692,35 @@
   // 19. ESTILOS Y CAPAS (Satelital, Calles, Oscuro)
   function setMapStyle(styleUri) {
     if (!state.map) return;
-    const normalizedStyle = styleUri.startsWith('mapbox://') ? styleUri : `mapbox://styles/mapbox/${styleUri}`;
-    state.mapStyle = normalizedStyle;
-    state.map.setStyle(normalizedStyle);
+    const hasValidToken = Boolean(state.mapboxToken && state.mapboxToken.trim().startsWith('pk.'));
+
+    let targetStyle;
+    if (!hasValidToken) {
+      if (styleUri === 'osm' || (typeof styleUri === 'string' && styleUri.includes('streets') && !styleUri.includes('satellite'))) {
+        targetStyle = OPEN_STREETS_STYLE;
+        state.freeMapStyle = 'osm';
+        showToast('Capa OpenStreetMap (Modo Libre) activada.', 'info');
+      } else {
+        targetStyle = OPEN_SATELLITE_STYLE;
+        state.freeMapStyle = 'esri';
+        showToast('Satélite Esri (Modo Libre) activado.', 'info');
+      }
+    } else {
+      targetStyle = styleUri.startsWith('mapbox://') ? styleUri : `mapbox://styles/mapbox/${styleUri}`;
+      state.mapStyle = targetStyle;
+      showToast('Estilo de mapa actualizado.', 'info');
+    }
+
+    state.map.setStyle(targetStyle);
     state.map.once('style.load', () => {
-      initTerrainAnd3DLayers();
+      if (hasValidToken) {
+        initTerrainAnd3DLayers();
+      }
       initGeoJsonSources();
       renderAllMapLayers();
       updateLiveTerrainHud();
     });
     closePopover('maps-layers-popover');
-    showToast('Estilo de mapa actualizado con relieve 3D.', 'info');
   }
 
   function toggleLayer(layerKey) {
@@ -6158,7 +6212,14 @@
     processKmlFile,
     toggleKmlTargetInputs,
     submitKmlImport,
+    loadFreeMapStyle,
+    saveInlineMapboxToken,
+    calculateProjectBounds,
   };
+
+  // Compatibilidad global directa para eventos onclick y acceso directo
+  window.loadFreeMapStyle = loadFreeMapStyle;
+  window.saveInlineMapboxToken = saveInlineMapboxToken;
 
   // Manejo de tecla Escape y atajos de teclado para el módulo de mapas
   document.addEventListener('keydown', (e) => {
