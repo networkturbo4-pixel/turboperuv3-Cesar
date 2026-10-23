@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import { resolveTenantId } from "../tenants/tenants.service";
@@ -28,6 +30,9 @@ import {
   addAssetMaintenance,
   addAssetEvent,
   addAssetAssignment,
+  getNodeStock,
+  assignStockToNode,
+  returnStockFromNode,
   getProductTraceability,
   createPurchase,
   createClientInstallation,
@@ -483,10 +488,80 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
     return { success: true, data: asset };
   });
 
+  // ----------------------------------------------------
+  // SUBIDA UNIFICADA DE ARCHIVOS MULTIMEDIA (FOTOS / VIDEOS)
+  // ----------------------------------------------------
+  fastify.post("/inventory/assets/upload-media", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const body = request.body as { dataUrl?: string; base64?: string; fileName?: string; mimeType?: string };
+    if (!body || (!body.dataUrl && !body.base64)) {
+      return reply.status(400).send({ success: false, message: "Contenido multimedia no proporcionado" });
+    }
+
+    const raw = body.dataUrl || body.base64 || "";
+    let base64Data = raw;
+    let mimeType = body.mimeType || "application/octet-stream";
+    let ext = ".jpg";
+
+    const matches = raw.match(/^data:([A-Za-z0-9\-+\/.]+);base64,(.+)$/);
+    if (matches && matches.length === 3) {
+      mimeType = matches[1].toLowerCase();
+      base64Data = matches[2];
+    }
+
+    if (mimeType.includes("jpeg") || mimeType.includes("jpg")) ext = ".jpg";
+    else if (mimeType.includes("png")) ext = ".png";
+    else if (mimeType.includes("webp")) ext = ".webp";
+    else if (mimeType.includes("gif")) ext = ".gif";
+    else if (mimeType.includes("svg")) ext = ".svg";
+    else if (mimeType.includes("bmp")) ext = ".bmp";
+    else if (mimeType.includes("avif")) ext = ".avif";
+    else if (mimeType.includes("mp4")) ext = ".mp4";
+    else if (mimeType.includes("webm")) ext = ".webm";
+    else if (mimeType.includes("ogg")) ext = ".ogg";
+    else if (mimeType.includes("quicktime") || mimeType.includes("mov")) ext = ".mov";
+    else if (mimeType.includes("x-matroska") || mimeType.includes("mkv")) ext = ".mkv";
+    else if (mimeType.includes("avi")) ext = ".avi";
+
+    if (body.fileName && body.fileName.includes(".")) {
+      const origParts = body.fileName.split(".");
+      const origExt = origParts[origParts.length - 1].toLowerCase();
+      if (/^[a-z0-9]{2,5}$/.test(origExt)) {
+        ext = `.${origExt}`;
+      }
+    }
+
+    const uploadDir = path.resolve(process.cwd(), "public", "uploads", "assets");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const safeBase = (body.fileName || "media")
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[^a-zA-Z0-9_\-]/g, "_")
+      .slice(0, 35);
+    const fileName = `${Date.now()}_${safeBase}${ext}`;
+    const targetFile = path.join(uploadDir, fileName);
+
+    const buffer = Buffer.from(base64Data, "base64");
+    fs.writeFileSync(targetFile, buffer);
+
+    const isVideo = mimeType.startsWith("video/") || [".mp4", ".webm", ".ogg", ".mov", ".mkv", ".avi"].includes(ext);
+
+    return reply.send({
+      success: true,
+      url: `/uploads/assets/${fileName}`,
+      fileName: body.fileName || fileName,
+      mimeType,
+      isVideo,
+      size: buffer.length
+    });
+  });
+
   fastify.post("/inventory/assets", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const schema = z.object({
-      code: z.string().min(1, "El código de activo es requerido"),
+      code: z.string().optional().nullable().transform((val) => (val && val.trim()) ? val.trim() : ""),
       name: z.string().min(1, "El nombre del activo es requerido"),
       category: z.enum(["vehiculo", "tecnologia", "mobiliario", "nodo"]),
       brand: z.string().optional().nullable(),
@@ -751,6 +826,66 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // ========================================================
+  // ----------------------------------------------------
+  // GESTIÓN DE EQUIPOS Y STOCK ASIGNADO A NODOS POP
+  // ----------------------------------------------------
+  fastify.get("/inventory/assets/:id/node-stock", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+    const items = getNodeStock(tenantId, numId);
+    return { success: true, count: items.length, data: items };
+  });
+
+  fastify.post("/inventory/assets/:id/node-stock", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+
+    const schema = z.object({
+      productId: z.number().min(1, "El producto es requerido"),
+      quantity: z.number().min(1, "La cantidad mínima es 1"),
+      rackLocation: z.string().optional().nullable(),
+      serialNumber: z.string().optional().nullable(),
+      itemUnitId: z.string().optional().nullable(),
+      assignedBy: z.string().optional().nullable(),
+      notes: z.string().optional().nullable(),
+    });
+
+    const parse = schema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ success: false, errors: parse.error.format() });
+    }
+
+    const result = assignStockToNode(tenantId, numId, parse.data as any);
+    if (!result.success) {
+      return reply.status(400).send(result);
+    }
+    return reply.status(201).send(result);
+  });
+
+  fastify.post("/inventory/assets/:id/node-stock/:stockId/return", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, stockId } = request.params as { id: string; stockId: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+
+    const body = (request.body || {}) as { returnedBy?: string; notes?: string };
+    const result = returnStockFromNode(tenantId, numId, stockId, body);
+    if (!result.success) {
+      return reply.status(400).send(result);
+    }
+    return reply.send(result);
+  });
+
   // 6. HISTORIAL & TRAZABILIDAD 360° (ESCÁNER, COMPRAS, CLIENTES, EPP)
   // ========================================================
   fastify.get("/inventory/traceability/:query", async (request, reply) => {

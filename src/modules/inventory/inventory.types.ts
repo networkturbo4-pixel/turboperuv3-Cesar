@@ -274,6 +274,30 @@ export interface AssetAssignment {
   createdAt: string;
 }
 
+export interface NodeStockItem {
+  id: string;
+  assetId: number;
+  assetCode?: string;
+  assetName?: string;
+  productId: number;
+  productName: string;
+  productSku: string;
+  productImage?: string;
+  category?: string;
+  quantity: number;
+  unitPrice?: number;
+  serialNumber?: string;
+  itemUnitId?: string;
+  rackLocation?: string;
+  assignedDate: string;
+  assignedBy?: string;
+  status: "en_operacion" | "en_reserva" | "retornado" | "danado";
+  notes?: string;
+  returnedDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface FixedAsset {
   id: number;
   tenantId: string;
@@ -298,7 +322,8 @@ export interface FixedAsset {
   vehicleDocs?: VehicleDocumentation; // Tarjeta de Identificación Vehicular, SOAT y CITV
   nodeDetails?: NodeDocumentation;    // Infraestructura de casa del nodo & servidores físicos
   techDetails?: TechDocumentation;    // Hardware & especificaciones técnicas
-  furnitureDetails?: FurnitureDocumentation; // Dimensiones & características de mobiliario/rack
+  furnitureDetails?: FurnitureDocumentation;
+  nodeStock?: NodeStockItem[]; // Dimensiones & características de mobiliario/rack
   createdAt: string;
   updatedAt: string;
 }

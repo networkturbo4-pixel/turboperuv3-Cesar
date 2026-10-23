@@ -16,99 +16,13 @@
     "workSchedule": "08:00 - 17:00",
     "preferences": {
       "primaryColor": "#2563eb",
-      "themeMode": "light",
+      "themeMode": "dark",
       "darkBgColor": "#18181b"
     },
     "requireTotp": false,
     "scheduleStartDate": "",
     "scheduleEndDate": "",
     "birthDate": "2026-10-21",
-    "expectedCheckInTime": "08:00",
-    "expectedCheckOutTime": "17:00"
-  },
-  {
-    "id": 1790781290504,
-    "name": "Emanuel Lopez",
-    "email": "emanuelalopez@gmail.com",
-    "pin": "95494255",
-    "roleId": 3,
-    "roleName": "Cajero / Cobranzas",
-    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=hhbzmd",
-    "isActive": true,
-    "createdAt": "2026-09-30T15:14:50.504Z",
-    "isSuperAdmin": false,
-    "allowedTenants": [
-      "turbonetwork",
-      "loanetwork",
-      "loa-san-miguel"
-    ],
-    "workSchedule": "Lunes a Viernes",
-    "hireDate": "2026-09-01",
-    "birthDate": "2026-09-16",
-    "preferences": {
-      "themeMode": "dark",
-      "primaryColor": "#7c3aed",
-      "darkBgColor": "#000000",
-      "lightBgColor": "#ffffff",
-      "toastStyle": "pill",
-      "accentColor": "#ff00bb"
-    },
-    "scheduleStartDate": "",
-    "scheduleEndDate": "",
-    "requireTotp": false,
-    "expectedCheckInTime": "08:00",
-    "expectedCheckOutTime": "17:00"
-  },
-  {
-    "id": 1790787042063,
-    "name": "Miguel Mendoza",
-    "email": "miguelmendoza@gmail.com",
-    "pin": "74214635",
-    "roleId": 2,
-    "roleName": "Administrador de Red / NOC",
-    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Miguel%20Mendoza",
-    "isActive": true,
-    "createdAt": "2026-09-30T16:50:42.063Z",
-    "isSuperAdmin": false,
-    "assignedTenantId": null,
-    "allowedTenants": [
-      "turbonetwork",
-      "roma-agencia",
-      "loa-san-miguel"
-    ],
-    "workSchedule": "08:00 - 17:00",
-    "hireDate": "2026-08-01",
-    "birthDate": "2026-08-14",
-    "preferences": {
-      "themeMode": "light"
-    },
-    "scheduleStartDate": "",
-    "scheduleEndDate": "",
-    "requireTotp": false
-  },
-  {
-    "id": 1790806727208,
-    "name": "Saul Caceres",
-    "email": "saulcaceres@gmail.com",
-    "pin": "54223961",
-    "roleId": 1,
-    "roleName": "Superadministrador",
-    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Saul%20Caceres",
-    "isActive": true,
-    "createdAt": "2026-09-30T22:18:47.208Z",
-    "isSuperAdmin": false,
-    "assignedTenantId": null,
-    "allowedTenants": [
-      "turbonetwork",
-      "loa-san-miguel"
-    ],
-    "workSchedule": "08:00 - 17:00",
-    "scheduleStartDate": "2026-09-30",
-    "scheduleEndDate": "2026-10-10",
-    "hireDate": "2026-09-01",
-    "birthDate": "2026-09-23",
-    "preferences": {},
-    "requireTotp": false,
     "expectedCheckInTime": "08:00",
     "expectedCheckOutTime": "17:00"
   }

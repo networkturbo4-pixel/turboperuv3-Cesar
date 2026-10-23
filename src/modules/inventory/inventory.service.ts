@@ -1266,8 +1266,20 @@ export function createAsset(
     }
   ] : [];
 
+  const prefixMap: Record<string, string> = {
+    vehiculo: "ACT-VEH",
+    tecnologia: "ACT-TEC",
+    mobiliario: "ACT-MOB",
+    nodo: "NOD",
+  };
+  const defaultPrefix = prefixMap[payload.category] || "ACT";
+  const generatedCode = (payload.code && String(payload.code).trim())
+    ? String(payload.code).trim()
+    : `${defaultPrefix}-${String(newId).padStart(3, "0")}`;
+
   const newAsset: FixedAsset = {
     ...payload,
+    code: generatedCode,
     id: newId,
     tenantId,
     photos: Array.isArray(payload.photos) ? payload.photos : [],
@@ -1325,6 +1337,9 @@ export function updateAsset(
   if (index === -1) return null;
 
   const current = assets[index];
+  if (!payload.code || !String(payload.code).trim()) {
+    delete (payload as any).code;
+  }
   const now = new Date();
   const nowIso = now.toISOString();
 
@@ -2295,3 +2310,197 @@ export function getInventoryMetrics(tenantId: string): InventoryMetrics {
 }
 
 
+
+// ==========================================
+// ASIGNACIÓN DE EQUIPOS DEL STOCK A NODOS POP
+// ==========================================
+
+export function getNodeStock(tenantId: string, assetId: number): any[] {
+  const asset = getAssetById(tenantId, assetId);
+  if (!asset) return [];
+  return (asset as any).nodeStock || [];
+}
+
+export function assignStockToNode(
+  tenantId: string,
+  assetId: number,
+  data: {
+    productId: number;
+    quantity: number;
+    rackLocation?: string;
+    serialNumber?: string;
+    itemUnitId?: string;
+    assignedBy?: string;
+    notes?: string;
+  }
+): { success: boolean; message: string; item?: any } {
+  const assets = loadAssets(tenantId);
+  const assetIndex = assets.findIndex((a) => a.id === assetId);
+  if (assetIndex === -1) return { success: false, message: "Nodo no encontrado" };
+
+  const products = loadProducts(tenantId);
+  const prodIndex = products.findIndex((p) => p.id === data.productId);
+  if (prodIndex === -1) return { success: false, message: "Producto no encontrado en inventario" };
+
+  const product = products[prodIndex];
+  const qty = Number(data.quantity) || 1;
+  if (qty <= 0) return { success: false, message: "La cantidad debe ser mayor a 0" };
+
+  if (product.stock < qty) {
+    return { success: false, message: `Stock insuficiente en almacén (Disponible: ${product.stock}, Solicitado: ${qty})` };
+  }
+
+  // 1. Decrementar stock en almacén general
+  product.stock -= qty;
+  product.updatedAt = new Date().toISOString();
+
+  if (data.itemUnitId && Array.isArray(product.itemUnits)) {
+    const unit = product.itemUnits.find((u) => u.id === data.itemUnitId || u.serialNumber === data.serialNumber);
+    if (unit) {
+      unit.status = "asignado";
+      unit.assignedTo = `Nodo POP: ${assets[assetIndex].name}`;
+      unit.assignedAt = new Date().toISOString();
+    }
+  }
+  saveProducts(tenantId, products);
+
+  // 2. Registrar movimiento de stock (salida hacia el nodo)
+  const now = new Date().toISOString();
+  saveMovement(tenantId, {
+    id: `mov-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    tenantId,
+    productId: product.id,
+    productName: product.name,
+    type: "out",
+    quantity: qty,
+    previousStock: product.stock + qty,
+    newStock: product.stock,
+    reason: `Asignación a Nodo POP: ${assets[assetIndex].name} (${assets[assetIndex].code})`,
+    operatorName: data.assignedBy || "Sistema / Inventario",
+    timestamp: now,
+  });
+
+  // 3. Vincular al nodo
+  const nodeAsset = assets[assetIndex] as any;
+  if (!Array.isArray(nodeAsset.nodeStock)) {
+    nodeAsset.nodeStock = [];
+  }
+
+  const newItem = {
+    id: `nstk-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    assetId,
+    assetCode: nodeAsset.code,
+    assetName: nodeAsset.name,
+    productId: product.id,
+    productName: product.name,
+    productSku: product.sku,
+    productImage: (Array.isArray(product.images) && product.images[0]) || "",
+    category: product.categoryName || product.categoryId,
+    quantity: qty,
+    unitPrice: product.baseCost || 0,
+    serialNumber: data.serialNumber || (data.itemUnitId ? "S/N-" + data.itemUnitId : undefined),
+    itemUnitId: data.itemUnitId,
+    rackLocation: data.rackLocation || "Gabinete Principal",
+    assignedDate: now.split("T")[0],
+    assignedBy: data.assignedBy || "Personal NOC",
+    status: "en_operacion",
+    notes: data.notes,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  nodeAsset.nodeStock.unshift(newItem);
+  nodeAsset.updatedAt = now;
+
+  // Registrar en línea de vida del activo
+  if (!Array.isArray(nodeAsset.eventHistory)) nodeAsset.eventHistory = [];
+  nodeAsset.eventHistory.unshift({
+    id: crypto.randomUUID(),
+    assetId,
+    type: "asignacion" as const,
+    title: `Equipamiento Instalado: ${product.name} (x${qty})`,
+    description: `Asignación de ${qty} unidad(es) de ${product.name} [SKU: ${product.sku}] al nodo. Ubicación: ${data.rackLocation || "Gabinete Principal"}.`,
+    operator: data.assignedBy || "Sistema",
+    date: now,
+  });
+
+  saveAssets(tenantId, assets);
+  return { success: true, message: "Equipo asignado al nodo exitosamente", item: newItem };
+}
+
+export function returnStockFromNode(
+  tenantId: string,
+  assetId: number,
+  stockItemId: string,
+  data?: { returnedBy?: string; notes?: string }
+): { success: boolean; message: string } {
+  const assets = loadAssets(tenantId);
+  const assetIndex = assets.findIndex((a) => a.id === assetId);
+  if (assetIndex === -1) return { success: false, message: "Nodo no encontrado" };
+
+  const nodeAsset = assets[assetIndex] as any;
+  if (!Array.isArray(nodeAsset.nodeStock)) return { success: false, message: "No hay stock asignado" };
+
+  const itemIndex = nodeAsset.nodeStock.findIndex((i: any) => i.id === stockItemId);
+  if (itemIndex === -1) return { success: false, message: "Artículo asignado no encontrado" };
+
+  const item = nodeAsset.nodeStock[itemIndex];
+  if (item.status === "retornado") return { success: false, message: "Este artículo ya fue retornado" };
+
+  // 1. Restaurar stock en almacén central
+  const products = loadProducts(tenantId);
+  const prodIndex = products.findIndex((p) => p.id === item.productId);
+  if (prodIndex !== -1) {
+    const product = products[prodIndex];
+    product.stock += item.quantity;
+    product.updatedAt = new Date().toISOString();
+
+    if (item.itemUnitId && Array.isArray(product.itemUnits)) {
+      const unit = product.itemUnits.find((u) => u.id === item.itemUnitId);
+      if (unit) {
+        unit.status = "disponible";
+        unit.assignedTo = undefined;
+      }
+    }
+    saveProducts(tenantId, products);
+
+    // Movimiento de entrada
+    const now = new Date().toISOString();
+    saveMovement(tenantId, {
+      id: `mov-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      tenantId,
+      productId: product.id,
+      productName: product.name,
+      type: "in",
+      quantity: item.quantity,
+      previousStock: product.stock - item.quantity,
+      newStock: product.stock,
+      reason: `Retorno desde Nodo POP: ${nodeAsset.name} (${nodeAsset.code})`,
+      operatorName: data?.returnedBy || "Personal NOC",
+      timestamp: now,
+    });
+  }
+
+  // 2. Actualizar estado en el nodo
+  const now = new Date().toISOString();
+  item.status = "retornado";
+  item.returnedDate = now.split("T")[0];
+  item.updatedAt = now;
+  if (data?.notes) {
+    item.notes = (item.notes ? item.notes + " | " : "") + `Retornado: ${data.notes}`;
+  }
+
+  if (!Array.isArray(nodeAsset.eventHistory)) nodeAsset.eventHistory = [];
+  nodeAsset.eventHistory.unshift({
+    id: crypto.randomUUID(),
+    assetId,
+    type: "mantenimiento" as const,
+    title: `Equipamiento Retornado a Almacén: ${item.productName}`,
+    description: `Se retiró del nodo y devolvió al almacén central ${item.quantity} unidad(es) de ${item.productName}.`,
+    operator: data?.returnedBy || "Sistema",
+    date: now,
+  });
+
+  saveAssets(tenantId, assets);
+  return { success: true, message: "Equipo retornado al almacén central exitosamente" };
+}
