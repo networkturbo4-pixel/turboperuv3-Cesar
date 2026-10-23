@@ -1,5 +1,36 @@
 [
   {
+    "code": "LP05-2025Y",
+    "name": "LAPTOP",
+    "category": "tecnologia",
+    "brand": "LENOVO",
+    "model": "THINKPAD T14",
+    "serialNumber": "LP05-2025Y",
+    "location": "LOCAL 1",
+    "acquisitionDate": "2024-01-01",
+    "acquisitionCost": 1000,
+    "status": "operativo",
+    "photos": [],
+    "videos": [],
+    "id": 502,
+    "tenantId": "turbonetwork",
+    "maintenanceHistory": [],
+    "assignmentHistory": [],
+    "eventHistory": [
+      {
+        "id": "4c89795a-dfdf-47ea-ab01-8610b56c4dad",
+        "assetId": 502,
+        "type": "creacion",
+        "title": "Alta de Activo Fijo",
+        "description": "Registro inicial de LAPTOP (tecnologia)",
+        "operator": "Sistema",
+        "date": "2026-10-23T15:00:37.368Z"
+      }
+    ],
+    "createdAt": "2026-10-23T15:00:37.368Z",
+    "updatedAt": "2026-10-23T15:00:37.368Z"
+  },
+  {
     "id": 501,
     "code": "ACT-VEH-001",
     "name": "Camioneta Técnica Toyota Hilux 4x4 Cuadrilla 1",
@@ -121,175 +152,5 @@
     "tenantId": "turbonetwork",
     "createdAt": "2026-09-30T15:19:09.885Z",
     "updatedAt": "2026-10-12T23:14:45.250Z"
-  },
-  {
-    "id": 502,
-    "code": "ACT-TEC-001",
-    "name": "Fusionadora de Fibra Óptica Fujikura 90S+ Core Alignment",
-    "category": "tecnologia",
-    "brand": "Fujikura",
-    "model": "90S+ Core Alignment",
-    "serialNumber": "FJ-90S-984210",
-    "assignedTo": "Técnico Especialista Carlos Gómez",
-    "location": "Laboratorio NOC / Cuadrilla Fibra",
-    "acquisitionDate": "2025-06-20",
-    "acquisitionCost": 6800,
-    "status": "operativo",
-    "description": "Equipo de fusión por alineación de núcleo con pérdida < 0.02 dB y cortadora CT-50 Bluetooth.",
-    "photos": [
-      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80"
-    ],
-    "videos": [],
-    "maintenanceHistory": [
-      {
-        "id": "maint-2",
-        "assetId": 502,
-        "type": "calibracion",
-        "title": "Calibración de Electrodos y Limpieza de Lentes V-Groove",
-        "description": "Calibración anual con 1,200 arcos realizados, reemplazo de electrodos originales Fujikura.",
-        "cost": 150,
-        "technician": "Servicio Técnico Óptico",
-        "date": "2026-06-15",
-        "photos": [],
-        "videos": [],
-        "createdAt": "2026-06-15T12:00:00Z"
-      }
-    ],
-    "assignmentHistory": [
-      {
-        "id": "assign-502-1",
-        "assetId": 502,
-        "assignedTo": "Técnico Especialista Carlos Gómez",
-        "previousAssignedTo": "Almacén Central",
-        "assignedDate": "2025-06-20",
-        "assignedTime": "11:30",
-        "status": "activa",
-        "location": "Laboratorio NOC / Cuadrilla Fibra",
-        "purpose": "Empalmes y Fusiones de Precisión en Red Troncal",
-        "condition": "Excelente (Incluye cortadora CT-50 y electrodos de repuesto)",
-        "assignedBy": "Jefe de Almacén",
-        "documentUrl": "",
-        "notes": "Equipo de alta precisión bajo custodia directa del técnico especialista.",
-        "createdAt": "2025-06-20T11:30:00Z"
-      }
-    ],
-    "eventHistory": [
-      {
-        "id": "evt-3",
-        "assetId": 502,
-        "type": "creacion",
-        "title": "Compra e ingreso a inventario técnico",
-        "description": "Adquirida para proyectos de expansión FTTH troncal.",
-        "operator": "Admin",
-        "date": "2025-06-20T11:00:00Z"
-      }
-    ],
-    "tenantId": "turbonetwork",
-    "createdAt": "2026-09-30T15:19:09.885Z",
-    "updatedAt": "2026-09-30T15:19:09.885Z"
-  },
-  {
-    "id": 503,
-    "code": "ACT-MOB-001",
-    "name": "Gabinete Rack Servidores 42U 800x1000mm Puerta Microperforada",
-    "category": "mobiliario",
-    "brand": "Nexxt Solutions",
-    "model": "Server Rack 42U Heavy Duty",
-    "serialNumber": "NXT-42U-003",
-    "assignedTo": "NOC DataCenter Central",
-    "location": "Data Center Piso 2 - Fila A",
-    "acquisitionDate": "2024-11-05",
-    "acquisitionCost": 1150,
-    "status": "operativo",
-    "description": "Rack para servidores de cabecera MikroTik CCR2216 y OLTs Huawei SmartAX.",
-    "photos": [
-      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80"
-    ],
-    "videos": [],
-    "maintenanceHistory": [],
-    "assignmentHistory": [
-      {
-        "id": "assign-503-1",
-        "assetId": 503,
-        "assignedTo": "NOC DataCenter Central",
-        "previousAssignedTo": "Almacén Central",
-        "assignedDate": "2024-11-05",
-        "assignedTime": "09:30",
-        "status": "activa",
-        "location": "Data Center Piso 2 - Fila A",
-        "purpose": "Infraestructura de Servidores y OLTs Core",
-        "condition": "Instalado y Anclado",
-        "assignedBy": "Admin",
-        "documentUrl": "",
-        "notes": "Uso exclusivo del personal NOC.",
-        "createdAt": "2024-11-05T09:30:00Z"
-      }
-    ],
-    "eventHistory": [
-      {
-        "id": "evt-4",
-        "assetId": 503,
-        "type": "creacion",
-        "title": "Instalación y anclaje antisísmico en sala de datos",
-        "description": "Anclaje con barras roscadas a losa de piso técnico.",
-        "operator": "Admin",
-        "date": "2024-11-05T09:00:00Z"
-      }
-    ],
-    "tenantId": "turbonetwork",
-    "createdAt": "2026-09-30T15:19:09.885Z",
-    "updatedAt": "2026-09-30T15:19:09.885Z"
-  },
-  {
-    "id": 504,
-    "code": "ACT-TEC-002",
-    "name": "Reflectómetro Óptico OTDR Anritsu MT9085C Access Master",
-    "category": "tecnologia",
-    "brand": "Anritsu",
-    "model": "MT9085C Access Master",
-    "serialNumber": "ANR-9085-782194",
-    "assignedTo": "Miguel Mendoza",
-    "location": "Laboratorio NOC / Cuadrilla Fibra Óptica",
-    "acquisitionDate": "2026-09-15",
-    "acquisitionCost": 4850,
-    "status": "operativo",
-    "description": "Equipo de medición y certificación de fibra óptica OTDR 1310/1550/1625 nm con puerto PON para enlaces FTTH activos.",
-    "photos": [
-      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80"
-    ],
-    "videos": [],
-    "maintenanceHistory": [],
-    "assignmentHistory": [
-      {
-        "id": "assign-504-1",
-        "assetId": 504,
-        "assignedTo": "Miguel Mendoza",
-        "previousAssignedTo": "Almacén Central / Registro Nuevo",
-        "assignedDate": "2026-09-15",
-        "assignedTime": "10:00",
-        "status": "activa",
-        "location": "Laboratorio NOC / Cuadrilla Fibra Óptica",
-        "purpose": "Certificación de enlaces PON y atención de cortes de fibra",
-        "condition": "Nuevo en maletín original con bobina de lanzamiento 500m",
-        "assignedBy": "Almacén Técnico",
-        "documentUrl": "",
-        "notes": "Asignado para mediciones OTDR y certificación de atenuación.",
-        "createdAt": "2026-09-15T10:00:00Z"
-      }
-    ],
-    "eventHistory": [
-      {
-        "id": "867dbf23-6690-416d-9785-b3a0bfae52b2",
-        "assetId": 504,
-        "type": "creacion",
-        "title": "Alta de Activo Fijo",
-        "description": "Registro inicial de Reflectómetro Óptico OTDR Anritsu MT9085C Access Master (tecnologia)",
-        "operator": "Sistema",
-        "date": "2026-10-12T22:53:21.367Z"
-      }
-    ],
-    "tenantId": "turbonetwork",
-    "createdAt": "2026-10-12T22:53:21.367Z",
-    "updatedAt": "2026-10-12T22:53:21.367Z"
   }
 ]

@@ -132,7 +132,62 @@ export interface InventoryMetrics {
 // ==========================================
 // ACTIVOS FIJOS (VEHÍCULO, TECNOLOGÍA, MOBILIARIO)
 // ==========================================
-export type AssetCategory = "vehiculo" | "tecnologia" | "mobiliario";
+export type AssetCategory = "vehiculo" | "tecnologia" | "mobiliario" | "nodo";
+
+export interface NodeDocumentation {
+  address?: string;              // Dirección física del inmueble / casa del nodo
+  reference?: string;            // Referencia de llegada
+  latitude?: number | string;    // Latitud GPS
+  longitude?: number | string;   // Longitud GPS
+  propertyType?: "alquilado" | "propio" | "comodato"; // Condición del inmueble
+  landlordName?: string;         // Propietario / Arrendador
+  landlordPhone?: string;        // Teléfono de contacto
+  rentalCost?: number | string;  // Costo mensual del alquiler
+  paymentDay?: number | string;  // Día de pago del alquiler
+  powerType?: string;            // Monofásica / Trifásica
+  powerMeterNumber?: string;     // N° de Suministro eléctrico / Medidor
+  upsModel?: string;             // Sistema UPS y banco de baterías
+  generator?: string;            // Generador auxiliar / Grupo electrógeno
+  powerAutonomyHours?: number | string; // Horas de autonomía eléctrica
+  airConditioning?: string;      // Climatización / Aire acondicionado
+  racksCount?: number | string;  // Cantidad de racks / gabinetes
+  serversCount?: number | string; // Servidores físicos / OLTs / Switches instalados
+  ipSubnet?: string;             // IP de gestión del nodo / VLAN / Segmento
+  uplinkProvider?: string;       // Enlace troncal fibra / Proveedor
+  keyHolder?: string;            // Custodio / Llaves en poder de
+  cctvCameras?: string;          // Sistema de videovigilancia / CCTV
+}
+
+export interface TechDocumentation {
+  techCategory?: string;         // "computo" | "redes" | "instrumentacion" | "herramienta_electrica" | "herramienta_manual" | "seguridad_altura" | "general"
+  deviceType?: string;           // Subtipo o nombre específico (ej: Fusionadora 6 motores, Laptop Core i7, Taladro 18V)
+  specifications?: string;       // Ficha técnica o resumen de capacidades
+  powerSource?: string;          // Tipo de alimentación: Batería Li-Ion, 220V, PoE, Manual, etc.
+  processor?: string;            // CPU
+  ram?: string;                  // RAM
+  storage?: string;              // Disco
+  macAddress?: string;           // MAC
+  managementIp?: string;         // IP de gestión
+  osVersion?: string;            // Sistema Operativo / Firmware
+  portsCount?: string;           // Puertos / Interfaces
+  wavelength?: string;           // Longitud de onda / Rango de pérdida
+  calibrationDate?: string;      // Fecha de calibración
+  calibrationExpiry?: string;    // Vigencia / Próxima calibración
+  calibrationCertNumber?: string;// N° Certificado de Calibración
+  powerRating?: string;          // Potencia / Voltaje (ej: 18V, 750W, 150Kg)
+  lifespanNotes?: string;        // Criterios de inspección / desgaste / vida útil
+  warrantyExpiry?: string;       // Garantía vigente hasta
+  accessories?: string;          // Maletín, kit y accesorios incluidos
+}
+
+export interface FurnitureDocumentation {
+  furnitureType?: string;        // Rack de piso, Gabinete mural, Escritorio, Silla, etc.
+  rackUnits?: number | string;   // Altura en U (42U, 24U, 12U, etc.)
+  dimensions?: string;           // Dimensiones (Alto x Ancho x Fondo)
+  material?: string;             // Acero, Madera, Metal, etc.
+  weightCapacityKg?: number | string; // Capacidad de carga máx.
+  floorLocation?: string;        // Piso / Sala / Oficina
+}
 export type AssetStatus = "operativo" | "mantenimiento" | "baja" | "en_reserva";
 
 export interface AssetMaintenance {
@@ -241,6 +296,9 @@ export interface FixedAsset {
   assignmentHistory?: AssetAssignment[];
   eventHistory: AssetHistoryEvent[];
   vehicleDocs?: VehicleDocumentation; // Tarjeta de Identificación Vehicular, SOAT y CITV
+  nodeDetails?: NodeDocumentation;    // Infraestructura de casa del nodo & servidores físicos
+  techDetails?: TechDocumentation;    // Hardware & especificaciones técnicas
+  furnitureDetails?: FurnitureDocumentation; // Dimensiones & características de mobiliario/rack
   createdAt: string;
   updatedAt: string;
 }

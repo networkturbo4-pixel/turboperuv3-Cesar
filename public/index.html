@@ -1273,6 +1273,9 @@
     html:not(.dark) input[type="number"],
     html:not(.dark) input[type="date"],
     html:not(.dark) input[type="time"],
+    html:not(.dark) input[type="url"],
+    html:not(.dark) input[type="tel"],
+    html:not(.dark) input[type="search"],
     html:not(.dark) select,
     html:not(.dark) textarea {
       background-color: #ffffff !important;
@@ -1291,6 +1294,9 @@
     html:not(.dark) input[type="number"]:focus,
     html:not(.dark) input[type="date"]:focus,
     html:not(.dark) input[type="time"]:focus,
+    html:not(.dark) input[type="url"]:focus,
+    html:not(.dark) input[type="tel"]:focus,
+    html:not(.dark) input[type="search"]:focus,
     html:not(.dark) select:focus,
     html:not(.dark) textarea:focus {
       background-color: #ffffff !important;
@@ -1309,6 +1315,9 @@
     html.dark input[type="number"],
     html.dark input[type="date"],
     html.dark input[type="time"],
+    html.dark input[type="url"],
+    html.dark input[type="tel"],
+    html.dark input[type="search"],
     html.dark select,
     html.dark textarea {
       background-color: var(--surface-dark-subtle) !important;
@@ -1327,6 +1336,9 @@
     html.dark input[type="number"]:focus,
     html.dark input[type="date"]:focus,
     html.dark input[type="time"]:focus,
+    html.dark input[type="url"]:focus,
+    html.dark input[type="tel"]:focus,
+    html.dark input[type="search"]:focus,
     html.dark select:focus,
     html.dark textarea:focus {
       background-color: var(--surface-dark-subtle) !important;
@@ -2054,8 +2066,25 @@
       background: rgba(255, 255, 255, 0.08);
       color: #f8fafc;
     }
+    .asset-cat-chip {
+      color: #64748b;
+      background: transparent;
+      border: 1px solid transparent;
+    }
+    html:not(.dark) .asset-cat-chip:not(.active-asset-chip) {
+      color: #475569;
+    }
+    .asset-cat-chip:hover:not(.active-asset-chip) {
+      background: rgba(148, 163, 184, 0.12);
+      color: #0f172a;
+    }
+    .dark .asset-cat-chip:hover:not(.active-asset-chip) {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+    }
     .cmd-chip.active-chip,
-    .inv-type-chip.active-inv-chip {
+    .inv-type-chip.active-inv-chip,
+    .asset-cat-chip.active-asset-chip {
       background: var(--brand-primary, #2563eb) !important;
       color: #ffffff !important;
       border-color: transparent !important;
@@ -8319,6 +8348,7 @@
                 <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none" id="asset-category-chips">
                   <button type="button" onclick="handleAssetCategoryFilter('all')" data-cat="all" class="asset-cat-chip active-asset-chip px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap">✨ Todos</button>
                   <button type="button" onclick="handleAssetCategoryFilter('vehiculo')" data-cat="vehiculo" class="asset-cat-chip px-3 py-1.5 rounded-xl text-xs font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 whitespace-nowrap">🚗 Vehículos & Flota</button>
+                  <button type="button" onclick="handleAssetCategoryFilter('nodo')" data-cat="nodo" class="asset-cat-chip px-3 py-1.5 rounded-xl text-xs font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 whitespace-nowrap">🏢 Nodos & Datacenter</button>
                   <button type="button" onclick="handleAssetCategoryFilter('tecnologia')" data-cat="tecnologia" class="asset-cat-chip px-3 py-1.5 rounded-xl text-xs font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 whitespace-nowrap">💻 Tecnología & Herramientas</button>
                   <button type="button" onclick="handleAssetCategoryFilter('mobiliario')" data-cat="mobiliario" class="asset-cat-chip px-3 py-1.5 rounded-xl text-xs font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 whitespace-nowrap">🪑 Mobiliario & Racks</button>
                 </div>
@@ -15826,15 +15856,15 @@
         <!-- Métricas Rápidas -->
         <div class="grid grid-cols-3 gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 text-center">
           <div>
-            <span class="text-[10px] text-slate-400 uppercase font-bold block">Stock Disponible</span>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Stock Disponible</span>
             <span id="dtl-prod-stock" class="text-base font-bold font-mono text-emerald-600 dark:text-emerald-400">0</span>
           </div>
           <div>
-            <span class="text-[10px] text-slate-400 uppercase font-bold block">Costo Base</span>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Costo Base</span>
             <span id="dtl-prod-cost" class="text-base font-bold font-mono text-slate-900 dark:text-white">$0.00</span>
           </div>
           <div>
-            <span class="text-[10px] text-slate-400 uppercase font-bold block">SKU</span>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">SKU</span>
             <span id="dtl-prod-sku" class="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 block mt-0.5">SKU</span>
           </div>
         </div>
@@ -15916,7 +15946,7 @@
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-3 flex-shrink-0">
         <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 flex items-center justify-between">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Unidades</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Total Unidades</span>
             <span id="units-kpi-total" class="font-mono font-bold text-base text-slate-900 dark:text-white">0</span>
           </div>
           <span class="text-xl">📦</span>
@@ -17109,9 +17139,9 @@
           <span>1. Ficha & Datos Generales</span>
         </button>
         <button type="button" id="tab-btn-asset-vehicle" onclick="switchAssetModalTab('vehicle')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition flex items-center gap-1.5">
-          <span>🚗</span>
-          <span>2. Documentación Vehicular</span>
-          <span id="tab-badge-asset-vehicle" class="px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-blue-500/20 text-blue-500">3 Módulos</span>
+          <span id="tab-icon-asset-spec">🚗</span>
+          <span id="tab-title-asset-spec">2. Documentación Vehicular</span>
+          <span id="tab-badge-asset-vehicle" class="px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-blue-500/20 text-blue-500">TIV • SOAT</span>
         </button>
         <button type="button" id="tab-btn-asset-multimedia" onclick="switchAssetModalTab('multimedia')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition flex items-center gap-1.5">
           <span>📸</span>
@@ -17135,6 +17165,7 @@
               <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Categoría *</label>
               <select id="inv-asset-category" required onchange="onAssetCategorySelectChange(this.value)" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium">
                 <option value="vehiculo">🚗 Vehículo & Flota</option>
+                <option value="nodo">🏢 Nodo & Datacenter (Servidores)</option>
                 <option value="tecnologia">💻 Tecnología & Herramientas</option>
                 <option value="mobiliario">🪑 Mobiliario & Racks</option>
               </select>
@@ -17198,22 +17229,10 @@
           </div>
         </div>
 
-        <!-- TAB 2: DOCUMENTACIÓN VEHICULAR (TIV, SOAT, CITV) -->
+        <!-- TAB 2: FICHA ESPECIALIZADA POR CATEGORÍA -->
         <div id="tab-content-asset-vehicle" class="space-y-4 hidden">
-          <!-- Banner informativo cuando la categoría NO es vehículo -->
-          <div id="inv-asset-non-vehicle-notice" class="hidden p-6 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 text-center">
-            <span class="text-3xl block mb-2">🚗</span>
-            <h4 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Módulo Exclusivo para Vehículos & Flota</h4>
-            <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
-              La documentación reglamentaria (TIV SUNARP, SOAT y CITV MTC) solo aplica para activos de categoría <strong>Vehículo & Flota</strong>.
-            </p>
-            <button type="button" onclick="switchAssetModalTab('general')" class="mt-3 px-3 py-1.5 rounded-xl bg-blue-600/10 text-blue-500 hover:bg-blue-600/20 text-xs font-semibold transition">
-              Volver a Datos Generales
-            </button>
-          </div>
-
-          <!-- Módulos de documentación vehicular -->
-          <div id="inv-asset-vehicle-modules-container" class="space-y-4">
+          <!-- SECCIÓN 1: VEHÍCULOS (TIV, SOAT, CITV) -->
+          <div id="tab-section-asset-vehicle" class="space-y-4">
             <!-- 1. TARJETA DE IDENTIFICACIÓN VEHICULAR (TIV / TIVE) -->
             <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-blue-500/20 space-y-3">
               <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
@@ -17357,6 +17376,394 @@
               </div>
             </div>
           </div>
+
+          <!-- SECCIÓN 2: NODO & DATACENTER (CASA DE SERVIDORES FÍSICOS) -->
+          <div id="tab-section-asset-node" class="space-y-4 hidden">
+            <!-- 1. INMUEBLE & UBICACIÓN GPS DEL NODO -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-emerald-500/20 space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                <div class="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                  <span class="text-sm">📍</span>
+                  <span>1. Inmueble & Ubicación GPS (Casa de Servidores Físicos)</span>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-500">UBICACIÓN POP</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div class="sm:col-span-2">
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Dirección Exacta del Inmueble *</label>
+                  <input type="text" id="inv-node-address" placeholder="Ej: Av. Los Héroes 452, Mz. B Lt. 12, San Juan" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Condición del Inmueble</label>
+                  <select id="inv-node-property" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white font-medium">
+                    <option value="alquilado">🏠 Casa / Local Alquilado</option>
+                    <option value="propio">🏢 Inmueble Propio</option>
+                    <option value="comodato">🤝 En Comodato / Convenio</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Referencia de Llegada</label>
+                <input type="text" id="inv-node-reference" placeholder="Ej: Frente al parque central, portón negro con reja blanca" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+              </div>
+
+              <!-- Coordenadas GPS con Botones Interactivos -->
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/10">
+                <div class="sm:col-span-4">
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Latitud GPS</label>
+                  <input type="text" id="inv-node-lat" placeholder="-12.046374" class="w-full bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div class="sm:col-span-4">
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Longitud GPS</label>
+                  <input type="text" id="inv-node-lng" placeholder="-77.042793" class="w-full bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div class="sm:col-span-4 flex items-center gap-1.5">
+                  <button type="button" onclick="getCurrentNodeGps()" class="flex-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 text-[11px] font-bold transition flex items-center justify-center gap-1 shadow-2xs">
+                    <span>📍 Mi GPS</span>
+                  </button>
+                  <button type="button" onclick="openNodeMapPreview()" class="px-2.5 py-1.5 rounded-lg bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-slate-200 text-[11px] font-semibold transition" title="Ver en Google Maps">
+                    <span>🗺️ Maps</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Contacto Arrendador / Propietario -->
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5 pt-1">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Propietario / Arrendador</label>
+                  <input type="text" id="inv-node-landlord-name" placeholder="Sr. Carlos Mendoza" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Teléfono Contacto</label>
+                  <input type="text" id="inv-node-landlord-phone" placeholder="987 654 321" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Alquiler Mensual ($)</label>
+                  <input type="number" step="0.01" id="inv-node-rental-cost" placeholder="350.00" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Día de Pago (Mensual)</label>
+                  <input type="number" min="1" max="31" id="inv-node-payment-day" placeholder="15" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. SERVIDORES FÍSICOS & INFRAESTRUCTURA DE RED -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-blue-500/20 space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+                  <span class="text-sm">🖥️</span>
+                  <span>2. Servidores Físicos & Equipamiento de Red</span>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/10 text-blue-500">HARDWARE CORE</span>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">N° Racks Físicos</label>
+                  <input type="number" id="inv-node-racks-count" placeholder="2 Racks" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Servidores Físicos / OLTs</label>
+                  <input type="text" id="inv-node-servers-count" placeholder="Ej: 3 Servidores Dell + 2 OLTs" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Climatización / Aire Acond.</label>
+                  <input type="text" id="inv-node-air-con" placeholder="Ej: Split Inverter 18000 BTU" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">IP Gestión / Subred VLAN</label>
+                  <input type="text" id="inv-node-ip-subnet" placeholder="Ej: 10.100.1.1/24" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Enlace Troncal Fibra Óptica / Proveedor Uplink</label>
+                <input type="text" id="inv-node-uplink" placeholder="Ej: Fibra Óptica 10G Anillo Principal / Uplink Lumen - Cirion" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+              </div>
+            </div>
+
+            <!-- 3. ENERGÍA ELÉCTRICA, RESPALDO UPS & SEGURIDAD -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-amber-500/20 space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                <div class="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+                  <span class="text-sm">⚡</span>
+                  <span>3. Energía Eléctrica, Respaldo UPS & Seguridad</span>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-500">ENERGÍA & ACCESOS</span>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Tipo de Energía</label>
+                  <select id="inv-node-power-type" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                    <option value="Trifásica 380V">Trifásica (380V)</option>
+                    <option value="Monofásica 220V">Monofásica (220V)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">N° Suministro / Medidor</label>
+                  <input type="text" id="inv-node-power-meter" placeholder="SUM-1940291" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Sistema UPS / Baterías</label>
+                  <input type="text" id="inv-node-ups-model" placeholder="APC Online 6kVA + Banco 8 Bat." class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Autonomía Eléctrica (Horas)</label>
+                  <input type="number" step="0.5" id="inv-node-power-autonomy" placeholder="4.5" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Generador Eléctrico Auxiliar</label>
+                  <input type="text" id="inv-node-generator" placeholder="Grupo electrógeno Honda 6.5kVA diésel" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Llaves en Custodia de</label>
+                  <input type="text" id="inv-node-key-holder" placeholder="Ej: Ing. Jorge / Guardia 24h" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Cámaras CCTV & Alarma</label>
+                  <input type="text" id="inv-node-cctv" placeholder="Ej: 3 Cámaras IP + Sensor Apertura" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 3: TECNOLOGÍA & HERRAMIENTAS GENERAL -->
+          <div id="tab-section-asset-tech" class="space-y-4 hidden">
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-purple-500/20 space-y-3.5">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                <div class="flex items-center gap-2 text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wide">
+                  <span class="text-sm">🛠️</span>
+                  <span>1. Ficha Técnica General (Tecnología & Herramientas)</span>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/10 text-purple-500">EQUIPOS, REDES & HERRAMIENTAS</span>
+              </div>
+
+              <!-- Fila 1: Clasificación de Rubro, Nombre/Subtipo y Fuente de Alimentación -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+                    Rubro / Tipo de Activo <span class="text-purple-500">*</span>
+                  </label>
+                  <select id="inv-tech-classification" onchange="onTechClassificationChange()" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white font-medium focus:border-purple-500">
+                    <option value="herramienta_electrica">🛠️ Herramienta Eléctrica / Potencia (Taladros, Rotomartillos, etc.)</option>
+                    <option value="herramienta_manual">🧰 Herramienta Manual / Cuadrilla (Crimpadoras, Cleavers, Peladoras)</option>
+                    <option value="instrumentacion">🔬 Instrumentación Óptica & Medición (Fusionadoras, OTDR, Power Meter)</option>
+                    <option value="redes">🌐 Redes & Telecomunicaciones (Switches, Routers, OLTs, Antenas)</option>
+                    <option value="computo">💻 Cómputo & Servidores (Laptops, PCs, Servidores de Rack)</option>
+                    <option value="seguridad_altura">🪜 Seguridad & Altura (Escaleras Dieléctricas, Arneses)</option>
+                    <option value="general">⚙️ Otro Equipo / Herramienta General</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Subtipo / Modelo Específico</label>
+                  <input type="text" id="inv-tech-device-type" placeholder="Ej: Taladro Percutor 18V / Fusionadora 6 Motores / Switch 24G" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:border-purple-500">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Alimentación / Energía</label>
+                  <select id="inv-tech-power-source" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white font-medium focus:border-purple-500">
+                    <option value="Batería Recargable Li-Ion">🔋 Batería Recargable Li-Ion</option>
+                    <option value="Red Eléctrica 220V AC">🔌 Red Eléctrica 220V AC</option>
+                    <option value="PoE / 48V DC">⚡ PoE / 48V DC</option>
+                    <option value="Manual / Mecánico">✋ Manual / Mecánico (Sin Energía)</option>
+                    <option value="Pilas AA / AAA">🔋 Pilas Reemplazables (AA/AAA)</option>
+                    <option value="Combustible (Gasolina)">⛽ Combustible (Gasolina)</option>
+                    <option value="Dual / Híbrido">🔄 Dual / Híbrido</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Fila 2: Resumen / Especificaciones Técnicas Principales (Común a todas) -->
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+                  Especificaciones Técnicas / Capacidad Principal
+                </label>
+                <textarea id="inv-tech-specifications" rows="2" placeholder="Resumen técnico: Potencia, capacidad de carga, memoria, puertos o características principales..." class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:border-purple-500"></textarea>
+              </div>
+
+              <!-- ============================================== -->
+              <!-- PANELES ADAPTATIVOS CONTEXTUALES SEGÚN RUBRO   -->
+              <!-- ============================================== -->
+
+              <!-- PANEL A: CÓMPUTO & SERVIDORES (Laptop, PC, Servidor) -->
+              <div id="panel-tech-computo" class="space-y-2.5 pt-2 border-t border-slate-200 dark:border-white/5 hidden">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
+                  <span>💻</span>
+                  <span>Especificaciones de Hardware Cómputo</span>
+                </span>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Procesador / CPU</label>
+                    <input type="text" id="inv-tech-processor" placeholder="Ej: Intel Core i7-12700 / Xeon E-2224" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Memoria RAM</label>
+                    <input type="text" id="inv-tech-ram" placeholder="Ej: 16 GB DDR4 / 32 GB DDR5" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Almacenamiento (Disco)</label>
+                    <input type="text" id="inv-tech-storage" placeholder="Ej: 512 GB NVMe SSD / 2TB HDD" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Sistema Operativo</label>
+                    <input type="text" id="inv-tech-os" placeholder="Ej: Windows 11 Pro 64-bit / Ubuntu Server" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Dirección MAC</label>
+                    <input type="text" id="inv-tech-mac" placeholder="00:1A:2B:3C:4D:5E" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono uppercase text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">IP de Gestión</label>
+                    <input type="text" id="inv-tech-ip" placeholder="Ej: 192.168.1.150" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                  </div>
+                </div>
+              </div>
+
+              <!-- PANEL B: REDES & TELECOMUNICACIONES (Switch, Router, OLT, Antenas) -->
+              <div id="panel-tech-redes" class="space-y-2.5 pt-2 border-t border-slate-200 dark:border-white/5 hidden">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                  <span>🌐</span>
+                  <span>Parámetros de Red & Interfaces</span>
+                </span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Puertos / Interfaces Físicas</label>
+                    <input type="text" id="inv-tech-ports" placeholder="Ej: 24x RJ45 Gigabit PoE+ (370W) + 4x SFP+ 10G" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Firmware / S.O. de Red</label>
+                    <input type="text" id="inv-tech-firmware" placeholder="Ej: RouterOS v7.14 / Cisco IOS XE / V-SOL OLT OS" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Dirección MAC de Gestión</label>
+                    <input type="text" id="inv-tech-net-mac" placeholder="00:1A:2B:3C:4D:5E" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono uppercase text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">IP de Gestión / VLAN</label>
+                    <input type="text" id="inv-tech-net-ip" placeholder="Ej: 10.10.0.1 / VLAN 20" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                  </div>
+                </div>
+              </div>
+
+              <!-- PANEL C: INSTRUMENTACIÓN ÓPTICA & MEDICIÓN (Fusionadora, OTDR, Power Meter) -->
+              <div id="panel-tech-instrumentacion" class="space-y-2.5 pt-2 border-t border-slate-200 dark:border-white/5 hidden">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                  <span>🔬</span>
+                  <span>Metrología, Calibración & Rango Óptico</span>
+                </span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Longitudes de Onda / Rango Dinámico</label>
+                    <input type="text" id="inv-tech-wavelength" placeholder="Ej: 1310/1550nm, 32/30dB / Pérdida 0.02dB" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">N° Certificado / Laboratorio Calibrador</label>
+                    <input type="text" id="inv-tech-calib-cert" placeholder="Ej: CERT-LAB-2024-5501 / INACAL" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Última Calibración</label>
+                    <input type="date" id="inv-tech-calib-date" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Vencimiento / Próxima Calibración</label>
+                    <input type="date" id="inv-tech-calib-expiry" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                </div>
+              </div>
+
+              <!-- PANEL D: HERRAMIENTAS ELÉCTRICAS, MANUALES & SEGURIDAD -->
+              <div id="panel-tech-herramienta" class="space-y-2.5 pt-2 border-t border-slate-200 dark:border-white/5">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <span>🛠️</span>
+                  <span>Potencia & Criterios Operativos de Campo</span>
+                </span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Potencia / Voltaje / Capacidad Máx.</label>
+                    <input type="text" id="inv-tech-power-rating" placeholder="Ej: 18V / 20V Max / 750W / Carga máx 150 Kg" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Inspección / Criterio de Reemplazo</label>
+                    <input type="text" id="inv-tech-lifespan-notes" placeholder="Ej: Inspección visual de costuras mensual / Cambio carbones anual" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fila Final: Garantía & Accesorios / Maletín Incluido (Común para todos) -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-200 dark:border-white/10">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Garantía Vigente Hasta</label>
+                  <input type="date" id="inv-tech-warranty" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Accesorios, Maletín & Kit Incluido</label>
+                  <input type="text" id="inv-tech-accessories" placeholder="Ej: Maletín rígido, 2 baterías 18V, cargador rápido, brocas, cleaver" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 4: MOBILIARIO & RACKS & RACKS -->
+          <div id="tab-section-asset-furniture" class="space-y-4 hidden">
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-amber-500/20 space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                <div class="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+                  <span class="text-sm">🪑</span>
+                  <span>1. Dimensiones & Especificaciones de Mobiliario / Racks</span>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-500">INFRAESTRUCTURA</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Tipo de Mobiliario / Estructura</label>
+                  <select id="inv-furn-type" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white font-medium">
+                    <option value="Rack de Piso">Rack de Piso / Gabinete Servidor</option>
+                    <option value="Gabinete Mural">Gabinete Mural (Pared)</option>
+                    <option value="Escritorio Técnico">Escritorio Técnico / Banco de Trabajo</option>
+                    <option value="Silla Ergonómica">Silla Ergonómica Operativa</option>
+                    <option value="Estantería">Estantería de Almacén Industrial</option>
+                    <option value="Otro">Otro Mobiliario</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Unidades de Rack (U)</label>
+                  <input type="text" id="inv-furn-rack-u" placeholder="Ej: 42U / 24U / 12U / N/A" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Dimensiones (Alto x Ancho x Fondo)</label>
+                  <input type="text" id="inv-furn-dimensions" placeholder="Ej: 200 x 60 x 100 cm" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Material de Fabricación</label>
+                  <input type="text" id="inv-furn-material" placeholder="Ej: Acero laminado en frío SPCC / Melamina" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Capacidad de Carga Máxima (Kg)</label>
+                  <input type="number" id="inv-furn-weight-cap" placeholder="800" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Ubicación (Piso / Sala / Área)</label>
+                  <input type="text" id="inv-furn-floor" placeholder="Ej: Sala de Servidores Piso 1" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- TAB 3: FOTOS & MULTIMEDIA -->
@@ -17432,7 +17839,7 @@
           <span>📋 Ficha & Multimedia</span>
         </button>
         <button type="button" id="tab-btn-detail-vehicle" onclick="switchAssetDetailMainTab('vehicle')" class="px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5">
-          <span>🚗 Documentación Vehicular</span>
+          <span id="dtl-spec-tab-title">🚗 Documentación Vehicular</span>
           <span id="tab-badge-detail-vehicle-status" class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-blue-500/20 text-blue-500">TIV • SOAT • CITV</span>
         </button>
         <button type="button" id="tab-btn-detail-assignments" onclick="switchAssetDetailMainTab('assignments')" class="px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-white transition flex items-center gap-1.5">
@@ -17458,19 +17865,19 @@
           <!-- Métricas Clave Rápidas -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 text-xs">
             <div>
-              <span class="text-[10px] text-slate-400 uppercase font-bold block">Responsable Actual:</span>
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Responsable Actual:</span>
               <span id="dtl-asset-assigned" class="font-semibold text-slate-800 dark:text-slate-200 truncate block mt-0.5">Personal</span>
             </div>
             <div>
-              <span class="text-[10px] text-slate-400 uppercase font-bold block">Ubicación / Sede:</span>
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Ubicación / Sede:</span>
               <span id="dtl-asset-location" class="font-semibold text-slate-800 dark:text-slate-200 truncate block mt-0.5">Sede Central</span>
             </div>
             <div>
-              <span class="text-[10px] text-slate-400 uppercase font-bold block">Fecha Adquisición:</span>
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Fecha Adquisición:</span>
               <span id="dtl-asset-date" class="font-mono text-slate-800 dark:text-slate-200 block mt-0.5">-</span>
             </div>
             <div>
-              <span class="text-[10px] text-slate-400 uppercase font-bold block">Valor / Costo:</span>
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Valor / Costo:</span>
               <span id="dtl-asset-cost" class="font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">$0.00</span>
             </div>
           </div>
@@ -17503,16 +17910,10 @@
         </div>
 
         <!-- ========================================== -->
-        <!-- PESTAÑA 2: DOCUMENTACIÓN VEHICULAR (TIV, SOAT, CITV) -->
+        <!-- PESTAÑA 2: FICHA ESPECIALIZADA POR CATEGORÍA -->
         <!-- ========================================== -->
         <div id="tab-content-detail-vehicle" class="space-y-3.5 hidden">
-          <!-- Si no es vehículo: mensaje informativo -->
-          <div id="dtl-veh-non-vehicle-notice" class="hidden p-8 text-center rounded-2xl border border-dashed border-slate-300 dark:border-white/10 text-slate-400">
-            <span class="text-3xl block mb-2">🚗ℹ️</span>
-            <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200">Activo no clasificado como Vehículo</h4>
-            <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">La documentación vehicular obligatoria (TIV/TIVE, SOAT y CITV) aplica exclusivamente a vehículos registrados en la categoría "Vehículos".</p>
-          </div>
-
+          <!-- 1. DETALLE VEHÍCULOS -->
           <div id="dtl-asset-vehicle-docs-container" class="space-y-3.5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent p-3.5 rounded-xl border border-blue-500/20">
               <div class="flex items-center gap-2.5">
@@ -17563,23 +17964,23 @@
                   <!-- Lista de Especificaciones TIV -->
                   <div class="mt-3 space-y-1.5 text-xs">
                     <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">N° Serie / VIN:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">N° Serie / VIN:</span>
                       <span id="dtl-veh-tiv-vin" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
                     </div>
                     <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">N° Motor:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">N° Motor:</span>
                       <span id="dtl-veh-tiv-engine" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
                     </div>
                     <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">Color / Combustible:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">Color / Combustible:</span>
                       <span id="dtl-veh-tiv-color-fuel" class="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
                     </div>
                     <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">Año Fab. / Sede:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">Año Fab. / Sede:</span>
                       <span id="dtl-veh-tiv-year-office" class="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
                     </div>
                     <div class="py-1">
-                      <span class="text-slate-400 text-[10px] uppercase font-bold block">Titular Registral:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Titular Registral:</span>
                       <span id="dtl-veh-tiv-owner" class="text-slate-800 dark:text-slate-200 text-[11px] font-medium block truncate">-</span>
                     </div>
                   </div>
@@ -17625,19 +18026,19 @@
                   <!-- Lista de Especificaciones SOAT -->
                   <div class="mt-3 space-y-1.5 text-xs">
                     <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">N° Póliza:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">N° Póliza:</span>
                       <span id="dtl-veh-soat-policy" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] font-semibold text-right">-</span>
                     </div>
                     <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">Tipo Certificado:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">Tipo Certificado:</span>
                       <span id="dtl-veh-soat-type" class="text-slate-700 dark:text-slate-300 text-[11px] capitalize text-right">Electrónico</span>
                     </div>
                     <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">Fecha de Inicio:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">Fecha de Inicio:</span>
                       <span id="dtl-veh-soat-start" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] text-right">-</span>
                     </div>
                     <div class="flex items-center justify-between gap-2 py-1">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">Fecha de Término:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">Fecha de Término:</span>
                       <span id="dtl-veh-soat-end" class="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px] text-right">-</span>
                     </div>
                   </div>
@@ -17683,19 +18084,19 @@
                   <!-- Lista de Especificaciones CITV -->
                   <div class="mt-3 space-y-1.5 text-xs">
                     <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">N° Certificado:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">N° Certificado:</span>
                       <span id="dtl-veh-citv-cert" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] font-semibold text-right">-</span>
                     </div>
                     <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">Centro MTC:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">Centro MTC:</span>
                       <span id="dtl-veh-citv-center" class="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
                     </div>
                     <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">Km en Inspección:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">Km en Inspección:</span>
                       <span id="dtl-veh-citv-km" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] text-right">-</span>
                     </div>
                     <div class="flex items-center justify-between gap-2 py-1">
-                      <span class="text-slate-400 text-[11px] flex-shrink-0">Vencimiento:</span>
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">Vencimiento:</span>
                       <span id="dtl-veh-citv-exp" class="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px] text-right">-</span>
                     </div>
                   </div>
@@ -17711,6 +18112,336 @@
               </div>
             </div>
           </div>
+        
+          <!-- 2. DETALLE NODOS & DATACENTER -->
+          <div id="dtl-asset-node-docs-container" class="space-y-3.5 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent p-3.5 rounded-xl border border-emerald-500/20">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-500 dark:text-emerald-400 flex-shrink-0">
+                  <span class="text-base">🏢</span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Infraestructura del Nodo & Servidores Físicos</h3>
+                    <span id="dtl-node-property-badge" class="px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase font-mono bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">ALQUILADO</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">Punto de presencia (POP), casa de telecomunicaciones, servidores y respaldo</p>
+                </div>
+              </div>
+              <button type="button" onclick="openDetailNodeMaps()" class="self-start sm:self-center px-3 py-1.5 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-1.5 border border-emerald-500/30 transition">
+                <span>🗺️ Ver en Google Maps</span>
+              </button>
+            </div>
+
+            <!-- Grid de 3 Apartados Técnicos del Nodo -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              <!-- APARTADO 1: Ubicación & Inmueble -->
+              <div class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs">
+                <div>
+                  <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                    <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <span>📍</span><span>Ubicación & Inmueble</span>
+                    </span>
+                    <span class="text-[10px] font-mono text-slate-400">GPS & ARRIENDO</span>
+                  </div>
+                  <div class="mt-2.5 space-y-2 text-xs">
+                    <div>
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Dirección Física:</span>
+                      <span id="dtl-node-address" class="text-slate-800 dark:text-slate-200 font-medium block mt-0.5">-</span>
+                    </div>
+                    <div>
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Referencia:</span>
+                      <span id="dtl-node-reference" class="text-slate-700 dark:text-slate-300 text-[11px] block mt-0.5">-</span>
+                    </div>
+                    <div class="pt-1 border-t border-slate-200 dark:border-white/5">
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Coordenadas GPS:</span>
+                      <span id="dtl-node-gps" class="font-mono text-emerald-600 dark:text-emerald-400 text-[11px] font-bold block mt-0.5">-</span>
+                    </div>
+                    <div class="pt-1 border-t border-slate-200 dark:border-white/5">
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Propietario / Arrendador:</span>
+                      <span id="dtl-node-landlord" class="text-slate-700 dark:text-slate-300 font-medium block mt-0.5">-</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px]">
+                      <span class="text-slate-400">Teléfono:</span>
+                      <span id="dtl-node-phone" class="font-mono text-slate-700 dark:text-slate-300">-</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px]">
+                      <span class="text-slate-400">Renta Mensual:</span>
+                      <span id="dtl-node-rent" class="font-mono font-bold text-emerald-600 dark:text-emerald-400">-</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px]">
+                      <span class="text-slate-400">Día de Pago:</span>
+                      <span id="dtl-node-payday" class="font-mono text-slate-700 dark:text-slate-300">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- APARTADO 2: Servidores Físicos & Racks -->
+              <div class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs">
+                <div>
+                  <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                    <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <span>🖥️</span><span>Racks & Servidores Físicos</span>
+                    </span>
+                    <span class="text-[10px] font-mono text-slate-400">HARDWARE POP</span>
+                  </div>
+                  <div class="mt-2.5 space-y-2 text-xs">
+                    <div>
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Racks & Gabinetes Instalados:</span>
+                      <span id="dtl-node-racks" class="font-semibold text-slate-800 dark:text-slate-200 block mt-0.5">-</span>
+                    </div>
+                    <div>
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Servidores Físicos / OLTs / Switches:</span>
+                      <span id="dtl-node-servers" class="text-slate-700 dark:text-slate-300 block mt-0.5 leading-relaxed">-</span>
+                    </div>
+                    <div class="pt-1 border-t border-slate-200 dark:border-white/5">
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Climatización / Aire Acondicionado:</span>
+                      <span id="dtl-node-aircon" class="text-slate-700 dark:text-slate-300 font-medium block mt-0.5">-</span>
+                    </div>
+                    <div class="pt-1 border-t border-slate-200 dark:border-white/5">
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Segmento IP / VLAN de Gestión:</span>
+                      <span id="dtl-node-ip" class="font-mono text-purple-600 dark:text-purple-400 font-bold block mt-0.5">-</span>
+                    </div>
+                    <div>
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Enlace Troncal / Proveedor Uplink:</span>
+                      <span id="dtl-node-uplink" class="text-slate-700 dark:text-slate-300 font-medium block mt-0.5">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- APARTADO 3: Energía, Respaldo & Seguridad -->
+              <div class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs">
+                <div>
+                  <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                    <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <span>⚡</span><span>Energía & Respaldo Eléctrico</span>
+                    </span>
+                    <span class="text-[10px] font-mono text-slate-400">UPS & SEGURIDAD</span>
+                  </div>
+                  <div class="mt-2.5 space-y-2 text-xs">
+                    <div>
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Suministro Eléctrico / Medidor:</span>
+                      <span id="dtl-node-power" class="text-slate-800 dark:text-slate-200 font-semibold block mt-0.5">-</span>
+                    </div>
+                    <div>
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Banco UPS:</span>
+                      <span id="dtl-node-ups" class="text-slate-700 dark:text-slate-300 font-medium block mt-0.5">-</span>
+                    </div>
+                    <div>
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Generador de Emergencia & Autonomía:</span>
+                      <span id="dtl-node-generator" class="text-slate-700 dark:text-slate-300 font-medium block mt-0.5">-</span>
+                    </div>
+                    <div class="pt-1 border-t border-slate-200 dark:border-white/5">
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Custodio / Control de Llaves:</span>
+                      <span id="dtl-node-keys" class="text-slate-700 dark:text-slate-300 font-medium block mt-0.5">-</span>
+                    </div>
+                    <div>
+                      <span class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">CCTV / Videovigilancia:</span>
+                      <span id="dtl-node-cctv" class="text-slate-700 dark:text-slate-300 font-medium block mt-0.5">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. DETALLE TECNOLOGÍA & HERRAMIENTAS -->
+          <div id="dtl-asset-tech-docs-container" class="space-y-3.5 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-gradient-to-r from-purple-500/10 via-indigo-500/5 to-transparent p-3.5 rounded-xl border border-purple-500/20">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-500 dark:text-purple-400 flex-shrink-0">
+                  <span class="text-base">🛠️</span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Ficha Técnica de Equipos & Herramientas</h3>
+                    <span id="dtl-tech-category-badge" class="px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase font-mono bg-purple-500/10 text-purple-500 border border-purple-500/20">HERRAMIENTA</span>
+                    <span id="dtl-tech-device-badge" class="px-2 py-0.5 rounded text-[9.5px] font-mono font-bold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300">EQUIPO</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">Especificaciones de operación, capacidades, metrología y accesorios de cuadrilla</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumen Técnico & Capacidad -->
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Especificaciones Principales / Capacidad</span>
+                <span class="text-[11px] font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                  <span>Alimentación:</span>
+                  <span id="dtl-tech-power" class="font-bold text-slate-800 dark:text-slate-200">-</span>
+                </span>
+              </div>
+              <p id="dtl-tech-specs" class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">-</p>
+            </div>
+
+            <!-- Grid de Módulos Especializados Contextuales -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              <!-- Módulo CÓMPUTO & SERVIDORES -->
+              <div id="dtl-tech-comp-block" class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 space-y-2.5">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                  <span class="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>💻</span><span>Hardware de Cómputo</span>
+                  </span>
+                </div>
+                <div class="space-y-1.5 text-xs">
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">Procesador (CPU):</span>
+                    <span id="dtl-tech-cpu" class="font-semibold text-slate-800 dark:text-slate-200 text-right">-</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">Memoria RAM:</span>
+                    <span id="dtl-tech-ram" class="font-semibold text-slate-800 dark:text-slate-200 text-right">-</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">Almacenamiento (Disco):</span>
+                    <span id="dtl-tech-storage" class="font-semibold text-slate-800 dark:text-slate-200 text-right">-</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">Sistema Operativo:</span>
+                    <span id="dtl-tech-os" class="text-slate-700 dark:text-slate-300 text-right">-</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">Dirección MAC:</span>
+                    <span id="dtl-tech-mac" class="font-mono text-purple-600 dark:text-purple-400 text-right font-bold">-</span>
+                  </div>
+                  <div class="flex justify-between py-1">
+                    <span class="text-slate-400">IP de Gestión:</span>
+                    <span id="dtl-tech-ip" class="font-mono text-slate-800 dark:text-slate-200 text-right">-</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Módulo REDES & TELECOM -->
+              <div id="dtl-tech-net-block" class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 space-y-2.5">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                  <span class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>🌐</span><span>Interfaces de Red & Firmware</span>
+                  </span>
+                </div>
+                <div class="space-y-1.5 text-xs">
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">Puertos / Interfaces:</span>
+                    <span id="dtl-tech-net-ports" class="font-semibold text-slate-800 dark:text-slate-200 text-right">-</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">Firmware / S.O.:</span>
+                    <span id="dtl-tech-net-fw" class="text-slate-700 dark:text-slate-300 text-right">-</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">MAC de Gestión:</span>
+                    <span id="dtl-tech-net-mac" class="font-mono text-blue-600 dark:text-blue-400 text-right font-bold">-</span>
+                  </div>
+                  <div class="flex justify-between py-1">
+                    <span class="text-slate-400">IP de Gestión:</span>
+                    <span id="dtl-tech-net-ip" class="font-mono text-slate-800 dark:text-slate-200 text-right font-bold">-</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Módulo INSTRUMENTACIÓN & CALIBRACIÓN -->
+              <div id="dtl-tech-calib-block" class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 space-y-2.5">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                  <span class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>🔬</span><span>Metrología & Calibración</span>
+                  </span>
+                </div>
+                <div class="space-y-1.5 text-xs">
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">Rango / Longitud de Onda:</span>
+                    <span id="dtl-tech-calib-wave" class="font-semibold text-slate-800 dark:text-slate-200 text-right">-</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">N° Certificado / Laboratorio:</span>
+                    <span id="dtl-tech-calib-cert" class="font-mono text-slate-700 dark:text-slate-300 text-right">-</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">Fecha Última Calibración:</span>
+                    <span id="dtl-tech-calib" class="font-mono text-slate-800 dark:text-slate-200 text-right">-</span>
+                  </div>
+                  <div class="flex justify-between py-1">
+                    <span class="text-slate-400">Próxima Calibración:</span>
+                    <span id="dtl-tech-calib-next" class="font-mono font-bold text-amber-600 dark:text-amber-400 text-right">-</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Módulo HERRAMIENTAS DE CAMPO & SEGURIDAD -->
+              <div id="dtl-tech-tool-block" class="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3.5 space-y-2.5">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                  <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>🛠️</span><span>Potencia & Criterios Operativos</span>
+                  </span>
+                </div>
+                <div class="space-y-1.5 text-xs">
+                  <div class="flex justify-between py-1 border-b border-slate-100 dark:border-white/5">
+                    <span class="text-slate-400">Potencia / Voltaje:</span>
+                    <span id="dtl-tech-tool-power" class="font-semibold text-slate-800 dark:text-slate-200 text-right">-</span>
+                  </div>
+                  <div class="flex justify-between py-1">
+                    <span class="text-slate-400">Criterio de Inspección / Desgaste:</span>
+                    <span id="dtl-tech-tool-lifespan" class="text-slate-700 dark:text-slate-300 text-right">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fila Común: Garantía y Maletín / Accesorios -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Garantía del Fabricante</span>
+                <span id="dtl-tech-warranty" class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs block">-</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Accesorios, Maletín & Kit Incluido</span>
+                <span id="dtl-tech-accessories" class="text-xs text-slate-700 dark:text-slate-300 font-medium block">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. DETALLE MOBILIARIO & RACKS -->
+          <div id="dtl-asset-furniture-docs-container" class="space-y-3.5 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent p-3.5 rounded-xl border border-amber-500/20">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 flex-shrink-0">
+                  <span class="text-base">🪑</span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Dimensiones & Infraestructura de Racks / Mobiliario</h3>
+                    <span id="dtl-furn-type-badge" class="px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase font-mono bg-amber-500/10 text-amber-500 border border-amber-500/20">RACK</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">Capacidad de unidades, materiales, resistencia de carga y ubicación</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs">
+              <div>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Unidades de Rack (U):</span>
+                <span id="dtl-furn-u" class="font-mono font-bold text-amber-600 dark:text-amber-400 block mt-0.5">-</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Dimensiones (H x W x D):</span>
+                <span id="dtl-furn-dim" class="font-semibold text-slate-800 dark:text-slate-200 block mt-0.5">-</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Material:</span>
+                <span id="dtl-furn-material" class="font-semibold text-slate-800 dark:text-slate-200 block mt-0.5">-</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Capacidad de Carga:</span>
+                <span id="dtl-furn-weight" class="font-mono font-bold text-slate-800 dark:text-slate-200 block mt-0.5">-</span>
+              </div>
+              <div class="col-span-2">
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Piso / Sala / Ubicación Exacta:</span>
+                <span id="dtl-furn-floor" class="font-semibold text-slate-800 dark:text-slate-200 block mt-0.5">-</span>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- ========================================== -->
@@ -29250,7 +29981,7 @@ Estamos atentos para brindarle asistencia inmediata.
             ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">🌐 Compartida</span>'
             : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">🏢 ${escapeHtml(a.tenantName || a.tenantId || 'TurboNetwork')}</span>`;
 
-          let actionHtml = '<span class="text-slate-400 text-[10px]">Verificado</span>';
+          let actionHtml = '<span class="text-slate-500 dark:text-slate-400 text-[10px]">Verificado</span>';
           if (a.status === 'very_late_blocked') {
             actionHtml = `<button type="button" onclick="openTotpUnlockModalForEmployee(${a.employeeId}, '${escapeHtml(a.employeeName).replace(/'/g, "\\'")}', ${a.minutesLate})" class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold shadow-sm transition mx-auto cursor-pointer">Desbloquear TOTP</button>`;
           } else if (a.modality === 'manual_auth' && a.approvalStatus === 'pending') {
@@ -36868,7 +37599,8 @@ function triggerBarcodePrint() {
           </div>
         `);
       });
-    } else {
+      onTechClassificationChange();
+} else {
       const copies = barcodeLabelQuantities[p.id] || 1;
       const code = p.barcode || p.sku || 'TRB-0001';
       const sku = p.sku || p.barcode || 'TRB-0001';
@@ -37215,6 +37947,8 @@ function renderAssetsTable() {
     let catBadge = '';
     if (a.category === 'vehiculo') {
       catBadge = '<span class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">🚗 Vehículo</span>';
+    } else if (a.category === 'nodo') {
+      catBadge = '<span class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">🏢 Nodo</span>';
     } else if (a.category === 'tecnologia') {
       catBadge = '<span class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">💻 Tecnología</span>';
     } else {
@@ -37237,11 +37971,11 @@ function renderAssetsTable() {
         <td class="px-4 py-3">
           <div class="flex items-center space-x-2.5">
             <div onclick="openAssetDetailModal(${a.id})" class="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 flex-shrink-0 cursor-pointer flex items-center justify-center bg-slate-100 dark:bg-white/5">
-              ${photo ? `<img src="${photo}" alt="" class="w-full h-full object-cover">` : '<span class="text-sm">🏢</span>'}
+              ${photo ? `<img src="${photo}" alt="" class="w-full h-full object-cover">` : `<span class="text-sm">${a.category === 'nodo' ? '🏢' : (a.category === 'vehiculo' ? '🚗' : (a.category === 'tecnologia' ? '💻' : '🪑'))}</span>`}
             </div>
             <div>
               <span onclick="openAssetDetailModal(${a.id})" class="font-bold text-slate-900 dark:text-white hover:text-blue-600 cursor-pointer block">${escapeHtml(a.name)}</span>
-              <span class="text-[10px] text-slate-400">${escapeHtml(a.location || 'Sede Central')}</span>
+              <span class="text-[10px] text-slate-400">${escapeHtml((a.category === 'nodo' && a.nodeDetails && a.nodeDetails.address) ? a.nodeDetails.address : (a.location || 'Sede Central'))}</span>
             </div>
           </div>
         </td>
@@ -37252,8 +37986,18 @@ function renderAssetsTable() {
           ${catBadge}
         </td>
         <td class="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
-          <span class="font-semibold block">${escapeHtml(a.brand || '')} ${escapeHtml(a.model || '')}</span>
-          <span class="text-[10px] text-slate-400 font-mono">${escapeHtml(a.plateNumber || a.serialNumber || 'Sin serie')}</span>
+          ${(() => {
+            if (a.category === 'nodo') {
+              const node = a.nodeDetails || {};
+              const rks = node.racksCount ? `${node.racksCount} Racks` : '';
+              const srvs = node.serversCount ? `${node.serversCount}` : '';
+              const info = [rks, srvs].filter(Boolean).join(' • ') || (node.propertyType ? `Inmueble ${node.propertyType}` : 'Casa Servidores');
+              const gps = (node.latitude && node.longitude) ? `📍 GPS: ${node.latitude}, ${node.longitude}` : (node.address || a.location || 'Ubicación física');
+              return `<span class="font-semibold block text-emerald-600 dark:text-emerald-400">${escapeHtml(info)}</span><span class="text-[10px] text-slate-400 font-mono truncate block max-w-[200px]">${escapeHtml(gps)}</span>`;
+            } else {
+              return `<span class="font-semibold block">${escapeHtml(a.brand || '')} ${escapeHtml(a.model || '')}</span><span class="text-[10px] text-slate-400 font-mono">${escapeHtml(a.plateNumber || a.serialNumber || 'Sin serie')}</span>`;
+            }
+          })()}
         </td>
         <td class="px-4 py-3 text-xs text-slate-800 dark:text-slate-200">
           ${escapeHtml(a.assignedTo || 'Sin asignar')}
@@ -37284,28 +38028,87 @@ function renderAssetsTable() {
 
 let currentAssetModalActiveTab = 'general';
 
+function getCurrentNodeGps() {
+  if (!navigator.geolocation) {
+    showToast('Tu navegador no soporta geolocalización', 'warning');
+    return;
+  }
+  showToast('Obteniendo coordenadas GPS actuales...', 'info');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      const elLat = document.getElementById('inv-node-lat');
+      const elLng = document.getElementById('inv-node-lng');
+      if (elLat) elLat.value = lat;
+      if (elLng) elLng.value = lng;
+      showToast(`Coordenadas capturadas: ${lat}, ${lng}`, 'success');
+    },
+    (err) => {
+      showToast('No se pudo obtener la ubicación GPS: ' + err.message, 'error');
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+function openNodeMapPreview() {
+  const lat = document.getElementById('inv-node-lat')?.value.trim();
+  const lng = document.getElementById('inv-node-lng')?.value.trim();
+  if (lat && lng) {
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+  } else {
+    const address = document.getElementById('inv-node-address')?.value.trim() || document.getElementById('inv-asset-location')?.value.trim();
+    if (address) {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
+    } else {
+      showToast('Ingresa las coordenadas o la dirección del nodo para ver en el mapa', 'warning');
+    }
+  }
+}
+
+function openDetailNodeMaps() {
+  if (!currentDetailAsset) return;
+  const node = currentDetailAsset.nodeDetails || {};
+  if (node.latitude && node.longitude) {
+    window.open(`https://www.google.com/maps?q=${node.latitude},${node.longitude}`, '_blank');
+  } else if (node.address || currentDetailAsset.location) {
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(node.address || currentDetailAsset.location)}`, '_blank');
+  } else {
+    showToast('El nodo no tiene coordenadas GPS ni dirección registradas.', 'warning');
+  }
+}
+
 function switchAssetModalTab(tabId) {
   const currentCat = document.getElementById('inv-asset-category')?.value || 'vehiculo';
-  const isVeh = currentCat === 'vehiculo';
-
-  if (!isVeh && tabId === 'vehicle') {
-    tabId = 'general';
-  }
   currentAssetModalActiveTab = tabId;
 
-  const titlesVeh = {
-    general: 'Paso 1 de 3: Ficha & Datos Generales',
-    vehicle: 'Paso 2 de 3: Documentación Vehicular (TIV, SOAT, CITV)',
-    multimedia: 'Paso 3 de 3: Galería & Evidencias Multimedia'
-  };
-  const titlesNonVeh = {
-    general: 'Paso 1 de 2: Ficha & Datos Generales',
-    multimedia: 'Paso 2 de 2: Galería & Evidencias Multimedia'
+  const stepTitles = {
+    vehiculo: {
+      general: 'Paso 1 de 3: Ficha & Datos Generales',
+      vehicle: 'Paso 2 de 3: Documentación Vehicular (TIV, SOAT, CITV)',
+      multimedia: 'Paso 3 de 3: Galería & Evidencias Multimedia'
+    },
+    nodo: {
+      general: 'Paso 1 de 3: Ficha & Datos Generales del Nodo',
+      vehicle: 'Paso 2 de 3: Casa del Nodo, GPS & Servidores Físicos',
+      multimedia: 'Paso 3 de 3: Fotos del Inmueble & Servidores'
+    },
+    tecnologia: {
+      general: 'Paso 1 de 3: Ficha & Datos Generales del Activo',
+      vehicle: 'Paso 2 de 3: Ficha Técnica, Hardware & Especificaciones',
+      multimedia: 'Paso 3 de 3: Fotos & Evidencias de Hardware'
+    },
+    mobiliario: {
+      general: 'Paso 1 de 3: Ficha & Datos Generales del Activo',
+      vehicle: 'Paso 2 de 3: Dimensiones, Material & Unidades de Rack',
+      multimedia: 'Paso 3 de 3: Fotos del Mobiliario / Rack'
+    }
   };
 
+  const catSteps = stepTitles[currentCat] || stepTitles.vehiculo;
   const indicator = document.getElementById('inv-asset-tab-indicator');
   if (indicator) {
-    indicator.textContent = isVeh ? (titlesVeh[tabId] || 'Paso 1 de 3') : (titlesNonVeh[tabId] || 'Paso 1 de 2');
+    indicator.textContent = catSteps[tabId] || 'Paso 1 de 3';
   }
 
   const tabs = ['general', 'vehicle', 'multimedia'];
@@ -37329,40 +38132,88 @@ function switchAssetModalTab(tabId) {
   });
 }
 
+function onTechClassificationChange() {
+  const cls = document.getElementById('inv-tech-classification')?.value || 'general';
+  const pComp = document.getElementById('panel-tech-computo');
+  const pNet = document.getElementById('panel-tech-redes');
+  const pOpt = document.getElementById('panel-tech-instrumentacion');
+  const pTool = document.getElementById('panel-tech-herramienta');
+
+  if (pComp) pComp.classList.toggle('hidden', cls !== 'computo');
+  if (pNet) pNet.classList.toggle('hidden', cls !== 'redes');
+  if (pOpt) pOpt.classList.toggle('hidden', cls !== 'instrumentacion');
+  if (pTool) pTool.classList.toggle('hidden', cls !== 'herramienta_electrica' && cls !== 'herramienta_manual' && cls !== 'seguridad_altura' && cls !== 'general');
+
+  const specEl = document.getElementById('inv-tech-specifications');
+  if (specEl && (!specEl.value || specEl.value.trim() === '')) {
+    if (cls === 'computo') specEl.placeholder = 'Ej: Laptop para diseño/soporte, pantalla 15.6" IPS FHD, teclado retroiluminado';
+    else if (cls === 'redes') specEl.placeholder = 'Ej: Switch capa 3 de distribución, backplane 128Gbps, montaje en rack 19"';
+    else if (cls === 'instrumentacion') specEl.placeholder = 'Ej: 6 motores alineación núcleo a núcleo, tiempo empalme 6s, pérdida 0.02dB';
+    else if (cls === 'herramienta_electrica') specEl.placeholder = 'Ej: Taladro Percutor 20V Max Brushless, mandril 1/2", 65Nm de torque';
+    else if (cls === 'herramienta_manual') specEl.placeholder = 'Ej: Cuchilla rotativa 16 posiciones, 48,000 cortes, ángulo <0.5°';
+    else if (cls === 'seguridad_altura') specEl.placeholder = 'Ej: Escalera de tijera dieléctrica de fibra de vidrio, 8 pasos, 150 kg';
+    else specEl.placeholder = 'Especificaciones técnicas generales, capacidades o características del activo...';
+  }
+}
+
 function onAssetCategorySelectChange(category) {
   const icon = document.getElementById('inv-asset-modal-icon');
+  const subtitle = document.getElementById('inv-asset-modal-subtitle');
+  const codeInput = document.getElementById('inv-asset-code');
   const plateLabel = document.getElementById('inv-asset-plate-label');
   const plateInput = document.getElementById('inv-asset-plate');
-  const vehicleTabBtn = document.getElementById('tab-btn-asset-vehicle');
-  const multiLabel = document.getElementById('tab-label-asset-multimedia');
-  const nonVehicleNotice = document.getElementById('inv-asset-non-vehicle-notice');
-  const vehicleModules = document.getElementById('inv-asset-vehicle-modules-container');
+  const tabIcon = document.getElementById('tab-icon-asset-spec');
+  const tabTitle = document.getElementById('tab-title-asset-spec');
+  const tabBadge = document.getElementById('tab-badge-asset-vehicle');
+
+  const secVeh = document.getElementById('tab-section-asset-vehicle');
+  const secNode = document.getElementById('tab-section-asset-node');
+  const secTech = document.getElementById('tab-section-asset-tech');
+  const secFurn = document.getElementById('tab-section-asset-furniture');
+
+  if (secVeh) secVeh.classList.toggle('hidden', category !== 'vehiculo');
+  if (secNode) secNode.classList.toggle('hidden', category !== 'nodo');
+  if (secTech) secTech.classList.toggle('hidden', category !== 'tecnologia');
+  if (secFurn) secFurn.classList.toggle('hidden', category !== 'mobiliario');
 
   if (category === 'vehiculo') {
     if (icon) icon.textContent = '🚗';
+    if (subtitle) subtitle.textContent = 'Control de flota, camionetas y vehículos de cuadrilla';
     if (plateLabel) plateLabel.textContent = 'Placa del Vehículo *';
     if (plateInput) plateInput.placeholder = 'Ej: ABC-123';
-    if (vehicleTabBtn) vehicleTabBtn.classList.remove('hidden');
-    if (multiLabel) multiLabel.textContent = '3. Fotos & Multimedia';
-    if (nonVehicleNotice) nonVehicleNotice.classList.add('hidden');
-    if (vehicleModules) vehicleModules.classList.remove('hidden');
+    if (codeInput && !codeInput.value) codeInput.placeholder = 'ACT-VEH-001';
+    if (tabIcon) tabIcon.textContent = '🚗';
+    if (tabTitle) tabTitle.textContent = '2. Documentación Vehicular';
+    if (tabBadge) { tabBadge.textContent = 'TIV • SOAT'; tabBadge.className = 'px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-blue-500/20 text-blue-500'; }
+  } else if (category === 'nodo') {
+    if (icon) icon.textContent = '🏢';
+    if (subtitle) subtitle.textContent = 'Casa de servidores físicos, Nodos POP y Datacenters';
+    if (plateLabel) plateLabel.textContent = 'Identificador Red / Subred';
+    if (plateInput) plateInput.placeholder = 'Ej: NODO-SUR-01 / VLAN 100';
+    if (codeInput && !codeInput.value) codeInput.placeholder = 'NOD-001';
+    if (tabIcon) tabIcon.textContent = '🏢';
+    if (tabTitle) tabTitle.textContent = '2. Casa del Nodo & Servidores';
+    if (tabBadge) { tabBadge.textContent = 'GPS • Energía • Racks'; tabBadge.className = 'px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-emerald-500/20 text-emerald-500'; }
+  } else if (category === 'tecnologia') {
+    if (icon) icon.textContent = '🛠️';
+    if (subtitle) subtitle.textContent = 'Equipamiento de fibra, redes, herramientas de campo y computación';
+    if (plateLabel) plateLabel.textContent = 'N° de Serie / Grabado *';
+    if (plateInput) plateInput.placeholder = 'Ej: SN-984210 / HER-2024';
+    if (codeInput && !codeInput.value) codeInput.placeholder = 'ACT-TEC-001';
+    if (tabIcon) tabIcon.textContent = '🛠️';
+    if (tabTitle) tabTitle.textContent = '2. Ficha Técnica & Herramientas';
+    if (tabBadge) { tabBadge.textContent = 'SPECS • ENERGÍA • KIT'; tabBadge.className = 'px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-purple-500/20 text-purple-400'; }
+    onTechClassificationChange();
   } else {
-    // Exclusivo de vehículos: ocultar completamente pestaña de documentación vehicular
-    if (vehicleTabBtn) vehicleTabBtn.classList.add('hidden');
-    if (multiLabel) multiLabel.textContent = '2. Fotos & Multimedia';
-    if (category === 'tecnologia') {
-      if (icon) icon.textContent = '💻';
-      if (plateLabel) plateLabel.textContent = 'N° de Serie (S/N)';
-      if (plateInput) plateInput.placeholder = 'Ej: SN-984210';
-    } else {
-      // mobiliario
-      if (icon) icon.textContent = '🪑';
-      if (plateLabel) plateLabel.textContent = 'N° Serie / Código Barras';
-      if (plateInput) plateInput.placeholder = 'Ej: S/N o Placa Mobiliario';
-    }
-    if (currentAssetModalActiveTab === 'vehicle') {
-      switchAssetModalTab('general');
-    }
+    // mobiliario
+    if (icon) icon.textContent = '🪑';
+    if (subtitle) subtitle.textContent = 'Racks de servidores, gabinetes murales y mobiliario corporativo';
+    if (plateLabel) plateLabel.textContent = 'N° Serie / Código Patrimonial';
+    if (plateInput) plateInput.placeholder = 'Ej: RACK-42U-01';
+    if (codeInput && !codeInput.value) codeInput.placeholder = 'ACT-MOB-001';
+    if (tabIcon) tabIcon.textContent = '🪑';
+    if (tabTitle) tabTitle.textContent = '2. Dimensiones & Racks';
+    if (tabBadge) { tabBadge.textContent = 'U • Dim • Carga'; tabBadge.className = 'px-1.5 py-0.2 rounded-full text-[9.5px] font-mono font-bold bg-amber-500/20 text-amber-500'; }
   }
 
   // Refrescar indicadores del paso actual
@@ -37398,7 +38249,8 @@ function populateAssetAssignedDatalist() {
     'Cuadrilla 2 - Instalaciones Domiciliarias FTTH',
     'Cuadrilla 3 - Mantenimiento & Averías',
     'Laboratorio NOC / Data Center Central',
-    'Almacén Central'
+    'Almacén Central',
+    'Responsable de Nodo / Custodio'
   ];
 
   let opts = defaultPresets.map(p => `<option value="${escapeHtml(p)}"></option>`).join('');
@@ -37451,13 +38303,29 @@ function previewAssetVideo() {
   }
 }
 
-function resetAssetVehicleFields() {
+function resetAssetCategoryFields() {
   const ids = [
+    // Vehículo
     'inv-veh-tiv-num', 'inv-veh-tiv-engine', 'inv-veh-tiv-color', 'inv-veh-tiv-fuel',
     'inv-veh-tiv-year', 'inv-veh-tiv-owner', 'inv-veh-tiv-registry', 'inv-veh-tiv-url',
     'inv-veh-soat-policy', 'inv-veh-soat-insurer', 'inv-veh-soat-type', 'inv-veh-soat-start',
     'inv-veh-soat-end', 'inv-veh-soat-url', 'inv-veh-citv-cert', 'inv-veh-citv-center',
-    'inv-veh-citv-result', 'inv-veh-citv-issued', 'inv-veh-citv-exp', 'inv-veh-citv-km', 'inv-veh-citv-url'
+    'inv-veh-citv-result', 'inv-veh-citv-issued', 'inv-veh-citv-exp', 'inv-veh-citv-km', 'inv-veh-citv-url',
+    // Nodo
+    'inv-node-address', 'inv-node-property', 'inv-node-reference', 'inv-node-lat', 'inv-node-lng',
+    'inv-node-landlord-name', 'inv-node-landlord-phone', 'inv-node-rental-cost', 'inv-node-payment-day',
+    'inv-node-racks-count', 'inv-node-servers-count', 'inv-node-air-con', 'inv-node-ip-subnet',
+    'inv-node-uplink', 'inv-node-power-type', 'inv-node-power-meter', 'inv-node-ups-model',
+    'inv-node-power-autonomy', 'inv-node-generator', 'inv-node-key-holder', 'inv-node-cctv',
+    // Tecnología & Herramientas
+    'inv-tech-classification', 'inv-tech-device-type', 'inv-tech-power-source', 'inv-tech-specifications',
+    'inv-tech-processor', 'inv-tech-ram', 'inv-tech-storage', 'inv-tech-os', 'inv-tech-mac', 'inv-tech-ip',
+    'inv-tech-ports', 'inv-tech-firmware', 'inv-tech-net-mac', 'inv-tech-net-ip',
+    'inv-tech-wavelength', 'inv-tech-calib-cert', 'inv-tech-calib-date', 'inv-tech-calib-expiry',
+    'inv-tech-power-rating', 'inv-tech-lifespan-notes',
+    'inv-tech-warranty', 'inv-tech-accessories',
+    // Mobiliario
+    'inv-furn-type', 'inv-furn-rack-u', 'inv-furn-dimensions', 'inv-furn-material', 'inv-furn-weight-cap', 'inv-furn-floor'
   ];
   ids.forEach(id => {
     const el = document.getElementById(id);
@@ -37469,6 +38337,10 @@ function resetAssetVehicleFields() {
       }
     }
   });
+}
+
+function resetAssetVehicleFields() {
+  resetAssetCategoryFields();
 }
 
 function openCreateAssetModal() {
@@ -37483,7 +38355,11 @@ function openCreateAssetModal() {
   document.getElementById('inv-asset-id').value = '';
   if (form) form.reset();
 
-  resetAssetVehicleFields();
+  const today = new Date().toISOString().split('T')[0];
+  const dateInput = document.getElementById('inv-asset-date');
+  if (dateInput) dateInput.value = today;
+
+  resetAssetCategoryFields();
   const cat = document.getElementById('inv-asset-category')?.value || 'vehiculo';
 
   switchAssetModalTab('general');
@@ -37520,23 +38396,18 @@ function openEditAssetModal(id) {
   document.getElementById('inv-asset-video').value = (asset.videos || [])[0] || '';
   document.getElementById('inv-asset-desc').value = asset.description || '';
 
-  // Configuración de tabs y vistas
-  switchAssetModalTab('general');
-  onAssetCategorySelectChange(cat);
-  updateAssetModalStatusBadge(asset.status || 'operativo');
-  populateAssetAssignedDatalist();
-  renderAssetModalPhotosPreview();
-
-  const vDocs = asset.vehicleDocs || {};
-  const tiv = vDocs.tiv || {};
-  const soat = vDocs.soat || {};
-  const citv = vDocs.citv || {};
+  resetAssetCategoryFields();
 
   const setVal = (elemId, val) => {
     const el = document.getElementById(elemId);
     if (el) el.value = (val !== undefined && val !== null) ? val : '';
   };
 
+  // 1. Vehículo
+  const vDocs = asset.vehicleDocs || {};
+  const tiv = vDocs.tiv || {};
+  const soat = vDocs.soat || {};
+  const citv = vDocs.citv || {};
   setVal('inv-veh-tiv-num', tiv.number);
   setVal('inv-veh-tiv-engine', tiv.engineNumber);
   setVal('inv-veh-tiv-color', tiv.color);
@@ -37545,14 +38416,12 @@ function openEditAssetModal(id) {
   setVal('inv-veh-tiv-owner', tiv.ownerName);
   setVal('inv-veh-tiv-registry', tiv.registrationOffice);
   setVal('inv-veh-tiv-url', tiv.documentUrl);
-
   setVal('inv-veh-soat-policy', soat.policyNumber);
   setVal('inv-veh-soat-insurer', soat.insurer);
   setVal('inv-veh-soat-type', soat.certificateType || 'electronico');
   setVal('inv-veh-soat-start', soat.startDate);
   setVal('inv-veh-soat-end', soat.endDate);
   setVal('inv-veh-soat-url', soat.documentUrl);
-
   setVal('inv-veh-citv-cert', citv.certificateNumber);
   setVal('inv-veh-citv-center', citv.inspectionCenter);
   setVal('inv-veh-citv-result', citv.result || 'aprobado');
@@ -37560,6 +38429,72 @@ function openEditAssetModal(id) {
   setVal('inv-veh-citv-exp', citv.expirationDate);
   setVal('inv-veh-citv-km', citv.mileageAtInspection);
   setVal('inv-veh-citv-url', citv.documentUrl);
+
+  // 2. Nodo
+  const nDocs = asset.nodeDetails || {};
+  setVal('inv-node-address', nDocs.address || asset.location);
+  setVal('inv-node-property', nDocs.propertyType || 'alquilado');
+  setVal('inv-node-reference', nDocs.reference);
+  setVal('inv-node-lat', nDocs.latitude);
+  setVal('inv-node-lng', nDocs.longitude);
+  setVal('inv-node-landlord-name', nDocs.landlordName);
+  setVal('inv-node-landlord-phone', nDocs.landlordPhone);
+  setVal('inv-node-rental-cost', nDocs.rentalCost);
+  setVal('inv-node-payment-day', nDocs.paymentDay);
+  setVal('inv-node-racks-count', nDocs.racksCount);
+  setVal('inv-node-servers-count', nDocs.serversCount);
+  setVal('inv-node-air-con', nDocs.airConditioning);
+  setVal('inv-node-ip-subnet', nDocs.ipSubnet);
+  setVal('inv-node-uplink', nDocs.uplinkProvider);
+  setVal('inv-node-power-type', nDocs.powerType || 'Trifásica 380V');
+  setVal('inv-node-power-meter', nDocs.powerMeterNumber);
+  setVal('inv-node-ups-model', nDocs.upsModel);
+  setVal('inv-node-power-autonomy', nDocs.powerAutonomyHours);
+  setVal('inv-node-generator', nDocs.generator);
+  setVal('inv-node-key-holder', nDocs.keyHolder);
+  setVal('inv-node-cctv', nDocs.cctvCameras);
+
+  // 3. Tecnología & Herramientas
+  const tDocs = asset.techDetails || {};
+  setVal('inv-tech-classification', tDocs.techCategory || 'general');
+  setVal('inv-tech-device-type', tDocs.deviceType || '');
+  setVal('inv-tech-power-source', tDocs.powerSource || 'Batería Recargable Li-Ion');
+  setVal('inv-tech-specifications', tDocs.specifications || '');
+  setVal('inv-tech-processor', tDocs.processor);
+  setVal('inv-tech-ram', tDocs.ram);
+  setVal('inv-tech-storage', tDocs.storage);
+  setVal('inv-tech-os', tDocs.osVersion);
+  setVal('inv-tech-mac', tDocs.macAddress);
+  setVal('inv-tech-ip', tDocs.managementIp);
+  setVal('inv-tech-ports', tDocs.portsCount);
+  setVal('inv-tech-firmware', tDocs.osVersion);
+  setVal('inv-tech-net-mac', tDocs.macAddress);
+  setVal('inv-tech-net-ip', tDocs.managementIp);
+  setVal('inv-tech-wavelength', tDocs.wavelength);
+  setVal('inv-tech-calib-cert', tDocs.calibrationCertNumber);
+  setVal('inv-tech-calib-date', tDocs.calibrationDate);
+  setVal('inv-tech-calib-expiry', tDocs.calibrationExpiry);
+  setVal('inv-tech-power-rating', tDocs.powerRating);
+  setVal('inv-tech-lifespan-notes', tDocs.lifespanNotes);
+  setVal('inv-tech-warranty', tDocs.warrantyExpiry);
+  setVal('inv-tech-accessories', tDocs.accessories);
+  onTechClassificationChange();
+
+  // 4. Mobiliario
+  const fDocs = asset.furnitureDetails || {};
+  setVal('inv-furn-type', fDocs.furnitureType || 'Rack de Piso');
+  setVal('inv-furn-rack-u', fDocs.rackUnits);
+  setVal('inv-furn-dimensions', fDocs.dimensions);
+  setVal('inv-furn-material', fDocs.material);
+  setVal('inv-furn-weight-cap', fDocs.weightCapacityKg);
+  setVal('inv-furn-floor', fDocs.floorLocation || asset.location);
+
+  // Configuración de tabs y vistas
+  switchAssetModalTab('general');
+  onAssetCategorySelectChange(cat);
+  updateAssetModalStatusBadge(asset.status || 'operativo');
+  populateAssetAssignedDatalist();
+  renderAssetModalPhotosPreview();
 
   if (modal) modal.classList.remove('hidden');
 }
@@ -37581,10 +38516,14 @@ async function handleSaveAsset(e) {
   const videos = videoUrl ? [videoUrl] : [];
 
   const category = document.getElementById('inv-asset-category').value;
+  const isVehicle = category === 'vehiculo';
+  const isNode = category === 'nodo';
+  const isTech = category === 'tecnologia';
+  const isFurn = category === 'mobiliario';
   const plateVal = document.getElementById('inv-asset-plate').value.trim() || undefined;
 
   let vehicleDocs = undefined;
-  if (category === 'vehiculo') {
+  if (isVehicle) {
     const tivYear = document.getElementById('inv-veh-tiv-year')?.value.trim();
     const citvKm = document.getElementById('inv-veh-citv-km')?.value.trim();
 
@@ -37618,8 +38557,87 @@ async function handleSaveAsset(e) {
         documentUrl: document.getElementById('inv-veh-citv-url')?.value.trim() || undefined
       }
     };
-  } else {
-    vehicleDocs = null;
+  }
+
+  let nodeDetails = undefined;
+  if (isNode) {
+    nodeDetails = {
+      address: document.getElementById('inv-node-address')?.value.trim() || undefined,
+      propertyType: document.getElementById('inv-node-property')?.value || 'alquilado',
+      reference: document.getElementById('inv-node-reference')?.value.trim() || undefined,
+      latitude: document.getElementById('inv-node-lat')?.value.trim() || undefined,
+      longitude: document.getElementById('inv-node-lng')?.value.trim() || undefined,
+      landlordName: document.getElementById('inv-node-landlord-name')?.value.trim() || undefined,
+      landlordPhone: document.getElementById('inv-node-landlord-phone')?.value.trim() || undefined,
+      rentalCost: parseFloat(document.getElementById('inv-node-rental-cost')?.value) || undefined,
+      paymentDay: document.getElementById('inv-node-payment-day')?.value.trim() || undefined,
+      racksCount: document.getElementById('inv-node-racks-count')?.value.trim() || undefined,
+      serversCount: document.getElementById('inv-node-servers-count')?.value.trim() || undefined,
+      airConditioning: document.getElementById('inv-node-air-con')?.value.trim() || undefined,
+      ipSubnet: document.getElementById('inv-node-ip-subnet')?.value.trim() || undefined,
+      uplinkProvider: document.getElementById('inv-node-uplink')?.value.trim() || undefined,
+      powerType: document.getElementById('inv-node-power-type')?.value || undefined,
+      powerMeterNumber: document.getElementById('inv-node-power-meter')?.value.trim() || undefined,
+      upsModel: document.getElementById('inv-node-ups-model')?.value.trim() || undefined,
+      powerAutonomyHours: document.getElementById('inv-node-power-autonomy')?.value.trim() || undefined,
+      generator: document.getElementById('inv-node-generator')?.value.trim() || undefined,
+      keyHolder: document.getElementById('inv-node-key-holder')?.value.trim() || undefined,
+      cctvCameras: document.getElementById('inv-node-cctv')?.value.trim() || undefined
+    };
+  }
+
+  let techDetails = undefined;
+  if (isTech) {
+    const cls = document.getElementById('inv-tech-classification')?.value || 'general';
+    let mac = document.getElementById('inv-tech-mac')?.value.trim();
+    if (cls === 'redes') {
+      const nMac = document.getElementById('inv-tech-net-mac')?.value.trim();
+      if (nMac) mac = nMac;
+    }
+    let ip = document.getElementById('inv-tech-ip')?.value.trim();
+    if (cls === 'redes') {
+      const nIp = document.getElementById('inv-tech-net-ip')?.value.trim();
+      if (nIp) ip = nIp;
+    }
+    let os = document.getElementById('inv-tech-os')?.value.trim();
+    if (cls === 'redes') {
+      const fw = document.getElementById('inv-tech-firmware')?.value.trim();
+      if (fw) os = fw;
+    }
+
+    techDetails = {
+      techCategory: cls,
+      deviceType: document.getElementById('inv-tech-device-type')?.value.trim() || undefined,
+      powerSource: document.getElementById('inv-tech-power-source')?.value || undefined,
+      specifications: document.getElementById('inv-tech-specifications')?.value.trim() || undefined,
+      processor: document.getElementById('inv-tech-processor')?.value.trim() || undefined,
+      ram: document.getElementById('inv-tech-ram')?.value.trim() || undefined,
+      storage: document.getElementById('inv-tech-storage')?.value.trim() || undefined,
+      macAddress: mac || undefined,
+      managementIp: ip || undefined,
+      osVersion: os || undefined,
+      portsCount: document.getElementById('inv-tech-ports')?.value.trim() || undefined,
+      wavelength: document.getElementById('inv-tech-wavelength')?.value.trim() || undefined,
+      calibrationCertNumber: document.getElementById('inv-tech-calib-cert')?.value.trim() || undefined,
+      calibrationDate: document.getElementById('inv-tech-calib-date')?.value || undefined,
+      calibrationExpiry: document.getElementById('inv-tech-calib-expiry')?.value || undefined,
+      powerRating: document.getElementById('inv-tech-power-rating')?.value.trim() || undefined,
+      lifespanNotes: document.getElementById('inv-tech-lifespan-notes')?.value.trim() || undefined,
+      warrantyExpiry: document.getElementById('inv-tech-warranty')?.value || undefined,
+      accessories: document.getElementById('inv-tech-accessories')?.value.trim() || undefined
+    };
+  }
+
+  let furnitureDetails = undefined;
+  if (isFurn) {
+    furnitureDetails = {
+      furnitureType: document.getElementById('inv-furn-type')?.value || undefined,
+      rackUnits: document.getElementById('inv-furn-rack-u')?.value.trim() || undefined,
+      dimensions: document.getElementById('inv-furn-dimensions')?.value.trim() || undefined,
+      material: document.getElementById('inv-furn-material')?.value.trim() || undefined,
+      weightCapacityKg: document.getElementById('inv-furn-weight-cap')?.value.trim() || undefined,
+      floorLocation: document.getElementById('inv-furn-floor')?.value.trim() || undefined
+    };
   }
 
   const payload = {
@@ -37628,17 +38646,20 @@ async function handleSaveAsset(e) {
     code: document.getElementById('inv-asset-code').value.trim().toUpperCase(),
     brand: document.getElementById('inv-asset-brand').value.trim() || undefined,
     model: document.getElementById('inv-asset-model').value.trim() || undefined,
-    plateNumber: plateVal,
-    serialNumber: plateVal,
-    status: document.getElementById('inv-asset-status').value,
-    acquisitionDate: document.getElementById('inv-asset-date').value || undefined,
+    plateNumber: isVehicle ? plateVal : undefined,
+    serialNumber: !isVehicle ? plateVal : (document.getElementById('inv-veh-tiv-engine')?.value.trim() || plateVal),
+    status: document.getElementById('inv-asset-status').value || 'operativo',
+    acquisitionDate: document.getElementById('inv-asset-date').value || new Date().toISOString().split('T')[0],
     acquisitionCost: parseFloat(document.getElementById('inv-asset-cost').value) || 0,
     assignedTo: document.getElementById('inv-asset-assigned').value.trim() || undefined,
-    location: document.getElementById('inv-asset-location').value.trim() || undefined,
+    location: (isNode && nodeDetails && nodeDetails.address) ? nodeDetails.address : (document.getElementById('inv-asset-location').value.trim() || undefined),
     photos,
     videos,
     description: document.getElementById('inv-asset-desc').value.trim() || undefined,
-    vehicleDocs
+    vehicleDocs,
+    nodeDetails,
+    techDetails,
+    furnitureDetails
   };
 
   const btn = document.getElementById('btn-save-asset');
@@ -37660,7 +38681,14 @@ async function handleSaveAsset(e) {
       closeAssetModal();
       await loadAssetsModule();
     } else {
-      showToast(data.message || 'Error al guardar el activo', 'error');
+      let errMsg = data.message;
+      if (!errMsg && data.errors) {
+        errMsg = Object.entries(data.errors)
+          .filter(([k]) => k !== '_errors')
+          .map(([k, v]) => `${k}: ${v?._errors?.join(', ') || ''}`)
+          .join('; ');
+      }
+      showToast(errMsg || 'Error al guardar el activo', 'error');
     }
   } catch (err) {
     showToast('Error de comunicación con el servidor', 'error');
@@ -37691,7 +38719,9 @@ async function deleteAssetConfirm(id, name) {
   }
 }
 
-// Modal Ficha 360° de Activo
+// ==========================================
+// RENDERIZADO DE FICHAS ESPECIALIZADAS (DETALLE 360°)
+// ==========================================
 function renderAssetVehicleDocs(asset) {
   const vDocs = asset.vehicleDocs || {};
   const tiv = vDocs.tiv || {};
@@ -37719,52 +38749,52 @@ function renderAssetVehicleDocs(asset) {
     elTivColorF.textContent = `${color} • ${fuel}`;
   }
 
-  const elTivYearOff = document.getElementById('dtl-veh-tiv-year-office');
-  if (elTivYearOff) {
-    const year = tiv.year || 'N/D';
-    const reg = tiv.registrationOffice || 'SUNARP';
-    elTivYearOff.textContent = `${year} • ${reg}`;
-  }
+  const elTivYear = document.getElementById('dtl-veh-tiv-year');
+  if (elTivYear) elTivYear.textContent = tiv.year ? `Año ${tiv.year}` : 'Año N/R';
 
   const elTivOwner = document.getElementById('dtl-veh-tiv-owner');
   if (elTivOwner) elTivOwner.textContent = tiv.ownerName || 'TURBONETWORK S.A.C.';
+
+  const elTivReg = document.getElementById('dtl-veh-tiv-registry');
+  if (elTivReg) elTivReg.textContent = tiv.registrationOffice || 'SUNARP - Sede Principal';
 
   const elTivLink = document.getElementById('dtl-veh-tiv-link');
   if (elTivLink) {
     elTivLink.href = tiv.documentUrl || 'https://www.sunarp.gob.pe/';
   }
 
-  // Base de fecha para cálculo
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-
   // 2. SOAT (Seguro Obligatorio de Accidentes de Tránsito)
+  const elSoatPolicy = document.getElementById('dtl-veh-soat-policy');
+  if (elSoatPolicy) elSoatPolicy.textContent = soat.policyNumber || 'No registrada';
+
+  const elSoatInsurer = document.getElementById('dtl-veh-soat-insurer');
+  if (elSoatInsurer) {
+    const ins = soat.insurer || 'Aseguradora No especificada';
+    const typ = (soat.certificateType === 'fisico') ? 'Físico' : 'Digital';
+    elSoatInsurer.textContent = `${ins} (${typ})`;
+  }
+
+  const elSoatRange = document.getElementById('dtl-veh-soat-dates');
+  const elSoatStatusLabel = document.getElementById('dtl-veh-soat-status-label');
   const elSoatBadge = document.getElementById('dtl-veh-soat-status-badge');
   const elSoatCountdown = document.getElementById('dtl-veh-soat-countdown');
-  const elSoatInsurer = document.getElementById('dtl-veh-soat-insurer');
-  const elSoatRange = document.getElementById('dtl-veh-soat-range');
-  const elSoatPolicy = document.getElementById('dtl-veh-soat-policy');
-  const elSoatType = document.getElementById('dtl-veh-soat-type');
-  const elSoatStart = document.getElementById('dtl-veh-soat-start');
-  const elSoatEnd = document.getElementById('dtl-veh-soat-end');
   const elSoatLink = document.getElementById('dtl-veh-soat-link');
 
-  if (elSoatPolicy) elSoatPolicy.textContent = soat.policyNumber || 'No registrada';
-  if (elSoatInsurer) elSoatInsurer.textContent = soat.insurer || 'No registrada';
-  if (elSoatType) elSoatType.textContent = soat.certificateType === 'fisico' ? 'Físico' : 'Electrónico';
-  if (elSoatStart) elSoatStart.textContent = soat.startDate || '-';
-  if (elSoatEnd) elSoatEnd.textContent = soat.endDate || '-';
-
+  const now = new Date();
   if (soat.endDate) {
     const end = new Date(soat.endDate + 'T23:59:59');
     const diffMs = end.getTime() - now.getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
     if (elSoatRange) {
-      elSoatRange.textContent = soat.startDate ? `Válido: ${soat.startDate} al ${soat.endDate}` : `Vence el ${soat.endDate}`;
+      elSoatRange.textContent = `${soat.startDate || 'Inicio N/R'} al ${soat.endDate}`;
     }
 
     if (diffDays < 0) {
+      if (elSoatStatusLabel) {
+        elSoatStatusLabel.className = 'text-xs font-bold text-rose-500 block';
+        elSoatStatusLabel.textContent = 'Vencido';
+      }
       if (elSoatBadge) {
         elSoatBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-500 border border-rose-500/20';
         elSoatBadge.textContent = 'Vencido';
@@ -37774,6 +38804,10 @@ function renderAssetVehicleDocs(asset) {
         elSoatCountdown.textContent = `⚠️ Vencido hace ${Math.abs(diffDays)} días`;
       }
     } else if (diffDays <= 30) {
+      if (elSoatStatusLabel) {
+        elSoatStatusLabel.className = 'text-xs font-bold text-amber-500 block';
+        elSoatStatusLabel.textContent = 'Por Vencer';
+      }
       if (elSoatBadge) {
         elSoatBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20';
         elSoatBadge.textContent = 'Por Vencer';
@@ -37783,6 +38817,10 @@ function renderAssetVehicleDocs(asset) {
         elSoatCountdown.textContent = `⚠️ Vence en ${diffDays} días`;
       }
     } else {
+      if (elSoatStatusLabel) {
+        elSoatStatusLabel.className = 'text-xs font-bold text-emerald-600 dark:text-emerald-400 block';
+        elSoatStatusLabel.textContent = 'Vigente';
+      }
       if (elSoatBadge) {
         elSoatBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
         elSoatBadge.textContent = 'Vigente';
@@ -37793,13 +38831,17 @@ function renderAssetVehicleDocs(asset) {
       }
     }
   } else {
+    if (elSoatStatusLabel) {
+      elSoatStatusLabel.className = 'text-xs font-semibold text-slate-400 block';
+      elSoatStatusLabel.textContent = 'Sin Registro';
+    }
     if (elSoatBadge) {
       elSoatBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/20';
       elSoatBadge.textContent = 'Sin Registro';
     }
     if (elSoatCountdown) {
       elSoatCountdown.className = 'text-xs font-semibold text-slate-400 block';
-      elSoatCountdown.textContent = 'Pendiente de registro';
+      elSoatCountdown.textContent = 'Pendiente de registrar';
     }
     if (elSoatRange) elSoatRange.textContent = 'Vigencia: No registrada';
   }
@@ -37808,21 +38850,21 @@ function renderAssetVehicleDocs(asset) {
     elSoatLink.href = soat.documentUrl || 'https://www.apeseg.org.pe/consultas-soat/';
   }
 
-  // 3. CERTIFICADO DE INSPECCIÓN TÉCNICA VEHICULAR (CITV)
+  // 3. CITV (Certificado de Inspección Técnica Vehicular)
+  const elCitvCert = document.getElementById('dtl-veh-citv-cert');
+  if (elCitvCert) elCitvCert.textContent = citv.certificateNumber || 'No registrado';
+
+  const elCitvCenter = document.getElementById('dtl-veh-citv-center');
+  if (elCitvCenter) elCitvCenter.textContent = citv.inspectionCenter || 'Centro no especificado';
+
+  const elCitvKm = document.getElementById('dtl-veh-citv-km');
+  if (elCitvKm) elCitvKm.textContent = citv.mileageAtInspection ? `${citv.mileageAtInspection} km` : '-';
+
+  const elCitvResultLabel = document.getElementById('dtl-veh-citv-result-label');
   const elCitvBadge = document.getElementById('dtl-veh-citv-status-badge');
   const elCitvCountdown = document.getElementById('dtl-veh-citv-countdown');
-  const elCitvResultLabel = document.getElementById('dtl-veh-citv-result-label');
-  const elCitvRange = document.getElementById('dtl-veh-citv-range');
-  const elCitvCert = document.getElementById('dtl-veh-citv-cert');
-  const elCitvCenter = document.getElementById('dtl-veh-citv-center');
-  const elCitvKm = document.getElementById('dtl-veh-citv-km');
-  const elCitvExp = document.getElementById('dtl-veh-citv-exp');
+  const elCitvRange = document.getElementById('dtl-veh-citv-exp');
   const elCitvLink = document.getElementById('dtl-veh-citv-link');
-
-  if (elCitvCert) elCitvCert.textContent = citv.certificateNumber || 'No registrado';
-  if (elCitvCenter) elCitvCenter.textContent = citv.inspectionCenter || 'No registrado';
-  if (elCitvKm) elCitvKm.textContent = citv.mileageAtInspection ? `${Number(citv.mileageAtInspection).toLocaleString('es-PE')} km` : 'No registrado';
-  if (elCitvExp) elCitvExp.textContent = citv.expirationDate || '-';
 
   if (citv.result === 'no_aplica') {
     if (elCitvResultLabel) {
@@ -37908,12 +38950,134 @@ function renderAssetVehicleDocs(asset) {
   }
 }
 
+function renderAssetNodeDocs(asset) {
+  const node = asset.nodeDetails || {};
+  const elProp = document.getElementById('dtl-node-property-badge');
+  if (elProp) {
+    const pType = node.propertyType || 'alquilado';
+    elProp.textContent = pType.toUpperCase();
+    elProp.className = pType === 'propio'
+      ? 'px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
+      : (pType === 'comodato' ? 'px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase font-mono bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20' : 'px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20');
+  }
+
+  const setT = (id, val, fallback = '-') => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (val !== undefined && val !== null && String(val).trim() !== '') ? val : fallback;
+  };
+
+  setT('dtl-node-address', node.address || asset.location);
+  setT('dtl-node-reference', node.reference, 'Sin referencia específica');
+  const gpsText = (node.latitude && node.longitude) ? `${node.latitude}, ${node.longitude}` : (asset.serialNumber || 'No registradas');
+  setT('dtl-node-gps', gpsText);
+  setT('dtl-node-landlord', node.landlordName);
+  setT('dtl-node-phone', node.landlordPhone);
+  setT('dtl-node-rent', node.rentalCost ? `$ ${Number(node.rentalCost).toFixed(2)} / mes` : 'N/A');
+  setT('dtl-node-payday', node.paymentDay ? `Día ${node.paymentDay} de cada mes` : '-');
+
+  setT('dtl-node-racks', node.racksCount ? `${node.racksCount} Gabinetes / Racks` : 'No especificado');
+  setT('dtl-node-servers', node.serversCount ? `${node.serversCount}` : 'No especificado');
+  setT('dtl-node-aircon', node.airConditioning, 'No registrado');
+  setT('dtl-node-ip', node.ipSubnet, 'Sin IP fija');
+  setT('dtl-node-uplink', node.uplinkProvider, 'No registrado');
+
+  const pTypeStr = node.powerType || 'Trifásica 380V';
+  const pMeterStr = node.powerMeterNumber ? ` (Medidor: ${node.powerMeterNumber})` : '';
+  setT('dtl-node-power', `${pTypeStr}${pMeterStr}`);
+  setT('dtl-node-ups', node.upsModel, 'Sin UPS registrado');
+  const autStr = node.powerAutonomyHours ? ` • Autonomía: ${node.powerAutonomyHours}h` : '';
+  setT('dtl-node-generator', `${node.generator || 'Sin generador'}${autStr}`);
+  setT('dtl-node-keys', node.keyHolder, 'Administración NOC');
+  setT('dtl-node-cctv', node.cctvCameras, 'No especificado');
+}
+
+function renderAssetTechDocs(asset) {
+  const tech = asset.techDetails || {};
+  const setT = (id, val, fallback = '-') => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (val !== undefined && val !== null && String(val).trim() !== '') ? val : fallback;
+  };
+
+  const cls = tech.techCategory || 'general';
+  const catNames = {
+    computo: '💻 CÓMPUTO & SERVIDORES',
+    redes: '🌐 REDES & TELECOM',
+    instrumentacion: '🔬 INSTRUMENTACIÓN ÓPTICA',
+    herramienta_electrica: '🛠️ HERRAMIENTA ELÉCTRICA',
+    herramienta_manual: '🧰 HERRAMIENTA MANUAL',
+    seguridad_altura: '🪜 SEGURIDAD & ALTURA',
+    general: '⚙️ EQUIPO GENERAL'
+  };
+
+  const bCat = document.getElementById('dtl-tech-category-badge');
+  if (bCat) bCat.textContent = catNames[cls] || 'TECNOLOGÍA & HERRAMIENTAS';
+
+  const bDev = document.getElementById('dtl-tech-device-badge');
+  if (bDev) bDev.textContent = (tech.deviceType || asset.name || 'EQUIPO').toUpperCase();
+
+  setT('dtl-tech-specs', tech.specifications || asset.description, 'Sin especificaciones detalladas registradas');
+  setT('dtl-tech-power', tech.powerSource, 'No especificado');
+
+  // Cómputo
+  const compBlock = document.getElementById('dtl-tech-comp-block');
+  const hasComp = !!(tech.processor || tech.ram || tech.storage || cls === 'computo');
+  if (compBlock) compBlock.classList.toggle('hidden', !hasComp);
+  setT('dtl-tech-cpu', tech.processor);
+  setT('dtl-tech-ram', tech.ram);
+  setT('dtl-tech-storage', tech.storage);
+  setT('dtl-tech-os', tech.osVersion);
+  setT('dtl-tech-mac', tech.macAddress);
+  setT('dtl-tech-ip', tech.managementIp);
+
+  // Redes
+  const netBlock = document.getElementById('dtl-tech-net-block');
+  const hasNet = !!(tech.portsCount || cls === 'redes');
+  if (netBlock) netBlock.classList.toggle('hidden', !hasNet);
+  setT('dtl-tech-net-ports', tech.portsCount);
+  setT('dtl-tech-net-fw', tech.osVersion);
+  setT('dtl-tech-net-mac', tech.macAddress);
+  setT('dtl-tech-net-ip', tech.managementIp);
+
+  // Metrología / Calibración
+  const calibBlock = document.getElementById('dtl-tech-calib-block');
+  const hasCalib = !!(tech.calibrationDate || tech.calibrationExpiry || tech.calibrationCertNumber || tech.wavelength || cls === 'instrumentacion');
+  if (calibBlock) calibBlock.classList.toggle('hidden', !hasCalib);
+  setT('dtl-tech-calib-wave', tech.wavelength);
+  setT('dtl-tech-calib-cert', tech.calibrationCertNumber);
+  setT('dtl-tech-calib', tech.calibrationDate);
+  setT('dtl-tech-calib-next', tech.calibrationExpiry);
+
+  // Herramientas / Potencia
+  const toolBlock = document.getElementById('dtl-tech-tool-block');
+  const hasTool = !!(tech.powerRating || tech.lifespanNotes || cls === 'herramienta_electrica' || cls === 'herramienta_manual' || cls === 'seguridad_altura');
+  if (toolBlock) toolBlock.classList.toggle('hidden', !hasTool);
+  setT('dtl-tech-tool-power', tech.powerRating);
+  setT('dtl-tech-tool-lifespan', tech.lifespanNotes);
+
+  // Comunes
+  setT('dtl-tech-warranty', tech.warrantyExpiry);
+  setT('dtl-tech-accessories', tech.accessories, 'Ninguno registrado');
+}
+
+function renderAssetFurnitureDocs(asset) {
+  const furn = asset.furnitureDetails || {};
+  const setT = (id, val, fallback = '-') => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (val !== undefined && val !== null && String(val).trim() !== '') ? val : fallback;
+  };
+  const b = document.getElementById('dtl-furn-type-badge');
+  if (b) b.textContent = (furn.furnitureType || 'Mobiliario').toUpperCase();
+
+  setT('dtl-furn-u', furn.rackUnits ? `${furn.rackUnits} U` : 'N/A');
+  setT('dtl-furn-dim', furn.dimensions);
+  setT('dtl-furn-material', furn.material);
+  setT('dtl-furn-weight', furn.weightCapacityKg ? `${furn.weightCapacityKg} Kg` : '-');
+  setT('dtl-furn-floor', furn.floorLocation || asset.location);
+}
+
 let currentAssetDetailMainTab = 'overview';
 
 function switchAssetDetailMainTab(tab) {
-  if (tab === 'vehicle' && currentDetailAsset && currentDetailAsset.category !== 'vehiculo') {
-    tab = 'overview';
-  }
   currentAssetDetailMainTab = tab || 'overview';
 
   const tabs = ['overview', 'vehicle', 'assignments', 'maintenance', 'timeline'];
@@ -37938,24 +39102,21 @@ function switchAssetDetailMainTab(tab) {
   if (!currentDetailAsset) return;
 
   if (currentAssetDetailMainTab === 'vehicle') {
-    const isVehicle = currentDetailAsset.category === 'vehiculo';
+    const cat = currentDetailAsset.category;
     const vehContainer = document.getElementById('dtl-asset-vehicle-docs-container');
-    const notice = document.getElementById('dtl-veh-non-vehicle-notice');
-    if (vehContainer) {
-      if (isVehicle) {
-        vehContainer.classList.remove('hidden');
-        renderAssetVehicleDocs(currentDetailAsset);
-      } else {
-        vehContainer.classList.add('hidden');
-      }
-    }
-    if (notice) {
-      if (isVehicle) {
-        notice.classList.add('hidden');
-      } else {
-        notice.classList.remove('hidden');
-      }
-    }
+    const nodeContainer = document.getElementById('dtl-asset-node-docs-container');
+    const techContainer = document.getElementById('dtl-asset-tech-docs-container');
+    const furnContainer = document.getElementById('dtl-asset-furniture-docs-container');
+
+    if (vehContainer) vehContainer.classList.toggle('hidden', cat !== 'vehiculo');
+    if (nodeContainer) nodeContainer.classList.toggle('hidden', cat !== 'nodo');
+    if (techContainer) techContainer.classList.toggle('hidden', cat !== 'tecnologia');
+    if (furnContainer) furnContainer.classList.toggle('hidden', cat !== 'mobiliario');
+
+    if (cat === 'vehiculo') renderAssetVehicleDocs(currentDetailAsset);
+    else if (cat === 'nodo') renderAssetNodeDocs(currentDetailAsset);
+    else if (cat === 'tecnologia') renderAssetTechDocs(currentDetailAsset);
+    else if (cat === 'mobiliario') renderAssetFurnitureDocs(currentDetailAsset);
   } else if (currentAssetDetailMainTab === 'assignments') {
     renderAssetAssignmentsList();
   } else if (currentAssetDetailMainTab === 'maintenance') {
@@ -37977,11 +39138,13 @@ function openAssetDetailModal(id) {
   if (!asset) return;
 
   currentDetailAsset = asset;
+  const cat = asset.category || 'vehiculo';
 
   const catBadge = document.getElementById('dtl-asset-cat-badge');
   if (catBadge) {
-    if (asset.category === 'vehiculo') catBadge.textContent = '🚗 Vehículo';
-    else if (asset.category === 'tecnologia') catBadge.textContent = '💻 Tecnología';
+    if (cat === 'vehiculo') catBadge.textContent = '🚗 Vehículo';
+    else if (cat === 'nodo') catBadge.textContent = '🏢 Nodo / Servidores';
+    else if (cat === 'tecnologia') catBadge.textContent = '💻 Tecnología';
     else catBadge.textContent = '🪑 Mobiliario';
   }
 
@@ -37995,13 +39158,27 @@ function openAssetDetailModal(id) {
   if (nameEl) nameEl.textContent = asset.name || '';
 
   const specsEl = document.getElementById('dtl-asset-specs');
-  if (specsEl) specsEl.textContent = `${asset.brand || ''} ${asset.model || ''} • Placa/Serie: ${asset.plateNumber || asset.serialNumber || 'N/A'}`;
+  if (specsEl) {
+    if (cat === 'nodo') {
+      const node = asset.nodeDetails || {};
+      const rks = node.racksCount ? `${node.racksCount} Racks` : '';
+      const srvs = node.serversCount ? `${node.serversCount}` : '';
+      const info = [rks, srvs].filter(Boolean).join(' • ') || 'Casa de Servidores Core';
+      const gps = (node.latitude && node.longitude) ? `📍 GPS: ${node.latitude}, ${node.longitude}` : (node.address || asset.location || 'Ubicación');
+      specsEl.textContent = `${info} • ${gps}`;
+    } else {
+      specsEl.textContent = `${asset.brand || ''} ${asset.model || ''} • Placa/Serie: ${asset.plateNumber || asset.serialNumber || 'N/A'}`;
+    }
+  }
 
   const assignedEl = document.getElementById('dtl-asset-assigned');
-  if (assignedEl) assignedEl.textContent = asset.assignedTo || 'Sin asignar';
+  if (assignedEl) assignedEl.textContent = asset.assignedTo || (cat === 'nodo' ? 'Custodio / NOC' : 'Sin asignar');
 
   const locEl = document.getElementById('dtl-asset-location');
-  if (locEl) locEl.textContent = asset.location || 'Sede Central';
+  if (locEl) {
+    const nodeAddr = cat === 'nodo' && asset.nodeDetails && asset.nodeDetails.address;
+    locEl.textContent = nodeAddr || asset.location || 'Sede Central';
+  }
 
   const dateEl = document.getElementById('dtl-asset-date');
   if (dateEl) dateEl.textContent = asset.acquisitionDate || '-';
@@ -38010,13 +39187,13 @@ function openAssetDetailModal(id) {
   if (costEl) costEl.textContent = `${getSystemCurrencySymbol()} ${Number(asset.acquisitionCost || 0).toFixed(2)}`;
 
   const descEl = document.getElementById('dtl-asset-desc');
-  if (descEl) descEl.textContent = asset.description || 'Sin ficha técnica o observaciones adicionales registradas.';
+  if (descEl) descEl.textContent = asset.description || 'Sin observaciones adicionales registradas.';
 
   // Foto y Video
   const photoImg = document.getElementById('dtl-asset-photo');
   const photos = asset.photos || [];
   if (photoImg) {
-    photoImg.src = photos[0] || 'https://images.unsplash.com/photo-1559416523-140ddc3d238c?auto=format&fit=crop&w=600&q=80';
+    photoImg.src = photos[0] || (cat === 'nodo' ? 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80' : 'https://images.unsplash.com/photo-1559416523-140ddc3d238c?auto=format&fit=crop&w=600&q=80');
   }
 
   const videoBox = document.getElementById('dtl-asset-video-content');
@@ -38032,21 +39209,31 @@ function openAssetDetailModal(id) {
     }
   }
 
-  // Visibilidad de pestañas según categoría (La documentación vehicular sólo aplica a vehículos)
-  const isVeh = asset.category === 'vehiculo';
+  // Pestaña técnica especializada según categoría
   const tabBtnVeh = document.getElementById('tab-btn-detail-vehicle');
-  if (tabBtnVeh) {
-    if (isVeh) {
-      tabBtnVeh.classList.remove('hidden');
-    } else {
-      tabBtnVeh.classList.add('hidden');
-    }
-  }
-
+  const specTabTitle = document.getElementById('dtl-spec-tab-title');
   const vehBadge = document.getElementById('tab-badge-detail-vehicle-status');
-  if (vehBadge) {
-    vehBadge.textContent = 'TIV • SOAT • CITV';
-    vehBadge.className = 'px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-blue-500/20 text-blue-500';
+
+  if (tabBtnVeh) tabBtnVeh.classList.remove('hidden');
+
+  if (specTabTitle && vehBadge) {
+    if (cat === 'vehiculo') {
+      specTabTitle.textContent = '🚗 Documentación Vehicular';
+      vehBadge.textContent = 'TIV • SOAT • CITV';
+      vehBadge.className = 'px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-blue-500/20 text-blue-500';
+    } else if (cat === 'nodo') {
+      specTabTitle.textContent = '🏢 Infraestructura del Nodo';
+      vehBadge.textContent = 'GPS • SERVIDORES • RACKS';
+      vehBadge.className = 'px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-500';
+    } else if (cat === 'tecnologia') {
+      specTabTitle.textContent = '🛠️ Ficha Técnica & Herramientas';
+      vehBadge.textContent = 'SPECS • ENERGÍA • KIT';
+      vehBadge.className = 'px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-purple-500/20 text-purple-400';
+    } else {
+      specTabTitle.textContent = '🪑 Dimensiones & Mobiliario';
+      vehBadge.textContent = 'RACKS • CARGA • DIM';
+      vehBadge.className = 'px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-amber-500/20 text-amber-500';
+    }
   }
 
   const assignBadge = document.getElementById('tab-badge-detail-assignments-count');
@@ -48293,7 +49480,7 @@ function renderQuickReplyChips() {
 
   if (!quickRepliesList || quickRepliesList.length === 0) {
     container.innerHTML = `
-      <span class="text-slate-400 text-[11px] italic px-1">Sin plantillas creadas</span>
+      <span class="text-slate-500 dark:text-slate-400 text-[11px] italic px-1">Sin plantillas creadas</span>
     `;
     return;
   }

@@ -1301,6 +1301,15 @@ export function createAsset(
   if (payload.category !== "vehiculo") {
     delete (newAsset as any).vehicleDocs;
   }
+  if (payload.category !== "nodo") {
+    delete (newAsset as any).nodeDetails;
+  }
+  if (payload.category !== "tecnologia") {
+    delete (newAsset as any).techDetails;
+  }
+  if (payload.category !== "mobiliario") {
+    delete (newAsset as any).furnitureDetails;
+  }
   assets.unshift(newAsset);
   saveAssets(tenantId, assets);
   return newAsset;
@@ -1373,6 +1382,15 @@ export function updateAsset(
 
   if (assets[index].category !== "vehiculo") {
     delete (assets[index] as any).vehicleDocs;
+  }
+  if (assets[index].category !== "nodo") {
+    delete (assets[index] as any).nodeDetails;
+  }
+  if (assets[index].category !== "tecnologia") {
+    delete (assets[index] as any).techDetails;
+  }
+  if (assets[index].category !== "mobiliario") {
+    delete (assets[index] as any).furnitureDetails;
   }
 
   saveAssets(tenantId, assets);

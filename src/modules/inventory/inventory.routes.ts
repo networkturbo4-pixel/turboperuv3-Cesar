@@ -488,64 +488,129 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
     const schema = z.object({
       code: z.string().min(1, "El código de activo es requerido"),
       name: z.string().min(1, "El nombre del activo es requerido"),
-      category: z.enum(["vehiculo", "tecnologia", "mobiliario"]),
-      brand: z.string().optional(),
-      model: z.string().optional(),
-      serialNumber: z.string().optional(),
-      plateNumber: z.string().optional(),
-      location: z.string().optional(),
-      assignedTo: z.string().optional(),
-      acquisitionDate: z.string().min(1, "La fecha de adquisición es requerida"),
-      acquisitionCost: z.number().min(0, "El costo no puede ser negativo"),
+      category: z.enum(["vehiculo", "tecnologia", "mobiliario", "nodo"]),
+      brand: z.string().optional().nullable(),
+      model: z.string().optional().nullable(),
+      serialNumber: z.string().optional().nullable(),
+      plateNumber: z.string().optional().nullable(),
+      location: z.string().optional().nullable(),
+      assignedTo: z.string().optional().nullable(),
+      acquisitionDate: z.string().optional().nullable().transform((val) => (val && val.trim()) ? val.trim() : new Date().toISOString().split("T")[0]),
+      acquisitionCost: z.union([z.number(), z.string()]).optional().nullable().transform((v) => {
+        if (v === null || v === undefined || v === "") return 0;
+        const n = Number(v);
+        return isNaN(n) || n < 0 ? 0 : n;
+      }),
       status: z.enum(["operativo", "mantenimiento", "baja", "en_reserva"]).default("operativo"),
-      description: z.string().optional(),
+      description: z.string().optional().nullable(),
       photos: z.array(z.string()).default([]),
       videos: z.array(z.string()).default([]),
       vehicleDocs: z.object({
         tiv: z.object({
-          number: z.string().optional(),
-          plateNumber: z.string().optional(),
-          vin: z.string().optional(),
-          engineNumber: z.string().optional(),
-          color: z.string().optional(),
-          fuelType: z.string().optional(),
-          year: z.union([z.string(), z.number()]).optional(),
-          ownerName: z.string().optional(),
-          registrationOffice: z.string().optional(),
-          documentUrl: z.string().optional(),
-        }).optional(),
+          number: z.string().optional().nullable(),
+          plateNumber: z.string().optional().nullable(),
+          vin: z.string().optional().nullable(),
+          engineNumber: z.string().optional().nullable(),
+          color: z.string().optional().nullable(),
+          fuelType: z.string().optional().nullable(),
+          year: z.union([z.string(), z.number()]).optional().nullable(),
+          ownerName: z.string().optional().nullable(),
+          registrationOffice: z.string().optional().nullable(),
+          documentUrl: z.string().optional().nullable(),
+        }).optional().nullable(),
         soat: z.object({
-          policyNumber: z.string().optional(),
-          insurer: z.string().optional(),
-          startDate: z.string().optional(),
-          endDate: z.string().optional(),
-          certificateType: z.enum(["electronico", "fisico"]).optional(),
-          status: z.enum(["vigente", "por_vencer", "vencido"]).optional(),
-          documentUrl: z.string().optional(),
-        }).optional(),
+          policyNumber: z.string().optional().nullable(),
+          insurer: z.string().optional().nullable(),
+          startDate: z.string().optional().nullable(),
+          endDate: z.string().optional().nullable(),
+          certificateType: z.enum(["electronico", "fisico"]).optional().nullable(),
+          status: z.enum(["vigente", "por_vencer", "vencido"]).optional().nullable(),
+          documentUrl: z.string().optional().nullable(),
+        }).optional().nullable(),
         citv: z.object({
-          certificateNumber: z.string().optional(),
-          inspectionCenter: z.string().optional(),
-          issueDate: z.string().optional(),
-          expirationDate: z.string().optional(),
-          result: z.enum(["aprobado", "desaprobado", "no_aplica"]).optional(),
-          mileageAtInspection: z.union([z.string(), z.number()]).optional(),
-          documentUrl: z.string().optional(),
-        }).optional(),
-      }).optional(),
+          certificateNumber: z.string().optional().nullable(),
+          inspectionCenter: z.string().optional().nullable(),
+          issueDate: z.string().optional().nullable(),
+          expirationDate: z.string().optional().nullable(),
+          result: z.enum(["aprobado", "desaprobado", "no_aplica"]).optional().nullable(),
+          mileageAtInspection: z.union([z.string(), z.number()]).optional().nullable(),
+          documentUrl: z.string().optional().nullable(),
+        }).optional().nullable(),
+      }).optional().nullable(),
+      nodeDetails: z.object({
+        address: z.string().optional().nullable(),
+        reference: z.string().optional().nullable(),
+        latitude: z.union([z.string(), z.number()]).optional().nullable(),
+        longitude: z.union([z.string(), z.number()]).optional().nullable(),
+        propertyType: z.enum(["alquilado", "propio", "comodato"]).optional().nullable(),
+        landlordName: z.string().optional().nullable(),
+        landlordPhone: z.string().optional().nullable(),
+        rentalCost: z.union([z.string(), z.number()]).optional().nullable(),
+        paymentDay: z.union([z.string(), z.number()]).optional().nullable(),
+        powerType: z.string().optional().nullable(),
+        powerMeterNumber: z.string().optional().nullable(),
+        upsModel: z.string().optional().nullable(),
+        generator: z.string().optional().nullable(),
+        powerAutonomyHours: z.union([z.string(), z.number()]).optional().nullable(),
+        airConditioning: z.string().optional().nullable(),
+        racksCount: z.union([z.string(), z.number()]).optional().nullable(),
+        serversCount: z.union([z.string(), z.number()]).optional().nullable(),
+        ipSubnet: z.string().optional().nullable(),
+        uplinkProvider: z.string().optional().nullable(),
+        keyHolder: z.string().optional().nullable(),
+        cctvCameras: z.string().optional().nullable(),
+      }).optional().nullable(),
+      techDetails: z.object({
+        techCategory: z.string().optional().nullable(),
+        deviceType: z.string().optional().nullable(),
+        specifications: z.string().optional().nullable(),
+        powerSource: z.string().optional().nullable(),
+        processor: z.string().optional().nullable(),
+        ram: z.string().optional().nullable(),
+        storage: z.string().optional().nullable(),
+        macAddress: z.string().optional().nullable(),
+        managementIp: z.string().optional().nullable(),
+        osVersion: z.string().optional().nullable(),
+        portsCount: z.string().optional().nullable(),
+        wavelength: z.string().optional().nullable(),
+        calibrationDate: z.string().optional().nullable(),
+        calibrationExpiry: z.string().optional().nullable(),
+        calibrationCertNumber: z.string().optional().nullable(),
+        powerRating: z.string().optional().nullable(),
+        lifespanNotes: z.string().optional().nullable(),
+        warrantyExpiry: z.string().optional().nullable(),
+        accessories: z.string().optional().nullable(),
+      }).optional().nullable(),
+      furnitureDetails: z.object({
+        furnitureType: z.string().optional().nullable(),
+        rackUnits: z.union([z.string(), z.number()]).optional().nullable(),
+        dimensions: z.string().optional().nullable(),
+        material: z.string().optional().nullable(),
+        weightCapacityKg: z.union([z.string(), z.number()]).optional().nullable(),
+        floorLocation: z.string().optional().nullable(),
+      }).optional().nullable(),
     });
 
     const parse = schema.safeParse(request.body);
     if (!parse.success) {
-      return reply.status(400).send({ success: false, errors: parse.error.format() });
+      const errorMsg = parse.error.errors.map((e) => `${e.path.join(".") || "campo"}: ${e.message}`).join(", ");
+      return reply.status(400).send({
+        success: false,
+        message: errorMsg || "Datos de activo inválidos",
+        errors: parse.error.format(),
+      });
     }
 
-    const created = createAsset(tenantId, parse.data as any);
-    return reply.status(201).send({
-      success: true,
-      message: "Activo fijo registrado con éxito",
-      data: created,
-    });
+    try {
+      const created = createAsset(tenantId, parse.data as any);
+      return reply.status(201).send({
+        success: true,
+        message: "Activo fijo registrado con éxito",
+        data: created,
+      });
+    } catch (err: any) {
+      return reply.status(500).send({ success: false, message: err.message || "Error al registrar activo fijo" });
+    }
   });
 
   fastify.put("/inventory/assets/:id", async (request, reply) => {
