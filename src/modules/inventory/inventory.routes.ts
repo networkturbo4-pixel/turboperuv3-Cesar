@@ -33,6 +33,10 @@ import {
   getNodeStock,
   assignStockToNode,
   returnStockFromNode,
+  getVehicleChecklist,
+  updateVehicleChecklist,
+  addVehicleChecklistItem,
+  removeVehicleChecklistItem,
   getProductTraceability,
   createPurchase,
   createClientInstallation,
@@ -888,6 +892,61 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
 
   // 6. HISTORIAL & TRAZABILIDAD 360° (ESCÁNER, COMPRAS, CLIENTES, EPP)
   // ========================================================
+  // ----------------------------------------------------
+  // GESTIÓN DE CHECKLIST DE IMPLEMENTOS DE VEHÍCULOS
+  // ----------------------------------------------------
+  fastify.get("/inventory/assets/:id/checklist", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+    const checklist = getVehicleChecklist(tenantId, numId);
+    return { success: true, count: checklist.length, data: checklist };
+  });
+
+  fastify.put("/inventory/assets/:id/checklist", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+    const { items } = request.body as { items: any[] };
+    if (!Array.isArray(items)) {
+      return reply.status(400).send({ success: false, message: "Formato inválido de checklist" });
+    }
+    const updated = updateVehicleChecklist(tenantId, numId, items);
+    return { success: true, message: "Checklist actualizado exitosamente", data: updated };
+  });
+
+  fastify.post("/inventory/assets/:id/checklist/item", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+    const itemData = request.body as any;
+    if (!itemData || !itemData.name) {
+      return reply.status(400).send({ success: false, message: "El nombre del implemento es requerido" });
+    }
+    const updated = addVehicleChecklistItem(tenantId, numId, itemData);
+    return { success: true, message: "Implemento agregado al vehículo", data: updated };
+  });
+
+  fastify.delete("/inventory/assets/:id/checklist/item/:itemId", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, itemId } = request.params as { id: string; itemId: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+    const updated = removeVehicleChecklistItem(tenantId, numId, itemId);
+    return { success: true, message: "Implemento eliminado del vehículo", data: updated };
+  });
+
   fastify.get("/inventory/traceability/:query", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const { query } = request.params as { query: string };

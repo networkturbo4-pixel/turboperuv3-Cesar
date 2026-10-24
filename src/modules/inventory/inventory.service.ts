@@ -3,6 +3,7 @@ import path from "path";
 import crypto from "crypto";
 import { getTenantFilePath } from "../tenants/tenants.service";
 import {
+  VehicleImplementItem,
   InventoryCategory,
   InventoryProduct,
   ProductType,
@@ -1389,9 +1390,20 @@ export function updateAsset(
     }
   }
 
+  const updatedVehicleDocs = payload.vehicleDocs !== undefined
+    ? {
+        ...(current.vehicleDocs || {}),
+        ...payload.vehicleDocs,
+        tiv: { ...(current.vehicleDocs?.tiv || {}), ...(payload.vehicleDocs?.tiv || {}) },
+        soat: { ...(current.vehicleDocs?.soat || {}), ...(payload.vehicleDocs?.soat || {}) },
+        citv: { ...(current.vehicleDocs?.citv || {}), ...(payload.vehicleDocs?.citv || {}) },
+      }
+    : current.vehicleDocs;
+
   assets[index] = {
     ...current,
     ...payload,
+    ...(payload.vehicleDocs !== undefined ? { vehicleDocs: updatedVehicleDocs } : {}),
     updatedAt: nowIso,
   };
 
@@ -2503,4 +2515,105 @@ export function returnStockFromNode(
 
   saveAssets(tenantId, assets);
   return { success: true, message: "Equipo retornado al almacén central exitosamente" };
+}
+
+
+// ==========================================
+// CHECKLIST DE IMPLEMENTOS DE VEHÍCULOS
+// ==========================================
+export const DEFAULT_VEHICLE_IMPLEMENTS: Omit<VehicleImplementItem, "id" | "updatedAt">[] = [
+  { name: "Extintor PQS 6kg (Vigente y recargado)", category: "emergencia", status: "ok", checked: true, quantity: 1, notes: "Con manómetro en verde y precinto intacto", expirationDate: "2027-06-30" },
+  { name: "Botiquín de Primeros Auxilios completo", category: "emergencia", status: "ok", checked: true, quantity: 1, notes: "Normado por MINSA / MTC", expirationDate: "2026-12-31" },
+  { name: "Triángulos / Conos de Seguridad (Par)", category: "emergencia", status: "ok", checked: true, quantity: 2, notes: "Reflectivos reglamentarios", expirationDate: "2027-10-31" },
+  { name: "Chalecos Reflectivos de Seguridad", category: "seguridad", status: "ok", checked: true, quantity: 2, notes: "Alta visibilidad para personal técnico" },
+  { name: "Gata Hidráulica (Capacidad acorde al peso)", category: "mecanica", status: "ok", checked: true, quantity: 1, notes: "Tipo caimán o botella con palanca" },
+  { name: "Llave de Ruedas tipo Cruz / Telescópica", category: "mecanica", status: "ok", checked: true, quantity: 1, notes: "En buen estado" },
+  { name: "Llanta de Repuesto Operativa", category: "mecanica", status: "ok", checked: true, quantity: 1, notes: "Presión de aire calibrada a 35 PSI" },
+  { name: "Cables Pasacorriente para Batería", category: "emergencia", status: "ok", checked: true, quantity: 1, notes: "Calibre 4 AWG con pinzas aisladas", expirationDate: "2028-05-15" },
+  { name: "Cable de Remolque / Eslinga con Grilletes", category: "emergencia", status: "ok", checked: true, quantity: 1, notes: "Capacidad mínima 3 Toneladas", expirationDate: "2027-08-30" },
+  { name: "Linterna de Mano Recargable / Baterías", category: "herramientas", status: "ok", checked: true, quantity: 1, notes: "LED de alta potencia para inspecciones nocturnas" },
+  { name: "Escalera Telescópica de Fibra de Vidrio", category: "herramientas", status: "ok", checked: true, quantity: 1, notes: "Dieléctrica 24 o 28 pasos" },
+  { name: "Caja / Maletín de Herramientas Básicas", category: "herramientas", status: "ok", checked: true, quantity: 1, notes: "Alicates, desarmadores, llaves mixtas y cinta aislante" },
+  { name: "Documentación FÍSICA (SOAT, TIV, CITV)", category: "documentos", status: "ok", checked: true, quantity: 1, notes: "Originales o copias legalizadas al día" },
+  { name: "Medidor / Manómetro de Presión de Llantas", category: "mecanica", status: "ok", checked: true, quantity: 1, notes: "Para control diario antes de ruta" },
+];
+
+export function getVehicleChecklist(tenantId: string, assetId: number): VehicleImplementItem[] {
+  const assets = loadAssets(tenantId);
+  const asset = assets.find((a) => a.id === assetId);
+  if (!asset) return [];
+
+  if (Array.isArray(asset.vehicleChecklist) && asset.vehicleChecklist.length > 0) {
+    return asset.vehicleChecklist;
+  }
+
+  // Inicializar checklist por defecto si aún no tiene elementos
+  const now = new Date().toISOString();
+  const initialItems: VehicleImplementItem[] = DEFAULT_VEHICLE_IMPLEMENTS.map((item, idx) => ({
+    id: `imp-${Date.now()}-${idx + 1}-${Math.random().toString(36).substring(2, 5)}`,
+    ...item,
+    updatedAt: now,
+  }));
+
+  asset.vehicleChecklist = initialItems;
+  asset.updatedAt = now;
+  saveAssets(tenantId, assets);
+  return initialItems;
+}
+
+export function updateVehicleChecklist(tenantId: string, assetId: number, items: VehicleImplementItem[]): VehicleImplementItem[] {
+  const assets = loadAssets(tenantId);
+  const asset = assets.find((a) => a.id === assetId);
+  if (!asset) return [];
+
+  const now = new Date().toISOString();
+  asset.vehicleChecklist = items.map((it) => ({
+    ...it,
+    id: it.id || `imp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    expirationDate: it.category === "emergencia" && it.expirationDate ? it.expirationDate.trim() : null,
+    updatedAt: now,
+  }));
+  asset.updatedAt = now;
+  saveAssets(tenantId, assets);
+  return asset.vehicleChecklist;
+}
+
+export function addVehicleChecklistItem(tenantId: string, assetId: number, itemData: Partial<VehicleImplementItem>): VehicleImplementItem[] {
+  const assets = loadAssets(tenantId);
+  const asset = assets.find((a) => a.id === assetId);
+  if (!asset) return [];
+
+  if (!Array.isArray(asset.vehicleChecklist)) {
+    asset.vehicleChecklist = [];
+  }
+
+  const now = new Date().toISOString();
+  const category = (itemData.category as any) || "otro";
+  const newItem: VehicleImplementItem = {
+    id: `imp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    name: itemData.name?.trim() || "Nuevo Implemento",
+    category,
+    status: itemData.status || "ok",
+    checked: itemData.checked !== undefined ? itemData.checked : true,
+    quantity: Number(itemData.quantity) || 1,
+    notes: itemData.notes?.trim() || "",
+    expirationDate: category === "emergencia" && itemData.expirationDate ? itemData.expirationDate.trim() : null,
+    updatedAt: now,
+  };
+
+  asset.vehicleChecklist.push(newItem);
+  asset.updatedAt = now;
+  saveAssets(tenantId, assets);
+  return asset.vehicleChecklist;
+}
+
+export function removeVehicleChecklistItem(tenantId: string, assetId: number, itemId: string): VehicleImplementItem[] {
+  const assets = loadAssets(tenantId);
+  const asset = assets.find((a) => a.id === assetId);
+  if (!asset || !Array.isArray(asset.vehicleChecklist)) return [];
+
+  asset.vehicleChecklist = asset.vehicleChecklist.filter((it) => it.id !== itemId);
+  asset.updatedAt = new Date().toISOString();
+  saveAssets(tenantId, assets);
+  return asset.vehicleChecklist;
 }

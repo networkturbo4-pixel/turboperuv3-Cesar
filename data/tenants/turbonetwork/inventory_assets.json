@@ -308,6 +308,187 @@
     ],
     "tenantId": "turbonetwork",
     "createdAt": "2026-09-30T15:19:09.885Z",
-    "updatedAt": "2026-10-12T23:14:45.250Z"
+    "updatedAt": "2026-10-23T22:12:40.924Z",
+    "vehicleChecklist": [
+      {
+        "id": "imp-1",
+        "name": "Extintor PQS 6kg (Vigente y recargado)",
+        "category": "emergencia",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "expirationDate": "2027-06-30",
+        "notes": "Con manómetro en verde y precinto intacto",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-2",
+        "name": "Botiquín de Primeros Auxilios completo",
+        "category": "emergencia",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "expirationDate": "2026-12-15",
+        "notes": "Normado por MINSA / MTC",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-3",
+        "name": "Triángulos / Conos de Seguridad (Par)",
+        "category": "emergencia",
+        "status": "ok",
+        "checked": true,
+        "quantity": 2,
+        "expirationDate": "2027-10-31",
+        "notes": "Reflectivos reglamentarios",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-4",
+        "name": "Chalecos Reflectivos de Seguridad",
+        "category": "seguridad",
+        "status": "ok",
+        "checked": true,
+        "quantity": 2,
+        "notes": "Alta visibilidad para personal técnico",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-5",
+        "name": "Gata Hidráulica tipo Caimán / Botella",
+        "category": "mecanica",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "notes": "Capacidad 3T con palanca",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-6",
+        "name": "Llave de Ruedas tipo Cruz",
+        "category": "mecanica",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "notes": "En buen estado",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-7",
+        "name": "Llanta de Repuesto Operativa (35 PSI)",
+        "category": "mecanica",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "notes": "Labrado óptimo y calibrada",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-8",
+        "name": "Cables Pasacorriente para Batería",
+        "category": "emergencia",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "expirationDate": "2028-05-20",
+        "notes": "Calibre 4 AWG con pinzas reforzadas",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-9",
+        "name": "Cable de Remolque / Eslinga resistente",
+        "category": "emergencia",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "expirationDate": "2027-09-15",
+        "notes": "Capacidad 4 Toneladas con grilletes",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-10",
+        "name": "Linterna de Mano Recargable LED",
+        "category": "herramientas",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "notes": "Batería 100% para trabajo nocturno",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-11",
+        "name": "Escalera Telescópica de Fibra 28 pasos",
+        "category": "herramientas",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "notes": "Dieléctrica para postes FTTH",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-12",
+        "name": "Caja de Herramientas Básicas",
+        "category": "herramientas",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "notes": "Alicates, desarmadores y llaves mixtas",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-13",
+        "name": "Documentación FÍSICA (SOAT, TIV, CITV)",
+        "category": "documentos",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "notes": "Originales vigentes en guantera",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      },
+      {
+        "id": "imp-14",
+        "name": "Medidor / Manómetro de Presión Neumáticos",
+        "category": "mecanica",
+        "status": "ok",
+        "checked": true,
+        "quantity": 1,
+        "notes": "Digital para chequeo diario",
+        "updatedAt": "2026-10-23T22:12:40.924Z"
+      }
+    ]
+  },
+  {
+    "id": 504,
+    "tenantId": "turbonetwork",
+    "code": "NOD-504",
+    "name": "Nodo POP Torre Carabayllo San Pedro",
+    "category": "nodo",
+    "status": "operativo",
+    "acquisitionDate": "2025-06-20",
+    "acquisitionCost": 0,
+    "location": "Cerro San Pedro s/n - Sector Carabayllo",
+    "description": "Torre de transmisión y repetición inalámbrica / POP de distribución Carabayllo con enlaces punto a punto y OLT remota.",
+    "photos": [
+      "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "videos": [],
+    "nodeDetails": {
+      "address": "Cerro San Pedro s/n, Carabayllo",
+      "reference": "Torre autosoportada de 36m",
+      "latitude": -11.86721,
+      "longitude": -77.02895,
+      "propertyType": "propio",
+      "powerType": "Monofásica 220V + Sistema Solar",
+      "upsModel": "APC Smart-UPS 3000VA",
+      "racksCount": 1,
+      "serversCount": "1 OLT EPON V-Sol + 2 Switch Edge",
+      "keyHolder": "Cuadrilla Norte"
+    },
+    "maintenanceHistory": [],
+    "assignmentHistory": [],
+    "eventHistory": [],
+    "createdAt": "2026-06-20T10:00:00.000Z",
+    "updatedAt": "2026-06-20T10:00:00.000Z",
+    "nodeStock": []
   }
 ]

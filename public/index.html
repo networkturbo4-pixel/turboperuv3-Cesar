@@ -16146,10 +16146,10 @@
           </div>
           <div>
             <div class="flex items-center space-x-2">
-              <h3 class="text-base font-bold text-slate-900 dark:text-white">Despacho & Mochila de Técnicos</h3>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400">Salidas / Devoluciones</span>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Despacho & Asignación de Materiales</h3>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400">Técnicos & Nodos POP</span>
             </div>
-            <p class="text-xs text-slate-400 mt-0.5">Control de materiales, herramientas, series físicas y EPP asignados</p>
+            <p class="text-xs text-slate-400 mt-0.5">Control de materiales, herramientas, series físicas y equipamiento para cuadrillas y Nodos POP</p>
           </div>
         </div>
         <button type="button" onclick="closeAssignmentManagerModal()" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 transition">
@@ -16179,46 +16179,110 @@
           <!-- Columna Izquierda: Técnico + Selección de Producto & Seriales -->
           <div class="w-full space-y-3.5">
             
-            <!-- 1. Colaborador -->
+            <!-- 1. Destino de la Asignación (Técnico o Nodo) -->
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 space-y-2.5">
-              <div class="flex items-center justify-between">
+              
+              <!-- Switch de Tipo de Destino: Técnico vs Nodo -->
+              <div class="flex items-center justify-between gap-2">
                 <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
                   <span class="w-4 h-4 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 inline-flex items-center justify-center text-[10px]">1</span>
-                  <span>Técnico / Colaborador</span>
+                  <span id="asm-target-step-title">Destino de Entrega</span>
                 </span>
-                <button type="button" onclick="openQrScannerForAssignment()" class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 font-semibold text-[11px] flex items-center space-x-1 transition">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h2v4m-2-2h.01M4 20h4m-4-4h4m12-4h.01M4 12h4m12-4h.01M4 8h4m4 12h.01M12 16h.01M12 12h.01M12 8h.01M4 4h4v4H4V4zm12 0h4v4h-4V4zM4 16h4v4H4v-4z"/></svg>
-                  <span>Carnet / QR</span>
-                </button>
+                
+                <!-- Pills para alternar entre Técnico y Nodo -->
+                <div class="inline-flex p-0.5 rounded-lg bg-slate-200/80 dark:bg-white/10 text-[11px] font-semibold">
+                  <button type="button" id="asm-target-pill-tech" onclick="switchAssignmentTargetType('tech')" class="px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs transition flex items-center gap-1 cursor-pointer">
+                    <span>👤</span>
+                    <span>Técnico</span>
+                  </button>
+                  <button type="button" id="asm-target-pill-node" onclick="switchAssignmentTargetType('node')" class="px-2.5 py-1 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1 cursor-pointer">
+                    <span>📡</span>
+                    <span>Nodo POP</span>
+                  </button>
+                </div>
               </div>
 
-              <!-- Input búsqueda -->
-              <div class="relative">
-                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input 
-                  type="text" 
-                  id="asm-tech-search-input" 
-                  placeholder="Escribe nombre, DNI, rol o ID..." 
-                  class="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
-                  oninput="handleAjaxTechSearch(this.value)"
-                />
-                <div id="asm-tech-results-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-xl max-h-48 overflow-y-auto z-20 hidden divide-y divide-slate-100 dark:divide-white/5"></div>
-              </div>
+              <!-- Vista TÉCNICO -->
+              <div id="asm-target-tech-wrapper" class="space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] text-slate-400 font-medium">Asignar a cuadrilla o colaborador:</span>
+                  <button type="button" onclick="openQrScannerForAssignment()" class="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 font-semibold text-[10.5px] flex items-center space-x-1 transition cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h2v4m-2-2h.01M4 20h4m-4-4h4m12-4h.01M4 12h4m12-4h.01M4 8h4m4 12h.01M12 16h.01M12 12h.01M12 8h.01M4 4h4v4H4V4zm12 0h4v4h-4V4zM4 16h4v4H4v-4z"/></svg>
+                    <span>Carnet / QR</span>
+                  </button>
+                </div>
 
-              <!-- Tarjeta Técnico Seleccionado -->
-              <div id="asm-selected-tech-card" class="hidden p-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between">
-                <div class="flex items-center space-x-2.5 min-w-0">
-                  <img id="asm-tech-avatar" class="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-white/10 flex-shrink-0" src="" alt="Avatar">
-                  <div class="truncate">
-                    <h4 id="asm-tech-name" class="font-bold text-slate-900 dark:text-white text-xs truncate">--</h4>
-                    <p id="asm-tech-role" class="text-[11px] text-slate-400 truncate">--</p>
+                <!-- Input búsqueda Técnico -->
+                <div class="relative">
+                  <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <input 
+                    type="text" 
+                    id="asm-tech-search-input" 
+                    placeholder="Escribe nombre, DNI, rol o ID..." 
+                    class="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
+                    oninput="handleAjaxTechSearch(this.value)"
+                  />
+                  <div id="asm-tech-results-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-xl max-h-48 overflow-y-auto z-20 hidden divide-y divide-slate-100 dark:divide-white/5"></div>
+                </div>
+
+                <!-- Tarjeta Técnico Seleccionado -->
+                <div id="asm-selected-tech-card" class="hidden p-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between">
+                  <div class="flex items-center space-x-2.5 min-w-0">
+                    <img id="asm-tech-avatar" class="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-white/10 flex-shrink-0" src="" alt="Avatar">
+                    <div class="truncate">
+                      <h4 id="asm-tech-name" class="font-bold text-slate-900 dark:text-white text-xs truncate">--</h4>
+                      <p id="asm-tech-role" class="text-[11px] text-slate-400 truncate">--</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-2 flex-shrink-0">
+                    <span id="asm-tech-custody-pill" class="px-2 py-0.5 rounded-full text-[10.5px] font-mono font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400">🎒 0</span>
+                    <button type="button" onclick="clearSelectedTech()" class="text-xs text-slate-400 hover:text-rose-500 transition px-1.5 py-0.5 cursor-pointer">Cambiar</button>
                   </div>
                 </div>
-                <div class="flex items-center space-x-2 flex-shrink-0">
-                  <span id="asm-tech-custody-pill" class="px-2 py-0.5 rounded-full text-[10.5px] font-mono font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400">🎒 0</span>
-                  <button type="button" onclick="clearSelectedTech()" class="text-xs text-slate-400 hover:text-rose-500 transition px-1.5 py-0.5">Cambiar</button>
+              </div>
+
+              <!-- Vista NODO POP -->
+              <div id="asm-target-node-wrapper" class="space-y-2.5 hidden">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] text-slate-400 font-medium">Asignar equipos a Casa de Servidores o Nodo:</span>
+                  <span id="asm-node-count-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">📡 0 Nodos</span>
+                </div>
+
+                <!-- Input búsqueda Nodo -->
+                <div class="relative">
+                  <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <input 
+                    type="text" 
+                    id="asm-node-search-input" 
+                    placeholder="Buscar nodo por nombre, código NOD o dirección..." 
+                    class="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500"
+                    onfocus="handleAjaxNodeSearch(this.value)"
+                    oninput="handleAjaxNodeSearch(this.value)"
+                  />
+                  <div id="asm-node-results-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-xl max-h-48 overflow-y-auto z-20 hidden divide-y divide-slate-100 dark:divide-white/5"></div>
+                </div>
+
+                <!-- Tarjeta Nodo Seleccionado -->
+                <div id="asm-selected-node-card" class="hidden p-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between">
+                  <div class="flex items-center space-x-2.5 min-w-0">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg flex-shrink-0 border border-emerald-500/30">
+                      <span>📡</span>
+                    </div>
+                    <div class="truncate">
+                      <div class="flex items-center gap-1.5">
+                        <h4 id="asm-node-name" class="font-bold text-slate-900 dark:text-white text-xs truncate">--</h4>
+                        <span id="asm-node-code" class="px-1.5 py-0.2 rounded text-[9.5px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">NOD-503</span>
+                      </div>
+                      <p id="asm-node-loc" class="text-[11px] text-slate-400 truncate">--</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-2 flex-shrink-0">
+                    <span id="asm-node-stock-pill" class="px-2 py-0.5 rounded-full text-[10.5px] font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">📡 0 equipos</span>
+                    <button type="button" onclick="clearSelectedNode()" class="text-xs text-slate-400 hover:text-rose-500 transition px-1.5 py-0.5 cursor-pointer">Cambiar</button>
+                  </div>
                 </div>
               </div>
+
             </div>
 
             <!-- 2. Seleccionar Material / Escaneo Rápido -->
@@ -16287,7 +16351,7 @@
               </div>
 
               <div>
-                <label class="block text-[10.5px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Observaciones / Orden de Trabajo (OT)</label>
+                <label id="asm-assign-notes-label" class="block text-[10.5px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Observaciones / Orden de Trabajo (OT)</label>
                 <input type="text" id="asm-assign-notes" placeholder="Ej: Para cuadrilla FTTH Miraflores..." class="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-purple-500">
               </div>
 
@@ -16320,7 +16384,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                   </div>
                   <p class="font-medium text-xs">El vale de salida está vacío</p>
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto">Selecciona o escanea materiales a la izquierda para agregarlos al lote de entrega del técnico.</p>
+                  <p id="asm-manifest-empty-hint" class="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto">Selecciona o escanea materiales a la izquierda para agregarlos al lote de despacho.</p>
                 </div>
               </div>
             </div>
@@ -16328,7 +16392,7 @@
             <!-- Resumen inferior del vale -->
             <div id="asm-manifest-summary-footer" class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between text-xs">
               <div>
-                <span class="text-[11px] text-slate-400 block">Colaborador receptor:</span>
+                <span id="asm-manifest-colab-label" class="text-[11px] text-slate-400 block">Colaborador receptor:</span>
                 <strong id="asm-manifest-tech-name" class="font-bold text-slate-800 dark:text-slate-200">Sin seleccionar</strong>
               </div>
               <div class="text-right">
@@ -16343,10 +16407,11 @@
         <div id="asm-section-unassign" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full hidden">
           <!-- Columna Izquierda: Técnico + Condición de Retorno -->
           <div class="w-full space-y-3.5">
-            <!-- Técnico -->
+            <!-- Origen de Devolución (Técnico o Nodo) -->
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 space-y-2.5">
-              <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">1. Técnico que devuelve</span>
+              <span id="asm-unassign-title" class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">1. Técnico que devuelve</span>
               
+              <!-- Tarjeta Técnico -->
               <div id="asm-unassign-tech-card" class="p-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between">
                 <div class="flex items-center space-x-2.5 min-w-0">
                   <img id="asm-unassign-tech-avatar" class="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-white/10 flex-shrink-0" src="" alt="Avatar">
@@ -16355,7 +16420,24 @@
                     <p id="asm-unassign-tech-role" class="text-[11px] text-slate-400 truncate">--</p>
                   </div>
                 </div>
-                <button type="button" onclick="clearSelectedTech()" class="text-xs text-slate-400 hover:text-rose-500 transition px-1.5 py-0.5">Cambiar</button>
+                <button type="button" onclick="clearSelectedTech()" class="text-xs text-slate-400 hover:text-rose-500 transition px-1.5 py-0.5 cursor-pointer">Cambiar</button>
+              </div>
+
+              <!-- Tarjeta Nodo -->
+              <div id="asm-unassign-node-card" class="hidden p-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between">
+                <div class="flex items-center space-x-2.5 min-w-0">
+                  <div class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg flex-shrink-0 border border-emerald-500/30">
+                    <span>📡</span>
+                  </div>
+                  <div class="truncate">
+                    <div class="flex items-center gap-1.5">
+                      <h4 id="asm-unassign-node-name" class="font-bold text-slate-900 dark:text-white text-xs truncate">--</h4>
+                      <span id="asm-unassign-node-code" class="px-1.5 py-0.2 rounded text-[9.5px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">NOD-503</span>
+                    </div>
+                    <p id="asm-unassign-node-loc" class="text-[11px] text-slate-400 truncate">--</p>
+                  </div>
+                </div>
+                <button type="button" onclick="clearSelectedNode()" class="text-xs text-slate-400 hover:text-rose-500 transition px-1.5 py-0.5 cursor-pointer">Cambiar</button>
               </div>
             </div>
 
@@ -16780,7 +16862,7 @@
                 <span>LECTOR LÁSER LISTO</span>
               </span>
             </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Escanea con lector láser, cámara o escribe el código SKU para abrir y gestionar la ficha del producto automáticamente</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Escanea con lector láser, cámara o escribe el código SKU para consultar existencias y gestionar stock en tiempo real</p>
           </div>
         </div>
         <button type="button" onclick="closeSmartInventoryScannerModal()" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition cursor-pointer flex-shrink-0">
@@ -16790,10 +16872,6 @@
 
       <!-- Fila de Interruptores / Toggles -->
       <div class="flex items-center gap-6 text-xs text-slate-700 dark:text-slate-300 font-semibold">
-        <label class="flex items-center gap-2 cursor-pointer select-none">
-          <input type="checkbox" id="smart-scan-toggle-auto-open" checked class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-100 dark:bg-black/30 border-slate-300 dark:border-white/10 cursor-pointer" />
-          <span>Auto-abrir ficha</span>
-        </label>
         <label class="flex items-center gap-2 cursor-pointer select-none">
           <input type="checkbox" id="smart-scan-toggle-beep" checked class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-100 dark:bg-black/30 border-slate-300 dark:border-white/10 cursor-pointer" />
           <span>Sonido Beep</span>
@@ -17318,7 +17396,7 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
                   <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Inicio Vigencia</label>
-                  <input type="date" id="inv-veh-soat-start" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  <input type="date" id="inv-veh-soat-start" onchange="onSoatStartDateChange()" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
                 </div>
                 <div>
                   <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Término / Vencimiento</label>
@@ -17361,7 +17439,7 @@
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div>
                   <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Emisión</label>
-                  <input type="date" id="inv-veh-citv-issued" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
+                  <input type="date" id="inv-veh-citv-issued" onchange="onCitvIssueDateChange()" class="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white">
                 </div>
                 <div>
                   <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fecha Vencimiento</label>
@@ -18006,10 +18084,15 @@
                   <p class="text-[11px] text-slate-500 dark:text-slate-400">Control estricto de vigencias, registros SUNARP y revisiones técnicas</p>
                 </div>
               </div>
-              <button type="button" onclick="editAssetFromDetail()" class="self-start sm:self-center px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center gap-1.5 border border-blue-500/30 transition">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                <span>Actualizar Documentos</span>
-              </button>
+              <div class="flex items-center gap-2 flex-wrap self-start sm:self-center">
+                <button type="button" onclick="closeAssetDetailModal(); openVehicleChecklistModal(currentDetailAsset.id);" class="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-1.5 border border-amber-500/30 transition cursor-pointer" title="Ver checklist de implementos">
+                  <span>🚗 Checklist de Implementos</span>
+                </button>
+                <button type="button" onclick="editAssetFromDetail('vehicle')" class="px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center gap-1.5 border border-blue-500/30 transition cursor-pointer" title="Editar SOAT, TIV y CITV">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                  <span>Actualizar Documentos</span>
+                </button>
+              </div>
             </div>
 
             <!-- Grid de 3 Apartados Individuales -->
@@ -18170,8 +18253,12 @@
                       <span id="dtl-veh-citv-center" class="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[150px] text-right">-</span>
                     </div>
                     <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
+                      <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">Fecha de Inspección:</span>
+                      <span id="dtl-veh-citv-issued" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] text-right">-</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-white/5">
                       <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">Km en Inspección:</span>
-                      <span id="dtl-veh-citv-km" class="font-mono text-slate-700 dark:text-slate-300 text-[11px] text-right">-</span>
+                      <span id="dtl-veh-citv-km" class="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px] text-right">-</span>
                     </div>
                     <div class="flex items-center justify-between gap-2 py-1">
                       <span class="text-slate-500 dark:text-slate-400 text-[11px] flex-shrink-0">Vencimiento:</span>
@@ -18926,6 +19013,195 @@
         <button type="button" onclick="closeNodeAssignedStockModal()" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 text-xs font-semibold transition">
           Cerrar
         </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: CHECKLIST DE IMPLEMENTOS DEL VEHÍCULO             -->
+  <!-- ======================================================== -->
+  <div id="inventory-vehicle-checklist-modal" class="fixed inset-0 z-[287] hidden flex items-center justify-center bg-black/85 backdrop-blur-md px-3 sm:px-4 py-4 sm:py-6 overflow-y-auto">
+    <div class="pro-card max-w-4xl w-full p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col max-h-[92vh] my-auto overflow-hidden">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10 flex-shrink-0">
+        <div class="flex items-center space-x-2.5">
+          <span class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 text-xl flex-shrink-0">🚗</span>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white" id="vehicle-checklist-modal-title">Checklist de Implementos del Auto</h3>
+              <span id="vehicle-checklist-plate-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">ABC-123</span>
+              <span id="vehicle-checklist-status-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">100% Conforme</span>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400" id="vehicle-checklist-modal-subtitle">Control de equipamiento, herramientas de auxilio, seguridad y accesorios</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeVehicleChecklistModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Métricas Rápidas del Checklist -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 py-3 border-b border-slate-200 dark:border-white/10 text-xs flex-shrink-0">
+        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+          <span class="text-[10px] text-slate-400 uppercase font-bold block">Total Implementos</span>
+          <span id="veh-checklist-stat-total" class="text-sm font-bold text-slate-900 dark:text-white block mt-0.5 font-mono">0 items</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+          <span class="text-[10px] text-slate-400 uppercase font-bold block">Conformes / Operativos</span>
+          <span id="veh-checklist-stat-ok" class="text-sm font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5 font-mono">0 OK</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+          <span class="text-[10px] text-slate-400 uppercase font-bold block">Faltantes / Dañados</span>
+          <span id="veh-checklist-stat-missing" class="text-sm font-bold text-rose-600 dark:text-rose-400 block mt-0.5 font-mono">0 Faltantes</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+          <span class="text-[10px] text-slate-400 uppercase font-bold block">Cumplimiento</span>
+          <span id="veh-checklist-stat-pct" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 block mt-0.5 font-mono">0%</span>
+        </div>
+      </div>
+
+      <!-- Barra de Acciones, Filtros y Búsqueda -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-3 flex-shrink-0">
+        <div class="relative flex-1">
+          <span class="absolute left-3 top-2.5 text-xs text-slate-400">🔍</span>
+          <input 
+            type="text" 
+            id="vehicle-checklist-search" 
+            oninput="filterVehicleChecklistTable()" 
+            placeholder="Buscar implemento, categoría o notas..." 
+            class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
+          >
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="flex items-center bg-slate-100 dark:bg-white/5 p-0.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs">
+            <button type="button" onclick="setVehicleChecklistFilter('all')" id="veh-filter-btn-all" class="px-2.5 py-1 rounded-lg font-semibold text-[11px] bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-2xs cursor-pointer">Todos</button>
+            <button type="button" onclick="setVehicleChecklistFilter('ok')" id="veh-filter-btn-ok" class="px-2.5 py-1 rounded-lg font-medium text-[11px] text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer">OK</button>
+            <button type="button" onclick="setVehicleChecklistFilter('missing')" id="veh-filter-btn-missing" class="px-2.5 py-1 rounded-lg font-medium text-[11px] text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer">Faltantes</button>
+            <button type="button" onclick="setVehicleChecklistFilter('emergencia')" id="veh-filter-btn-emergencia" class="px-2.5 py-1 rounded-lg font-medium text-[11px] text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer">🚨 Emergencia</button>
+            <button type="button" onclick="setVehicleChecklistFilter('vencidos')" id="veh-filter-btn-vencidos" class="px-2.5 py-1 rounded-lg font-medium text-[11px] text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer">⚠️ Vencidos / Cambio</button>
+          </div>
+          <button 
+            type="button" 
+            onclick="toggleVehicleChecklistAll(true)" 
+            class="px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold text-xs border border-emerald-500/20 transition cursor-pointer"
+            title="Marcar todos los implementos como conformes"
+          >
+            ✓ Todos OK
+          </button>
+          <button 
+            type="button" 
+            id="btn-toggle-vehicle-add-form" 
+            onclick="toggleVehicleAddImplementForm()" 
+            class="px-3 py-1.5 rounded-xl btn-brand-primary text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap cursor-pointer"
+          >
+            <span>➕</span>
+            <span>Agregar Implemento</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Alerta visual de implementos vencidos o próximos a cambio -->
+      <div id="veh-checklist-emergency-alert" class="hidden mb-3 flex-shrink-0 transition"></div>
+
+      <!-- Formulario Desplegable para Agregar Implemento -->
+      <div id="vehicle-add-implement-form-container" class="hidden p-4 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 mb-3 space-y-3 flex-shrink-0 transition">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>🛠️</span>
+            <span>Nuevo Implemento / Accesorio del Auto</span>
+          </h4>
+          <button type="button" onclick="toggleVehicleAddImplementForm(false)" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs cursor-pointer">✕ Cerrar</button>
+        </div>
+
+        <form id="form-add-vehicle-implement" onsubmit="handleSaveVehicleImplement(event)" class="space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-[10.5px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Nombre del Implemento *</label>
+              <input type="text" id="veh-new-imp-name" required placeholder="Ej: Llave de impacto, Cono 75cm, Linterna, etc." class="w-full bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 font-medium">
+            </div>
+            <div>
+              <label class="block text-[10.5px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Categoría *</label>
+              <select id="veh-new-imp-cat" onchange="onVehicleNewImpCatChange()" required class="w-full bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500">
+                <option value="seguridad">🛡️ Seguridad</option>
+                <option value="mecanica">⚙️ Mecánica</option>
+                <option value="herramientas">🔧 Herramientas</option>
+                <option value="emergencia">🚨 Emergencia</option>
+                <option value="documentos">📄 Documentos</option>
+                <option value="otro">📦 Otro</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10.5px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Cantidad *</label>
+              <input type="number" id="veh-new-imp-qty" required min="1" value="1" class="w-full bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-amber-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[10.5px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Estado Inicial</label>
+              <select id="veh-new-imp-status" class="w-full bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500">
+                <option value="ok">✅ Operativo / Presente</option>
+                <option value="faltante">⚠️ Faltante</option>
+                <option value="dañado">❌ Dañado / Vencido</option>
+              </select>
+            </div>
+            <div id="veh-new-imp-exp-group" class="hidden">
+              <label class="block text-[10.5px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
+                <span>Vence / Necesita Cambio</span>
+                <span class="text-rose-500 font-bold text-[9.5px]">🚨 Emergencia</span>
+              </label>
+              <input type="date" id="veh-new-imp-exp" class="w-full bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500" title="Fecha en que vence y necesita cambio">
+            </div>
+            <div>
+              <label class="block text-[10.5px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Notas / Observaciones</label>
+              <input type="text" id="veh-new-imp-notes" placeholder="Ej: Vence en Jun 2027, recarga anual..." class="w-full bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500">
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-200 dark:border-white/10">
+            <button type="button" onclick="toggleVehicleAddImplementForm(false)" class="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer">
+              Cancelar
+            </button>
+            <button type="submit" id="btn-save-vehicle-implement" class="px-4 py-1.5 rounded-xl btn-brand-primary text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer">
+              <span>💾 Guardar Implemento</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tabla / Lista de Implementos del Checklist -->
+      <div class="flex-1 overflow-y-auto rounded-xl border border-slate-200 dark:border-white/10">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-white/[0.04] text-slate-500 dark:text-slate-400 uppercase font-semibold text-[10.5px] sticky top-0 border-b border-slate-200 dark:border-white/10 z-10">
+            <tr>
+              <th class="px-3 py-2.5 text-center w-12">Check</th>
+              <th class="px-3 py-2.5">Implemento / Accesorio</th>
+              <th class="px-3 py-2.5">Categoría</th>
+              <th class="px-3 py-2.5 text-center">Cant.</th>
+              <th class="px-3 py-2.5">Estado</th>
+              <th class="px-3 py-2.5 min-w-[175px]">Vence / Necesita Cambio</th>
+              <th class="px-3 py-2.5">Observaciones</th>
+              <th class="px-3 py-2.5 text-right w-16">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="vehicle-checklist-table-tbody" class="divide-y divide-slate-200 dark:divide-white/5 bg-white dark:bg-transparent">
+            <!-- Se llena dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 flex-shrink-0 mt-3">
+        <div class="flex items-center gap-2 text-[11px] text-slate-400">
+          <span>💡 Marca la casilla o cambia el estado para auditar el equipamiento del vehículo. Los cambios se guardan automáticamente.</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeVehicleChecklistModal()" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer">
+            Cerrar
+          </button>
+        </div>
       </div>
 
     </div>
@@ -38266,13 +38542,27 @@ function renderAssetsTable() {
         </td>
         <td class="px-4 py-3 text-right whitespace-nowrap">
           <div class="flex items-center justify-end space-x-1">
-            <button type="button" onclick="openAssetDetailModal(${a.id})" class="px-2 py-1 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold text-[11px] hover:bg-blue-500/20 transition flex items-center gap-1" title="Ficha y Mantenimientos">
+            <button type="button" onclick="openAssetDetailModal(${a.id})" class="px-2 py-1 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold text-[11px] hover:bg-blue-500/20 transition flex items-center gap-1 cursor-pointer" title="Ficha y Mantenimientos">
               <span>📋 Ficha</span>
             </button>
+            ${a.category === 'vehiculo' ? `
+            <button type="button" onclick="openVehicleChecklistModal(${a.id})" class="px-2.5 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold text-[11px] transition flex items-center gap-1.5 shadow-2xs whitespace-nowrap border border-amber-500/20 cursor-pointer active:scale-95" title="Checklist de implementos y equipamiento del auto">
+              <span>🚗 Checklist</span>
+              ${(() => {
+                const list = a.vehicleChecklist || [];
+                if (list.length === 0) return '';
+                const okCount = list.filter(i => i.checked || i.status === 'ok').length;
+                return `<span class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold ${okCount === list.length ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'}">${okCount}/${list.length}</span>`;
+              })()}
+            </button>
+            ` : ''}
             ${a.category === 'nodo' ? `
             <button type="button" onclick="openNodeAssignedStockModal(${a.id})" class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-[11px] hover:bg-emerald-500/20 transition flex items-center gap-1.5 shadow-2xs whitespace-nowrap" title="Ver equipamiento y stock asignado al nodo">
-              <span>📦 Asignado</span>
+              <span>📡 Asignado</span>
               ${(a.nodeStock && a.nodeStock.filter(x => x.status !== 'retornado').length > 0) ? `<span class="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">${a.nodeStock.filter(x => x.status !== 'retornado').length}</span>` : ''}
+            </button>
+            <button type="button" onclick="openAssignmentManagerModal(null, ${a.id})" class="px-2.5 py-1 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold text-[11px] hover:bg-purple-500/20 transition flex items-center gap-1 shadow-2xs whitespace-nowrap" title="Despachar y asignar materiales a este nodo">
+              <span>+ Despachar</span>
             </button>
             ` : ''}
             <button type="button" onclick="openEditAssetModal(${a.id})" class="p-1.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white transition" title="Editar">
@@ -38392,6 +38682,35 @@ function switchAssetModalTab(tabId) {
       }
     }
   });
+}
+
+function calculateOneYearLater(dateStr) {
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return '';
+  const parts = dateStr.split('-');
+  const y = parseInt(parts[0], 10) + 1;
+  const m = parts[1];
+  let d = parseInt(parts[2], 10);
+  if (m === '02' && d === 29) {
+    const isLeap = (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+    if (!isLeap) d = 28;
+  }
+  return `${y}-${m}-${String(d).padStart(2, '0')}`;
+}
+
+function onSoatStartDateChange() {
+  const startEl = document.getElementById('inv-veh-soat-start');
+  const endEl = document.getElementById('inv-veh-soat-end');
+  if (startEl && endEl && startEl.value) {
+    endEl.value = calculateOneYearLater(startEl.value);
+  }
+}
+
+function onCitvIssueDateChange() {
+  const startEl = document.getElementById('inv-veh-citv-issued');
+  const endEl = document.getElementById('inv-veh-citv-exp');
+  if (startEl && endEl && startEl.value) {
+    endEl.value = calculateOneYearLater(startEl.value);
+  }
 }
 
 function onTechClassificationChange() {
@@ -38980,7 +39299,7 @@ function openCreateAssetModal() {
   if (modal) modal.classList.remove('hidden');
 }
 
-function openEditAssetModal(id) {
+function openEditAssetModal(id, initialTab = 'general') {
   const asset = inventoryAssets.find(a => a.id === id);
   if (!asset) return;
 
@@ -39099,7 +39418,7 @@ function openEditAssetModal(id) {
   setVal('inv-furn-floor', fDocs.floorLocation || asset.location);
 
   // Configuración de tabs y vistas
-  switchAssetModalTab('general');
+  switchAssetModalTab(initialTab || 'general');
   onAssetCategorySelectChange(cat);
   updateAssetModalStatusBadge(asset.status || 'operativo');
   populateAssetAssignedDatalist();
@@ -39181,7 +39500,9 @@ async function handleSaveAsset(e) {
   let vehicleDocs = undefined;
   if (isVehicle) {
     const tivYear = document.getElementById('inv-veh-tiv-year')?.value.trim();
-    const citvKm = document.getElementById('inv-veh-citv-km')?.value.trim();
+    const citvKmRaw = document.getElementById('inv-veh-citv-km')?.value.trim();
+    const citvKmNum = citvKmRaw ? parseInt(citvKmRaw.replace(/\D/g, ''), 10) : undefined;
+    const citvKm = (!isNaN(citvKmNum) && citvKmNum !== undefined) ? citvKmNum : (citvKmRaw || undefined);
 
     vehicleDocs = {
       tiv: {
@@ -39701,6 +40022,668 @@ async function handleReturnNodeStock(stockItemId, productName) {
   }
 }
 
+
+
+// ==========================================
+// GESTIÓN DE CHECKLIST DE IMPLEMENTOS DE VEHÍCULOS
+// ==========================================
+let currentVehicleChecklistAsset = null;
+let currentVehicleChecklistItems = [];
+let currentVehicleChecklistFilter = 'all'; // 'all' | 'ok' | 'missing'
+
+async function openVehicleChecklistModal(assetId) {
+  const asset = (inventoryAssets || []).find(a => String(a.id) === String(assetId));
+  if (!asset) {
+    console.warn("Vehículo no encontrado para id:", assetId);
+    return;
+  }
+
+  currentVehicleChecklistAsset = asset;
+  currentVehicleChecklistFilter = 'all';
+
+  const modal = document.getElementById('inventory-vehicle-checklist-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+
+  const title = document.getElementById('vehicle-checklist-modal-title');
+  const plateBadge = document.getElementById('vehicle-checklist-plate-badge');
+  const subtitle = document.getElementById('vehicle-checklist-modal-subtitle');
+  const searchInput = document.getElementById('vehicle-checklist-search');
+
+  if (title) title.textContent = `Checklist: ${asset.name}`;
+  if (plateBadge) plateBadge.textContent = asset.plateNumber || asset.code || 'VEH';
+  if (subtitle) {
+    const resp = asset.assignedTo || 'Sin asignar';
+    const loc = asset.location || 'Sede Principal';
+    const brand = `${asset.brand || ''} ${asset.model || ''}`.trim() || 'Vehículo Técnico';
+    subtitle.textContent = `${brand} • Placa: ${asset.plateNumber || 'S/P'} • Asignado a: ${resp} • Ubicación: ${loc}`;
+  }
+  if (searchInput) searchInput.value = '';
+
+  toggleVehicleAddImplementForm(false);
+  setVehicleChecklistFilter('all');
+
+  // Cargar checklist desde la API o usar local
+  try {
+    const res = await fetch(`/api/inventory/assets/${asset.id}/checklist`, {
+      headers: typeof getInventoryHeaders === 'function' ? getInventoryHeaders() : { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (data.success && Array.isArray(data.data)) {
+      currentVehicleChecklistItems = data.data;
+      asset.vehicleChecklist = data.data;
+    } else {
+      currentVehicleChecklistItems = Array.isArray(asset.vehicleChecklist) ? asset.vehicleChecklist : [];
+    }
+  } catch (err) {
+    console.error("Error al cargar checklist del vehículo:", err);
+    currentVehicleChecklistItems = Array.isArray(asset.vehicleChecklist) ? asset.vehicleChecklist : [];
+  }
+
+  renderVehicleChecklistModalContent();
+}
+
+function closeVehicleChecklistModal() {
+  const modal = document.getElementById('inventory-vehicle-checklist-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+  currentVehicleChecklistAsset = null;
+  currentVehicleChecklistItems = [];
+}
+
+function renderVehicleChecklistModalContent() {
+  if (!currentVehicleChecklistAsset) return;
+
+  const items = currentVehicleChecklistItems || [];
+  const total = items.length;
+  const okItems = items.filter(i => i.checked || i.status === 'ok');
+  const okCount = okItems.length;
+  const missingCount = total - okCount;
+  const pct = total > 0 ? Math.round((okCount / total) * 100) : 0;
+
+  // Actualizar métricas
+  const statTotal = document.getElementById('veh-checklist-stat-total');
+  const statOk = document.getElementById('veh-checklist-stat-ok');
+  const statMissing = document.getElementById('veh-checklist-stat-missing');
+  const statPct = document.getElementById('veh-checklist-stat-pct');
+  const statusBadge = document.getElementById('vehicle-checklist-status-badge');
+
+  if (statTotal) statTotal.textContent = `${total} items`;
+  if (statOk) statOk.textContent = `${okCount} OK`;
+  if (statMissing) {
+    statMissing.textContent = `${missingCount} Faltantes`;
+    statMissing.className = `text-sm font-bold block mt-0.5 font-mono ${missingCount > 0 ? 'text-rose-500' : 'text-slate-400'}`;
+  }
+  if (statPct) {
+    statPct.textContent = `${pct}%`;
+    statPct.className = `text-sm font-bold block mt-0.5 font-mono ${pct === 100 ? 'text-emerald-500' : (pct >= 80 ? 'text-amber-500' : 'text-rose-500')}`;
+  }
+  if (statusBadge) {
+    if (pct === 100) {
+      statusBadge.textContent = '100% Conforme';
+      statusBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
+    } else {
+      statusBadge.textContent = `${pct}% Conforme (${missingCount} obs)`;
+      statusBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20';
+    }
+  }
+
+  // Alerta de implementos de emergencia vencidos o próximos a cambio
+  const alertContainer = document.getElementById('veh-checklist-emergency-alert');
+  if (alertContainer) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const expiredEmergency = items.filter(it => {
+      if (it.category !== 'emergencia' && !it.expirationDate) return false;
+      if (!it.expirationDate) return false;
+      const d = new Date(it.expirationDate + 'T00:00:00');
+      return d < today;
+    });
+
+    const soonEmergency = items.filter(it => {
+      if (it.category !== 'emergencia' && !it.expirationDate) return false;
+      if (!it.expirationDate) return false;
+      const d = new Date(it.expirationDate + 'T00:00:00');
+      const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+      return diff >= 0 && diff <= 30;
+    });
+
+    const missingDateEmergency = items.filter(it => it.category === 'emergencia' && !it.expirationDate);
+
+    if (expiredEmergency.length > 0) {
+      alertContainer.className = 'p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between text-xs text-rose-600 dark:text-rose-400 mb-3';
+      alertContainer.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="text-base">🚨</span>
+          <div>
+            <span class="font-bold">¡Atención de Seguridad!</span>
+            <span class="ml-1 font-medium">Hay ${expiredEmergency.length} implemento(s) vencido(s) que requieren recambio urgente (${expiredEmergency.map(e => e.name).join(', ')}).</span>
+          </div>
+        </div>
+        <button type="button" onclick="setVehicleChecklistFilter('vencidos')" class="px-2.5 py-1 rounded-lg bg-rose-500 text-white font-bold text-[10px] hover:bg-rose-600 transition cursor-pointer whitespace-nowrap">
+          Ver vencidos
+        </button>
+      `;
+      alertContainer.classList.remove('hidden');
+    } else if (soonEmergency.length > 0) {
+      alertContainer.className = 'p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs text-amber-600 dark:text-amber-400 mb-3';
+      alertContainer.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="text-base">⚠️</span>
+          <div>
+            <span class="font-bold">Aviso de Mantenimiento:</span>
+            <span class="ml-1 font-medium">${soonEmergency.length} implemento(s) de emergencia vencerán en los próximos 30 días (${soonEmergency.map(e => e.name).join(', ')}).</span>
+          </div>
+        </div>
+        <button type="button" onclick="setVehicleChecklistFilter('vencidos')" class="px-2.5 py-1 rounded-lg bg-amber-500 text-white font-bold text-[10px] hover:bg-amber-600 transition cursor-pointer whitespace-nowrap">
+          Revisar
+        </button>
+      `;
+      alertContainer.classList.remove('hidden');
+    } else if (missingDateEmergency.length > 0) {
+      alertContainer.className = 'p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between text-xs text-amber-700 dark:text-amber-400 mb-3';
+      alertContainer.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="text-sm">🚨</span>
+          <span>Hay ${missingDateEmergency.length} implemento(s) de categoría emergencia sin fecha de vencimiento/cambio definida.</span>
+        </div>
+        <button type="button" onclick="setVehicleChecklistFilter('emergencia')" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold text-[10px] hover:bg-amber-500/30 transition cursor-pointer whitespace-nowrap">
+          Completar fechas
+        </button>
+      `;
+      alertContainer.classList.remove('hidden');
+    } else {
+      alertContainer.className = 'hidden';
+      alertContainer.innerHTML = '';
+    }
+  }
+
+  // Renderizar filas de la tabla
+  renderVehicleChecklistRows();
+}
+
+function renderVehicleChecklistRows() {
+  const tbody = document.getElementById('vehicle-checklist-table-tbody');
+  if (!tbody) return;
+
+  const search = (document.getElementById('vehicle-checklist-search')?.value || '').toLowerCase().trim();
+  const filter = currentVehicleChecklistFilter;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const filtered = (currentVehicleChecklistItems || []).filter(item => {
+    const isOk = item.checked || item.status === 'ok';
+    if (filter === 'ok' && !isOk) return false;
+    if (filter === 'missing' && isOk) return false;
+    if (filter === 'emergencia' && item.category !== 'emergencia') return false;
+    if (filter === 'vencidos') {
+      const isDamaged = item.status === 'dañado';
+      const isExp = item.expirationDate && new Date(item.expirationDate + 'T00:00:00') < today;
+      const isNear = item.expirationDate && (() => {
+        const d = new Date(item.expirationDate + 'T00:00:00');
+        const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+        return diff >= 0 && diff <= 30;
+      })();
+      const isMissingExp = item.category === 'emergencia' && !item.expirationDate;
+      if (!isDamaged && !isExp && !isNear && !isMissingExp) return false;
+    }
+
+    if (search) {
+      const name = (item.name || '').toLowerCase();
+      const cat = (item.category || '').toLowerCase();
+      const notes = (item.notes || '').toLowerCase();
+      const exp = (item.expirationDate || '').toLowerCase();
+      const isExp = item.expirationDate && new Date(item.expirationDate + 'T00:00:00') < today;
+      if (!name.includes(search) && !cat.includes(search) && !notes.includes(search) && !exp.includes(search)) {
+        if (search === 'vencido' && isExp) {
+          // match
+        } else if (search === 'cambio' && isExp) {
+          // match
+        } else if (search === 'emergencia' && cat === 'emergencia') {
+          // match
+        } else {
+          return false;
+        }
+      }
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="text-center py-8 text-slate-400 text-xs">
+          <div class="flex flex-col items-center justify-center space-y-2">
+            <span class="text-2xl">🚗</span>
+            <span>No se encontraron implementos con ese criterio.</span>
+            <button type="button" onclick="toggleVehicleAddImplementForm(true)" class="px-3 py-1.5 rounded-xl btn-brand-primary text-xs font-semibold shadow-2xs mt-1 cursor-pointer">
+              + Agregar Implemento
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(item => {
+    const isOk = item.checked || item.status === 'ok';
+    const isEmergency = item.category === 'emergencia';
+
+    let expDateObj = null;
+    let daysLeft = null;
+    let isExpired = false;
+    let isExpiringSoon = false;
+
+    if (item.expirationDate) {
+      expDateObj = new Date(item.expirationDate + 'T00:00:00');
+      daysLeft = Math.ceil((expDateObj - today) / (1000 * 60 * 60 * 24));
+      if (daysLeft < 0) {
+        isExpired = true;
+      } else if (daysLeft <= 30) {
+        isExpiringSoon = true;
+      }
+    }
+
+    return `
+      <tr class="hover:bg-slate-50/70 dark:hover:bg-white/[0.02] transition ${!isOk || (isEmergency && isExpired) ? 'bg-rose-500/[0.03]' : ''}">
+        <td class="px-3 py-2.5 text-center">
+          <input 
+            type="checkbox" 
+            ${isOk ? 'checked' : ''} 
+            onchange="toggleVehicleImplementCheck('${item.id}', this.checked)"
+            class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 bg-slate-100 dark:bg-black/30 border-slate-300 dark:border-white/10 cursor-pointer"
+            title="Marcar como presente y operativo"
+          />
+        </td>
+        <td class="px-3 py-2.5">
+          <div class="flex items-center space-x-2">
+            <span class="font-bold text-xs ${isOk ? 'text-slate-800 dark:text-slate-200' : 'text-rose-600 dark:text-rose-400 line-through opacity-80'}">${escapeHtml(item.name)}</span>
+          </div>
+        </td>
+        <td class="px-3 py-2.5 whitespace-nowrap">
+          <select 
+            onchange="changeVehicleImplementCategory('${item.id}', this.value)"
+            class="bg-slate-50 dark:bg-black/30 border ${isEmergency ? 'border-rose-500/30 text-rose-600 dark:text-rose-400 font-bold' : 'border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200'} rounded-lg px-2 py-1 text-[11px] font-semibold focus:outline-none cursor-pointer"
+            title="Cambiar categoría del implemento"
+          >
+            <option value="emergencia" ${item.category === 'emergencia' ? 'selected' : ''}>🚨 Emergencia</option>
+            <option value="seguridad" ${item.category === 'seguridad' ? 'selected' : ''}>🛡️ Seguridad</option>
+            <option value="mecanica" ${item.category === 'mecanica' ? 'selected' : ''}>⚙️ Mecánica</option>
+            <option value="herramientas" ${item.category === 'herramientas' ? 'selected' : ''}>🔧 Herramientas</option>
+            <option value="documentos" ${item.category === 'documentos' ? 'selected' : ''}>📄 Documentos</option>
+            <option value="otro" ${item.category === 'otro' ? 'selected' : ''}>📦 Otro</option>
+          </select>
+        </td>
+        <td class="px-3 py-2.5 text-center">
+          <div class="inline-flex items-center gap-1 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-white/10 font-mono text-xs">
+            <button type="button" onclick="changeVehicleImplementQuantity('${item.id}', -1)" class="text-slate-400 hover:text-slate-700 dark:hover:text-white px-1 font-bold cursor-pointer">-</button>
+            <span class="font-bold px-1">${item.quantity || 1}</span>
+            <button type="button" onclick="changeVehicleImplementQuantity('${item.id}', 1)" class="text-slate-400 hover:text-slate-700 dark:hover:text-white px-1 font-bold cursor-pointer">+</button>
+          </div>
+        </td>
+        <td class="px-3 py-2.5 whitespace-nowrap">
+          <select 
+            onchange="changeVehicleImplementStatus('${item.id}', this.value)"
+            class="bg-slate-50 dark:bg-black/30 border ${item.status === 'ok' ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : (item.status === 'dañado' ? 'border-rose-500/30 text-rose-600 dark:text-rose-400' : 'border-amber-500/30 text-amber-600 dark:text-amber-400')} rounded-lg px-2 py-1 text-[11px] font-semibold focus:outline-none cursor-pointer"
+          >
+            <option value="ok" ${item.status === 'ok' ? 'selected' : ''}>✅ OK / Operativo</option>
+            <option value="faltante" ${item.status === 'faltante' ? 'selected' : ''}>⚠️ Faltante</option>
+            <option value="dañado" ${item.status === 'dañado' ? 'selected' : ''}>❌ Dañado / Vencido</option>
+          </select>
+        </td>
+        <td class="px-3 py-2.5 whitespace-nowrap">
+          ${isEmergency ? `
+            <div class="space-y-1">
+              <div class="flex items-center gap-1.5">
+                <input 
+                  type="date" 
+                  value="${item.expirationDate || ''}" 
+                  onchange="changeVehicleImplementExpirationDate('${item.id}', this.value)"
+                  class="bg-slate-50 dark:bg-black/30 border ${isExpired ? 'border-rose-500 text-rose-600 dark:text-rose-400 font-bold bg-rose-500/5' : (isExpiringSoon ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-bold bg-amber-500/5' : (!item.expirationDate ? 'border-amber-500/50 text-amber-600' : 'border-slate-300 dark:border-white/10 text-slate-800 dark:text-slate-200'))} rounded-lg px-2 py-0.5 text-[11px] focus:outline-none focus:border-amber-500 cursor-pointer"
+                  title="Fecha en que vence y necesita cambio"
+                />
+                ${item.expirationDate ? `
+                  <button type="button" onclick="changeVehicleImplementExpirationDate('${item.id}', '')" class="text-slate-400 hover:text-rose-500 text-xs px-1 cursor-pointer" title="Quitar fecha">✕</button>
+                ` : ''}
+              </div>
+              ${(() => {
+                if (item.expirationDate) {
+                  if (isExpired) {
+                    return `
+                      <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30" title="Venció el ${item.expirationDate}">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                        <span>🚨 Vencido (${Math.abs(daysLeft)}d) • Requiere cambio</span>
+                      </div>
+                    `;
+                  }
+                  if (isExpiringSoon) {
+                    return `
+                      <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30" title="Vence el ${item.expirationDate}">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        <span>⚠️ Vence en ${daysLeft === 0 ? 'hoy' : daysLeft + 'd'} • Próx. cambio</span>
+                      </div>
+                    `;
+                  }
+                  return `
+                    <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" title="Válido hasta ${item.expirationDate}">
+                      <span>✅ Vigente (${daysLeft}d)</span>
+                    </div>
+                  `;
+                }
+                return `
+                  <div class="inline-flex items-center gap-1 text-[9.5px] text-amber-500 dark:text-amber-400 font-medium">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>⚠️ Definir fecha de cambio</span>
+                  </div>
+                `;
+              })()}
+            </div>
+          ` : ''}
+        </td>
+        <td class="px-3 py-2.5">
+          <input 
+            type="text" 
+            value="${escapeHtml(item.notes || '')}" 
+            placeholder="Observaciones..." 
+            onchange="changeVehicleImplementNotes('${item.id}', this.value)" 
+            class="w-full bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 focus:bg-white dark:focus:bg-black/40 border border-transparent hover:border-slate-200 dark:hover:border-white/10 focus:border-amber-500 rounded px-1.5 py-1 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none transition"
+            title="Editar observación"
+          />
+        </td>
+        <td class="px-3 py-2.5 text-right whitespace-nowrap">
+          <button 
+            type="button" 
+            onclick="deleteVehicleImplement('${item.id}', '${escapeHtml(item.name).replace(/'/g, "\\'")}')" 
+            class="p-1 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition cursor-pointer" 
+            title="Eliminar implemento del auto"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function toggleVehicleImplementCheck(itemId, checked) {
+  const item = (currentVehicleChecklistItems || []).find(i => i.id === itemId);
+  if (!item) return;
+
+  item.checked = checked;
+  item.status = checked ? 'ok' : 'faltante';
+  item.updatedAt = new Date().toISOString();
+
+  renderVehicleChecklistModalContent();
+  await saveCurrentVehicleChecklistToServer();
+  if (typeof renderAssetsTable === 'function') renderAssetsTable();
+}
+
+async function changeVehicleImplementStatus(itemId, newStatus) {
+  const item = (currentVehicleChecklistItems || []).find(i => i.id === itemId);
+  if (!item) return;
+
+  item.status = newStatus;
+  item.checked = newStatus === 'ok';
+  item.updatedAt = new Date().toISOString();
+
+  renderVehicleChecklistModalContent();
+  await saveCurrentVehicleChecklistToServer();
+  if (typeof renderAssetsTable === 'function') renderAssetsTable();
+}
+
+async function changeVehicleImplementQuantity(itemId, delta) {
+  const item = (currentVehicleChecklistItems || []).find(i => i.id === itemId);
+  if (!item) return;
+
+  const currentQty = Number(item.quantity || 1);
+  const newQty = Math.max(1, currentQty + delta);
+  if (newQty === currentQty) return;
+
+  item.quantity = newQty;
+  item.updatedAt = new Date().toISOString();
+
+  renderVehicleChecklistModalContent();
+  await saveCurrentVehicleChecklistToServer();
+}
+
+async function toggleVehicleChecklistAll(markAsOk) {
+  if (!currentVehicleChecklistItems || currentVehicleChecklistItems.length === 0) return;
+
+  currentVehicleChecklistItems.forEach(item => {
+    item.checked = markAsOk;
+    item.status = markAsOk ? 'ok' : 'faltante';
+    item.updatedAt = new Date().toISOString();
+  });
+
+  renderVehicleChecklistModalContent();
+  await saveCurrentVehicleChecklistToServer();
+  if (typeof renderAssetsTable === 'function') renderAssetsTable();
+  if (typeof showToast === 'function') {
+    showToast(markAsOk ? 'Todos los implementos marcados como Conformes (OK)' : 'Checklist desmarcado', 'success');
+  }
+}
+
+function setVehicleChecklistFilter(filter) {
+  currentVehicleChecklistFilter = filter;
+  const btnAll = document.getElementById('veh-filter-btn-all');
+  const btnOk = document.getElementById('veh-filter-btn-ok');
+  const btnMiss = document.getElementById('veh-filter-btn-missing');
+  const btnEm = document.getElementById('veh-filter-btn-emergencia');
+  const btnExp = document.getElementById('veh-filter-btn-vencidos');
+
+  const activeCls = 'px-2.5 py-1 rounded-lg font-semibold text-[11px] bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-2xs cursor-pointer';
+  const inactiveCls = 'px-2.5 py-1 rounded-lg font-medium text-[11px] text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer';
+
+  if (btnAll) btnAll.className = filter === 'all' ? activeCls : inactiveCls;
+  if (btnOk) btnOk.className = filter === 'ok' ? activeCls : inactiveCls;
+  if (btnMiss) btnMiss.className = filter === 'missing' ? activeCls : inactiveCls;
+  if (btnEm) btnEm.className = filter === 'emergencia' ? activeCls : inactiveCls;
+  if (btnExp) btnExp.className = filter === 'vencidos' ? activeCls : inactiveCls;
+
+  renderVehicleChecklistRows();
+}
+
+function filterVehicleChecklistTable() {
+  renderVehicleChecklistRows();
+}
+
+function onVehicleNewImpCatChange() {
+  const cat = document.getElementById('veh-new-imp-cat')?.value;
+  const expGroup = document.getElementById('veh-new-imp-exp-group');
+  const expInput = document.getElementById('veh-new-imp-exp');
+  if (expGroup) {
+    if (cat === 'emergencia') {
+      expGroup.classList.remove('hidden');
+    } else {
+      expGroup.classList.add('hidden');
+      if (expInput) expInput.value = '';
+    }
+  }
+}
+
+function toggleVehicleAddImplementForm(show) {
+  const container = document.getElementById('vehicle-add-implement-form-container');
+  if (!container) return;
+  const isHidden = container.classList.contains('hidden');
+  const willShow = show !== undefined ? show : isHidden;
+
+  if (willShow) {
+    container.classList.remove('hidden');
+    onVehicleNewImpCatChange();
+    document.getElementById('veh-new-imp-name')?.focus();
+  } else {
+    container.classList.add('hidden');
+    document.getElementById('form-add-vehicle-implement')?.reset();
+    onVehicleNewImpCatChange();
+  }
+}
+
+async function handleSaveVehicleImplement(e) {
+  e.preventDefault();
+  if (!currentVehicleChecklistAsset) return;
+
+  const nameInput = document.getElementById('veh-new-imp-name');
+  const catInput = document.getElementById('veh-new-imp-cat');
+  const qtyInput = document.getElementById('veh-new-imp-qty');
+  const statusInput = document.getElementById('veh-new-imp-status');
+  const notesInput = document.getElementById('veh-new-imp-notes');
+  const btn = document.getElementById('btn-save-vehicle-implement');
+
+  const name = nameInput?.value?.trim();
+  if (!name) {
+    if (typeof showToast === 'function') showToast('El nombre del implemento es requerido', 'warning');
+    return;
+  }
+
+  const category = catInput?.value || 'emergencia';
+  const quantity = Math.max(1, parseInt(qtyInput?.value || '1', 10));
+  const status = statusInput?.value || 'ok';
+  const expirationDate = category === 'emergencia' ? (document.getElementById('veh-new-imp-exp')?.value?.trim() || null) : null;
+  const notes = notesInput?.value?.trim() || '';
+
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/inventory/assets/${currentVehicleChecklistAsset.id}/checklist/item`, {
+      method: 'POST',
+      headers: typeof getInventoryHeaders === 'function' ? getInventoryHeaders() : { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        category,
+        quantity,
+        status,
+        checked: status === 'ok',
+        notes,
+        expirationDate
+      })
+    });
+    const data = await res.json();
+    if (data.success && Array.isArray(data.data)) {
+      currentVehicleChecklistItems = data.data;
+      currentVehicleChecklistAsset.vehicleChecklist = data.data;
+      toggleVehicleAddImplementForm(false);
+      renderVehicleChecklistModalContent();
+      if (typeof renderAssetsTable === 'function') renderAssetsTable();
+      if (typeof showToast === 'function') showToast(`Implemento "${name}" agregado al auto`, 'success');
+    } else {
+      if (typeof showToast === 'function') showToast(data.message || 'Error al agregar implemento', 'error');
+    }
+  } catch (err) {
+    if (typeof showToast === 'function') showToast('Error de conexión al agregar implemento', 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function deleteVehicleImplement(itemId, itemName) {
+  if (!currentVehicleChecklistAsset) return;
+
+  if (!confirm(`¿Eliminar el implemento "${itemName}" del checklist del vehículo?`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/inventory/assets/${currentVehicleChecklistAsset.id}/checklist/item/${itemId}`, {
+      method: 'DELETE',
+      headers: typeof getInventoryHeaders === 'function' ? getInventoryHeaders() : { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (data.success && Array.isArray(data.data)) {
+      currentVehicleChecklistItems = data.data;
+      currentVehicleChecklistAsset.vehicleChecklist = data.data;
+      renderVehicleChecklistModalContent();
+      if (typeof renderAssetsTable === 'function') renderAssetsTable();
+      if (typeof showToast === 'function') showToast(`Implemento "${itemName}" eliminado`, 'info');
+    } else {
+      if (typeof showToast === 'function') showToast(data.message || 'Error al eliminar implemento', 'error');
+    }
+  } catch (err) {
+    if (typeof showToast === 'function') showToast('Error de red al eliminar implemento', 'error');
+  }
+}
+
+
+async function changeVehicleImplementExpirationDate(itemId, newExpDate) {
+  const item = (currentVehicleChecklistItems || []).find(i => i.id === itemId);
+  if (!item) return;
+
+  if (item.category !== 'emergencia') {
+    item.expirationDate = null;
+    renderVehicleChecklistModalContent();
+    return;
+  }
+
+  const trimmed = (newExpDate || '').trim();
+  item.expirationDate = trimmed || null;
+  item.updatedAt = new Date().toISOString();
+
+  if (trimmed) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const exp = new Date(trimmed + 'T00:00:00');
+    if (exp < today && item.status === 'ok') {
+      item.status = 'dañado';
+      item.checked = false;
+      if (typeof showToast === 'function') {
+        showToast(`"${item.name}" está vencido y requiere cambio urgente`, 'warning');
+      }
+    }
+  }
+
+  renderVehicleChecklistModalContent();
+  await saveCurrentVehicleChecklistToServer();
+  if (typeof renderAssetsTable === 'function') renderAssetsTable();
+}
+
+async function changeVehicleImplementCategory(itemId, newCategory) {
+  const item = (currentVehicleChecklistItems || []).find(i => i.id === itemId);
+  if (!item) return;
+
+  item.category = newCategory;
+  if (newCategory !== 'emergencia') {
+    item.expirationDate = null;
+  }
+  item.updatedAt = new Date().toISOString();
+
+  renderVehicleChecklistModalContent();
+  await saveCurrentVehicleChecklistToServer();
+  if (typeof renderAssetsTable === 'function') renderAssetsTable();
+}
+
+async function changeVehicleImplementNotes(itemId, newNotes) {
+  const item = (currentVehicleChecklistItems || []).find(i => i.id === itemId);
+  if (!item) return;
+
+  item.notes = (newNotes || '').trim();
+  item.updatedAt = new Date().toISOString();
+
+  await saveCurrentVehicleChecklistToServer();
+}
+async function saveCurrentVehicleChecklistToServer() {
+  if (!currentVehicleChecklistAsset) return;
+
+  try {
+    const res = await fetch(`/api/inventory/assets/${currentVehicleChecklistAsset.id}/checklist`, {
+      method: 'PUT',
+      headers: typeof getInventoryHeaders === 'function' ? getInventoryHeaders() : { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: currentVehicleChecklistItems })
+    });
+    const data = await res.json();
+    if (data.success && Array.isArray(data.data)) {
+      currentVehicleChecklistAsset.vehicleChecklist = data.data;
+    }
+  } catch (err) {
+    console.error("Error guardando checklist en servidor:", err);
+  }
+}
+
+
 async function deleteAssetConfirm(id, name) {
   if (!confirm(`¿Eliminar el activo "${name}" de los registros patrimoniales?`)) {
     return;
@@ -39753,14 +40736,15 @@ function renderAssetVehicleDocs(asset) {
     elTivColorF.textContent = `${color} • ${fuel}`;
   }
 
-  const elTivYear = document.getElementById('dtl-veh-tiv-year');
-  if (elTivYear) elTivYear.textContent = tiv.year ? `Año ${tiv.year}` : 'Año N/R';
+  const elTivYearOffice = document.getElementById('dtl-veh-tiv-year-office');
+  if (elTivYearOffice) {
+    const yr = tiv.year ? `Año ${tiv.year}` : 'Año N/R';
+    const off = tiv.registrationOffice || 'SUNARP';
+    elTivYearOffice.textContent = `${yr} • ${off}`;
+  }
 
   const elTivOwner = document.getElementById('dtl-veh-tiv-owner');
   if (elTivOwner) elTivOwner.textContent = tiv.ownerName || 'TURBONETWORK S.A.C.';
-
-  const elTivReg = document.getElementById('dtl-veh-tiv-registry');
-  if (elTivReg) elTivReg.textContent = tiv.registrationOffice || 'SUNARP - Sede Principal';
 
   const elTivLink = document.getElementById('dtl-veh-tiv-link');
   if (elTivLink) {
@@ -39778,8 +40762,16 @@ function renderAssetVehicleDocs(asset) {
     elSoatInsurer.textContent = `${ins} (${typ})`;
   }
 
-  const elSoatRange = document.getElementById('dtl-veh-soat-dates');
-  const elSoatStatusLabel = document.getElementById('dtl-veh-soat-status-label');
+  const elSoatType = document.getElementById('dtl-veh-soat-type');
+  if (elSoatType) elSoatType.textContent = (soat.certificateType === 'fisico') ? 'Físico' : 'Electrónico';
+
+  const elSoatStart = document.getElementById('dtl-veh-soat-start');
+  if (elSoatStart) elSoatStart.textContent = soat.startDate || '-';
+
+  const elSoatEnd = document.getElementById('dtl-veh-soat-end');
+  if (elSoatEnd) elSoatEnd.textContent = soat.endDate || '-';
+
+  const elSoatRange = document.getElementById('dtl-veh-soat-range');
   const elSoatBadge = document.getElementById('dtl-veh-soat-status-badge');
   const elSoatCountdown = document.getElementById('dtl-veh-soat-countdown');
   const elSoatLink = document.getElementById('dtl-veh-soat-link');
@@ -39795,10 +40787,6 @@ function renderAssetVehicleDocs(asset) {
     }
 
     if (diffDays < 0) {
-      if (elSoatStatusLabel) {
-        elSoatStatusLabel.className = 'text-xs font-bold text-rose-500 block';
-        elSoatStatusLabel.textContent = 'Vencido';
-      }
       if (elSoatBadge) {
         elSoatBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-500 border border-rose-500/20';
         elSoatBadge.textContent = 'Vencido';
@@ -39808,10 +40796,6 @@ function renderAssetVehicleDocs(asset) {
         elSoatCountdown.textContent = `⚠️ Vencido hace ${Math.abs(diffDays)} días`;
       }
     } else if (diffDays <= 30) {
-      if (elSoatStatusLabel) {
-        elSoatStatusLabel.className = 'text-xs font-bold text-amber-500 block';
-        elSoatStatusLabel.textContent = 'Por Vencer';
-      }
       if (elSoatBadge) {
         elSoatBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20';
         elSoatBadge.textContent = 'Por Vencer';
@@ -39821,10 +40805,6 @@ function renderAssetVehicleDocs(asset) {
         elSoatCountdown.textContent = `⚠️ Vence en ${diffDays} días`;
       }
     } else {
-      if (elSoatStatusLabel) {
-        elSoatStatusLabel.className = 'text-xs font-bold text-emerald-600 dark:text-emerald-400 block';
-        elSoatStatusLabel.textContent = 'Vigente';
-      }
       if (elSoatBadge) {
         elSoatBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
         elSoatBadge.textContent = 'Vigente';
@@ -39835,10 +40815,6 @@ function renderAssetVehicleDocs(asset) {
       }
     }
   } else {
-    if (elSoatStatusLabel) {
-      elSoatStatusLabel.className = 'text-xs font-semibold text-slate-400 block';
-      elSoatStatusLabel.textContent = 'Sin Registro';
-    }
     if (elSoatBadge) {
       elSoatBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/20';
       elSoatBadge.textContent = 'Sin Registro';
@@ -39861,13 +40837,26 @@ function renderAssetVehicleDocs(asset) {
   const elCitvCenter = document.getElementById('dtl-veh-citv-center');
   if (elCitvCenter) elCitvCenter.textContent = citv.inspectionCenter || 'Centro no especificado';
 
+  const elCitvIssued = document.getElementById('dtl-veh-citv-issued');
+  if (elCitvIssued) elCitvIssued.textContent = citv.issueDate || '-';
+
   const elCitvKm = document.getElementById('dtl-veh-citv-km');
-  if (elCitvKm) elCitvKm.textContent = citv.mileageAtInspection ? `${citv.mileageAtInspection} km` : '-';
+  if (elCitvKm) {
+    if (citv.mileageAtInspection !== undefined && citv.mileageAtInspection !== null && citv.mileageAtInspection !== '') {
+      const num = Number(citv.mileageAtInspection);
+      elCitvKm.textContent = !isNaN(num) ? `${num.toLocaleString('es-PE')} km` : `${citv.mileageAtInspection} km`;
+    } else {
+      elCitvKm.textContent = '-';
+    }
+  }
+
+  const elCitvExp = document.getElementById('dtl-veh-citv-exp');
+  if (elCitvExp) elCitvExp.textContent = citv.expirationDate || '-';
 
   const elCitvResultLabel = document.getElementById('dtl-veh-citv-result-label');
   const elCitvBadge = document.getElementById('dtl-veh-citv-status-badge');
   const elCitvCountdown = document.getElementById('dtl-veh-citv-countdown');
-  const elCitvRange = document.getElementById('dtl-veh-citv-exp');
+  const elCitvRange = document.getElementById('dtl-veh-citv-range');
   const elCitvLink = document.getElementById('dtl-veh-citv-link');
 
   if (citv.result === 'no_aplica') {
@@ -39890,7 +40879,11 @@ function renderAssetVehicleDocs(asset) {
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
     if (elCitvRange) {
-      elCitvRange.textContent = `Válido hasta: ${citv.expirationDate}`;
+      if (citv.issueDate) {
+        elCitvRange.textContent = `${citv.issueDate} al ${citv.expirationDate}`;
+      } else {
+        elCitvRange.textContent = `Válido hasta: ${citv.expirationDate}`;
+      }
     }
 
     if (diffDays < 0) {
@@ -39920,13 +40913,16 @@ function renderAssetVehicleDocs(asset) {
         elCitvCountdown.textContent = `⚠️ Vence en ${diffDays} días`;
       }
     } else {
+      const isDesaprobado = citv.result === 'desaprobado';
       if (elCitvResultLabel) {
-        elCitvResultLabel.className = 'text-xs font-bold text-emerald-600 dark:text-emerald-400 block';
-        elCitvResultLabel.textContent = 'Aprobado';
+        elCitvResultLabel.className = isDesaprobado ? 'text-xs font-bold text-rose-500 block' : 'text-xs font-bold text-emerald-600 dark:text-emerald-400 block';
+        elCitvResultLabel.textContent = isDesaprobado ? 'Desaprobado' : 'Aprobado';
       }
       if (elCitvBadge) {
-        elCitvBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
-        elCitvBadge.textContent = 'Aprobado & Vigente';
+        elCitvBadge.className = isDesaprobado
+          ? 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-500 border border-rose-500/20'
+          : 'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
+        elCitvBadge.textContent = isDesaprobado ? 'Desaprobado' : 'Aprobado & Vigente';
       }
       if (elCitvCountdown) {
         elCitvCountdown.className = 'text-xs font-bold text-emerald-600 dark:text-emerald-400 block';
@@ -40712,11 +41708,12 @@ async function handleSaveAssetAssignment(e) {
   }
 }
 
-function editAssetFromDetail() {
+function editAssetFromDetail(initialTab) {
   if (!currentDetailAsset) return;
   const id = currentDetailAsset.id;
+  const tab = initialTab || (currentDetailAsset.category === 'vehiculo' ? 'vehicle' : 'general');
   closeAssetDetailModal();
-  openEditAssetModal(id);
+  openEditAssetModal(id, tab);
 }
 
 // ========================================================
@@ -41540,6 +42537,7 @@ function processSmartScannedCode(rawCode) {
   const input = document.getElementById('smart-scanner-input');
   if (input) {
     input.value = q;
+    input.select();
     const clearBtn = document.getElementById('smart-scanner-clear-btn');
     if (clearBtn) clearBtn.classList.remove('hidden');
   }
@@ -41659,27 +42657,18 @@ function renderFoundProductCard(p) {
         </div>
 
         <div class="flex items-center gap-2">
-          <button type="button" onclick="openEditProductFromScanner(${p.id})" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer">
+          <button type="button" onclick="openProductDetailFromScanner(${p.id})" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 border border-slate-200 dark:border-white/10 transition active:scale-95 cursor-pointer" title="Ver ficha técnica completa">
+            <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            <span>Ver Ficha</span>
+          </button>
+          <button type="button" onclick="openEditProductFromScanner(${p.id})" class="px-3.5 py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer" title="Editar producto">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-            <span>Abrir Ficha Completa</span>
+            <span>Editar Producto</span>
           </button>
         </div>
       </div>
-
-      <div id="smart-scan-auto-open-hint" class="hidden text-center text-[11px] text-indigo-600 dark:text-indigo-400 font-medium pt-1 animate-pulse">
-        Abriendo ficha del producto automáticamente...
-      </div>
     </div>
   `;
-
-  const autoOpen = document.getElementById('smart-scan-toggle-auto-open')?.checked !== false;
-  if (autoOpen) {
-    const hint = document.getElementById('smart-scan-auto-open-hint');
-    if (hint) hint.classList.remove('hidden');
-    smartScannerAutoOpenTimer = setTimeout(() => {
-      openEditProductFromScanner(p.id);
-    }, 700);
-  }
 }
 
 function renderNotFoundState(code) {
@@ -41710,6 +42699,13 @@ function renderNotFoundState(code) {
       </button>
     </div>
   `;
+}
+
+function openProductDetailFromScanner(productId) {
+  closeSmartInventoryScannerModal();
+  if (typeof openProductDetailModal === 'function') {
+    openProductDetailModal(productId);
+  }
 }
 
 function openEditProductFromScanner(productId) {
@@ -41755,6 +42751,11 @@ async function quickAdjustProductStock(productId, delta) {
       showToast(`Stock de "${p.name}" actualizado a ${newStock}`, 'success');
       if (typeof playScannerBeep === 'function') playScannerBeep();
       renderFoundProductCard(p);
+      const input = document.getElementById('smart-scanner-input');
+      if (input) {
+        input.focus();
+        input.select();
+      }
       if (typeof renderInventoryTable === 'function') renderInventoryTable(inventoryProducts);
     } else {
       showToast(data.message || 'Error al ajustar stock', 'error');
@@ -42315,20 +43316,24 @@ function updateOffcanvasBadgeAndChips() {
 }
 
 // ========================================================
-// MOTOR: GESTIÓN DE ASIGNACIÓN & DESASIGNACIÓN DE MATERIALES
+// MOTOR: GESTIÓN DE ASIGNACIÓN & DESASIGNACIÓN DE MATERIALES (TÉCNICOS & NODOS)
 // ========================================================
 let currentAssignmentMode = 'assign'; // 'assign' | 'unassign'
+let currentAssignmentTargetType = 'tech'; // 'tech' | 'node'
 let assignmentSelectedTech = null;
+let assignmentSelectedNode = null;
 let assignmentSelectedProduct = null;
 let assignmentSelectedUnit = null; // { id, itemNumber, sku, status }
 let assignmentDispatchList = []; // Array de { product, quantity, unitSku, itemUnitId, unitNumber, variantName, notes }
 let assignmentReturnSelectedItems = new Set(); // IDs de asignación para retorno
 let assignmentReturnCondition = 'buen_estado';
 let techSearchDebounceTimer = null;
+let nodeSearchDebounceTimer = null;
 let productSearchDebounceTimer = null;
 let techCustodyCache = [];
+let nodeStockCache = [];
 
-function openAssignmentManagerModal(preselectedTechId = null) {
+function openAssignmentManagerModal(preselectedTechId = null, preselectedNodeId = null) {
   if (!hasPermission('backpack:manage')) {
     showToast("Acceso denegado: No tienes permiso para asignar materiales.", "error");
     return;
@@ -42343,20 +43348,307 @@ function openAssignmentManagerModal(preselectedTechId = null) {
 
   switchAssignmentManagerMode('assign');
   clearSelectedTech();
+  clearSelectedNode();
   clearSelectedProduct();
   renderDispatchManifest();
 
-  if (preselectedTechId) {
+  // Asegurar que inventoryAssets esté cargado para los Nodos
+  if (!inventoryAssets || inventoryAssets.length === 0) {
+    fetch('/api/inventory/assets', { headers: typeof getInventoryHeaders === 'function' ? getInventoryHeaders() : { 'Content-Type': 'application/json' } })
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.success) {
+          inventoryAssets = d.data || [];
+          updateNodeCountBadge();
+        }
+      }).catch(() => {});
+  } else {
+    updateNodeCountBadge();
+  }
+
+  if (preselectedNodeId) {
+    switchAssignmentTargetType('node');
+    const node = (inventoryAssets || []).find(a => String(a.id) === String(preselectedNodeId) && a.category === 'nodo');
+    if (node) selectNode(node);
+  } else if (preselectedTechId) {
+    switchAssignmentTargetType('tech');
     const tech = (currentUsers || []).find(u => u.id === preselectedTechId);
     if (tech) selectTech(tech);
+  } else {
+    switchAssignmentTargetType('tech');
   }
 
   modal.classList.remove('hidden');
 
   setTimeout(() => {
-    const inp = document.getElementById(assignmentSelectedTech ? 'asm-product-search-input' : 'asm-tech-search-input');
+    const isNode = currentAssignmentTargetType === 'node';
+    let targetInputId = 'asm-tech-search-input';
+    if (isNode) {
+      targetInputId = assignmentSelectedNode ? 'asm-product-search-input' : 'asm-node-search-input';
+    } else {
+      targetInputId = assignmentSelectedTech ? 'asm-product-search-input' : 'asm-tech-search-input';
+    }
+    const inp = document.getElementById(targetInputId);
     if (inp) inp.focus();
   }, 100);
+}
+
+function switchAssignmentTargetType(targetType) {
+  currentAssignmentTargetType = targetType; // 'tech' | 'node'
+  const pillTech = document.getElementById('asm-target-pill-tech');
+  const pillNode = document.getElementById('asm-target-pill-node');
+  const techWrapper = document.getElementById('asm-target-tech-wrapper');
+  const nodeWrapper = document.getElementById('asm-target-node-wrapper');
+  const labelColab = document.getElementById('asm-manifest-colab-label');
+  const manifestTechName = document.getElementById('asm-manifest-tech-name');
+  const stepTitle = document.getElementById('asm-target-step-title');
+  const emptyStateHint = document.getElementById('asm-manifest-empty-hint');
+  const notesInput = document.getElementById('asm-assign-notes');
+  const notesLabel = document.getElementById('asm-assign-notes-label');
+
+  const unassignTechCard = document.getElementById('asm-unassign-tech-card');
+  const unassignNodeCard = document.getElementById('asm-unassign-node-card');
+  const unassignTitle = document.getElementById('asm-unassign-title');
+
+  if (targetType === 'tech') {
+    if (pillTech) {
+      pillTech.className = "px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs font-bold transition flex items-center gap-1 cursor-pointer";
+    }
+    if (pillNode) {
+      pillNode.className = "px-2.5 py-1 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1 cursor-pointer";
+    }
+    if (techWrapper) techWrapper.classList.remove('hidden');
+    if (nodeWrapper) nodeWrapper.classList.add('hidden');
+    if (stepTitle) stepTitle.textContent = "Técnico / Colaborador";
+    if (labelColab) labelColab.textContent = "Colaborador receptor:";
+    if (emptyStateHint) emptyStateHint.textContent = "Selecciona o escanea materiales a la izquierda para agregarlos al lote de entrega del técnico.";
+    if (notesLabel) notesLabel.textContent = "Observaciones / Orden de Trabajo (OT)";
+    if (notesInput) notesInput.placeholder = "Ej: Para cuadrilla FTTH Miraflores...";
+
+    if (unassignTechCard) unassignTechCard.classList.remove('hidden');
+    if (unassignNodeCard) unassignNodeCard.classList.add('hidden');
+    if (unassignTitle) unassignTitle.textContent = "1. Técnico que devuelve";
+
+    if (assignmentSelectedTech) {
+      if (manifestTechName) manifestTechName.textContent = assignmentSelectedTech.name;
+      if (currentAssignmentMode === 'unassign') loadTechAssignedMaterials(assignmentSelectedTech.id);
+    } else {
+      if (manifestTechName) manifestTechName.textContent = "Sin seleccionar";
+      if (currentAssignmentMode === 'unassign') {
+        const matList = document.getElementById('asm-active-materials-list');
+        if (matList) matList.innerHTML = '<p class="text-xs text-slate-400 text-center py-10">Selecciona un colaborador para consultar los materiales que tiene asignados.</p>';
+      }
+    }
+  } else {
+    if (pillNode) {
+      pillNode.className = "px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-xs font-bold transition flex items-center gap-1 cursor-pointer";
+    }
+    if (pillTech) {
+      pillTech.className = "px-2.5 py-1 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1 cursor-pointer";
+    }
+    if (techWrapper) techWrapper.classList.add('hidden');
+    if (nodeWrapper) nodeWrapper.classList.remove('hidden');
+    if (stepTitle) stepTitle.textContent = "Nodo POP / Infraestructura";
+    if (labelColab) labelColab.textContent = "Nodo receptor:";
+    if (emptyStateHint) emptyStateHint.textContent = "Selecciona o escanea materiales a la izquierda para agregarlos al lote de equipamiento del nodo.";
+    if (notesLabel) notesLabel.textContent = "Ubicación en Rack / Gabinete / Notas";
+    if (notesInput) notesInput.placeholder = "Ej: Rack 1 - Gabinete OLT Huawei, Bandeja 2...";
+
+    if (unassignTechCard) unassignTechCard.classList.add('hidden');
+    if (unassignNodeCard) unassignNodeCard.classList.remove('hidden');
+    if (unassignTitle) unassignTitle.textContent = "1. Nodo POP de origen";
+
+    updateNodeCountBadge();
+
+    if (assignmentSelectedNode) {
+      if (manifestTechName) {
+        manifestTechName.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">📡 ${escapeHtml(assignmentSelectedNode.name)}</span>`;
+      }
+      if (currentAssignmentMode === 'unassign') loadNodeAssignedMaterials(assignmentSelectedNode.id);
+    } else {
+      if (manifestTechName) manifestTechName.textContent = "Sin seleccionar";
+      if (currentAssignmentMode === 'unassign') {
+        const matList = document.getElementById('asm-active-materials-list');
+        if (matList) matList.innerHTML = '<p class="text-xs text-slate-400 text-center py-10">Selecciona un nodo para consultar los equipos instalados.</p>';
+      }
+    }
+  }
+
+  updateSubmitButton();
+}
+
+function updateNodeCountBadge() {
+  const badge = document.getElementById('asm-node-count-badge');
+  if (badge) {
+    const count = (inventoryAssets || []).filter(a => a.category === 'nodo').length;
+    badge.textContent = `📡 ${count} Nodo${count === 1 ? '' : 's'}`;
+  }
+}
+
+function handleAjaxNodeSearch(val) {
+  const q = (val || '').trim().toLowerCase();
+  const dropdown = document.getElementById('asm-node-results-dropdown');
+  if (!dropdown) return;
+
+  if (nodeSearchDebounceTimer) clearTimeout(nodeSearchDebounceTimer);
+  nodeSearchDebounceTimer = setTimeout(() => {
+    const nodeAssets = (inventoryAssets || []).filter(a => a.category === 'nodo');
+    const matched = nodeAssets.filter(n => {
+      if (!q) return true;
+      const name = (n.name || '').toLowerCase();
+      const code = (n.code || '').toLowerCase();
+      const loc = ((n.nodeDetails && n.nodeDetails.address) || n.location || '').toLowerCase();
+      return name.includes(q) || code.includes(q) || loc.includes(q);
+    });
+
+    if (matched.length === 0) {
+      dropdown.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center">No se encontraron Nodos POP en inventario</div>';
+    } else {
+      dropdown.innerHTML = matched.map(n => {
+        const activeCount = Array.isArray(n.nodeStock) ? n.nodeStock.filter(x => x.status !== 'retornado').length : 0;
+        const loc = (n.nodeDetails && n.nodeDetails.address) || n.location || 'Sede Principal';
+        return `
+          <div onclick="selectNodeById(${n.id})" class="p-2.5 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer transition">
+            <div class="flex items-center space-x-2.5 min-w-0">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-base flex-shrink-0">
+                📡
+              </div>
+              <div class="truncate">
+                <div class="flex items-center gap-1.5">
+                  <p class="font-bold text-slate-800 dark:text-white text-xs truncate">${escapeHtml(n.name)}</p>
+                  <span class="px-1.5 py-0.2 rounded text-[9.5px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">${escapeHtml(n.code || 'NOD')}</span>
+                </div>
+                <p class="text-[10.5px] text-slate-400 truncate">📍 ${escapeHtml(loc)} • Equipamiento: ${activeCount} items</p>
+              </div>
+            </div>
+            <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex-shrink-0">Seleccionar</span>
+          </div>
+        `;
+      }).join('');
+    }
+    dropdown.classList.remove('hidden');
+  }, 80);
+}
+
+function selectNodeById(id) {
+  const node = (inventoryAssets || []).find(a => a.id === id && a.category === 'nodo');
+  if (node) selectNode(node);
+}
+
+function selectNode(node) {
+  assignmentSelectedNode = node;
+  const card = document.getElementById('asm-selected-node-card');
+  const input = document.getElementById('asm-node-search-input');
+  const dropdown = document.getElementById('asm-node-results-dropdown');
+  const name = document.getElementById('asm-node-name');
+  const code = document.getElementById('asm-node-code');
+  const loc = document.getElementById('asm-node-loc');
+  const pill = document.getElementById('asm-node-stock-pill');
+  const manifestTechName = document.getElementById('asm-manifest-tech-name');
+
+  const activeCount = Array.isArray(node.nodeStock) ? node.nodeStock.filter(x => x.status !== 'retornado').length : 0;
+  const address = (node.nodeDetails && node.nodeDetails.address) || node.location || 'Sede Principal';
+
+  if (name) name.textContent = node.name;
+  if (code) code.textContent = node.code || 'NOD';
+  if (loc) loc.textContent = `📍 ${address}`;
+  if (pill) pill.textContent = `📡 ${activeCount} en nodo`;
+  if (manifestTechName) {
+    manifestTechName.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">📡 ${escapeHtml(node.name)}</span>`;
+  }
+
+  if (dropdown) dropdown.classList.add('hidden');
+  if (input) {
+    input.value = '';
+    input.parentElement.classList.add('hidden');
+  }
+  if (card) card.classList.remove('hidden');
+
+  syncUnassignNodeView(node);
+  loadNodeAssignedMaterials(node.id);
+
+  setTimeout(() => {
+    const prodInp = document.getElementById('asm-product-search-input');
+    if (prodInp) prodInp.focus();
+  }, 100);
+
+  updateSubmitButton();
+}
+
+function clearSelectedNode() {
+  assignmentSelectedNode = null;
+  const card = document.getElementById('asm-selected-node-card');
+  const input = document.getElementById('asm-node-search-input');
+  const dropdown = document.getElementById('asm-node-results-dropdown');
+  if (card) card.classList.add('hidden');
+  if (input) {
+    input.parentElement.classList.remove('hidden');
+    input.value = '';
+    input.focus();
+  }
+  if (dropdown) dropdown.classList.add('hidden');
+
+  const manifestTechName = document.getElementById('asm-manifest-tech-name');
+  if (manifestTechName) manifestTechName.textContent = 'Sin seleccionar';
+
+  const matList = document.getElementById('asm-active-materials-list');
+  if (matList) matList.innerHTML = '<p class="text-xs text-slate-400 text-center py-10">Selecciona un nodo para consultar los equipos instalados.</p>';
+  assignmentReturnSelectedItems.clear();
+  updateSubmitButton();
+}
+
+function syncUnassignNodeView(node) {
+  const name = document.getElementById('asm-unassign-node-name');
+  const code = document.getElementById('asm-unassign-node-code');
+  const loc = document.getElementById('asm-unassign-node-loc');
+  const address = (node.nodeDetails && node.nodeDetails.address) || node.location || 'Sede Principal';
+  if (name) name.textContent = node.name;
+  if (code) code.textContent = node.code || 'NOD';
+  if (loc) loc.textContent = `📍 ${address}`;
+}
+
+function loadNodeAssignedMaterials(nodeId) {
+  const container = document.getElementById('asm-active-materials-list');
+  const countBadge = document.getElementById('asm-active-custody-count');
+  const custodyPill = document.getElementById('asm-tech-custody-pill');
+  const node = (inventoryAssets || []).find(a => a.id === nodeId && a.category === 'nodo');
+
+  const items = (node && Array.isArray(node.nodeStock)) ? node.nodeStock.filter(x => x.status !== 'retornado') : [];
+  nodeStockCache = items;
+
+  if (countBadge) countBadge.textContent = items.length;
+  if (custodyPill) custodyPill.textContent = `📡 ${items.length} en nodo`;
+
+  if (!container) return;
+
+  if (items.length === 0) {
+    container.innerHTML = '<div class="py-10 text-center text-xs text-slate-400">Este nodo no tiene ningún equipo ni material asignado actualmente.</div>';
+    assignmentReturnSelectedItems.clear();
+    updateReturnSummary();
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    const isSelected = assignmentReturnSelectedItems.has(item.id);
+    return `
+      <div onclick="toggleReturnItem('${item.id}')" id="asm-custody-row-${item.id}" class="p-3 rounded-xl border transition cursor-pointer flex items-center justify-between space-x-2.5 ${isSelected ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] hover:border-slate-300'}">
+        <div class="flex items-center space-x-3 min-w-0">
+          <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleReturnItem('${item.id}')" class="w-4 h-4 rounded text-emerald-600 accent-emerald-600 flex-shrink-0">
+          <div class="truncate">
+            <h5 class="font-bold text-slate-800 dark:text-white text-xs truncate">${escapeHtml(item.productName || item.notes || 'Equipo')}</h5>
+            <div class="flex items-center space-x-2 text-[10.5px] text-slate-400 font-mono flex-wrap">
+              <span>SKU: ${escapeHtml(item.productSku || '--')}</span>
+              ${item.serialNumber ? `<span class="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400">SN: ${escapeHtml(item.serialNumber)}</span>` : ''}
+              ${item.rackLocation ? `<span class="text-emerald-600 dark:text-emerald-400">📍 ${escapeHtml(item.rackLocation)}</span>` : ''}
+              <span>• Asignado: ${escapeHtml(item.assignedDate || '-')}</span>
+            </div>
+          </div>
+        </div>
+        <span class="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs flex-shrink-0">x${item.quantity || 1}</span>
+      </div>
+    `;
+  }).join('');
+  updateReturnSummary();
 }
 
 function closeAssignmentManagerModal() {
@@ -43011,27 +44303,41 @@ function updateSubmitButton() {
   const btn = document.getElementById('btn-submit-assignment');
   if (!btn) return;
 
+  const isNode = currentAssignmentTargetType === 'node';
+  const targetLabel = isNode ? 'a Nodo' : '';
+
   if (currentAssignmentMode === 'assign') {
     const totalCount = assignmentDispatchList.length;
     if (totalCount > 0) {
-      btn.innerHTML = `<span>Confirmar Salida (${totalCount} ${totalCount === 1 ? 'material' : 'materiales'})</span>`;
+      btn.innerHTML = `<span>Confirmar Asignación ${targetLabel} (${totalCount} ${totalCount === 1 ? 'material' : 'materiales'})</span>`;
     } else {
-      btn.innerHTML = `<span>Confirmar Asignación</span>`;
+      btn.innerHTML = `<span>Confirmar Asignación ${targetLabel}</span>`;
     }
+    btn.className = isNode 
+      ? "px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-md shadow-emerald-500/20 transition cursor-pointer flex items-center space-x-2"
+      : "px-5 py-2.5 rounded-xl btn-brand-primary font-semibold text-xs shadow-md transition cursor-pointer flex items-center space-x-2";
   } else {
     const returnCount = assignmentReturnSelectedItems.size;
     if (returnCount > 0) {
-      btn.innerHTML = `<span>Confirmar Retorno (${returnCount} ${returnCount === 1 ? 'material' : 'materiales'})</span>`;
+      btn.innerHTML = `<span>Confirmar Retorno ${isNode ? 'desde Nodo' : ''} (${returnCount} ${returnCount === 1 ? 'material' : 'materiales'})</span>`;
     } else {
-      btn.innerHTML = `<span>Confirmar Devolución</span>`;
+      btn.innerHTML = `<span>Confirmar Devolución ${isNode ? 'desde Nodo' : ''}</span>`;
     }
+    btn.className = "px-5 py-2.5 rounded-xl btn-brand-primary font-semibold text-xs shadow-md transition cursor-pointer flex items-center space-x-2";
   }
 }
 
 async function submitAssignmentAction() {
-  if (!assignmentSelectedTech) {
-    showToast('Por favor selecciona un colaborador / técnico', 'error');
-    return;
+  if (currentAssignmentTargetType === 'node') {
+    if (!assignmentSelectedNode) {
+      showToast('Por favor selecciona un Nodo POP de destino', 'error');
+      return;
+    }
+  } else {
+    if (!assignmentSelectedTech) {
+      showToast('Por favor selecciona un colaborador / técnico', 'error');
+      return;
+    }
   }
 
   const btn = document.getElementById('btn-submit-assignment');
@@ -43061,41 +44367,82 @@ async function submitAssignmentAction() {
         }
       }
 
-      // Enviar lote completo vía /api/inventory/personnel-assignments/batch
-      const payload = {
-        employeeId: assignmentSelectedTech.id,
-        employeeName: assignmentSelectedTech.name,
-        personnelName: assignmentSelectedTech.name,
-        items: assignmentDispatchList.map(item => ({
-          productId: item.product.id,
-          productName: item.product.name,
-          productSku: item.product.sku,
-          productImage: (item.product.images && item.product.images[0]) || '',
-          quantity: item.quantity,
-          variantName: item.variantName,
-          unitSku: item.unitSku,
-          itemUnitId: item.itemUnitId,
-          unitNumber: item.unitNumber,
-          notes: item.notes
-        }))
-      };
+      if (currentAssignmentTargetType === 'tech') {
+        // Enviar lote completo vía /api/inventory/personnel-assignments/batch
+        const payload = {
+          employeeId: assignmentSelectedTech.id,
+          employeeName: assignmentSelectedTech.name,
+          personnelName: assignmentSelectedTech.name,
+          items: assignmentDispatchList.map(item => ({
+            productId: item.product.id,
+            productName: item.product.name,
+            productSku: item.product.sku,
+            productImage: (item.product.images && item.product.images[0]) || '',
+            quantity: item.quantity,
+            variantName: item.variantName,
+            unitSku: item.unitSku,
+            itemUnitId: item.itemUnitId,
+            unitNumber: item.unitNumber,
+            notes: item.notes
+          }))
+        };
 
-      const res = await fetch('/api/inventory/personnel-assignments/batch', {
-        method: 'POST',
-        headers: getInventoryHeaders(),
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
+        const res = await fetch('/api/inventory/personnel-assignments/batch', {
+          method: 'POST',
+          headers: getInventoryHeaders(),
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
 
-      if (data.success) {
-        showToast(`¡${data.count || assignmentDispatchList.length} materiales asignados exitosamente a ${assignmentSelectedTech.name}!`, 'success');
-        closeAssignmentManagerModal();
-        await loadInventoryModule();
-        if (typeof activeTabId !== 'undefined' && activeTabId === 'mochila') {
-          loadMochilaModule();
+        if (data.success) {
+          showToast(`¡${data.count || assignmentDispatchList.length} materiales asignados exitosamente a ${assignmentSelectedTech.name}!`, 'success');
+          closeAssignmentManagerModal();
+          await loadInventoryModule();
+          if (typeof activeTabId !== 'undefined' && activeTabId === 'mochila') {
+            loadMochilaModule();
+          }
+        } else {
+          showToast(data.message || 'Error al asignar materiales', 'error');
         }
       } else {
-        showToast(data.message || 'Error al asignar materiales', 'error');
+        // Enviar a Nodo POP vía /api/inventory/assets/:id/node-stock
+        let successCount = 0;
+        let lastError = null;
+
+        for (const item of assignmentDispatchList) {
+          try {
+            const res = await fetch(`/api/inventory/assets/${assignmentSelectedNode.id}/node-stock`, {
+              method: 'POST',
+              headers: getInventoryHeaders(),
+              body: JSON.stringify({
+                productId: item.product.id,
+                quantity: item.quantity,
+                serialNumber: item.unitSku || item.variantName || undefined,
+                itemUnitId: item.itemUnitId || undefined,
+                rackLocation: item.notes || "Gabinete General",
+                assignedBy: (typeof currentAuthUser !== 'undefined' && currentAuthUser?.name) ? currentAuthUser.name : "Operador Almacén",
+                notes: item.notes || undefined
+              })
+            });
+            const data = await res.json();
+            if (data.success) {
+              successCount++;
+            } else {
+              lastError = data.message;
+            }
+          } catch (err) {
+            lastError = err.message;
+          }
+        }
+
+        if (successCount > 0) {
+          showToast(`¡${successCount} equipo(s) y material(es) asignados exitosamente al nodo ${assignmentSelectedNode.name}!`, 'success');
+          closeAssignmentManagerModal();
+          await loadInventoryModule();
+          if (typeof renderAssetsTable === 'function') renderAssetsTable();
+        } else {
+          showToast(lastError || 'Error al asignar materiales al nodo', 'error');
+        }
       }
     } else {
       // Modo Desasignar / Retorno
@@ -43109,27 +44456,46 @@ async function submitAssignmentAction() {
       const returnIds = Array.from(assignmentReturnSelectedItems);
       let successCount = 0;
 
-      for (const asgId of returnIds) {
-        try {
-          const r = await fetch(`/api/inventory/personnel-assignments/${asgId}/return`, {
-            method: 'POST',
-            headers: getInventoryHeaders(),
-            body: JSON.stringify({
-              condition: assignmentReturnCondition,
-              notes: notes || undefined
-            })
-          });
-          const d = await r.json();
-          if (d.success) successCount++;
-        } catch (err) {}
+      if (currentAssignmentTargetType === 'tech') {
+        for (const asgId of returnIds) {
+          try {
+            const r = await fetch(`/api/inventory/personnel-assignments/${asgId}/return`, {
+              method: 'POST',
+              headers: getInventoryHeaders(),
+              body: JSON.stringify({
+                condition: assignmentReturnCondition,
+                notes: notes || undefined
+              })
+            });
+            const d = await r.json();
+            if (d.success) successCount++;
+          } catch (err) {}
+        }
+        showToast(`¡Se procesó la devolución de ${successCount} materiales correctamente!`, 'success');
+      } else {
+        for (const sId of returnIds) {
+          try {
+            const r = await fetch(`/api/inventory/assets/${assignmentSelectedNode.id}/node-stock/${sId}/return`, {
+              method: 'POST',
+              headers: getInventoryHeaders(),
+              body: JSON.stringify({
+                returnedBy: (typeof currentAuthUser !== 'undefined' && currentAuthUser?.name) ? currentAuthUser.name : "Operador Almacén",
+                notes: notes || undefined
+              })
+            });
+            const d = await r.json();
+            if (d.success) successCount++;
+          } catch (err) {}
+        }
+        showToast(`¡Se procesó el retorno de ${successCount} equipos del nodo al almacén!`, 'success');
       }
 
-      showToast(`¡Se procesó la devolución de ${successCount} materiales correctamente!`, 'success');
       closeAssignmentManagerModal();
       await loadInventoryModule();
       if (typeof activeTabId !== 'undefined' && activeTabId === 'mochila') {
         loadMochilaModule();
       }
+      if (typeof renderAssetsTable === 'function') renderAssetsTable();
     }
   } catch (err) {
     showToast('Error de comunicación con el servidor', 'error');

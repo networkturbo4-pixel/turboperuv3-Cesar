@@ -298,6 +298,18 @@ export interface NodeStockItem {
   updatedAt: string;
 }
 
+export interface VehicleImplementItem {
+  id: string;
+  name: string;
+  category: 'seguridad' | 'mecanica' | 'herramientas' | 'documentos' | 'emergencia' | 'otro';
+  status: 'ok' | 'faltante' | 'dañado';
+  checked: boolean;
+  quantity: number;
+  notes?: string;
+  expirationDate?: string | null; // Fecha en que vence y necesita cambio (YYYY-MM-DD)
+  updatedAt?: string;
+}
+
 export interface FixedAsset {
   id: number;
   tenantId: string;
@@ -320,6 +332,7 @@ export interface FixedAsset {
   assignmentHistory?: AssetAssignment[];
   eventHistory: AssetHistoryEvent[];
   vehicleDocs?: VehicleDocumentation; // Tarjeta de Identificación Vehicular, SOAT y CITV
+  vehicleChecklist?: VehicleImplementItem[]; // Checklist de implementos, herramientas y accesorios del auto
   nodeDetails?: NodeDocumentation;    // Infraestructura de casa del nodo & servidores físicos
   techDetails?: TechDocumentation;    // Hardware & especificaciones técnicas
   furnitureDetails?: FurnitureDocumentation;
