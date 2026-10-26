@@ -17,11 +17,12 @@ const PAYROLLS_FILE = path.join(DATA_DIR, "rrhh_payrolls.json");
 export interface EmployeeDocument {
   id: string;
   title: string;
-  category: "contrato" | "dni" | "antecedentes" | "certificado" | "licencia" | "otro";
+  category: "contrato" | "adenda" | "dni" | "antecedentes" | "certificado" | "licencia" | "boleta" | "otro" | string;
   issueDate?: string;
   expiryDate?: string;
   fileUrl?: string;
   fileName?: string;
+  fileSize?: string | number;
   notes?: string;
   uploadedAt: string;
 }

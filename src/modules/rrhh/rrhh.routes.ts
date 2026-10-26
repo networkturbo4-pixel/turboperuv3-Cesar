@@ -51,6 +51,8 @@ export interface Employee {
   phone: string;
   email: string;
   workSchedule: string; // ej: "08:00 - 17:00"
+  workDays?: string[]; // ej: ["lun", "mar", "mie", "jue", "vie"]
+  specialSchedules?: Record<string, { schedule: string; expectedCheckInTime?: string }>;
   expectedCheckInTime: string; // ej: "08:00"
   salary: string;
   currency: string;
@@ -436,6 +438,8 @@ const createEmployeeSchema = z
     phone: z.string().min(6, "El teléfono debe ser válido"),
     email: z.string().email("Correo electrónico inválido"),
     workSchedule: z.string().default("08:00 - 17:00"),
+    workDays: z.array(z.string()).optional(),
+    specialSchedules: z.record(z.object({ schedule: z.string(), expectedCheckInTime: z.string().optional() })).optional(),
     expectedCheckInTime: z.string().optional(),
     salary: z
       .union([z.string(), z.number()])
@@ -722,7 +726,7 @@ export function renderPublicCredentialHtml(emp: Employee, baseUrl: string): stri
           </div>
           <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
             <span class="text-slate-400 block text-[10px] uppercase font-bold">Horario de Trabajo Asignado:</span>
-            <span class="font-mono font-extrabold text-amber-700">${emp.workSchedule}</span>
+            <span class="font-mono font-extrabold text-amber-700">${emp.workSchedule}${emp.workDays && emp.workDays.length ? ' · ' + emp.workDays.map(d => d.toUpperCase()).join(', ') : ''}</span>
           </div>
           <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
             <span class="text-slate-400 block text-[10px] uppercase font-bold">Fecha de Ingreso a la Empresa:</span>
@@ -904,16 +908,55 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       ? [...employeesStore[idx].documents]
       : [];
 
+    let fileUrl = body.fileUrl || undefined;
+    let fileName = body.fileName || `${String(body.title).trim().replace(/\s+/g, "_")}.pdf`;
+    let fileSize = body.fileSize || undefined;
+
+    if (body.fileData && typeof body.fileData === 'string' && body.fileData.includes(',')) {
+      try {
+        const uploadsDir = path.resolve(process.cwd(), 'public', 'uploads', 'rrhh');
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        const parts = body.fileData.split(',');
+        const base64Content = parts[1];
+        const mimeMatch = parts[0].match(/:(.*?);/);
+        const mimeType = mimeMatch ? mimeMatch[1] : 'application/pdf';
+
+        let ext = 'pdf';
+        if (body.fileName && body.fileName.includes('.')) {
+          ext = body.fileName.split('.').pop().toLowerCase();
+        } else if (mimeType.includes('png')) ext = 'png';
+        else if (mimeType.includes('jpeg') || mimeType.includes('jpg')) ext = 'jpg';
+        else if (mimeType.includes('webp')) ext = 'webp';
+        else if (mimeType.includes('word') || mimeType.includes('officedocument')) ext = 'docx';
+        else if (mimeType.includes('sheet') || mimeType.includes('excel')) ext = 'xlsx';
+
+        const cleanTitle = (body.title || 'doc').toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 25);
+        const generatedFileName = `doc_${empId}_${Date.now()}_${cleanTitle}.${ext}`;
+        const targetPath = path.join(uploadsDir, generatedFileName);
+
+        const fileBuffer = Buffer.from(base64Content, 'base64');
+        fs.writeFileSync(targetPath, fileBuffer);
+        fileUrl = `/uploads/rrhh/${generatedFileName}`;
+        if (!body.fileName) fileName = generatedFileName;
+        if (!fileSize) fileSize = fileBuffer.length;
+      } catch (saveErr) {
+        console.error('Error al guardar archivo en disco:', saveErr);
+      }
+    }
+
     const newDoc: EmployeeDocument = {
       id: `doc-${Date.now()}-${crypto.randomBytes(2).toString("hex")}`,
       title: String(body.title).trim(),
       category: body.category || "otro",
       issueDate: body.issueDate || peruDate,
       expiryDate: body.expiryDate || body.expiresAt || undefined,
-      fileUrl: body.fileUrl || undefined,
-      fileName: body.fileName || `${String(body.title).trim().replace(/\s+/g, "_")}.pdf`,
+      fileUrl,
+      fileName,
+      fileSize,
       notes: body.notes || "",
-      uploadedAt: new Date().toISOString(),
+      uploadedAt: new Date().toISOString().slice(0, 10),
     };
 
     docs.unshift(newDoc);
@@ -946,6 +989,16 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       ? employeesStore[idx].documents
       : [];
     const docs: EmployeeDocument[] = currentDocs.filter((d: EmployeeDocument) => String(d.id) !== String(docId));
+    // Borrar archivo físico si existía
+    const docToDelete = currentDocs.find((d: EmployeeDocument) => String(d.id) === String(docId));
+    if (docToDelete && docToDelete.fileUrl && docToDelete.fileUrl.startsWith('/uploads/rrhh/')) {
+      try {
+        const filePathOnDisk = path.resolve(process.cwd(), 'public', docToDelete.fileUrl.replace(/^\//, ''));
+        if (fs.existsSync(filePathOnDisk)) {
+          fs.unlinkSync(filePathOnDisk);
+        }
+      } catch (e) {}
+    }
 
     employeesStore[idx] = {
       ...employeesStore[idx],
@@ -1255,6 +1308,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       phone: body.phone,
       email: body.email,
       workSchedule: body.workSchedule,
+      workDays: (body as any).workDays && (body as any).workDays.length > 0 ? (body as any).workDays : ["lun", "mar", "mie", "jue", "vie"],
+      specialSchedules: (body as any).specialSchedules || {},
       expectedCheckInTime: expectedTime || "08:00",
       salary: body.salary,
       currency: body.currency,
@@ -1317,6 +1372,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       ...body,
       id: current.id,
       expectedCheckInTime: expectedTime,
+      workDays: body.workDays !== undefined ? body.workDays : (current.workDays || ["lun", "mar", "mie", "jue", "vie"]),
+      specialSchedules: (body as any).specialSchedules !== undefined ? (body as any).specialSchedules : (current.specialSchedules || {}),
       updatedAt: new Date().toISOString(),
     };
 
@@ -1449,7 +1506,14 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     // Calcular si el colaborador ya se encuentra en tardanza en este momento
     let expectedTime = resolvedUser.expectedCheckInTime || "08:00";
-    if (resolvedUser.workSchedule) {
+    const peruDayOfWeek = ["dom", "lun", "mar", "mie", "jue", "vie", "sab"][new Date(today + "T12:00:00").getDay()];
+    const specialForToday = (resolvedUser as any).specialSchedules?.[peruDayOfWeek];
+    if (specialForToday?.expectedCheckInTime) {
+      expectedTime = specialForToday.expectedCheckInTime;
+    } else if (specialForToday?.schedule) {
+      const sm = specialForToday.schedule.match(/(\d{1,2}:\d{2})/);
+      if (sm) expectedTime = sm[1];
+    } else if (resolvedUser.workSchedule) {
       const m = resolvedUser.workSchedule.match(/(\d{1,2}:\d{2})/);
       if (m) expectedTime = m[1];
     }
@@ -1480,6 +1544,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       isCurrentlyLate: liveDiffMinutes > 0,
       liveMinutesLate: Math.max(0, liveDiffMinutes),
       expectedCheckInTime: expectedTime,
+      workDays: (resolvedUser as any).workDays || ["lun", "mar", "mie", "jue", "vie"],
       data: record || null,
       tenantId: activeTenant,
       serverPeruDate: today,
@@ -2257,7 +2322,10 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       }
     } else {
       const emp = resolveEmployeeOrUser(employeeId);
-      const outMatch = emp.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/);
+      const peruDayOfWeek = ["dom", "lun", "mar", "mie", "jue", "vie", "sab"][new Date(peruDate + "T12:00:00").getDay()];
+      const specialForToday = (emp as any).specialSchedules?.[peruDayOfWeek];
+      const schedToUse = specialForToday?.schedule || emp.workSchedule;
+      const outMatch = schedToUse?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/);
       const expectedOut = outMatch ? outMatch[1] : "17:00";
       const [expOutH, expOutM] = expectedOut.split(":").map(Number);
       const [curOutH, curOutM] = peruTime.split(":").map(Number);

@@ -33,6 +33,7 @@ import {
   getNodeStock,
   assignStockToNode,
   returnStockFromNode,
+  updateNodeStockItem,
   getVehicleChecklist,
   updateVehicleChecklist,
   addVehicleChecklistItem,
@@ -888,6 +889,34 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send(result);
     }
     return reply.send(result);
+  });
+
+  fastify.put("/inventory/assets/:id/node-stock/:stockId", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id, stockId } = request.params as { id: string; stockId: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+
+    const schema = z.object({
+      rackLocation: z.string().optional().nullable(),
+      serialNumber: z.string().optional().nullable(),
+      status: z.enum(["en_operacion", "en_reserva", "retornado"]).optional().nullable(),
+      notes: z.string().optional().nullable(),
+      quantity: z.number().optional().nullable(),
+    });
+
+    const parse = schema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ success: false, errors: parse.error.format() });
+    }
+
+    const result = updateNodeStockItem(tenantId, numId, stockId, parse.data as any);
+    if (!result.success) {
+      return reply.status(400).send(result);
+    }
+    return reply.send({ success: true, message: result.message, item: result.item });
   });
 
   // 6. HISTORIAL & TRAZABILIDAD 360° (ESCÁNER, COMPRAS, CLIENTES, EPP)

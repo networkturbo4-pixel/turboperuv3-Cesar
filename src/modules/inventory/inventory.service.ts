@@ -2517,6 +2517,40 @@ export function returnStockFromNode(
   return { success: true, message: "Equipo retornado al almacén central exitosamente" };
 }
 
+export function updateNodeStockItem(
+  tenantId: string,
+  assetId: number,
+  stockItemId: string,
+  data: {
+    rackLocation?: string;
+    serialNumber?: string;
+    status?: string;
+    notes?: string;
+    quantity?: number;
+  }
+): { success: boolean; message: string; item?: any } {
+  const assets = loadAssets(tenantId);
+  const assetIndex = assets.findIndex((a) => a.id === assetId);
+  if (assetIndex === -1) return { success: false, message: "Nodo no encontrado" };
+
+  const nodeAsset = assets[assetIndex] as any;
+  if (!Array.isArray(nodeAsset.nodeStock)) return { success: false, message: "No hay stock asignado" };
+
+  const itemIndex = nodeAsset.nodeStock.findIndex((i: any) => i.id === stockItemId);
+  if (itemIndex === -1) return { success: false, message: "Artículo asignado no encontrado" };
+
+  const item = nodeAsset.nodeStock[itemIndex];
+  if (data.rackLocation !== undefined) item.rackLocation = data.rackLocation;
+  if (data.serialNumber !== undefined) item.serialNumber = data.serialNumber;
+  if (data.status !== undefined) item.status = data.status;
+  if (data.notes !== undefined) item.notes = data.notes;
+  if (data.quantity !== undefined && Number(data.quantity) > 0) item.quantity = Number(data.quantity);
+  item.updatedAt = new Date().toISOString();
+
+  saveAssets(tenantId, assets);
+  return { success: true, message: "Equipamiento del nodo actualizado exitosamente", item };
+}
+
 
 // ==========================================
 // CHECKLIST DE IMPLEMENTOS DE VEHÍCULOS
