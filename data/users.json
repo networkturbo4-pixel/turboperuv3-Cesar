@@ -24,6 +24,7 @@
     "scheduleEndDate": "",
     "birthDate": "2026-10-21",
     "expectedCheckInTime": "08:00",
-    "expectedCheckOutTime": "17:00"
+    "expectedCheckOutTime": "17:00",
+    "assignedTenantId": "turbonetwork"
   }
 ]

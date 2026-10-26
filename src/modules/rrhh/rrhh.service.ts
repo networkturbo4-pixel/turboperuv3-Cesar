@@ -596,11 +596,45 @@ export function calculateMonthlyPayroll(params: {
         .reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
         .toFixed(2);
 
-      // 6. Régimen Pensionario (AFP / ONP)
-      const afpType = emp.afpType || emp.pensionSystem || "AFP Integra";
-      let pensionRatePercent = 12.8;
-      if (String(afpType).toUpperCase().includes("ONP")) pensionRatePercent = 13.0;
-      else if (String(afpType).toUpperCase().includes("EXENTO") || String(afpType).includes("Sin")) pensionRatePercent = 0;
+      // 6. Régimen Pensionario (AFP / ONP - Conforme normativa SBS / SUNAT)
+      const rawAfp = String(emp.afpType || emp.pensionSystem || "ONP").toUpperCase().trim();
+      let pensionRatePercent = 11.37;
+      let pensionLabel = "AFP Integra (Mixta)";
+
+      if (rawAfp.includes("ONP")) {
+        pensionRatePercent = 13.00;
+        pensionLabel = "ONP (13.00%)";
+      } else if (rawAfp.includes("NONE") || rawAfp.includes("SIN") || rawAfp.includes("EXENTO") || rawAfp.includes("JUBILADO") || rawAfp.includes("RXH")) {
+        pensionRatePercent = 0.00;
+        pensionLabel = "Sin Retención (0.00%)";
+      } else if (rawAfp.includes("HABITAT") && rawAfp.includes("FLUJO")) {
+        pensionRatePercent = 12.84;
+        pensionLabel = "AFP Habitat - Flujo (12.84%)";
+      } else if (rawAfp.includes("INTEGRA") && rawAfp.includes("FLUJO")) {
+        pensionRatePercent = 12.92;
+        pensionLabel = "AFP Integra - Flujo (12.92%)";
+      } else if (rawAfp.includes("PRIMA") && rawAfp.includes("FLUJO")) {
+        pensionRatePercent = 12.97;
+        pensionLabel = "AFP Prima - Flujo (12.97%)";
+      } else if (rawAfp.includes("PROFUTURO") && rawAfp.includes("FLUJO")) {
+        pensionRatePercent = 13.06;
+        pensionLabel = "AFP Profuturo - Flujo (13.06%)";
+      } else if (rawAfp.includes("HABITAT")) {
+        pensionRatePercent = 11.37;
+        pensionLabel = "AFP Habitat - Mixta (11.37%)";
+      } else if (rawAfp.includes("PRIMA")) {
+        pensionRatePercent = 11.37;
+        pensionLabel = "AFP Prima - Mixta (11.37%)";
+      } else if (rawAfp.includes("PROFUTURO")) {
+        pensionRatePercent = 11.37;
+        pensionLabel = "AFP Profuturo - Mixta (11.37%)";
+      } else if (rawAfp.includes("INTEGRA")) {
+        pensionRatePercent = 11.37;
+        pensionLabel = "AFP Integra - Mixta (11.37%)";
+      } else {
+        pensionRatePercent = 13.00;
+        pensionLabel = "ONP (13.00%)";
+      }
 
       const pensionDeduction = +((baseSalary * pensionRatePercent) / 100).toFixed(2);
 
@@ -654,8 +688,8 @@ export function calculateMonthlyPayroll(params: {
         advanceAndOtherDeductions,
         bonusesTotal,
         incidentsList: empIncidents,
-        afpType,
-        pensionSystem: afpType,
+        afpType: emp.afpType || "ONP",
+        pensionSystem: pensionLabel,
         pensionRatePercent,
         pensionDeduction,
         grossIncome,
@@ -668,4 +702,184 @@ export function calculateMonthlyPayroll(params: {
         voucherCode: savedState?.voucherCode || `BOL-${period}-${String(emp.id).padStart(3, "0")}`,
       };
     });
+}
+
+// ==========================================
+// 8. TRAMAS PLAME, ASIENTOS CONTABLES Y PERSISTENCIA
+// ==========================================
+
+const MONTHLY_PAYROLL_FILE = path.join(DATA_DIR, "rrhh_monthly_payroll.json");
+
+export function loadMonthlyPayrollsFromDisk(): Record<string, { period: string; company?: any; items: any[] }> {
+  try {
+    if (fs.existsSync(MONTHLY_PAYROLL_FILE)) {
+      return JSON.parse(fs.readFileSync(MONTHLY_PAYROLL_FILE, "utf-8"));
+    }
+  } catch (err) {
+    console.error("Error reading rrhh_monthly_payroll.json:", err);
+  }
+  return {};
+}
+
+export function getMonthlyPayrollForTenant(tenantId: string | undefined, period: string) {
+  const all = loadMonthlyPayrollsFromDisk();
+  const safeTenant = (tenantId || "turbonetwork").toLowerCase().trim();
+  const tenantKey = `${safeTenant}_${period}`;
+  if (all[tenantKey]) return all[tenantKey];
+  if (all[period]) return all[period];
+  return null;
+}
+
+export function saveMonthlyPayrollToDisk(period: string, data: any, tenantId?: string) {
+  try {
+    const all = loadMonthlyPayrollsFromDisk();
+    const safeTenant = (tenantId || data.tenantId || "turbonetwork").toLowerCase().trim();
+    const tenantKey = `${safeTenant}_${period}`;
+    all[tenantKey] = { ...data, tenantId: safeTenant };
+    // Para compatibilidad hacia atrás
+    if (safeTenant === "loanetwork" || safeTenant === "turbonetwork" || !all[period]) {
+      all[period] = { ...data, tenantId: safeTenant };
+    }
+    fs.writeFileSync(MONTHLY_PAYROLL_FILE, JSON.stringify(all, null, 2), "utf-8");
+  } catch (err) {
+    console.error("Error saving rrhh_monthly_payroll.json:", err);
+  }
+}
+
+export function saveMonthlyPayrollItem(period: string, body: any, initialCalculated: any[] = [], tenantId?: string): any {
+  const safeTenant = (tenantId || body.tenantId || "turbonetwork").toLowerCase().trim();
+  const all = loadMonthlyPayrollsFromDisk();
+  const tenantKey = `${safeTenant}_${period}`;
+  const existing = all[tenantKey] || all[period];
+
+  const periodData = existing ? { ...existing } : {
+    period,
+    tenantId: safeTenant,
+    company: { name: safeTenant === "loanetwork" ? "LOA NETWORK JL SAC" : "TurboNetwork Perú S.A.C.", ruc: safeTenant === "loanetwork" ? "20607511579" : "20601234567", regimen: "PEQ. EMPRESA" },
+    items: initialCalculated || [],
+  };
+
+  const items = periodData.items || [];
+  const idx = items.findIndex((it: any) => Number(it.employeeId) === Number(body.employeeId));
+  let updatedItem;
+  if (idx >= 0) {
+    items[idx] = { ...items[idx], ...body };
+    updatedItem = items[idx];
+  } else {
+    updatedItem = { ...body };
+    items.push(updatedItem);
+  }
+  periodData.items = items;
+  saveMonthlyPayrollToDisk(period, periodData, safeTenant);
+  return updatedItem;
+}
+
+export function computeTaxAndPensionCuadre(items: any[]) {
+  let renta5ta = 0;
+  let essalud = 0;
+  let onp = 0;
+  let renta4ta = 0;
+  let integra = 0;
+  let profuturo = 0;
+  let prima = 0;
+  let habitat = 0;
+
+  for (const it of items) {
+    renta5ta += Number(it.renta5ta || 0);
+    essalud += Number(it.essalud || 0);
+    onp += Number(it.dsctoOnp || 0);
+    const afpTotal = Number(it.totalDsctoAfp || (Number(it.afpFondoFijo || 0) + Number(it.afpSeguro || 0) + Number(it.afpComision || 0)));
+    const penSys = String(it.pensionSystem || "").toUpperCase();
+    if (penSys.includes("INTEGRA")) integra += afpTotal;
+    else if (penSys.includes("PROFUTURO")) profuturo += afpTotal;
+    else if (penSys.includes("PRIMA")) prima += afpTotal;
+    else if (penSys.includes("HABITAT")) habitat += afpTotal;
+  }
+
+  const totalAfp = +(integra + profuturo + prima + habitat).toFixed(2);
+  const totalImpuestos = +(renta5ta + essalud + onp + renta4ta).toFixed(2);
+
+  return {
+    plame: {
+      renta5ta: +renta5ta.toFixed(2),
+      essalud: +essalud.toFixed(2),
+      onp: +onp.toFixed(2),
+      renta4ta: +renta4ta.toFixed(2),
+      totalImpuestos,
+    },
+    afpnet: {
+      integra: +integra.toFixed(2),
+      profuturo: +profuturo.toFixed(2),
+      prima: +prima.toFixed(2),
+      habitat: +habitat.toFixed(2),
+      totalAfp,
+    },
+  };
+}
+
+export function computeAccountingSeat(items: any[]) {
+  const sueldosBrutos = items.reduce((s, i) => s + (Number(i.baseAportes) || Number(i.basicoMes || 0)), 0);
+  const essalud = items.reduce((s, i) => s + Number(i.essalud || 0), 0);
+  const onp = items.reduce((s, i) => s + Number(i.dsctoOnp || 0), 0);
+  const afp = items.reduce((s, i) => s + Number(i.totalDsctoAfp || 0), 0);
+  const r5 = items.reduce((s, i) => s + Number(i.renta5ta || 0), 0);
+  const quincena = items.reduce((s, i) => s + (Number(i.adelantoQuincena || 0) + Number(i.prestamo || 0)), 0);
+  const neto = items.reduce((s, i) => s + Number(i.netoFinDeMes || 0), 0);
+
+  const totalDebe = +(sueldosBrutos + essalud).toFixed(2);
+  const totalHaber = +(essalud + onp + afp + r5 + quincena + neto).toFixed(2);
+
+  const asiento = [
+    { cta: "6211", denominacion: "Remuneraciones y Salarios al Personal", cecos: "ADMIN / OPER", debe: +sueldosBrutos.toFixed(2), haber: 0 },
+    { cta: "6271", denominacion: "Régimen Prestaciones de Salud - EsSalud 9%", cecos: "COSTO EMPRESA", debe: +essalud.toFixed(2), haber: 0 },
+    { cta: "4031", denominacion: "EsSalud por Pagar (Instituciones Públicas)", cecos: "SUNAT / ESSALUD", debe: 0, haber: +essalud.toFixed(2) },
+    { cta: "4032", denominacion: "ONP - Sistema Nacional Pensiones", cecos: "SUNAT", debe: 0, haber: +onp.toFixed(2) },
+    { cta: "4071", denominacion: "AFPnet - Retenciones Administradoras de Pensiones", cecos: "AFP RETENCIONES", debe: 0, haber: +afp.toFixed(2) },
+    { cta: "40173", denominacion: "Impuesto a la Renta de Quinta Categoría", cecos: "SUNAT TRIBUTOS", debe: 0, haber: +r5.toFixed(2) },
+    { cta: "1412", denominacion: "Adelanto de Remuneraciones y Préstamos", cecos: "DESCUENTOS BANCARIOS", debe: 0, haber: +quincena.toFixed(2) },
+    { cta: "4111", denominacion: "Remuneraciones por Pagar (Neto Colaboradores)", cecos: "DISPERSIÓN FIN DE MES", debe: 0, haber: +neto.toFixed(2) },
+  ];
+
+  return { asiento, totalDebe, totalHaber };
+}
+
+export function generatePlameTramas(targetPeriod: string, items: any[]) {
+  let jor = "";
+  let snl = "";
+  let rem = "";
+
+  for (const it of items) {
+    const docType = it.docType || "01";
+    const dni = it.dni || "";
+    if (!dni) continue;
+
+    const hOrd = it.hrasLab || 208;
+    const heHoras = it.heHoras || 0;
+    const heMin = it.heMin || 0;
+    jor += `${docType}|${dni}|${hOrd}|0|${heHoras}|${heMin}|0|0|\r\n`;
+
+    if (Number(it.maternidadEsSalud || 0) > 0) {
+      snl += `${docType}|${dni}|21|30|\r\n`;
+    }
+    if (Number(it.licenciaSinGoce || 0) > 0) {
+      snl += `${docType}|${dni}|05|${it.licenciaSinGoce}|\r\n`;
+    }
+
+    const basico = Number(it.basicoMes || it.sueldoReal || 0).toFixed(2);
+    rem += `${docType}|${dni}|0121|${basico}|${basico}|\r\n`;
+    if (Number(it.he25 || 0) > 0) {
+      const val = Number(it.he25).toFixed(2);
+      rem += `${docType}|${dni}|0105|${val}|${val}|\r\n`;
+    }
+    if (Number(it.he35 || 0) > 0) {
+      const val = Number(it.he35).toFixed(2);
+      rem += `${docType}|${dni}|0106|${val}|${val}|\r\n`;
+    }
+    if (Number(it.bonifRegu || 0) > 0) {
+      const val = Number(it.bonifRegu).toFixed(2);
+      rem += `${docType}|${dni}|0301|${val}|${val}|\r\n`;
+    }
+  }
+
+  return { jor, snl, rem };
 }

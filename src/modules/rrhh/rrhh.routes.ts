@@ -26,6 +26,13 @@ import {
   computeHRAlerts,
   syncDamagedInventoryAssignmentsToPayroll,
   calculateMonthlyPayroll,
+  computeTaxAndPensionCuadre,
+  computeAccountingSeat,
+  generatePlameTramas,
+  saveMonthlyPayrollItem,
+  saveMonthlyPayrollToDisk,
+  getMonthlyPayrollForTenant,
+  loadMonthlyPayrollsFromDisk,
 } from "./rrhh.service";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
@@ -438,12 +445,10 @@ const createEmployeeSchema = z
     hireDate: z.string().optional(),
     birthDate: z.string().optional(),
     emergencyContact: z.string().optional(),
-    contractType: z
-      .enum(["Plazo Fijo", "Indeterminado", "Locación de Servicios", "Prácticas"])
-      .optional(),
+    contractType: z.string().optional(),
     contractStartDate: z.string().optional(),
     contractEndDate: z.string().optional(),
-    workModality: z.enum(["office", "store_gps", "field"]).optional(),
+    workModality: z.string().optional(),
     biometricPin: z.string().optional(),
     vacationDaysAccumulated: z.number().optional(),
     vacationDaysBaseTaken: z.number().optional(),
@@ -2779,15 +2784,18 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     const enrichedEmployees = employeesStore.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
 
-    const items = calculateMonthlyPayroll({
-      period: targetPeriod,
-      tenantId: activeTenant,
-      employees: enrichedEmployees,
-      attendances: attendanceStore,
-      leaves,
-      commissions,
-      incidents,
-    });
+    const savedPeriodData = getMonthlyPayrollForTenant(activeTenant, targetPeriod);
+    let items = (savedPeriodData && Array.isArray(savedPeriodData.items) && savedPeriodData.items.length > 0)
+      ? savedPeriodData.items
+      : calculateMonthlyPayroll({
+          period: targetPeriod,
+          tenantId: activeTenant,
+          employees: enrichedEmployees,
+          attendances: attendanceStore,
+          leaves,
+          commissions,
+          incidents,
+        });
 
     const totalTardinessDeduction = +items.reduce((s, i) => s + i.tardinessDeduction, 0).toFixed(2);
     const totalIncidentDeductions = +items
@@ -2795,20 +2803,69 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       .toFixed(2);
     const totalNetPay = +items.reduce((s, i) => s + i.netPay, 0).toFixed(2);
 
+    const totalBaseSalary = +items.reduce((s, i) => s + (Number(i.basicoMes) || Number(i.baseSalary) || 0), 0).toFixed(2);
+    const totalSueldoReal = +items.reduce((s, i) => s + (Number(i.sueldoReal) || Number(i.baseSalary) || 0), 0).toFixed(2);
+    const totalOvertime25 = +items.reduce((s, i) => s + (Number(i.he25) || 0), 0).toFixed(2);
+    const totalOvertime35 = +items.reduce((s, i) => s + (Number(i.he35) || 0), 0).toFixed(2);
+    const totalOvertimePay = +items.reduce((s, i) => s + (Number(i.he25) || 0) + (Number(i.he35) || 0) + (Number(i.overtimePay) || 0), 0).toFixed(2);
+    const totalFeriados = +items.reduce((s, i) => s + (Number(i.feriadosMonto) || 0), 0).toFixed(2);
+    const totalBonuses = +items.reduce((s, i) => s + (Number(i.bonifRegu) || Number(i.bonusesTotal) || 0), 0).toFixed(2);
+    const totalSubsidios = +items.reduce((s, i) => s + (Number(i.maternidadEsSalud) || 0) + (Number(i.licenciaPaternidad) || 0), 0).toFixed(2);
+    const totalBaseAportes = +items.reduce((s, i) => s + (Number(i.baseAportes) || Number(i.grossIncome) || 0), 0).toFixed(2);
+    const totalEssalud = +items.reduce((s, i) => s + (Number(i.essalud) || 0), 0).toFixed(2);
+    const totalOnp = +items.reduce((s, i) => s + (Number(i.dsctoOnp) || 0), 0).toFixed(2);
+    const totalAfp = +items.reduce((s, i) => s + (Number(i.totalDsctoAfp) || 0), 0).toFixed(2);
+    const totalPensionDeduction = +(totalAfp + totalOnp).toFixed(2);
+    const totalRenta5ta = +items.reduce((s, i) => s + (Number(i.renta5ta) || 0), 0).toFixed(2);
+    const totalQuincena = +items.reduce((s, i) => s + (Number(i.adelantoQuincena) || 0), 0).toFixed(2);
+    const totalFinDeMes = +items.reduce((s, i) => s + (Number(i.netoFinDeMes) || Number(i.netSalary) || 0), 0).toFixed(2);
+    const totalPrestamos = +items.reduce((s, i) => s + (Number(i.prestamo) || 0), 0).toFixed(2);
+
     const summary = {
       employeesCount: items.length,
-      totalBaseSalary: +items.reduce((s, i) => s + i.baseSalary, 0).toFixed(2),
-      totalOvertimePay: +items.reduce((s, i) => s + i.overtimePay, 0).toFixed(2),
-      totalCommissions: +items.reduce((s, i) => s + i.commissionsTotal, 0).toFixed(2),
-      totalBonuses: +items.reduce((s, i) => s + i.bonusesTotal, 0).toFixed(2),
+      totalBaseSalary,
+      totalSueldoReal,
+      totalOvertime25,
+      totalOvertime35,
+      totalOvertimePay,
+      totalFeriados,
+      totalCommissions: +items.reduce((s, i) => s + (Number(i.commissionsTotal) || 0), 0).toFixed(2),
+      totalBonuses,
+      totalSubsidios,
+      totalBaseAportes,
+      totalEssalud,
+      totalOnp,
+      totalAfp,
+      totalPensionDeduction,
+      totalRenta5ta,
       totalTardinessDeduction,
       totalTardinessDiscount: totalTardinessDeduction,
       totalIncidentDeductions,
       totalIncidentDiscounts: totalIncidentDeductions,
-      totalPensionDeduction: +items.reduce((s, i) => s + i.pensionDeduction, 0).toFixed(2),
-      totalNetPay,
-      totalNetPayroll: totalNetPay,
+      totalQuincena,
+      totalFinDeMes,
+      totalNetPay: totalFinDeMes,
+      totalNetPayroll: totalFinDeMes,
+      totalPrestamos,
     };
+
+    const taxCuadre = computeTaxAndPensionCuadre(items);
+    const accountingSeat = computeAccountingSeat(items);
+    const dispersion = items.map((it, idx) => ({
+      idx: idx + 1,
+      id: it.employeeId,
+      name: it.employeeName,
+      dni: it.dni,
+      docType: it.docType || "01",
+      position: it.position,
+      area: it.area || "CDS",
+      pensionSystem: it.pensionSystem,
+      bankName: it.bankName || "Transferencia BCP",
+      bankAccount: it.bankAccount || "--",
+      adelantoQuincena: it.adelantoQuincena || 0,
+      netoFinDeMes: it.netoFinDeMes || it.netSalary || it.netPay || 0,
+      status: it.status || "pending",
+    }));
 
     return reply.send({
       success: true,
@@ -2816,10 +2873,16 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       totals: summary,
       summary,
       items,
+      taxCuadre,
+      accountingSeat,
+      dispersion,
       data: {
         period: targetPeriod,
         items,
         summary,
+        taxCuadre,
+        accountingSeat,
+        dispersion,
       },
     });
   });
@@ -2976,6 +3039,260 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           ? `Planilla del periodo ${period} marcada como PAGADA (${targetIds.length} boleta(s) emitidas).`
           : `Estado de planilla actualizado a pendiente.`,
     });
+  });
+
+  // Guardar / Actualizar ítem individual de planilla (incidencias, horas extras, feriados, etc.)
+  fastify.post("/rrhh/payroll/save-item", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const { period, employeeId } = body;
+    if (!period || !employeeId) {
+      return reply.status(400).send({ success: false, message: "Periodo y Colaborador requeridos." });
+    }
+
+    employeesStore = loadEmployeesFromDisk();
+    attendanceStore = loadAttendanceFromDisk();
+    const leaves = loadLeavesFromDisk();
+    const commissions = loadCommissionsFromDisk();
+    const incidents = loadIncidentsFromDisk();
+
+    const initialCalculated = calculateMonthlyPayroll({
+      period,
+      tenantId: "default",
+      employees: employeesStore,
+      attendances: attendanceStore,
+      leaves,
+      commissions,
+      incidents,
+    });
+
+    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
+    const updated = saveMonthlyPayrollItem(period, body, initialCalculated, activeTenant);
+    return reply.send({
+      success: true,
+      message: `Valores de planilla actualizados para ${updated.employeeName || "el colaborador"}.`,
+      item: updated,
+    });
+  });
+
+  // Guardar periodo completo de planilla
+  fastify.post("/rrhh/payroll/save-period", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const { period, items } = body;
+    if (!period || !Array.isArray(items)) {
+      return reply.status(400).send({ success: false, message: "Periodo e ítems requeridos." });
+    }
+
+    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
+    const allTenants = loadTenantsFromDisk();
+    const tenantObj = allTenants.find((t) => t.id === activeTenant);
+    const companyName = tenantObj?.name || (activeTenant === "loanetwork" ? "LOA NETWORK JL SAC" : "TurboNetwork Perú S.A.C.");
+    const companyRuc = tenantObj?.ruc || (activeTenant === "loanetwork" ? "20607511579" : "20601234567");
+
+    saveMonthlyPayrollToDisk(period, {
+      period,
+      tenantId: activeTenant,
+      company: { name: companyName, ruc: companyRuc, regimen: "PEQ. EMPRESA" },
+      items,
+    }, activeTenant);
+
+    return reply.send({
+      success: true,
+      message: `Planilla del periodo ${period} guardada exitosamente.`,
+    });
+  });
+
+  // Importar y consolidar filas de planilla desde Excel o CSV
+  fastify.post("/rrhh/payroll/import", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const { period, items } = body;
+    if (!period || !Array.isArray(items) || items.length === 0) {
+      return reply.status(400).send({ success: false, message: "Periodo y filas para importar son requeridos." });
+    }
+
+    employeesStore = loadEmployeesFromDisk();
+    attendanceStore = loadAttendanceFromDisk();
+    const leaves = loadLeavesFromDisk();
+    const commissions = loadCommissionsFromDisk();
+    const incidents = loadIncidentsFromDisk();
+
+    // Cargar planilla existente o calcularla base
+    const monthlyPayrolls = loadMonthlyPayrollsFromDisk();
+    let currentPeriodData = monthlyPayrolls[period];
+    let currentItems: any[] = currentPeriodData?.items;
+
+    if (!currentItems || currentItems.length === 0) {
+      const { peruDate } = getPeruDateTime();
+      const enrichedEmployees = employeesStore.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
+      currentItems = calculateMonthlyPayroll({
+        period,
+        tenantId: "turbonetwork",
+        employees: enrichedEmployees,
+        attendances: attendanceStore,
+        leaves,
+        commissions,
+        incidents,
+      });
+    }
+
+    let updatedCount = 0;
+    const nowIso = new Date().toISOString();
+
+    for (const importItem of items) {
+      const dni = String(importItem.dni || "").trim();
+      const name = String(importItem.employeeName || importItem.name || "").trim().toUpperCase();
+      const empId = importItem.employeeId ? Number(importItem.employeeId) : null;
+
+      let idx = -1;
+      if (dni) {
+        idx = currentItems.findIndex((it) => String(it.dni || "").trim() === dni);
+      }
+      if (idx === -1 && empId) {
+        idx = currentItems.findIndex((it) => Number(it.employeeId) === empId);
+      }
+      if (idx === -1 && name) {
+        idx = currentItems.findIndex((it) => {
+          const itName = String(it.employeeName || "").toUpperCase();
+          return itName.includes(name) || name.includes(itName);
+        });
+      }
+
+      if (idx >= 0) {
+        const target = { ...currentItems[idx] };
+        if (importItem.hrasLab !== undefined && importItem.hrasLab !== '') target.hrasLab = Number(importItem.hrasLab);
+        if (importItem.he25 !== undefined && importItem.he25 !== '') target.he25 = Number(importItem.he25);
+        if (importItem.he35 !== undefined && importItem.he35 !== '') target.he35 = Number(importItem.he35);
+        if (importItem.bonifRegu !== undefined && importItem.bonifRegu !== '') target.bonifRegu = Number(importItem.bonifRegu);
+        if (importItem.feriadosMonto !== undefined && importItem.feriadosMonto !== '') target.feriadosMonto = Number(importItem.feriadosMonto);
+        if (importItem.adelantoQuincena !== undefined && importItem.adelantoQuincena !== '') target.adelantoQuincena = Number(importItem.adelantoQuincena);
+        if (importItem.prestamo !== undefined && importItem.prestamo !== '') target.prestamo = Number(importItem.prestamo);
+        if (importItem.desc707 !== undefined && importItem.desc707 !== '') target.desc707 = Number(importItem.desc707);
+        if (importItem.basicoMes !== undefined && importItem.basicoMes !== '') target.basicoMes = Number(importItem.basicoMes);
+        if (importItem.sueldoReal !== undefined && importItem.sueldoReal !== '') target.sueldoReal = Number(importItem.sueldoReal);
+        if (importItem.renta5ta !== undefined && importItem.renta5ta !== '') target.renta5ta = Number(importItem.renta5ta);
+
+        // Recalcular base imponible y descuentos
+        const basico = Number(target.basicoMes || target.sueldoReal || target.baseSalary || 0);
+        const he25 = Number(target.he25 || 0);
+        const he35 = Number(target.he35 || 0);
+        const bonif = Number(target.bonifRegu || 0);
+        const feriados = Number(target.feriadosMonto || 0);
+        const baseAportes = +(basico + he25 + he35 + bonif + feriados).toFixed(2);
+        target.baseAportes = baseAportes;
+
+        // EsSalud 9%
+        target.essalud = +(baseAportes * 0.09).toFixed(2);
+
+        // Pensiones
+        const penSys = String(target.pensionSystem || "").toUpperCase();
+        if (penSys.includes("ONP")) {
+          target.dsctoOnp = +(baseAportes * 0.13).toFixed(2);
+          target.afpFondoFijo = 0;
+          target.afpSeguro = 0;
+          target.afpComision = 0;
+          target.totalDsctoAfp = 0;
+        } else if (penSys.includes("SIN") || penSys.includes("EXENTO")) {
+          target.dsctoOnp = 0;
+          target.afpFondoFijo = 0;
+          target.afpSeguro = 0;
+          target.afpComision = 0;
+          target.totalDsctoAfp = 0;
+        } else {
+          target.dsctoOnp = 0;
+          target.afpFondoFijo = +(baseAportes * 0.10).toFixed(2);
+          target.afpSeguro = +(baseAportes * 0.0137).toFixed(2);
+          target.afpComision = 0;
+          target.totalDsctoAfp = +(target.afpFondoFijo + target.afpSeguro).toFixed(2);
+        }
+
+        const totalPension = (Number(target.dsctoOnp) || 0) + (Number(target.totalDsctoAfp) || 0);
+        const r5 = Number(target.renta5ta || 0);
+        const adelanto = Number(target.adelantoQuincena || 0);
+        const prestamo = Number(target.prestamo || 0);
+        const desc = Number(target.desc707 || 0);
+
+        target.netoFinDeMes = Math.max(0, +(baseAportes - (totalPension + r5 + adelanto + prestamo + desc)).toFixed(2));
+        target.netSalary = target.netoFinDeMes;
+        target.updatedAt = nowIso;
+
+        currentItems[idx] = target;
+        updatedCount++;
+      }
+    }
+
+    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
+    const allTenants = loadTenantsFromDisk();
+    const tenantObj = allTenants.find((t) => t.id === activeTenant);
+    const companyName = tenantObj?.name || (activeTenant === "loanetwork" ? "LOA NETWORK JL SAC" : "TurboNetwork Perú S.A.C.");
+    const companyRuc = tenantObj?.ruc || (activeTenant === "loanetwork" ? "20607511579" : "20601234567");
+
+    saveMonthlyPayrollToDisk(period, {
+      period,
+      tenantId: activeTenant,
+      company: { name: companyName, ruc: companyRuc, regimen: "PEQ. EMPRESA" },
+      items: currentItems,
+    }, activeTenant);
+
+    return reply.send({
+      success: true,
+      message: `Se importaron y actualizaron ${updatedCount} colaborador(es) en la planilla del periodo ${period}.`,
+      updatedCount,
+      totalItems: currentItems.length,
+    });
+  });
+
+  // Exportar Archivos Planos Oficiales para SUNAT PLAME (.jor, .snl, .rem)
+  fastify.get("/rrhh/payroll/plame-export", async (request, reply) => {
+    const { period, type } = request.query as { period?: string; type?: "jor" | "snl" | "rem" };
+    const { peruDate } = getPeruDateTime();
+    const targetPeriod = period || peruDate.slice(0, 7);
+
+    const monthlyPayrolls = loadMonthlyPayrollsFromDisk();
+    let items = monthlyPayrolls[targetPeriod]?.items;
+
+    if (!items || items.length === 0) {
+      employeesStore = loadEmployeesFromDisk();
+      attendanceStore = loadAttendanceFromDisk();
+      const leaves = loadLeavesFromDisk();
+      const commissions = loadCommissionsFromDisk();
+      const incidents = loadIncidentsFromDisk();
+      const enrichedEmployees = employeesStore.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
+      items = calculateMonthlyPayroll({
+        period: targetPeriod,
+        tenantId: "turbonetwork",
+        employees: enrichedEmployees,
+        attendances: attendanceStore,
+        leaves,
+        commissions,
+        incidents,
+      });
+    }
+
+    const tramas = generatePlameTramas(targetPeriod, items);
+    const activeTenant = ((request.query as any).tenantId || resolveTenantId(request)).toLowerCase();
+    const allTenants = loadTenantsFromDisk();
+    const tenantObj = allTenants.find((t) => t.id === activeTenant);
+    const ruc = tenantObj?.ruc || (activeTenant === "loanetwork" ? "20607511579" : "20608543121");
+    const [year, month] = targetPeriod.split("-");
+    const formattedPeriod = `${year}${month}`;
+
+    const fileType = type || "rem";
+    let fileContent = "";
+    let fileName = "";
+
+    if (fileType === "jor") {
+      fileContent = tramas.jor;
+      fileName = `0601${formattedPeriod}${ruc}.jor`;
+    } else if (fileType === "snl") {
+      fileContent = tramas.snl;
+      fileName = `0601${formattedPeriod}${ruc}.snl`;
+    } else {
+      fileContent = tramas.rem;
+      fileName = `0601${formattedPeriod}${ruc}.rem`;
+    }
+
+    reply.header("Content-Type", "text/plain; charset=iso-8859-1");
+    reply.header("Content-Disposition", `attachment; filename="${fileName}"`);
+    return reply.send(fileContent);
   });
 };
 

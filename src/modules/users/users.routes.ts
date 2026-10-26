@@ -342,7 +342,29 @@ function saveRolesToDisk() {
 function loadUsersFromDisk(): SystemUser[] {
   try {
     if (fs.existsSync(USERS_FILE)) {
-      return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
+      const parsed = JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        let changed = false;
+        const normalized = parsed.map((u: any) => {
+          if (!u.assignedTenantId) {
+            u.assignedTenantId = (Array.isArray(u.allowedTenants) && u.allowedTenants.length > 0 && !u.allowedTenants.includes("*"))
+              ? u.allowedTenants[0]
+              : "turbonetwork";
+            changed = true;
+          }
+          if (!Array.isArray(u.allowedTenants) || u.allowedTenants.length === 0) {
+            u.allowedTenants = [u.assignedTenantId];
+            changed = true;
+          }
+          return u as SystemUser;
+        });
+        if (changed) {
+          try {
+            fs.writeFileSync(USERS_FILE, JSON.stringify(normalized, null, 2), "utf-8");
+          } catch {}
+        }
+        return normalized;
+      }
     }
   } catch (err) {}
   return usersStore;
@@ -628,11 +650,31 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({ success: true, tenantId, message: "Rol eliminado exitosamente", data: deleted });
   });
 
-  // Listar usuarios con horario, preferencias y estado
-  fastify.get("/users", async (_request, reply) => {
+  // Listar usuarios con horario, preferencias y estado (filtrado estricto por empresa)
+  fastify.get("/users", async (request, reply) => {
     usersStore = loadUsersFromDisk();
-    const sanitized = usersStore.map(({ pin, ...safeUser }) => ({
+    const query = request.query as Record<string, any> | undefined;
+    const showAll = query?.all === "true" || query?.all === true;
+    const requestedTenant = (query?.tenantId || query?.tenant || request.headers["x-tenant-id"]) as string | undefined;
+    const tenantId = requestedTenant ? requestedTenant.trim().toLowerCase() : resolveTenantId(request);
+
+    let list = usersStore;
+    if (!showAll && tenantId) {
+      list = usersStore.filter((u) => {
+        const uTenant = (u.assignedTenantId
+          ? u.assignedTenantId
+          : (Array.isArray(u.allowedTenants) && u.allowedTenants.length > 0 && !u.allowedTenants.includes("*")
+              ? u.allowedTenants[0]
+              : "turbonetwork")).trim().toLowerCase();
+
+        if (uTenant === "*") return true;
+        return uTenant === tenantId;
+      });
+    }
+
+    const sanitized = list.map(({ pin, ...safeUser }) => ({
       ...safeUser,
+      assignedTenantId: safeUser.assignedTenantId || (Array.isArray(safeUser.allowedTenants) && safeUser.allowedTenants.length > 0 && !safeUser.allowedTenants.includes("*") ? safeUser.allowedTenants[0] : "turbonetwork"),
       workSchedule: safeUser.workSchedule || "08:00 - 17:00",
       scheduleStartDate: safeUser.scheduleStartDate || "",
       scheduleEndDate: safeUser.scheduleEndDate || "",
@@ -640,7 +682,7 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       requireTotp: Boolean(safeUser.requireTotp),
       pinMasked: "••••••••",
     }));
-    return reply.send({ success: true, count: sanitized.length, data: sanitized });
+    return reply.send({ success: true, count: sanitized.length, tenantId, data: sanitized });
   });
 
   // Switcher rápido: Alternar acceso con código Google Authenticator (2FA) o sin código
@@ -681,12 +723,15 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ success: false, errors: parse.error.format() });
     }
 
-    const targetTenant = parse.data.assignedTenantId || (parse.data.allowedTenants && parse.data.allowedTenants[0]) || resolveTenantId(request);
+    const rawTargetTenant = (parse.data.assignedTenantId || (parse.data.allowedTenants && parse.data.allowedTenants[0]) || resolveTenantId(request) || "turbonetwork").trim().toLowerCase();
+    const targetTenant = rawTargetTenant || "turbonetwork";
     const tenantRoles = loadRolesForTenant(targetTenant);
     const role = tenantRoles.find((r) => r.id === parse.data.roleId) || rolesStore.find((r) => r.id === parse.data.roleId);
     if (!role) {
-      return reply.status(400).send({ success: false, message: "El rol especificado no existe" });
+      return reply.status(400).send({ success: false, message: "El rol especificado no existe para esta empresa" });
     }
+
+    usersStore = loadUsersFromDisk();
 
     // Comprobar email duplicado
     if (usersStore.some((u) => u.email.toLowerCase() === parse.data.email.toLowerCase())) {
@@ -709,8 +754,8 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       isActive: true,
       createdAt: new Date().toISOString(),
       isSuperAdmin: false,
-      assignedTenantId: parse.data.assignedTenantId || (parse.data.allowedTenants && parse.data.allowedTenants[0]) || "turbonetwork",
-      allowedTenants: parse.data.allowedTenants || (parse.data.assignedTenantId ? [parse.data.assignedTenantId] : ["turbonetwork"]),
+      assignedTenantId: targetTenant,
+      allowedTenants: [targetTenant],
       workSchedule: parse.data.workSchedule || "08:00 - 17:00",
       expectedCheckInTime: parse.data.expectedCheckInTime || (parse.data.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00",
       expectedCheckOutTime: parse.data.expectedCheckOutTime || (parse.data.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00",
@@ -778,14 +823,19 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     if (data.hireDate !== undefined) user.hireDate = data.hireDate || undefined;
     if (data.birthDate !== undefined) user.birthDate = data.birthDate || undefined;
     if (data.assignedTenantId !== undefined) {
-      user.assignedTenantId = data.assignedTenantId || undefined;
-      if (!user.allowedTenants) user.allowedTenants = [];
-      if (data.assignedTenantId && !user.allowedTenants.includes(data.assignedTenantId) && !user.allowedTenants.includes("*")) {
-        user.allowedTenants.push(data.assignedTenantId);
+      const assigned = data.assignedTenantId ? String(data.assignedTenantId).trim().toLowerCase() : undefined;
+      user.assignedTenantId = assigned;
+      if (assigned && assigned !== "*") {
+        user.allowedTenants = [assigned];
+      } else if (assigned === "*") {
+        user.allowedTenants = ["*"];
       }
     }
     if (data.allowedTenants !== undefined) {
       user.allowedTenants = Array.isArray(data.allowedTenants) ? data.allowedTenants.filter(Boolean) : [];
+      if (user.allowedTenants.length === 1 && (!user.assignedTenantId || user.assignedTenantId === "*")) {
+        user.assignedTenantId = user.allowedTenants[0];
+      }
     }
     if (user.allowedTenants) {
       user.allowedTenants = user.allowedTenants.filter(Boolean);

@@ -1,5 +1,39 @@
 [
   {
+    "id": "4892af0c-0ef9-454e-b815-f0c834747877",
+    "tenantId": "turbonetwork",
+    "productId": 102,
+    "productName": "ONT ROUTER ZTE",
+    "type": "out",
+    "quantity": 1,
+    "variantName": "",
+    "reason": "Ajuste rápido desde Pistola Láser (-1)",
+    "operatorName": "EMMANUELLE",
+    "unitsAffected": [
+      "EQ-VR9UD5-001"
+    ],
+    "previousStock": 51,
+    "newStock": 50,
+    "timestamp": "2026-10-23T21:44:46.258Z"
+  },
+  {
+    "id": "b37ed6c8-f7d7-438e-93ab-32d1008a6a6c",
+    "tenantId": "turbonetwork",
+    "productId": 102,
+    "productName": "ONT ROUTER ZTE",
+    "type": "in",
+    "quantity": 1,
+    "variantName": "",
+    "reason": "Ajuste rápido desde Pistola Láser (+1)",
+    "operatorName": "EMMANUELLE",
+    "unitsAffected": [
+      "EQ-VR9UD5-051"
+    ],
+    "previousStock": 50,
+    "newStock": 51,
+    "timestamp": "2026-10-23T21:44:43.637Z"
+  },
+  {
     "id": "a9ba2dd2-db07-4aaa-97c5-e736fa79eaaa",
     "tenantId": "turbonetwork",
     "productId": 101,

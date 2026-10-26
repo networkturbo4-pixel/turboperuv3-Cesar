@@ -19,19 +19,21 @@
     "barcodePrinted": true,
     "status": "optimal",
     "createdAt": "2026-10-12T22:12:24.618Z",
-    "updatedAt": "2026-10-12T22:12:24.618Z",
+    "updatedAt": "2026-10-23T21:44:46.258Z",
     "itemUnits": [
       {
         "id": "unit_102_1_1791843661835",
         "itemNumber": 1,
         "sku": "EQ-VR9UD5-001",
         "barcode": "EQ-VR9UD5-001",
-        "status": "disponible",
+        "status": "entregado",
         "serialNumber": "",
-        "notes": "",
+        "notes": "Ajuste rápido desde Pistola Láser (-1)",
         "barcodePrinted": true,
         "createdAt": "2026-10-12T22:12:24.618Z",
-        "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
+        "barcodePrintedAt": "2026-10-14T15:52:12.616Z",
+        "assignedTo": "EMMANUELLE",
+        "assignedAt": "2026-10-23T21:44:46.258Z"
       },
       {
         "id": "unit_102_2_1791843661835",
@@ -620,6 +622,17 @@
         "barcodePrinted": true,
         "createdAt": "2026-10-12T22:12:24.618Z",
         "barcodePrintedAt": "2026-10-14T15:52:12.616Z"
+      },
+      {
+        "id": "unit_102_51_1792791883639",
+        "itemNumber": 51,
+        "sku": "EQ-VR9UD5-051",
+        "barcode": "EQ-VR9UD5-051",
+        "status": "disponible",
+        "serialNumber": "",
+        "notes": "Ajuste rápido desde Pistola Láser (+1)",
+        "barcodePrinted": false,
+        "createdAt": "2026-10-23T21:44:43.637Z"
       }
     ],
     "barcodePrintedAt": "2026-10-14T15:52:12.616Z",
@@ -1223,7 +1236,8 @@
         "createdAt": "2026-10-23T20:47:16.339Z",
         "conditionStatus": "optimo"
       }
-    ]
+    ],
+    "status": "optimal"
   },
   {
     "id": 102,
@@ -1333,7 +1347,8 @@
         "createdAt": "2026-10-23T20:47:16.340Z",
         "conditionStatus": "optimo"
       }
-    ]
+    ],
+    "status": "optimal"
   },
   {
     "id": 103,
@@ -1620,7 +1635,8 @@
         "createdAt": "2026-10-23T20:47:16.340Z",
         "conditionStatus": "optimo"
       }
-    ]
+    ],
+    "status": "optimal"
   },
   {
     "id": 104,
@@ -1799,6 +1815,7 @@
         "createdAt": "2026-10-23T20:47:16.340Z",
         "conditionStatus": "optimo"
       }
-    ]
+    ],
+    "status": "optimal"
   }
 ]
