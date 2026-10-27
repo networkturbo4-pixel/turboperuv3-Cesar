@@ -402,8 +402,8 @@ export function enrichEmployeeExpediente(emp: any, approvedLeaves: LeaveRequest[
     bankAccount: emp.bankAccount || "",
     documents: normalizedDocs,
   };
-}
-
+}
+
 export function computeHRAlerts(_enrichedEmployees: any[], _todayStr: string, _alertWindowDays = 15): any[] {
   return [];
 }
@@ -592,10 +592,12 @@ export function calculateMonthlyPayroll(params: {
 
       const advanceAndOtherDeductions = +(advancesDeduction + otherDeductions).toFixed(2);
 
-      const bonusesTotal = +empIncidents
-        .filter((i) => i.type === "bonus")
-        .reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
-        .toFixed(2);
+      const empFixedBonus = parseFloat((emp.bonus as any) || 0) || 0;
+      const bonusesTotal = +(
+        empIncidents
+          .filter((i) => i.type === "bonus")
+          .reduce((sum, i) => sum + (Number(i.amount) || 0), 0) + empFixedBonus
+      ).toFixed(2);
 
       // 6. Régimen Pensionario (AFP / ONP - Conforme normativa SBS / SUNAT)
       const rawAfp = String(emp.afpType || emp.pensionSystem || "ONP").toUpperCase().trim();
@@ -688,6 +690,7 @@ export function calculateMonthlyPayroll(params: {
         materialAndEppDeductions,
         advanceAndOtherDeductions,
         bonusesTotal,
+        bonifRegu: bonusesTotal,
         incidentsList: empIncidents,
         afpType: emp.afpType || "ONP",
         pensionSystem: pensionLabel,

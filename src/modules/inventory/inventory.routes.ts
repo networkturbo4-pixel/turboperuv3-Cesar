@@ -48,6 +48,8 @@ import {
   getPersonnelAssignments,
   getInventoryMetrics,
   loadMovements,
+  regenerateProductUnitSkusInfinite,
+  regenerateAllTenantUnitSkusInfinite,
 } from "./inventory.service";
 
 const variantSchema = z.object({
@@ -236,6 +238,37 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       success: true,
       message: "Unidades individuales y SKUs actualizados correctamente",
       data: updated.itemUnits || [],
+    };
+  });
+
+  // Regenerar SKUs de unidades a formato Infinito Supermercado por producto
+  fastify.post("/inventory/products/:id/regenerate-infinite-skus", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID inválido" });
+    }
+    const result = regenerateProductUnitSkusInfinite(tenantId, numId);
+    if (!result.success) {
+      return reply.status(404).send({ success: false, message: "Producto no encontrado" });
+    }
+    return {
+      success: true,
+      message: `¡${result.count} SKUs de ítems regenerados de manera infinita (Modo Supermercado)!`,
+      data: result.product?.itemUnits || [],
+      product: result.product,
+    };
+  });
+
+  // Regenerar SKUs de unidades a formato Infinito Supermercado para todo el inventario del tenant
+  fastify.post("/inventory/regenerate-all-infinite-skus", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const result = regenerateAllTenantUnitSkusInfinite(tenantId);
+    return {
+      success: true,
+      message: `¡${result.unitsCount} ítems en ${result.productsCount} productos actualizados a SKUs infinitos de supermercado!`,
+      data: result,
     };
   });
 

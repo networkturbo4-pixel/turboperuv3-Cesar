@@ -425,17 +425,104 @@ export function saveCategories(tenantId: string, categories: InventoryCategory[]
   fs.writeFileSync(filePath, JSON.stringify(categories, null, 2), "utf-8");
 }
 
+// ==========================================
+// GENERACIÓN INFINITA DE SKUs (ESTILO SUPERMERCADO)
+// ==========================================
+// Alfabeto alfanumérico limpio de 30 caracteres (sin 0/O, sin 1/I para evitar ambigüedades al leer o escanear con pistola láser)
+export const SKU_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+/**
+ * Genera un código aleatorio infinito con el alfabeto limpio.
+ */
+export function generateRandomCode(length: number = 4): string {
+  let res = "";
+  for (let i = 0; i < length; i++) {
+    res += SKU_ALPHABET.charAt(Math.floor(Math.random() * SKU_ALPHABET.length));
+  }
+  return res;
+}
+
+/**
+ * Genera un SKU aleatorio infinito para productos (ej: EQ-9X4K2L).
+ */
+export function generateRandomSku(preferredPrefix: string = "SKU", existingSkus?: Set<string>): string {
+  const prefix = (preferredPrefix || "SKU").trim().toUpperCase();
+  let attempts = 0;
+  while (attempts < 500) {
+    const code = generateRandomCode(6);
+    const candidate = `${prefix}-${code}`;
+    if (!existingSkus || !existingSkus.has(candidate)) {
+      return candidate;
+    }
+    attempts++;
+  }
+  return `${prefix}-${Date.now().toString(36).toUpperCase().slice(-6)}`;
+}
+
+/**
+ * Genera un SKU infinito único por ítem individual (estilo supermercado).
+ * Cada unidad física recibe su propio SKU individual y código de barras irrepetible.
+ * Ejemplos: EQ-VR9UD5-7K82, PAS-ZKTC39-M4P9
+ */
+export function generateInfiniteUnitSku(
+  baseSku: string,
+  existingUnitsOrSkus?: (ProductItemUnit | string)[] | Set<string>,
+  extraExistingSkus?: Set<string>
+): string {
+  const prefix = (baseSku || "SKU").trim().toUpperCase();
+  const used = new Set<string>();
+
+  if (existingUnitsOrSkus instanceof Set) {
+    existingUnitsOrSkus.forEach((s) => used.add(s.toUpperCase()));
+  } else if (Array.isArray(existingUnitsOrSkus)) {
+    existingUnitsOrSkus.forEach((item) => {
+      if (typeof item === "string") {
+        used.add(item.toUpperCase());
+      } else if (item && item.sku) {
+        used.add(item.sku.toUpperCase());
+      }
+    });
+  }
+
+  if (extraExistingSkus) {
+    extraExistingSkus.forEach((s) => used.add(s.toUpperCase()));
+  }
+
+  let codeLen = 4;
+  let attempts = 0;
+
+  while (attempts < 500) {
+    const rand = generateRandomCode(codeLen);
+    const candidate = `${prefix}-${rand}`;
+    if (!used.has(candidate)) {
+      return candidate;
+    }
+    attempts++;
+    if (attempts > 50) codeLen = 5;
+    if (attempts > 150) codeLen = 6;
+  }
+
+  // Fallback con timestamp de alta resolución
+  return `${prefix}-${Date.now().toString(36).toUpperCase().slice(-5)}`;
+}
+
 export function ensureItemUnits(product: InventoryProduct): boolean {
+  // Productos a granel (ej. bobinas/cables en metros) no generan miles de unidades individuales si no tienen unidades previas
+  if (product.type === "bulk" && (!product.itemUnits || product.itemUnits.length === 0)) {
+    return false;
+  }
+
   let changed = false;
   const stockCount = Math.max(1, Number(product.stock) || 1);
 
   if (!product.itemUnits || !Array.isArray(product.itemUnits) || product.itemUnits.length === 0) {
     product.itemUnits = [];
+    const usedSkus = new Set<string>();
     for (let i = 1; i <= stockCount; i++) {
-      const suffix = String(i).padStart(3, "0");
-      const unitSku = `${product.sku}-${suffix}`;
+      const unitSku = generateInfiniteUnitSku(product.sku, usedSkus);
+      usedSkus.add(unitSku);
       product.itemUnits.push({
-        id: `unit_${product.id}_${i}_${Date.now()}`,
+        id: `unit_${product.id}_${i}_${Date.now()}_${i}`,
         itemNumber: i,
         sku: unitSku,
         barcode: unitSku,
@@ -452,11 +539,12 @@ export function ensureItemUnits(product: InventoryProduct): boolean {
     changed = true;
   } else if (product.itemUnits.length < stockCount) {
     const curLen = product.itemUnits.length;
+    const usedSkus = new Set<string>(product.itemUnits.map((u) => u.sku));
     for (let i = curLen + 1; i <= stockCount; i++) {
-      const suffix = String(i).padStart(3, "0");
-      const unitSku = `${product.sku}-${suffix}`;
+      const unitSku = generateInfiniteUnitSku(product.sku, usedSkus);
+      usedSkus.add(unitSku);
       product.itemUnits.push({
-        id: `unit_${product.id}_${i}_${Date.now()}`,
+        id: `unit_${product.id}_${i}_${Date.now()}_${i}`,
         itemNumber: i,
         sku: unitSku,
         barcode: unitSku,
@@ -638,8 +726,11 @@ export function createProduct(
   }
 
   const now = new Date().toISOString();
+  const existingSkus = new Set<string>(products.map((p) => (p.sku || "").toUpperCase()));
+  const productSku = (payload.sku || "").trim().toUpperCase() || generateRandomSku("SKU", existingSkus);
   const newProduct: InventoryProduct = {
     ...payload,
+    sku: productSku,
     id: newId,
     tenantId,
     stock: totalStock,
@@ -988,10 +1079,11 @@ export function adjustStock(
       p.stock += qty;
       if (!p.itemUnits) p.itemUnits = [];
       const maxNum = p.itemUnits.reduce((max, u) => Math.max(max, u.itemNumber || 0), 0);
+      const usedSkus = new Set<string>(p.itemUnits.map((u) => u.sku));
       for (let i = 1; i <= qty; i++) {
         const nextNum = maxNum + i;
-        const suffix = String(nextNum).padStart(3, "0");
-        const unitSku = `${p.sku}-${suffix}`;
+        const unitSku = generateInfiniteUnitSku(p.sku, usedSkus);
+        usedSkus.add(unitSku);
         const newUnit: ProductItemUnit = {
           id: `unit_${p.id}_${nextNum}_${Date.now() + i}`,
           itemNumber: nextNum,
@@ -1075,10 +1167,11 @@ export function adjustStock(
         } else if (qty > p.stock) {
           const diff = qty - p.stock;
           const maxNum = p.itemUnits.reduce((max, u) => Math.max(max, u.itemNumber || 0), 0);
+          const usedSkus = new Set<string>(p.itemUnits.map((u) => u.sku));
           for (let i = 1; i <= diff; i++) {
             const nextNum = maxNum + i;
-            const suffix = String(nextNum).padStart(3, "0");
-            const unitSku = `${p.sku}-${suffix}`;
+            const unitSku = generateInfiniteUnitSku(p.sku, usedSkus);
+            usedSkus.add(unitSku);
             p.itemUnits.push({
               id: `unit_${p.id}_${nextNum}_${Date.now() + i}`,
               itemNumber: nextNum,
@@ -2322,7 +2415,7 @@ export function getInventoryMetrics(tenantId: string): InventoryMetrics {
 }
 
 
-
+
 // ==========================================
 // ASIGNACIÓN DE EQUIPOS DEL STOCK A NODOS POP
 // ==========================================
@@ -2650,4 +2743,59 @@ export function removeVehicleChecklistItem(tenantId: string, assetId: number, it
   asset.updatedAt = new Date().toISOString();
   saveAssets(tenantId, assets);
   return asset.vehicleChecklist;
+}
+
+// ==========================================
+// REGENERACIÓN MASIVA DE SKUs INFINITOS (MODO SUPERMERCADO)
+// ==========================================
+export function regenerateProductUnitSkusInfinite(
+  tenantId: string,
+  productId: number
+): { success: boolean; product?: InventoryProduct; count: number } {
+  const products = loadProducts(tenantId);
+  const p = products.find((item) => item.id === productId);
+  if (!p) return { success: false, count: 0 };
+
+  ensureItemUnits(p);
+  const usedSkus = new Set<string>();
+  if (Array.isArray(p.itemUnits)) {
+    p.itemUnits.forEach((u) => {
+      const newSku = generateInfiniteUnitSku(p.sku, usedSkus);
+      usedSkus.add(newSku);
+      u.sku = newSku;
+      u.barcode = newSku;
+    });
+  }
+
+  p.updatedAt = new Date().toISOString();
+  saveProducts(tenantId, products);
+  return { success: true, product: p, count: (p.itemUnits || []).length };
+}
+
+export function regenerateAllTenantUnitSkusInfinite(
+  tenantId: string
+): { success: boolean; productsCount: number; unitsCount: number } {
+  const products = loadProducts(tenantId);
+  let unitsCount = 0;
+  let productsCount = 0;
+
+  for (const p of products) {
+    if (p.itemUnits && p.itemUnits.length > 0) {
+      const usedSkus = new Set<string>();
+      p.itemUnits.forEach((u) => {
+        const newSku = generateInfiniteUnitSku(p.sku, usedSkus);
+        usedSkus.add(newSku);
+        u.sku = newSku;
+        u.barcode = newSku;
+        unitsCount++;
+      });
+      p.updatedAt = new Date().toISOString();
+      productsCount++;
+    }
+  }
+
+  if (productsCount > 0) {
+    saveProducts(tenantId, products);
+  }
+  return { success: true, productsCount, unitsCount };
 }

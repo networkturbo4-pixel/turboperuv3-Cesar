@@ -55,6 +55,8 @@ export interface Employee {
   specialSchedules?: Record<string, { schedule: string; expectedCheckInTime?: string }>;
   expectedCheckInTime: string; // ej: "08:00"
   salary: string;
+  bonus?: string;
+  bonusDescription?: string;
   currency: string;
   hireDate: string;
   birthDate?: string;
@@ -445,6 +447,12 @@ const createEmployeeSchema = z
       .union([z.string(), z.number()])
       .transform((val) => (typeof val === "number" ? val.toFixed(2) : val))
       .default("2000.00"),
+    bonus: z
+      .union([z.string(), z.number()])
+      .transform((val) => (typeof val === "number" ? val.toFixed(2) : String(val).trim()))
+      .optional()
+      .default("0.00"),
+    bonusDescription: z.string().optional().default(""),
     currency: z.string().default("S/"),
     hireDate: z.string().optional(),
     birthDate: z.string().optional(),
@@ -735,6 +743,7 @@ export function renderPublicCredentialHtml(emp: Employee, baseUrl: string): stri
           <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/80">
             <span class="text-slate-400 block text-[10px] uppercase font-bold">Salario Mensual Declarado:</span>
             <span class="font-mono font-extrabold text-emerald-700 text-sm">${currency} ${salaryNum.toFixed(2)}</span>
+            ${emp.bonus && parseFloat(emp.bonus) > 0 ? `<span class="block text-[11px] text-amber-700 font-semibold font-mono mt-0.5">+ ${currency} ${parseFloat(emp.bonus).toFixed(2)} Bono ${emp.bonusDescription ? `(${emp.bonusDescription})` : ''}</span>` : ''}
           </div>
         </div>
       </div>
@@ -1312,6 +1321,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       specialSchedules: (body as any).specialSchedules || {},
       expectedCheckInTime: expectedTime || "08:00",
       salary: body.salary,
+      bonus: body.bonus || "0.00",
+      bonusDescription: body.bonusDescription || "",
       currency: body.currency,
       hireDate: body.hireDate || new Date().toISOString().slice(0, 10),
       birthDate: body.birthDate,
@@ -1374,6 +1385,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       expectedCheckInTime: expectedTime,
       workDays: body.workDays !== undefined ? body.workDays : (current.workDays || ["lun", "mar", "mie", "jue", "vie"]),
       specialSchedules: (body as any).specialSchedules !== undefined ? (body as any).specialSchedules : (current.specialSchedules || {}),
+      bonus: body.bonus !== undefined ? (typeof body.bonus === "number" ? (body.bonus as number).toFixed(2) : String(body.bonus).trim()) : (current.bonus || "0.00"),
+      bonusDescription: body.bonusDescription !== undefined ? String(body.bonusDescription).trim() : (current.bonusDescription || ""),
       updatedAt: new Date().toISOString(),
     };
 
