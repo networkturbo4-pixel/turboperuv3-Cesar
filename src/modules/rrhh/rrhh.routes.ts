@@ -3592,6 +3592,8 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
 
     const configResponse = [
       `GET OPTION FROM: ${sn}`,
+      `Stamp=9999`,
+      `OpStamp=9999`,
       `ATTLOGStamp=None`,
       `OPERLOGStamp=9999`,
       `ATTPHOTOStamp=None`,
@@ -3599,10 +3601,12 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       `Delay=5`,
       `TransTimes=00:00;14:05`,
       `TransInterval=1`,
-      `TransFlag=TransData AttLog\tOpLog`,
+      `TransFlag=TransData AttLog OpLog AttPhoto EnrollUser ChgUser EnrollFP ChgFP FACE UserPic BioPhoto`,
       `TimeZone=-5`,
       `Realtime=1`,
       `Encrypt=0`,
+      `ServerVer=3.4.1`,
+      `PushProtVer=2.4.1`,
       `ServerTime=${curDateTime}`,
     ].join("\n");
 
