@@ -25,6 +25,7 @@ import { whatsappRoutes } from "./modules/messages/whatsapp.routes";
 import { mapsRoutes } from "./modules/maps/maps.routes";
 import { databaseRoutes } from "./modules/database/database.routes";
 import { apartadosRoutes } from "./modules/apartados/apartados.routes";
+import { scannerRoutes } from "./modules/scanner/scanner.routes";
 import { ogRoutes } from "./modules/og/og.routes";
 import { resolveTenantFromRequest, injectOpenGraphHtml } from "./modules/og/og.service";
 import { initializeTenantsSystem } from "./modules/tenants/tenants.service";
@@ -185,6 +186,35 @@ export async function buildApp() {
       return serveDynamicTechHtml(req, reply, tenantSlug);
     });
 
+    // 1.1c Rutas del Escáner Móvil con OCR (TurboScanner Standalone & Paired)
+    const serveDynamicScannerHtml = (req: any, reply: any, tenantSlug?: string) => {
+      const scanPath = path.join(publicPath, "scan.html");
+      if (!fs.existsSync(scanPath)) {
+        return reply.status(404).send("scan.html not found");
+      }
+      const rawHtml = fs.readFileSync(scanPath, "utf-8");
+      const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
+      const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
+      const baseUrl = `${proto}://${host}`;
+      const currentUrl = `${baseUrl}${req.url}`;
+      const tenant = resolveTenantFromRequest(req, tenantSlug);
+      const processedHtml = injectOpenGraphHtml(rawHtml, tenant, currentUrl, baseUrl);
+      return reply.type("text/html; charset=utf-8").send(processedHtml);
+    };
+
+    fastify.get("/scan", async (req, reply) => {
+      return serveDynamicScannerHtml(req, reply);
+    });
+
+    fastify.get("/scanner", async (req, reply) => {
+      return serveDynamicScannerHtml(req, reply);
+    });
+
+    fastify.get("/t/:tenantSlug/scan", async (req, reply) => {
+      const { tenantSlug } = req.params as { tenantSlug: string };
+      return serveDynamicScannerHtml(req, reply, tenantSlug);
+    });
+
     // 1.2 Rutas de Soporte en Vivo por Videollamada (WebRTC One-Click Room para Clientes)
     fastify.get("/soporte/:roomId", async (req, reply) => {
       const callPath = path.join(publicPath, "call.html");
@@ -300,6 +330,7 @@ export async function buildApp() {
   await fastify.register(mapsRoutes, { prefix: "/api" });
   await fastify.register(databaseRoutes, { prefix: "/api" });
   await fastify.register(apartadosRoutes, { prefix: "/api" });
+  await fastify.register(scannerRoutes, { prefix: "/api" });
 
 
   // Mensaje base de bienvenida para la API

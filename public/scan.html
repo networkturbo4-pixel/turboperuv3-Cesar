@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#090d16">
+  <title>TurboScanner Móvil • Escáner & OCR</title>
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7V5a2 2 0 0 1 2-2h2'%3E%3C/path%3E%3Cpath d='M17 3h2a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3Cpath d='M21 17v2a2 2 0 0 1-2 2h-2'%3E%3C/path%3E%3Cpath d='M7 21H5a2 2 0 0 1-2-2v-2'%3E%3C/path%3E%3Crect x='7' y='7' width='10' height='10' rx='2'%3E%3C/rect%3E%3C/svg%3E">
+
+  <!-- Estilos base modernos y Tailwind -->
+  <link rel="stylesheet" href="/assets/tailwind.min.css">
+  <script src="/js/jsQR.min.js"></script>
+  <script src="/js/tesseract.min.js"></script>
+
+  <style>
+    body {
+      background-color: #07090e;
+      color: #f1f5f9;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    /* Animación de línea láser */
+    @keyframes laserScan {
+      0% { top: 6%; opacity: 0.8; }
+      50% { top: 92%; opacity: 1; }
+      100% { top: 6%; opacity: 0.8; }
+    }
+    .laser-line {
+      position: absolute;
+      left: 4%;
+      right: 4%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #ef4444 30%, #f87171 50%, #ef4444 70%, transparent);
+      box-shadow: 0 0 12px #ef4444, 0 0 4px #fca5a5;
+      animation: laserScan 2.4s ease-in-out infinite;
+    }
+    .laser-line-ocr {
+      background: linear-gradient(90deg, transparent, #06b6d4 30%, #38bdf8 50%, #06b6d4 70%, transparent);
+      box-shadow: 0 0 12px #0ea5e9, 0 0 4px #7dd3fc;
+      animation: laserScan 3s ease-in-out infinite;
+    }
+
+    /* Retícula de esquinas */
+    .corner-bracket {
+      width: 20px;
+      height: 20px;
+      border-color: currentColor;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden safe-area-inset">
+
+  <!-- ========================================== -->
+  <!-- BARRA SUPERIOR / HEADER                    -->
+  <!-- ========================================== -->
+  <header class="sticky top-0 z-30 bg-[#090d16]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-2.5">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h2v4m-2-2h.01M4 20h4m-4-4h4m12-4h.01M4 12h4m12-4h.01M4 8h4m4 12h.01M12 16h.01M12 12h.01M12 8h.01M4 4h4v4H4V4zm12 0h4v4h-4V4zM4 16h4v4H4v-4z"/></svg>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+          <span>TurboScanner</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-400 font-mono font-bold">MÓVIL</span>
+        </h1>
+        <div id="session-status-badge" class="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span id="session-status-text">Iniciando cámara...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controles rápidos: Linterna y Girar Cámara -->
+    <div class="flex items-center space-x-1.5">
+      <button type="button" id="btn-torch" onclick="toggleTorch()" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 flex items-center justify-center border border-white/10 transition active:scale-90" title="Linterna">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      </button>
+      <button type="button" onclick="switchCameraFacing()" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 flex items-center justify-center border border-white/10 transition active:scale-90" title="Girar Cámara">
+        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- SELECTOR DE MODO: BARRAS / QR vs OCR TEXTO -->
+  <!-- ========================================== -->
+  <div class="px-4 pt-3 pb-1">
+    <div class="grid grid-cols-2 p-1 bg-white/5 rounded-2xl border border-white/10 text-xs font-semibold">
+      <button type="button" id="tab-mode-barcode" onclick="setScannerMode('barcode')" class="py-2 rounded-xl text-center transition flex items-center justify-center gap-1.5 bg-blue-600 text-white shadow-sm font-bold">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h2v4m-2-2h.01M4 20h4m-4-4h4m12-4h.01M4 12h4m12-4h.01M4 8h4m4 12h.01M12 16h.01M12 12h.01M12 8h.01M4 4h4v4H4V4zm12 0h4v4h-4V4zM4 16h4v4H4v-4z"/></svg>
+        <span>Código Barras / QR</span>
+      </button>
+      <button type="button" id="tab-mode-ocr" onclick="setScannerMode('ocr')" class="py-2 rounded-xl text-center transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>OCR Texto / Serial</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- ÁREA DE VISOR DE CÁMARA (VIEWPORT)         -->
+  <!-- ========================================== -->
+  <main class="flex-1 flex flex-col justify-center px-4 py-2 relative">
+    <div class="relative w-full aspect-square max-h-[50vh] bg-black rounded-3xl overflow-hidden border border-white/10 shadow-2xl flex items-center justify-center mx-auto">
+      <!-- Elemento de video principal -->
+      <video id="scanner-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+      <canvas id="scanner-canvas" class="hidden"></canvas>
+      <canvas id="ocr-crop-canvas" class="hidden"></canvas>
+
+      <!-- RETÍCULA MODO 1: BARRAS & QR (CUADRADA) -->
+      <div id="reticle-barcode" class="absolute inset-8 border-2 border-dashed border-red-500/70 rounded-2xl pointer-events-none flex flex-col justify-between p-2 text-red-500">
+        <div class="flex justify-between">
+          <div class="corner-bracket border-t-3 border-l-3 rounded-tl-lg"></div>
+          <div class="corner-bracket border-t-3 border-r-3 rounded-tr-lg"></div>
+        </div>
+        <div class="laser-line"></div>
+        <div class="flex justify-between">
+          <div class="corner-bracket border-b-3 border-l-3 rounded-bl-lg"></div>
+          <div class="corner-bracket border-b-3 border-r-3 rounded-br-lg"></div>
+        </div>
+      </div>
+
+      <!-- RETÍCULA MODO 2: OCR TEXTO / SERIAL (PANORÁMICA APISADA) -->
+      <div id="reticle-ocr" class="hidden absolute inset-x-6 top-1/2 -translate-y-1/2 h-36 border-2 border-dashed border-cyan-400/80 rounded-2xl pointer-events-none flex flex-col justify-between p-2 text-cyan-400 bg-cyan-500/5">
+        <div class="flex justify-between">
+          <div class="corner-bracket border-t-3 border-l-3 rounded-tl-lg"></div>
+          <div class="corner-bracket border-t-3 border-r-3 rounded-tr-lg"></div>
+        </div>
+        <div class="laser-line-ocr"></div>
+        <div class="flex justify-between">
+          <div class="corner-bracket border-b-3 border-l-3 rounded-bl-lg"></div>
+          <div class="corner-bracket border-b-3 border-r-3 rounded-br-lg"></div>
+        </div>
+      </div>
+
+      <!-- Overlay de Estado de Procesamiento OCR -->
+      <div id="ocr-processing-overlay" class="hidden absolute inset-0 bg-black/75 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center z-10">
+        <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center mb-3">
+          <svg class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+        </div>
+        <div id="ocr-processing-title" class="text-sm font-bold text-white">Analizando Texto con OCR...</div>
+        <p id="ocr-processing-desc" class="text-xs text-slate-400 mt-1 max-w-xs">Extrayendo números de serie, MAC y etiquetas del equipo</p>
+      </div>
+
+      <!-- Instrucción flotante inferior en cámara -->
+      <div id="camera-tip-badge" class="absolute bottom-3 inset-x-4 text-center py-1.5 px-3 rounded-xl bg-black/70 backdrop-blur-md text-[11px] font-mono font-medium text-slate-200 border border-white/10 pointer-events-none">
+        Apunta al código de barras o QR
+      </div>
+    </div>
+
+    <!-- BOTÓN DE CAPTURA OCR (Solo visible en modo OCR) -->
+    <div id="ocr-action-container" class="hidden mt-3 text-center space-y-2">
+      <button type="button" onclick="captureAndProcessOcr()" id="btn-capture-ocr" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600 via-sky-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-sm shadow-lg shadow-cyan-500/25 active:scale-98 transition flex items-center justify-center gap-2 cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>📸 Capturar & Reconocer Texto / Serial</span>
+      </button>
+      <div class="flex items-center justify-center gap-4 text-[11px] text-slate-400">
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" id="ocr-auto-send-toggle" checked class="rounded text-cyan-500 bg-white/10 border-white/20">
+          <span>Enviar automáticamente a PC</span>
+        </label>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================== -->
+  <!-- TARJETA DE RESULTADOS / ÚLTIMO ESCANEO     -->
+  <!-- ========================================== -->
+  <section class="px-4 pb-4 space-y-2">
+    <!-- Contenedor del último resultado detectado -->
+    <div id="scan-result-card" class="hidden p-4 rounded-2xl bg-white/[0.04] border border-white/10 shadow-lg space-y-3">
+      <div class="flex items-center justify-between">
+        <span id="scan-format-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+          CÓDIGO DETECTADO
+        </span>
+        <span id="scan-time-badge" class="text-[10px] text-slate-400 font-mono">Ahora</span>
+      </div>
+
+      <!-- Texto principal detectado -->
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex-1 overflow-hidden">
+          <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Valor Detectado</div>
+          <div id="scan-code-value" class="text-base font-bold font-mono text-white tracking-wide truncate">--</div>
+        </div>
+        <button type="button" onclick="copyCurrentScannedCode()" class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 active:scale-90 transition" title="Copiar">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        </button>
+      </div>
+
+      <!-- Chips de campos OCR sugeridos (S/N, MAC, SKU) -->
+      <div id="ocr-chips-container" class="hidden space-y-1.5">
+        <div class="text-[10px] text-slate-400 uppercase font-semibold">Coincidencias identificadas (Toca para seleccionar):</div>
+        <div id="ocr-chips-list" class="flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <!-- Botones de Acción para el resultado -->
+      <div class="flex items-center gap-2 pt-1">
+        <button type="button" id="btn-send-pc" onclick="sendCurrentCodeToPc()" class="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-95 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          <span id="btn-send-pc-text">Enviar a mi PC</span>
+        </button>
+        <button type="button" onclick="lookupInInventory()" class="py-2.5 px-3 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 font-semibold text-xs border border-blue-500/20 flex items-center justify-center gap-1 active:scale-95 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <span>Consultar</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Entrada Manual Rápida -->
+    <div class="flex items-center gap-2">
+      <div class="relative flex-1">
+        <input 
+          type="text" 
+          id="manual-scanner-input" 
+          placeholder="O ingresa código / serie manual..." 
+          class="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+          onkeydown="if(event.key==='Enter') handleManualSubmit(this.value)"
+        />
+      </div>
+      <button type="button" onclick="handleManualSubmit(document.getElementById('manual-scanner-input').value)" class="py-2 px-3.5 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-sm active:scale-95 transition">
+        OK
+      </button>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- TOAST FLOTANTE DE NOTIFICACIÓN             -->
+  <!-- ========================================== -->
+  <div id="scanner-toast" class="fixed top-16 inset-x-4 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex justify-center">
+    <div id="scanner-toast-content" class="px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-semibold text-xs shadow-xl flex items-center gap-2 border border-white/20">
+      <span>Notificación</span>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- SCRIPTS DE LÓGICA DE ESCÁNER Y OCR         -->
+  <!-- ========================================== -->
+  <script>
+    // Variables de Estado
+    let currentMode = 'barcode'; // 'barcode' | 'ocr'
+    let videoStream = null;
+    let currentFacingMode = 'environment';
+    let torchActive = false;
+    let barcodeInterval = null;
+    let isDetectingBarcode = false;
+    let tesseractWorker = null;
+    let isOcrLoading = false;
+    let isOcrProcessing = false;
+    let lastScannedCode = '';
+    let currentSessionId = null;
+    let isPairedWithPc = false;
+
+    // Obtener parámetros de URL (ej: /scan?session=SES-123456)
+    const urlParams = new URLSearchParams(window.location.search);
+    currentSessionId = urlParams.get('session');
+
+    // Inicializar al cargar la página
+    window.addEventListener('DOMContentLoaded', async () => {
+      initSessionConnection();
+      await startCamera();
+      preloadOcrWorker();
+    });
+
+    // -------------------------------------------------------------
+    // CONEXIÓN Y SINCRONIZACIÓN CON LA PC (SESIÓN REMOTA)
+    // -------------------------------------------------------------
+    async function initSessionConnection() {
+      const badge = document.getElementById('session-status-badge');
+      const text = document.getElementById('session-status-text');
+
+      if (!currentSessionId) {
+        if (text) text.textContent = 'Modo Autónomo (Sin PC)';
+        if (badge) badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-400"></span><span class="text-slate-400">Modo Autónomo</span>';
+        return;
+      }
+
+      // Notificar al servidor que el celular se ha conectado a la sesión
+      try {
+        const deviceInfo = getDeviceInfoString();
+        const res = await fetch(`/api/scanner/session/${encodeURIComponent(currentSessionId)}/connect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceInfo })
+        });
+        const data = await res.json();
+        if (data.success) {
+          isPairedWithPc = true;
+          if (badge) {
+            badge.innerHTML = `
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-emerald-400 font-bold">VINCULADO CON PC (${currentSessionId})</span>
+            `;
+          }
+          showToast(`¡Conectado exitosamente con tu PC!`, 'success');
+        } else {
+          if (text) text.textContent = 'Sesión no encontrada';
+        }
+      } catch (err) {
+        console.warn("Error conectando a sesión:", err);
+      }
+    }
+
+    function getDeviceInfoString() {
+      const ua = navigator.userAgent || '';
+      if (/iPhone|iPad|iPod/i.test(ua)) return 'iPhone / Apple iOS';
+      if (/Android/i.test(ua)) return 'Celular Android';
+      return 'Navegador Móvil';
+    }
+
+    // -------------------------------------------------------------
+    // GESTIÓN DE CÁMARA & VIDEO STREAM
+    // -------------------------------------------------------------
+    async function startCamera() {
+      stopCamera();
+      const video = document.getElementById('scanner-video');
+      const text = document.getElementById('session-status-text');
+
+      try {
+        const constraints = {
+          video: {
+            facingMode: currentFacingMode,
+            width: { ideal: 1920, min: 1280 },
+            height: { ideal: 1080, min: 720 },
+          },
+          audio: false
+        };
+
+        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = videoStream;
+        await video.play();
+
+        // Intentar habilitar enfoque continuo en dispositivos móviles
+        try {
+          const track = videoStream.getVideoTracks()[0];
+          if (track && track.getCapabilities) {
+            const caps = track.getCapabilities();
+            if (caps.focusMode && caps.focusMode.includes('continuous')) {
+              await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+            }
+          }
+        } catch (_) {}
+
+        if (!currentSessionId && text) {
+          text.textContent = 'Cámara Activa';
+        }
+
+        if (currentMode === 'barcode') {
+          startBarcodeDetectionLoop();
+        }
+      } catch (err) {
+        console.error("Camera error:", err);
+        showToast('No se pudo acceder a la cámara. Revisa los permisos.', 'error');
+        if (text) text.textContent = 'Error de cámara';
+      }
+    }
+
+    function stopCamera() {
+      if (barcodeInterval) {
+        clearInterval(barcodeInterval);
+        barcodeInterval = null;
+      }
+      if (videoStream) {
+        videoStream.getTracks().forEach(t => t.stop());
+        videoStream = null;
+      }
+    }
+
+    function switchCameraFacing() {
+      currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+      haptic('light');
+      startCamera();
+    }
+
+    async function toggleTorch() {
+      if (!videoStream) return;
+      const track = videoStream.getVideoTracks()[0];
+      if (!track) return;
+
+      try {
+        torchActive = !torchActive;
+        await track.applyConstraints({ advanced: [{ torch: torchActive }] });
+        const btn = document.getElementById('btn-torch');
+        if (btn) {
+          if (torchActive) {
+            btn.classList.add('bg-amber-500', 'text-black');
+            btn.classList.remove('bg-white/5', 'text-slate-300');
+          } else {
+            btn.classList.remove('bg-amber-500', 'text-black');
+            btn.classList.add('bg-white/5', 'text-slate-300');
+          }
+        }
+        haptic('medium');
+      } catch (err) {
+        showToast('Linterna no soportada en este dispositivo', 'warn');
+      }
+    }
+
+    // -------------------------------------------------------------
+    // CAMBIO DE MODO: BARRAS/QR vs OCR TEXTO
+    // -------------------------------------------------------------
+    function setScannerMode(mode) {
+      if (currentMode === mode) return;
+      currentMode = mode;
+      haptic('light');
+
+      const btnBarcode = document.getElementById('tab-mode-barcode');
+      const btnOcr = document.getElementById('tab-mode-ocr');
+      const reticleBarcode = document.getElementById('reticle-barcode');
+      const reticleOcr = document.getElementById('reticle-ocr');
+      const ocrAction = document.getElementById('ocr-action-container');
+      const tipBadge = document.getElementById('camera-tip-badge');
+
+      if (mode === 'barcode') {
+        btnBarcode.className = 'py-2 rounded-xl text-center transition flex items-center justify-center gap-1.5 bg-blue-600 text-white shadow-sm font-bold';
+        btnOcr.className = 'py-2 rounded-xl text-center transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white';
+        reticleBarcode.classList.remove('hidden');
+        reticleOcr.classList.add('hidden');
+        ocrAction.classList.add('hidden');
+        if (tipBadge) tipBadge.textContent = 'Apunta al código de barras o QR';
+        startBarcodeDetectionLoop();
+      } else {
+        btnOcr.className = 'py-2 rounded-xl text-center transition flex items-center justify-center gap-1.5 bg-cyan-600 text-white shadow-sm font-bold';
+        btnBarcode.className = 'py-2 rounded-xl text-center transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white';
+        reticleBarcode.classList.add('hidden');
+        reticleOcr.classList.remove('hidden');
+        ocrAction.classList.remove('hidden');
+        if (tipBadge) tipBadge.textContent = 'Enfoca la serie (S/N), MAC o etiqueta y pulsa Capturar';
+        if (barcodeInterval) {
+          clearInterval(barcodeInterval);
+          barcodeInterval = null;
+        }
+      }
+    }
+
+    // -------------------------------------------------------------
+    // MOTOR DE ESCANEO 1: CÓDIGOS DE BARRA Y QR
+    // -------------------------------------------------------------
+    function startBarcodeDetectionLoop() {
+      if (barcodeInterval) clearInterval(barcodeInterval);
+
+      const video = document.getElementById('scanner-video');
+      const canvas = document.getElementById('scanner-canvas');
+
+      let nativeDetector = null;
+      if ('BarcodeDetector' in window) {
+        try {
+          nativeDetector = new window.BarcodeDetector({
+            formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'upc_a', 'data_matrix']
+          });
+        } catch (_) {}
+      }
+
+      barcodeInterval = setInterval(async () => {
+        if (!video || video.readyState < 2 || video.videoWidth === 0 || isDetectingBarcode) return;
+        isDetectingBarcode = true;
+
+        try {
+          // 1. Intentar con BarcodeDetector nativo
+          if (nativeDetector) {
+            try {
+              const barcodes = await nativeDetector.detect(video);
+              if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                handleScannedValue(barcodes[0].rawValue, 'barcode');
+                return;
+              }
+            } catch (_) {}
+          }
+
+          // 2. Fallback universal jsQR para QR
+          if (typeof jsQR === 'function' && canvas) {
+            const w = video.videoWidth;
+            const h = video.videoHeight;
+            if (canvas.width !== w || canvas.height !== h) {
+              canvas.width = w;
+              canvas.height = h;
+            }
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            if (ctx) {
+              ctx.drawImage(video, 0, 0, w, h);
+              const imgData = ctx.getImageData(0, 0, w, h);
+              const qrResult = jsQR(imgData.data, imgData.width, imgData.height, {
+                inversionAttempts: "dontInvert"
+              });
+              if (qrResult && qrResult.data) {
+                handleScannedValue(qrResult.data, 'qr');
+                return;
+              }
+            }
+          }
+        } finally {
+          isDetectingBarcode = false;
+        }
+      }, 200);
+    }
+
+    // -------------------------------------------------------------
+    // MOTOR DE ESCANEO 2: RECONOCIMIENTO OCR ÓPTICO (TEXTO/SERIALES)
+    // -------------------------------------------------------------
+    async function preloadOcrWorker() {
+      if (typeof Tesseract === 'undefined') return;
+      try {
+        isOcrLoading = true;
+        // Inicializar worker con inglés (óptimo para códigos alfanuméricos, seriales y MACs)
+        tesseractWorker = await Tesseract.createWorker('eng', 1, {
+          logger: () => {}
+        });
+        isOcrLoading = false;
+      } catch (err) {
+        console.warn("No se pudo precargar Tesseract worker:", err);
+        isOcrLoading = false;
+      }
+    }
+
+    async function captureAndProcessOcr() {
+      if (isOcrProcessing) return;
+      const video = document.getElementById('scanner-video');
+      const cropCanvas = document.getElementById('ocr-crop-canvas');
+      const overlay = document.getElementById('ocr-processing-overlay');
+      const procTitle = document.getElementById('ocr-processing-title');
+      const procDesc = document.getElementById('ocr-processing-desc');
+
+      if (!video || video.readyState < 2 || video.videoWidth === 0) {
+        showToast('Espera que la cámara esté activa', 'warn');
+        return;
+      }
+
+      isOcrProcessing = true;
+      haptic('medium');
+      if (overlay) overlay.classList.remove('hidden');
+      if (procTitle) procTitle.textContent = 'Capturando imagen...';
+      if (procDesc) procDesc.textContent = 'Enfocando retícula para máxima precisión OCR';
+
+      try {
+        const vw = video.videoWidth;
+        const vh = video.videoHeight;
+
+        // Recortar la región central de la retícula OCR (60% ancho, 30% alto)
+        const cropW = Math.round(vw * 0.85);
+        const cropH = Math.round(vh * 0.35);
+        const cropX = Math.round((vw - cropW) / 2);
+        const cropY = Math.round((vh - cropH) / 2);
+
+        cropCanvas.width = cropW;
+        cropCanvas.height = cropH;
+        const ctx = cropCanvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+        // Preprocesamiento de imagen: Escala de grises y aumento de contraste para stickers
+        preprocessCanvasForOcr(ctx, cropW, cropH);
+
+        if (procTitle) procTitle.textContent = 'Leyendo texto y seriales...';
+
+        let recognizedText = '';
+
+        // 1. Probar con Tesseract Worker
+        if (tesseractWorker) {
+          const res = await tesseractWorker.recognize(cropCanvas);
+          recognizedText = res?.data?.text || '';
+        } else if (typeof Tesseract !== 'undefined') {
+          const res = await Tesseract.recognize(cropCanvas, 'eng');
+          recognizedText = res?.data?.text || '';
+        } else {
+          throw new Error('Motor OCR no disponible');
+        }
+
+        const parsed = parseOcrExtractedText(recognizedText);
+
+        if (!parsed.bestGuess) {
+          showToast('No se detectó texto claro. Acerca la cámara y mantén el pulso firme.', 'warn');
+          return;
+        }
+
+        // Éxito en lectura OCR
+        playScanBeep();
+        haptic('scan');
+        handleOcrSuccessResult(parsed);
+      } catch (err) {
+        console.error("OCR error:", err);
+        showToast('Error al procesar OCR. Intenta nuevamente.', 'error');
+      } finally {
+        isOcrProcessing = false;
+        if (overlay) overlay.classList.add('hidden');
+      }
+    }
+
+    /**
+     * Filtro de imagen en canvas para resaltar letras y números de etiquetas
+     */
+    function preprocessCanvasForOcr(ctx, width, height) {
+      try {
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const d = imgData.data;
+        // Binarización y estiramiento de contraste
+        for (let i = 0; i < d.length; i += 4) {
+          const r = d[i];
+          const g = d[i + 1];
+          const b = d[i + 2];
+          // Grayscale
+          let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+          // Contraste dinámico
+          gray = (gray - 128) * 1.4 + 128;
+          gray = Math.max(0, Math.min(255, gray));
+          d[i] = gray;
+          d[i + 1] = gray;
+          d[i + 2] = gray;
+        }
+        ctx.putImageData(imgData, 0, 0);
+      } catch (_) {}
+    }
+
+    /**
+     * Analizador inteligente de texto OCR para extraer MACs, Seriales, SKUs y DNIs
+     */
+    function parseOcrExtractedText(rawText) {
+      const text = (rawText || '').replace(/\r/g, '').trim();
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+      const detectedMacs = [];
+      const detectedSerials = [];
+      const detectedSkus = [];
+      const detectedDnis = [];
+
+      // 1. Detección de MAC Address (XX:XX:XX:XX:XX:XX o XX-XX-XX-XX-XX-XX)
+      const macRegex = /\b([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})\b/g;
+      let macMatch;
+      while ((macMatch = macRegex.exec(text)) !== null) {
+        const cleanMac = macMatch[0].toUpperCase().replace(/-/g, ':');
+        if (!detectedMacs.includes(cleanMac)) detectedMacs.push(cleanMac);
+      }
+
+      // 2. Detección de Número de Serie (S/N, SN, SERIE o marcas ONT conocidas)
+      const snPrefixRegex = /(?:S\/?N|SERIE|SN|SERIAL)[\s.:#-]*([A-Za-z0-9\-_]{6,28})/gi;
+      let snMatch;
+      while ((snMatch = snPrefixRegex.exec(text)) !== null) {
+        const val = snMatch[1].trim().toUpperCase();
+        if (val.length >= 6 && !detectedSerials.includes(val)) {
+          detectedSerials.push(val);
+        }
+      }
+
+      // Standalone ONT Serials (ZTEG, ALCL, HWTC, FHTT, GPON, etc.)
+      const ontSnRegex = /\b(ZTEG|ALCL|HWTC|FHTT|GPON|EPON|HUAW)[A-Za-z0-9]{6,16}\b/gi;
+      let ontMatch;
+      while ((ontMatch = ontSnRegex.exec(text)) !== null) {
+        const val = ontMatch[0].trim().toUpperCase();
+        if (!detectedSerials.includes(val)) detectedSerials.push(val);
+      }
+
+      // 3. Detección de DNI peruano (8 dígitos)
+      const dniRegex = /\b\d{8}\b/g;
+      let dniMatch;
+      while ((dniMatch = dniRegex.exec(text)) !== null) {
+        if (!detectedDnis.includes(dniMatch[0])) detectedDnis.push(dniMatch[0]);
+      }
+
+      // 4. Detección de Modelo o SKU
+      const modelRegex = /(?:MODEL|MODELO|MOD|SKU)[\s.:#-]*([A-Za-z0-9\-_]{3,20})/gi;
+      let modMatch;
+      while ((modMatch = modelRegex.exec(text)) !== null) {
+        const val = modMatch[1].trim().toUpperCase();
+        if (!detectedSkus.includes(val)) detectedSkus.push(val);
+      }
+
+      // Determinar la mejor coincidencia (Best Guess)
+      let bestGuess = '';
+      let bestFormat = 'text';
+
+      if (detectedSerials.length > 0) {
+        bestGuess = detectedSerials[0];
+        bestFormat = 'serial_number';
+      } else if (detectedMacs.length > 0) {
+        bestGuess = detectedMacs[0];
+        bestFormat = 'mac_address';
+      } else if (detectedDnis.length > 0) {
+        bestGuess = detectedDnis[0];
+        bestFormat = 'dni';
+      } else if (detectedSkus.length > 0) {
+        bestGuess = detectedSkus[0];
+        bestFormat = 'sku';
+      } else {
+        // Seleccionar la línea alfanumérica más representativa
+        const goodLine = lines.find(l => l.length >= 4 && /[A-Za-z0-9]/.test(l));
+        bestGuess = goodLine ? goodLine.replace(/[^A-Za-z0-9\-_:.]/g, '') : '';
+        bestFormat = 'ocr';
+      }
+
+      return {
+        raw: text,
+        lines,
+        detectedSerials,
+        detectedMacs,
+        detectedSkus,
+        detectedDnis,
+        bestGuess,
+        bestFormat,
+      };
+    }
+
+    function handleOcrSuccessResult(parsed) {
+      displayScanResultCard({
+        code: parsed.bestGuess,
+        format: parsed.bestFormat,
+        raw: parsed.raw,
+        parsed
+      });
+
+      const autoSend = document.getElementById('ocr-auto-send-toggle')?.checked;
+      if (autoSend && isPairedWithPc) {
+        sendCurrentCodeToPc();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // GESTIÓN DE RESULTADO Y TRANSMISIÓN A LA PC
+    // -------------------------------------------------------------
+    function handleScannedValue(code, format = 'barcode') {
+      const clean = (code || '').trim();
+      if (!clean || clean === lastScannedCode) return;
+
+      lastScannedCode = clean;
+      playScanBeep();
+      haptic('scan');
+
+      displayScanResultCard({
+        code: clean,
+        format,
+        raw: clean
+      });
+
+      // Si está emparejado con la PC, transmitir de inmediato
+      if (isPairedWithPc) {
+        sendCurrentCodeToPc();
+      }
+
+      // Reiniciar buffer después de 2.5s para permitir escanear el mismo código si se desea
+      setTimeout(() => {
+        if (lastScannedCode === clean) lastScannedCode = '';
+      }, 2500);
+    }
+
+    function displayScanResultCard(scanObj) {
+      const card = document.getElementById('scan-result-card');
+      const valEl = document.getElementById('scan-code-value');
+      const badgeEl = document.getElementById('scan-format-badge');
+      const chipsCont = document.getElementById('ocr-chips-container');
+      const chipsList = document.getElementById('ocr-chips-list');
+
+      if (!card || !valEl) return;
+      card.classList.remove('hidden');
+
+      valEl.textContent = scanObj.code;
+      window.currentScannedData = scanObj;
+
+      let labelText = 'CÓDIGO DETECTADO';
+      if (scanObj.format === 'serial_number') labelText = '🏷️ SERIE (S/N) DETECTADA';
+      else if (scanObj.format === 'mac_address') labelText = '🌐 DIRECCIÓN MAC DETECTADA';
+      else if (scanObj.format === 'qr') labelText = '📱 CÓDIGO QR DETECTADO';
+      else if (scanObj.format === 'barcode') labelText = '⚡ CÓDIGO DE BARRAS';
+      else if (scanObj.format === 'dni') labelText = '🪪 DNI DETECTADO';
+      else if (scanObj.format === 'ocr') labelText = '🔍 TEXTO OCR';
+
+      if (badgeEl) badgeEl.textContent = labelText;
+
+      // Renderizar chips de campos sugeridos si hay más de una entidad detectada
+      if (scanObj.parsed && chipsCont && chipsList) {
+        const p = scanObj.parsed;
+        const allSuggestions = [];
+
+        p.detectedSerials.forEach(s => allSuggestions.push({ label: `SN: ${s}`, val: s, type: 'serial' }));
+        p.detectedMacs.forEach(m => allSuggestions.push({ label: `MAC: ${m}`, val: m, type: 'mac' }));
+        p.detectedSkus.forEach(k => allSuggestions.push({ label: `SKU: ${k}`, val: k, type: 'sku' }));
+        p.detectedDnis.forEach(d => allSuggestions.push({ label: `DNI: ${d}`, val: d, type: 'dni' }));
+
+        if (allSuggestions.length > 1) {
+          chipsCont.classList.remove('hidden');
+          chipsList.innerHTML = allSuggestions.map(item => `
+            <button type="button" onclick="selectOcrChipValue('${escapeForJs(item.val)}', '${item.type}')" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1 ${item.val === scanObj.code ? 'bg-cyan-500 text-black shadow-sm' : 'bg-white/10 hover:bg-white/15 text-slate-300'}">
+              <span>${item.label}</span>
+            </button>
+          `).join('');
+        } else {
+          chipsCont.classList.add('hidden');
+        }
+      } else if (chipsCont) {
+        chipsCont.classList.add('hidden');
+      }
+    }
+
+    function selectOcrChipValue(val, type) {
+      haptic('light');
+      const valEl = document.getElementById('scan-code-value');
+      if (valEl) valEl.textContent = val;
+      if (window.currentScannedData) {
+        window.currentScannedData.code = val;
+        window.currentScannedData.format = type;
+      }
+      if (isPairedWithPc) {
+        sendCurrentCodeToPc();
+      }
+    }
+
+    async function sendCurrentCodeToPc() {
+      const code = window.currentScannedData?.code;
+      if (!code) return;
+
+      if (!currentSessionId) {
+        showToast('Modo autónomo. Abre este enlace desde el código QR en tu PC para vincular.', 'info');
+        return;
+      }
+
+      const btnText = document.getElementById('btn-send-pc-text');
+      if (btnText) btnText.textContent = 'Enviando...';
+
+      try {
+        const res = await fetch(`/api/scanner/session/${encodeURIComponent(currentSessionId)}/scan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code,
+            format: window.currentScannedData?.format || 'code',
+            raw: window.currentScannedData?.raw || code,
+            preview: code,
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`✅ ¡Enviado a tu PC: ${code}!`, 'success');
+          haptic('success');
+        } else {
+          showToast(data.message || 'Error al enviar a PC', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión al enviar a la PC', 'error');
+      } finally {
+        if (btnText) btnText.textContent = 'Enviar a mi PC';
+      }
+    }
+
+    function copyCurrentScannedCode() {
+      const code = window.currentScannedData?.code;
+      if (!code) return;
+      navigator.clipboard.writeText(code).then(() => {
+        showToast('Código copiado al portapapeles', 'info');
+        haptic('light');
+      }).catch(() => {
+        showToast('Selecciona el texto para copiar', 'info');
+      });
+    }
+
+    async function lookupInInventory() {
+      const code = window.currentScannedData?.code;
+      if (!code) return;
+      showToast(`Consultando "${code}" en inventario...`, 'info');
+      try {
+        const res = await fetch(`/api/inventory/traceability/${encodeURIComponent(code)}`);
+        const data = await res.json();
+        if (data.success && data.data) {
+          showToast(`Encontrado: ${data.data.product?.name || 'Producto registrado'}`, 'success');
+        } else {
+          showToast(`No se encontró en inventario: ${code}`, 'warn');
+        }
+      } catch (_) {
+        showToast('Error al consultar trazabilidad', 'error');
+      }
+    }
+
+    function handleManualSubmit(val) {
+      const clean = (val || '').trim();
+      if (!clean) return;
+      handleScannedValue(clean, 'manual');
+      const inp = document.getElementById('manual-scanner-input');
+      if (inp) inp.value = '';
+    }
+
+    // -------------------------------------------------------------
+    // EFECTOS DE SONIDO, HÁPTICA Y TOAST
+    // -------------------------------------------------------------
+    function playScanBeep() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1850, ctx.currentTime);
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.12);
+      } catch (_) {}
+    }
+
+    function haptic(type = 'light') {
+      try {
+        if ('vibrate' in navigator) {
+          if (type === 'light') navigator.vibrate(15);
+          else if (type === 'medium') navigator.vibrate(35);
+          else if (type === 'success') navigator.vibrate([15, 30, 20]);
+          else if (type === 'scan') navigator.vibrate([20, 50, 20]);
+          else if (type === 'error') navigator.vibrate([50, 50, 50]);
+        }
+      } catch (_) {}
+    }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('scanner-toast');
+      const content = document.getElementById('scanner-toast-content');
+      if (!toast || !content) return;
+
+      content.textContent = msg;
+      content.className = 'px-4 py-2.5 rounded-2xl text-white font-semibold text-xs shadow-xl flex items-center gap-2 border border-white/20 ';
+      if (type === 'success') content.className += 'bg-emerald-600';
+      else if (type === 'error') content.className += 'bg-rose-600';
+      else if (type === 'warn') content.className += 'bg-amber-600';
+      else content.className += 'bg-blue-600';
+
+      toast.classList.remove('-translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('-translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    function escapeForJs(str) {
+      return (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+  </script>
+</body>
+</html>

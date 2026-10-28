@@ -35,3 +35,5 @@ data/connections_settings.json
 data/tenants/*/connections.json
 tmp/
 scratch/
+
+cloudflared.exe
