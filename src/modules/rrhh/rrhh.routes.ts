@@ -3551,25 +3551,24 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 // al configurar en el menú del ZKTeco: Red -> Servidor de Nube (ADMS)
 // ============================================================================
 export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.addContentTypeParser(
-    ["application/octet-stream", "application/x-www-form-urlencoded"],
-    { parseAs: "string" },
-    (_req, body, done) => {
-      done(null, typeof body === "string" ? body : String(body || ""));
-    }
-  );
+  // Soporte universal para cualquier Content-Type que envie ZKTeco (text/plain, octet-stream, urlencoded, etc.)
+  fastify.addContentTypeParser("*", { parseAs: "string" }, (_req, body, done) => {
+    done(null, typeof body === "string" ? body : String(body || ""));
+  });
 
   // 1. Handshake inicial del ZKTeco (convierte el icono de servidor en pantalla de ROJO a VERDE)
   fastify.get("/iclock/cdata", async (request, reply) => {
     const query = (request.query as Record<string, string>) || {};
-    const sn = query.SN || "ZKTECO-OFICINA";
+    const sn = query.SN || query.sn || "ZKTECO-OFICINA";
     const clientIp = request.ip || "LAN";
+
+    console.log(`[ZKTeco ADMS] Handshake / Conexión recibida desde SN: ${sn} (IP: ${clientIp})`);
 
     zktecoAdmsDevices[sn] = {
       sn,
       ip: clientIp,
       lastSeen: new Date().toISOString(),
-      pushVersion: query.pushver || "2.4.1",
+      pushVersion: query.pushver || query.PushVer || "2.4.1",
       totalSynced: zktecoAdmsDevices[sn]?.totalSynced || 0,
     };
 
@@ -3612,9 +3611,17 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
   // 2. Recepción en tiempo real de marcaciones de Huella (VERIFY=1) y Rostro (VERIFY=15)
   fastify.post("/iclock/cdata", async (request, reply) => {
     const query = (request.query as Record<string, string>) || {};
-    const sn = query.SN || "ZKTeco-MB360-Oficina";
-    const table = (query.table || "ATTLOG").toUpperCase();
-    const rawBody = typeof request.body === "string" ? request.body : JSON.stringify(request.body || "");
+    const sn = query.SN || query.sn || "ZKTeco-MB360-Oficina";
+    const rawTable = query.table || query.Table || "ATTLOG";
+    const table = rawTable.toUpperCase();
+    let rawBody = typeof request.body === "string" ? request.body : JSON.stringify(request.body || "");
+
+    // Si el cuerpo viene codificado en URL (%09, %0A, %20), decodificarlo
+    if (rawBody.includes("%09") || rawBody.includes("%0A") || rawBody.includes("%20")) {
+      try {
+        rawBody = decodeURIComponent(rawBody);
+      } catch {}
+    }
 
     if (zktecoAdmsDevices[sn]) {
       zktecoAdmsDevices[sn].lastSeen = new Date().toISOString();
@@ -3628,8 +3635,11 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     if (table !== "ATTLOG") {
-      return reply.type("text/plain").send("OK");
+      console.log(`[ZKTeco ADMS] Recibida tabla ${table} desde ${sn} (se responde OK)`);
+      return reply.type("text/plain; charset=utf-8").send("OK\n");
     }
+
+    console.log(`[ZKTeco ADMS] Recibidas marcaciones de ${sn}:\n${rawBody.trim()}`);
 
     const lines = rawBody
       .split(/\r?\n/)
@@ -3641,12 +3651,20 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
 
     for (const line of lines) {
       // Formato estándar ZKTeco ADMS: PIN \t YYYY-MM-DD HH:MM:SS \t STATUS \t VERIFY \t WORKCODE...
-      const parts = line.split(/\t+/);
-      if (parts.length < 2) continue;
+      let parts = line.split(/\t+/);
+      if (parts.length < 2) {
+        // Fallback: separar por espacios múltiples o formato libre preservando fecha/hora
+        const match = line.match(/^(\S+)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s*(\d*)\s*(\d*)/);
+        if (match) {
+          parts = [match[1], match[2], match[3] || "0", match[4] || "1"];
+        } else {
+          continue;
+        }
+      }
 
       const pin = parts[0].trim();
       const dateTimeStr = parts[1].trim(); // Ej: "2026-10-20 09:15:30"
-      const statusFlag = parseInt(parts[2] || "0", 10); // 0=Entrada, 1=Salida, 4=HE Entrada, 5=HE Salida
+      const statusFlag = parseInt(parts[2] || "0", 10); // 0=Entrada, 1=Salida, 2=Refrigerio Inicio, 3=Refrigerio Fin, 4=HE Entrada, 5=HE Salida
       const verifyMode = parseInt(parts[3] || "1", 10); // 1=Huella, 15=Rostro/Facial, 4=Tarjeta RFID, 3=PIN
 
       const [dateStr, timeStr] = dateTimeStr.split(" ");
@@ -3666,8 +3684,15 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       const isCheckout = statusFlag === 1 || statusFlag === 5 || (existing && curH >= 13);
 
       if (existing) {
-        if (isCheckout) {
+        if (statusFlag === 2) {
+          existing.lunchStart = timeStr;
+        } else if (statusFlag === 3) {
+          existing.lunchEndTime = timeStr;
+        } else if (isCheckout) {
           existing.checkOut = timeStr;
+        } else {
+          // Si el usuario vuelve a pasar su huella como verificación
+          existing.notes = `Marcación automática en tiempo real vía ${devLabel} (${timeStr})`;
         }
         existing.modality = "fingerprint";
         existing.biometricVerified = true;
@@ -3695,7 +3720,7 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
         checkOut: statusFlag === 1 ? timeStr : null,
         overtimeUnlocked: false,
         overtimeMinutes: 0,
-        photo: emp.avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=ZKTeco",
+        photo: emp.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(emp.name)}`,
         location: {
           latitude: -12.046374,
           longitude: -77.042793,
@@ -3719,15 +3744,16 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
     if (processedCount > 0) {
       saveAttendanceToDisk(attendanceList);
       zktecoAdmsDevices[sn].totalSynced += processedCount;
+      console.log(`[ZKTeco ADMS] ✅ Sincronizadas ${processedCount} marcaciones de asistencia en el sistema.`);
     }
 
-    return reply.type("text/plain").send(`OK: ${processedCount}`);
+    return reply.type("text/plain; charset=utf-8").send("OK\n");
   });
 
   // 3. Heartbeat periódico del ZKTeco (mantiene el icono de servidor en VERDE y despacha comandos en lote)
   fastify.get("/iclock/getrequest", async (request, reply) => {
     const query = (request.query as Record<string, string>) || {};
-    const sn = query.SN || "ZKTECO-OFICINA";
+    const sn = query.SN || query.sn || "ZKTECO-OFICINA";
     if (zktecoAdmsDevices[sn]) {
       zktecoAdmsDevices[sn].lastSeen = new Date().toISOString();
     } else {
@@ -3751,15 +3777,15 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.type("text/plain; charset=utf-8").send(batch.join("\n"));
     }
 
-    return reply.type("text/plain").send("OK");
+    return reply.type("text/plain; charset=utf-8").send("OK\n");
   });
 
   fastify.post("/iclock/devicecmd", async (request, reply) => {
     const query = (request.query as Record<string, string>) || {};
-    const sn = query.SN || "ZKTECO-OFICINA";
+    const sn = query.SN || query.sn || "ZKTECO-OFICINA";
     if (zktecoAdmsDevices[sn]) {
       zktecoAdmsDevices[sn].lastSeen = new Date().toISOString();
     }
-    return reply.type("text/plain").send("OK");
+    return reply.type("text/plain; charset=utf-8").send("OK\n");
   });
 };

@@ -18,7 +18,7 @@ En tu segunda foto, la barra superior muestra **4 iconos de estado** de izquierd
 1. ⚠️ **Triángulo amarillo de advertencia**: Indica que el equipo aún no tiene administrador asignado o requiere verificar ajustes iniciales.
 2. 🖥️ **Monitor con indicador verde**: Indica la interfaz de **Red Ethernet (LAN)**.
 3. 🔌 **Icono de energía**: Alimentación eléctrica 12V DC conectada correctamente.
-4. 🗄️🚫 **Dos cilindros negros con círculo rojo (Servidor ADMS / Nube desconectado)**: **¡Este es el icono clave!** Significa que el reloj tiene activo el módulo de **Servidor de Nube (ADMS)**, pero aún no apunta a la IP de tu servidor TurboNetwork (`192.168.1.190:3000`). En cuanto ingreses la IP y puerto en el menú del ZKTeco, **ese círculo rojo cambiará a un check VERDE (`✅`)** y el reloj enviará cada marcación de huella o rostro automáticamente.
+4. 🗄️🚫 **Dos cilindros negros con círculo rojo (Servidor ADMS / Nube desconectado)**: **¡Este es el icono clave!** Significa que el reloj tiene activo el módulo de **Servidor de Nube (ADMS)**, pero aún no apunta a la IP de tu servidor TurboNetwork (`192.168.1.54:3000`). En cuanto ingreses la IP y puerto en el menú del ZKTeco, **ese círculo rojo cambiará a un check VERDE (`✅`)** y el reloj enviará cada marcación de huella o rostro automáticamente.
 
 ---
 
@@ -35,7 +35,7 @@ En tu segunda foto, la barra superior muestra **4 iconos de estado** de izquierd
 
 ## 3. 🌐 Paso 2: Configuración de Red e IP en el Teclado del ZKTeco
 
-Tu red local de oficina opera en el segmento **`192.168.1.X`** (Puerta de enlace `192.168.1.1`) y tu servidor TurboNetwork tiene la IP **`192.168.1.190`** en el puerto **`3000`**.
+Tu red local de oficina opera en el segmento **`192.168.1.X`** (Puerta de enlace `192.168.1.1`) y tu servidor TurboNetwork tiene la IP **`192.168.1.54`** en el puerto **`3000`**.
 
 Realiza estos pasos directamente en el teclado físico del ZKTeco:
 
@@ -56,7 +56,7 @@ Realiza estos pasos directamente en el teclado físico del ZKTeco:
 1. Dentro del mismo menú **🌐 Red (Comm.)**, baja hasta **Configuración de Servidor de Nube** *(en algunos firmwares aparece como **Servidor ADMS** o **Cloud Server**)* y presiona **`M/OK`**.
 2. Configura exactamente estos valores:
    - **Modo de Nombre de Dominio (Enable Domain Name)**: `Desactivado (OFF)`
-   - **Dirección del Servidor (Server Address)**: **`192.168.1.190`** *(La IP de tu PC donde corre TurboNetwork)*
+   - **Dirección del Servidor (Server Address)**: **`192.168.1.54`** *(La IP de tu PC donde corre TurboNetwork)*
    - **Puerto del Servidor (Server Port)**: **`3000`**
    - **Habilitar Servidor Proxy**: `Desactivado (OFF)`
 3. Presiona **`ESC`** dos veces hasta volver a la pantalla principal del reloj (`09:15`).
@@ -89,7 +89,7 @@ Para que el sistema reconozca de quién es cada marcación, el **ID de Usuario**
 
 1. Con el ZKTeco en la pantalla principal (`Bienvenido`), coloca tu **dedo en el lector** o **mira a la cámara**.
 2. El ZKTeco dirá: *"Acceso correcto / Gracias"* y mostrará tu nombre e ID en pantalla.
-3. En **menos de 2 segundos**, el ZKTeco enviará automáticamente la marcación a `http://192.168.1.190:3000/iclock/cdata`.
+3. En **menos de 2 segundos**, el ZKTeco enviará automáticamente la marcación a `http://192.168.1.54:3000/iclock/cdata`.
 4. Entra a **TurboNetwork -> Recursos Humanos -> Control de Asistencia**:
    - Verás la marcación registrada automáticamente con la insignia **`🖐️ Huella Oficina`** (indicando si fue por **Huella Dactilar ZKTeco** o **Reconocimiento Facial ZKTeco**), la hora exacta y el cálculo automático de puntualidad o tardanza.
 
@@ -101,6 +101,29 @@ Para que el sistema reconozca de quién es cada marcación, el **ID de Usuario**
 | :--- | :---: | :--- |
 | `/iclock/cdata` | `GET` / `POST` | Receptor nativo **ADMS Push** del reloj ZKTeco (recibe huellas `VERIFY=1`, rostros `VERIFY=15` y tarjetas `VERIFY=4` en tiempo real). |
 | `/iclock/getrequest` | `GET` | Heartbeat que mantiene el icono del servidor en **verde (`✅`)** en la pantalla del ZKTeco. |
-| `/api/rrhh/zkteco/status` | `GET` | Muestra la IP del servidor (`192.168.1.190:3000`), los relojes ZKTeco conectados en vivo y la tabla de IDs de empleados. |
+| `/api/rrhh/zkteco/status` | `GET` | Muestra la IP del servidor (`192.168.1.54:3000`), los relojes ZKTeco conectados en vivo y la tabla de IDs de empleados. |
 | `/api/rrhh/zkteco/test-lan` | `POST` | Prueba la conexión TCP directa al puerto `4370` de la IP del ZKTeco (`192.168.1.201`). |
 | `/api/rrhh/attendance/biometric-sync` | `POST` | Sincronización manual o por script desde la interfaz web. |
+
+
+---
+
+## 7. ?? Configuraci�n para Producci�n (sistemasisp.tech)
+
+Cuando desees que el reloj biom�trico ZKTeco env�e las marcaciones directamente al servidor en producci�n en la nube:
+
+1. Entra a **M/OK** -> **Red** -> **Configuraci�n de Servidor de Nube (ADMS)**.
+2. Configura los siguientes par�metros:
+   - **Habilitar Servidor de Nube**: \S� / ON\
+   - **Habilitar Servidor Proxy**: \Desactivado (OFF)\
+   - **Opci�n A (Por IP directa - Recomendada)**:
+     - **Modo de Nombre de Dominio**: \Desactivado (OFF)\
+     - **Direcci�n del Servidor**: \179.236.230.204\
+     - **Puerto del Servidor**: \80\ *(HTTP est�ndar, en Nginx de producci�n)*
+   - **Opci�n B (Por Nombre de Dominio)**:
+     - **Modo de Nombre de Dominio**: \Activado (ON)\
+     - **Nombre de Dominio**: \sistemasisp.tech\
+     - **Puerto del Servidor**: \80\
+     - *(Requiere que en Red -> Ethernet el DNS est� configurado en 8.8.8.8)*
+3. El icono de servidor (dos cilindros) cambiar� a check verde (\?\) y las marcaciones entrar�n en vivo al sistema en la nube.
+
