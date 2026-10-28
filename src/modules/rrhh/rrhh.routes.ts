@@ -3016,7 +3016,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
     const serverIp = localIps.find((ip) => ip.startsWith("192.168.1.155")) || localIps.find((ip) => ip.startsWith("192.168.1.")) || localIps[0] || "192.168.1.155";
-    const serverPort = Number(process.env.PORT) || 3000;
+    const isPublicServer = !serverIp.startsWith("192.168.") && !serverIp.startsWith("10.") && !serverIp.startsWith("127.");
+    const serverPort = isPublicServer ? 80 : (Number(process.env.PORT) || 3000);
     const emps = loadEmployeesFromDisk();
 
     // Diagnosticar presencia del terminal ZKTeco en la red local
