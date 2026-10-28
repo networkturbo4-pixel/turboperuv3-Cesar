@@ -7971,7 +7971,9 @@ function renderCandidateMemberList() {
     const already = isUserAlreadyMember(c.id);
     const isSelected = selectedMemberCandidateIds.has(sId);
     const isCustomer = c.type === 'customer';
-    const defaultAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(c.name || sId)}`;
+    const SAFE_DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none'%3E%3Crect width='64' height='64' rx='16' fill='%231e293b'/%3E%3Ccircle cx='32' cy='25' r='12' fill='%233b82f6' fill-opacity='0.85'/%3E%3Cpath d='M16 54c0-8.837 7.163-16 16-16s16 7.163 16 16' stroke='%233b82f6' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E";
+window.SAFE_DEFAULT_AVATAR = SAFE_DEFAULT_AVATAR;
+    const defaultAvatar = (c.name || sId) ? `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(c.name || sId)}` : SAFE_DEFAULT_AVATAR;
 
     return `
       <div onclick="${already ? '' : `toggleCandidateSelection('${sId}')`}" class="flex items-center justify-between p-2.5 rounded-xl border transition select-none ${already ? 'bg-white/[0.01] border-white/5 opacity-60 cursor-default' : (isSelected ? 'bg-blue-500/10 border-blue-500/60 cursor-pointer shadow-xs' : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 cursor-pointer')}">
@@ -7979,7 +7981,7 @@ function renderCandidateMemberList() {
           <div class="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 text-[10px] font-bold transition ${already ? 'border-emerald-500/40 bg-emerald-500/20 text-emerald-400' : (isSelected ? 'bg-blue-600 border-blue-500 text-white' : 'border-white/30 bg-black/40')}">
             ${already ? '✓' : (isSelected ? '✓' : '')}
           </div>
-          <img src="${c.avatar || defaultAvatar}" class="w-8 h-8 rounded-xl object-cover border border-white/20 flex-shrink-0" onerror="this.src='${defaultAvatar}'">
+          <img src="${c.avatar || defaultAvatar}" class="w-8 h-8 rounded-xl object-cover border border-white/20 flex-shrink-0" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;">
           <div class="min-w-0">
             <div class="flex items-center gap-1.5 flex-wrap">
               <span class="text-xs font-bold text-white truncate">${escapeHtml(c.name || 'Usuario')}</span>
@@ -8200,12 +8202,12 @@ function renderViewCommunityMembers(members) {
   container.innerHTML = members.map(m => {
     const isCustomer = m.type === 'customer';
     const isAdmin = m.communityRole === 'admin';
-    const defaultAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.name || m.id)}`;
+    const defaultAvatar = (m.name || m.id) ? `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.name || m.id)}` : SAFE_DEFAULT_AVATAR;
 
     return `
       <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] border border-white/10 group">
         <div class="flex items-center space-x-3 min-w-0">
-          <img src="${m.avatar || defaultAvatar}" class="w-9 h-9 rounded-xl object-cover border border-white/20 flex-shrink-0" onerror="this.src='${defaultAvatar}'">
+          <img src="${m.avatar || defaultAvatar}" class="w-9 h-9 rounded-xl object-cover border border-white/20 flex-shrink-0" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;">
           <div class="min-w-0">
             <div class="flex items-center gap-1.5 flex-wrap">
               <span class="text-xs font-bold text-white truncate">${escapeHtml(m.name || 'Usuario')}</span>

@@ -332,6 +332,47 @@ export async function buildApp() {
   await fastify.register(apartadosRoutes, { prefix: "/api" });
   await fastify.register(scannerRoutes, { prefix: "/api" });
 
+  // Manejo blindado de Avatares por Defecto (previene errores 404 y bucles infinitos)
+  const DEFAULT_AVATAR_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="16" fill="#1e293b"/><circle cx="32" cy="25" r="12" fill="#3b82f6" fill-opacity="0.85"/><path d="M16 54c0-8.837 7.163-16 16-16s16 7.163 16 16" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/></svg>';
+
+  // Hook ultra-temprano para interceptar cualquier petición de avatar o placeholder malformado
+  fastify.addHook("onRequest", async (req, reply) => {
+    const rawUrl = (req.raw.url || req.url || "").toLowerCase();
+    if (rawUrl.includes("defaultavatar") || rawUrl.includes("%5b%5b") || rawUrl.includes("[[")) {
+      return reply
+        .type("image/svg+xml; charset=utf-8")
+        .header("Cache-Control", "public, max-age=31536000, immutable")
+        .send(DEFAULT_AVATAR_SVG);
+    }
+  });
+
+  const serveDefaultAvatar = async (_req: any, reply: any) => {
+    return reply
+      .type("image/svg+xml; charset=utf-8")
+      .header("Cache-Control", "public, max-age=31536000, immutable")
+      .send(DEFAULT_AVATAR_SVG);
+  };
+
+  fastify.get("/[[defaultAvatar]]", serveDefaultAvatar);
+  fastify.get("/%5B%5BdefaultAvatar%5D%5D", serveDefaultAvatar);
+  fastify.get("/assets/default-avatar.svg", serveDefaultAvatar);
+
+  // Manejador 404 seguro: si se solicita cualquier variante de avatar inexistente, retornar SVG en vez de 404
+  fastify.setNotFoundHandler((req, reply) => {
+    const rawUrl = (req.raw.url || req.url || "").toLowerCase();
+    if (rawUrl.includes("defaultavatar") || rawUrl.includes("%5b%5b") || rawUrl.includes("[[") || rawUrl.includes("avatar")) {
+      return reply
+        .type("image/svg+xml; charset=utf-8")
+        .header("Cache-Control", "public, max-age=31536000, immutable")
+        .send(DEFAULT_AVATAR_SVG);
+    }
+    return reply.status(404).send({
+      statusCode: 404,
+      error: "Not Found",
+      message: "Ruta no encontrada"
+    });
+  });
+
 
   // Mensaje base de bienvenida para la API
   fastify.get("/api", async () => {

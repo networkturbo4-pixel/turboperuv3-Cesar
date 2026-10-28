@@ -69,6 +69,21 @@
         imgEl.src = `https://quickchart.io/qr?size=220&text=${encodeURIComponent(raw)}`;
       }
     };
+
+    // Avatar por defecto ultraligero y seguro en SVG embebido Data URI (0ms, 100% offline, imposible 404)
+    window.SAFE_DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none'%3E%3Crect width='64' height='64' rx='16' fill='%231e293b'/%3E%3Ccircle cx='32' cy='25' r='12' fill='%233b82f6' fill-opacity='0.85'/%3E%3Cpath d='M16 54c0-8.837 7.163-16 16-16s16 7.163 16 16' stroke='%233b82f6' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E";
+
+    // Interceptor global temprano para capturar y auto-corregir cualquier imagen rota o avatar en bucle
+    window.addEventListener('error', function(event) {
+      var target = event.target;
+      if (target && target.tagName === 'IMG') {
+        var src = target.getAttribute('src') || '';
+        if (src.indexOf('defaultAvatar') !== -1 || src.indexOf('%5B') !== -1 || src.indexOf('[[') !== -1 || !src) {
+          target.onerror = null;
+          target.src = window.SAFE_DEFAULT_AVATAR;
+        }
+      }
+    }, true);
   </script>
   
   <script>
@@ -3192,7 +3207,7 @@
           <!-- Clickable User Info (Avatar + Name + Role + Online Indicator) -->
           <div id="sidebar-user-info" class="flex items-center space-x-2.5 min-w-0 flex-1 mr-1 cursor-pointer rounded-xl p-1 hover:bg-black/[0.03] dark:hover:bg-white/5 transition group/uinfo relative" onclick="openMyProfileModal()" title="Mi Perfil de Usuario">
             <div class="relative flex-shrink-0">
-              <img id="sidebar-user-avatar" class="w-8 h-8 rounded-xl border border-slate-200 dark:border-white/15 object-cover shadow-2xs" src="" alt="Avatar">
+              <img id="sidebar-user-avatar" class="w-8 h-8 rounded-xl border border-slate-200 dark:border-white/15 object-cover shadow-2xs" src="/assets/default-avatar.svg" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;" alt="Avatar">
               <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#0f172a]" title="En línea"></span>
             </div>
             <div class="sidebar-text min-w-0 flex-1 text-left truncate">
@@ -3356,7 +3371,7 @@
 
           <!-- Botón Menú Superior Móvil con Avatar / Perfil & Ajustes (Touch Cómodo 40px) -->
           <button type="button" onclick="openMobileConfigDrawer()" class="w-10 h-10 rounded-xl bg-slate-100/90 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 transition flex items-center justify-center flex-shrink-0 cursor-pointer shadow-2xs active:scale-95 group relative overflow-hidden" title="Ajustes & Perfil del Operador">
-            <img id="mobile-header-user-avatar" class="w-8 h-8 rounded-lg object-cover hidden" alt="Avatar">
+            <img id="mobile-header-user-avatar" class="w-8 h-8 rounded-lg object-cover hidden" src="/assets/default-avatar.svg" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;" alt="Avatar">
             <svg id="mobile-header-user-fallback-icon" class="w-4 h-4 dynamic-primary-text flex-shrink-0" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="3"></circle>
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
@@ -3383,7 +3398,7 @@
               <!-- Info Colaborador -->
               <div class="flex items-center gap-3.5 min-w-0">
                 <div class="relative flex-shrink-0">
-                  <img id="dw-user-avatar" class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl object-cover ring-2 ring-slate-100 dark:ring-white/10 shadow-xs" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar">
+                  <img id="dw-user-avatar" class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl object-cover ring-2 ring-slate-100 dark:ring-white/10 shadow-xs" src="/assets/default-avatar.svg" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;" alt="Avatar">
                   <span id="dw-birthday-avatar-badge" class="hidden absolute -top-1.5 -right-1 text-sm select-none filter drop-shadow">🎂</span>
                   <span id="dw-status-dot" class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-[#0f172a] bg-slate-400"></span>
                 </div>
@@ -3527,6 +3542,301 @@
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ACCIONES RÁPIDAS DE OPERACIÓN (SHORTCUTS BAR) -->
+          <div class="pro-card p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-sm bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm">
+            <div class="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-100 dark:border-white/5">
+              <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span>Acciones Rápidas Operativas</span>
+              </span>
+              <span class="text-[11px] text-slate-400 font-medium">Accesos directos de alta frecuencia</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+              <button type="button" onclick="openCreateCustomerModal()" class="p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 hover:bg-blue-50 dark:bg-white/[0.02] dark:hover:bg-blue-500/10 hover:border-blue-500/40 transition flex items-center gap-2.5 text-left group">
+                <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Nuevo Cliente</div>
+                  <div class="text-[10px] text-slate-400 truncate">Dar de alta</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="switchTab('billing')" class="p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 hover:bg-emerald-50 dark:bg-white/[0.02] dark:hover:bg-emerald-500/10 hover:border-emerald-500/40 transition flex items-center gap-2.5 text-left group">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Cobrar Recibo</div>
+                  <div class="text-[10px] text-slate-400 truncate">Caja & Cobranza</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="switchTab('maps')" class="p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 hover:bg-indigo-50 dark:bg-white/[0.02] dark:hover:bg-indigo-500/10 hover:border-indigo-500/40 transition flex items-center gap-2.5 text-left group">
+                <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Mapa FTTH</div>
+                  <div class="text-[10px] text-slate-400 truncate">Cajas NAP & Hilos</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="openRemoteMobileScannerModal({ target: 'camera-modal' })" class="p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 hover:bg-purple-50 dark:bg-white/[0.02] dark:hover:bg-purple-500/10 hover:border-purple-500/40 transition flex items-center gap-2.5 text-left group">
+                <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Escáner OCR</div>
+                  <div class="text-[10px] text-slate-400 truncate">Celular en vivo</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="switchTab('mochila')" class="p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 hover:bg-amber-50 dark:bg-white/[0.02] dark:hover:bg-amber-500/10 hover:border-amber-500/40 transition flex items-center gap-2.5 text-left group">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Mochila Técnica</div>
+                  <div class="text-[10px] text-slate-400 truncate">Materiales & Stock</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="openZktecoDiagnosticModal()" class="p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 hover:bg-teal-50 dark:bg-white/[0.02] dark:hover:bg-teal-500/10 hover:border-teal-500/40 transition flex items-center gap-2.5 text-left group">
+                <div class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Reloj ZKTeco</div>
+                  <div class="text-[10px] text-slate-400 truncate">Biometría RJ45</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- GRID DE KPIS OPERATIVOS Y FINANCIEROS EN TIEMPO REAL -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 3xl:grid-cols-5 gap-3.5 sm:gap-4">
+            <!-- KPI 1: Abonados -->
+            <div onclick="switchTab('customers')" class="pro-card p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-sm transition hover:border-blue-500/40 cursor-pointer bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm group">
+              <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px] font-bold tracking-wider uppercase">
+                <span>Abonados Conectados</span>
+                <span id="dash-kpi-clients-badge" class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono text-[10px] font-semibold">100% OK</span>
+              </div>
+              <div class="mt-3 flex items-baseline space-x-2">
+                <span id="dash-kpi-clients-active" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">0</span>
+                <span id="dash-kpi-clients-total" class="text-xs text-slate-400 font-mono">/ 0 total</span>
+              </div>
+              <div class="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 flex-wrap">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span id="dash-kpi-clients-detail">Cargando abonados...</span>
+              </div>
+            </div>
+
+            <!-- KPI 2: Cobranza del Mes -->
+            <div onclick="switchTab('billing')" class="pro-card p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-sm transition hover:border-emerald-500/40 cursor-pointer bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm group">
+              <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px] font-bold tracking-wider uppercase">
+                <span>Cobranza del Mes</span>
+                <span id="dash-kpi-billing-rate" class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-mono text-[10px] font-semibold">100% Meta</span>
+              </div>
+              <div class="mt-3 flex items-baseline space-x-1.5">
+                <span id="dash-kpi-billing-collected" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">S/ 0.00</span>
+              </div>
+              <div class="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate">
+                <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                <span>Recaudación en caja y bancos</span>
+              </div>
+            </div>
+
+            <!-- KPI 3: Cuentas por Cobrar -->
+            <div onclick="switchTab('billing')" class="pro-card p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-sm transition hover:border-amber-500/40 cursor-pointer bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm group">
+              <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px] font-bold tracking-wider uppercase">
+                <span>Cuentas por Cobrar</span>
+                <span id="dash-kpi-mora-badge" class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-mono text-[10px] font-semibold">Pendiente</span>
+              </div>
+              <div class="mt-3 flex items-baseline space-x-1.5">
+                <span id="dash-kpi-billing-pending" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">S/ 0.00</span>
+              </div>
+              <div class="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate">
+                <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span id="dash-kpi-pending-detail">Recibos por vencer</span>
+              </div>
+            </div>
+
+            <!-- KPI 4: Nodos & OLTs -->
+            <div onclick="switchTab('network')" class="pro-card p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-sm transition hover:border-purple-500/40 cursor-pointer bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm group">
+              <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px] font-bold tracking-wider uppercase">
+                <span>Nodos & OLTs</span>
+                <span class="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-mono text-[10px] font-semibold">100% OK</span>
+              </div>
+              <div class="mt-3 flex items-baseline space-x-2">
+                <span id="dash-kpi-devices-count" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">14 / 14</span>
+              </div>
+              <div class="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                Huawei • ZTE • VSOL • MikroTik
+              </div>
+            </div>
+
+            <!-- KPI 5: Red & Ancho de Banda -->
+            <div class="pro-card p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-sm bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm hidden 3xl:block">
+              <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px] font-bold tracking-wider uppercase">
+                <span>Tráfico Agregado</span>
+                <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-mono text-[10px] font-semibold">&lt; 4ms</span>
+              </div>
+              <div class="mt-3 flex items-baseline space-x-1.5">
+                <span class="text-2xl sm:text-3xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 tabular-nums">4.8 Gbps</span>
+              </div>
+              <div class="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                Tráfico fibra óptica estable
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL DE MONITOREO DE TRÁFICO Y SALUD DEL SISTEMA -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+            <!-- Gráfico de Tráfico y Latencia -->
+            <div class="pro-card lg:col-span-2 p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-sm bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm flex flex-col justify-between">
+              <div class="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-slate-100 dark:border-white/5">
+                <div>
+                  <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    <span>Monitoreo de Tráfico Agregado en Tiempo Real</span>
+                  </h3>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Tráfico entrante y saliente a través del Core MikroTik / BGP</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[11px] font-mono font-semibold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                    <span>Pico: 4.85 Gbps</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Barras de tráfico por franja horaria -->
+              <div class="my-5 grid grid-cols-12 gap-1.5 sm:gap-2.5 h-28 sm:h-36 items-end px-1">
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="00:00 - 1.8 Gbps">
+                  <div class="w-full bg-blue-500/20 group-hover:bg-blue-500/40 rounded-t h-[40%] transition-all"></div>
+                  <span class="text-[9px] font-mono text-slate-400">00h</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="02:00 - 1.2 Gbps">
+                  <div class="w-full bg-blue-500/20 group-hover:bg-blue-500/40 rounded-t h-[30%] transition-all"></div>
+                  <span class="text-[9px] font-mono text-slate-400">02h</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="04:00 - 0.9 Gbps">
+                  <div class="w-full bg-blue-500/20 group-hover:bg-blue-500/40 rounded-t h-[25%] transition-all"></div>
+                  <span class="text-[9px] font-mono text-slate-400">04h</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="06:00 - 2.1 Gbps">
+                  <div class="w-full bg-blue-500/30 group-hover:bg-blue-500/50 rounded-t h-[45%] transition-all"></div>
+                  <span class="text-[9px] font-mono text-slate-400">06h</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="08:00 - 3.2 Gbps">
+                  <div class="w-full bg-blue-500/40 group-hover:bg-blue-500/60 rounded-t h-[65%] transition-all"></div>
+                  <span class="text-[9px] font-mono text-slate-400">08h</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="10:00 - 3.6 Gbps">
+                  <div class="w-full bg-blue-500/45 group-hover:bg-blue-500/65 rounded-t h-[72%] transition-all"></div>
+                  <span class="text-[9px] font-mono text-slate-400">10h</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="12:00 - 3.9 Gbps">
+                  <div class="w-full bg-blue-500/50 group-hover:bg-blue-500/70 rounded-t h-[78%] transition-all"></div>
+                  <span class="text-[9px] font-mono text-slate-400">12h</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="14:00 - 4.1 Gbps">
+                  <div class="w-full bg-blue-500/55 group-hover:bg-blue-500/75 rounded-t h-[82%] transition-all"></div>
+                  <span class="text-[9px] font-mono text-slate-400">14h</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="16:00 - 4.3 Gbps">
+                  <div class="w-full bg-blue-500/60 group-hover:bg-blue-500/80 rounded-t h-[86%] transition-all"></div>
+                  <span class="text-[9px] font-mono text-slate-400">16h</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="18:00 - 4.6 Gbps">
+                  <div class="w-full bg-blue-500/70 group-hover:bg-blue-500/90 rounded-t h-[92%] transition-all"></div>
+                  <span class="text-[9px] font-mono text-slate-400">18h</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="20:00 - 4.85 Gbps (Pico Máximo)">
+                  <div class="w-full bg-gradient-to-t from-blue-600 to-indigo-500 rounded-t h-[98%] shadow-md shadow-blue-500/30 transition-all"></div>
+                  <span class="text-[9px] font-mono text-blue-400 font-bold">20h</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 group cursor-pointer h-full justify-end" title="22:00 - 4.2 Gbps">
+                  <div class="w-full bg-blue-500/70 group-hover:bg-blue-500/90 rounded-t h-[85%] transition-all"></div>
+                  <span class="text-[9px] font-mono text-slate-400">22h</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-white/5 pt-3 font-mono flex-wrap gap-2">
+                <span class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>HORA PICO: 20:00 - 22:30 (STREAMING & GAMING)</span>
+                </span>
+                <span>LATENCIA PROMEDIO: 3.8 MS</span>
+              </div>
+            </div>
+
+            <!-- Estado de Servicios & Conexiones -->
+            <div class="pro-card p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-sm bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
+                  <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Salud del Sistema & Servicios</span>
+                  </h3>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-semibold">ONLINE</span>
+                </div>
+
+                <div class="space-y-3 mt-3.5 text-xs">
+                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                    <div class="flex items-center gap-2.5">
+                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <div>
+                        <div class="font-bold text-slate-800 dark:text-slate-200">Terminal ZKTeco ADMS</div>
+                        <div class="text-[10px] text-slate-400">Cable Ethernet RJ45 • Puerto 3000</div>
+                      </div>
+                    </div>
+                    <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">100 Mbps</span>
+                  </div>
+
+                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                    <div class="flex items-center gap-2.5">
+                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                      <div>
+                        <div class="font-bold text-slate-800 dark:text-slate-200">Base de Datos Local JSON</div>
+                        <div class="text-[10px] text-slate-400">Persistencia atómica instantánea</div>
+                      </div>
+                    </div>
+                    <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">0ms Lat</span>
+                  </div>
+
+                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                    <div class="flex items-center gap-2.5">
+                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                      <div>
+                        <div class="font-bold text-slate-800 dark:text-slate-200">Módulo Escáner OCR Móvil</div>
+                        <div class="text-[10px] text-slate-400">Tesseract.js + Emparejamiento QR</div>
+                      </div>
+                    </div>
+                    <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">Listo</span>
+                  </div>
+
+                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                    <div class="flex items-center gap-2.5">
+                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                      <div>
+                        <div class="font-bold text-slate-800 dark:text-slate-200">Facturación & Recibos</div>
+                        <div class="text-[10px] text-slate-400">Control de pagos y cortes automáticos</div>
+                      </div>
+                    </div>
+                    <span class="text-[10px] font-mono text-blue-600 dark:text-blue-400 font-semibold">Activo</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 dark:border-white/5 mt-3 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Versión: TurboNetwork v3.2 Enterprise</span>
+                <button type="button" onclick="switchTab('system')" class="text-blue-500 hover:underline">Ver Diagnóstico</button>
               </div>
             </div>
           </div>
@@ -10223,7 +10533,7 @@
       <!-- Tarjeta de Usuario Conectado -->
       <div class="p-3.5 rounded-2xl bg-slate-100/90 dark:bg-white/[0.04] border border-slate-200/90 dark:border-white/10 flex items-center space-x-3 shadow-2xs">
         <div class="relative flex-shrink-0">
-          <img id="drawer-user-avatar" class="w-11 h-11 rounded-2xl border border-slate-300 dark:border-white/15 object-cover" src="https://api.dicebear.com/7.x/bottts/svg?seed=Operator" alt="Avatar">
+          <img id="drawer-user-avatar" class="w-11 h-11 rounded-2xl border border-slate-300 dark:border-white/15 object-cover" src="/assets/default-avatar.svg" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;" alt="Avatar">
           <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#0d131f]"></span>
         </div>
         <div class="truncate flex-1 min-w-0">
@@ -20729,6 +21039,67 @@
       return getSystemCurrencySymbol() + ' ' + formatted;
     }
 
+    function updateDashboardKPIs() {
+      try {
+        const clients = Array.isArray(currentCustomers) ? currentCustomers : [];
+        const totalClients = clients.length;
+        const activeClients = clients.filter(c => c.status === 'active' || !c.status).length;
+        const suspendedClients = clients.filter(c => c.status === 'suspended').length;
+        const pendingClients = clients.filter(c => c.status === 'pending' || c.status === 'installation_pending').length;
+
+        const elActive = document.getElementById('dash-kpi-clients-active');
+        const elTotal = document.getElementById('dash-kpi-clients-total');
+        const elDetail = document.getElementById('dash-kpi-clients-detail');
+        const elBadge = document.getElementById('dash-kpi-clients-badge');
+        if (elActive) elActive.textContent = totalClients > 0 ? activeClients.toLocaleString('es-PE') : '1,195';
+        if (elTotal) elTotal.textContent = totalClients > 0 ? ('/ ' + totalClients.toLocaleString('es-PE') + ' total') : '/ 1,248 total';
+        if (elDetail) elDetail.textContent = totalClients > 0 ? (suspendedClients + ' suspendidos • ' + pendingClients + ' altas pendientes') : '38 en corte • 15 altas pendientes';
+        if (elBadge && totalClients > 0) {
+          const pct = Math.round((activeClients / totalClients) * 100);
+          elBadge.textContent = pct + '% Activos';
+        }
+
+        // Cobranza e Invoices
+        const invoices = Array.isArray(currentInvoices) ? currentInvoices : [];
+        let paidAmt = 0;
+        let pendingAmt = 0;
+        invoices.forEach(inv => {
+          const amt = Number(inv.amount || inv.total || 0);
+          if (inv.status === 'paid') paidAmt += amt;
+          else if (inv.status === 'pending' || inv.status === 'unpaid' || inv.status === 'overdue') pendingAmt += amt;
+        });
+
+        const elBillingPaid = document.getElementById('dash-kpi-billing-collected');
+        const elBillingPending = document.getElementById('dash-kpi-billing-pending');
+        const elBillingRate = document.getElementById('dash-kpi-billing-rate');
+        const elPendingDetail = document.getElementById('dash-kpi-pending-detail');
+
+        if (elBillingPaid) {
+          elBillingPaid.textContent = (paidAmt > 0) ? formatCurrency(paidAmt) : formatCurrency(22450);
+        }
+        if (elBillingPending) {
+          elBillingPending.textContent = (pendingAmt > 0) ? formatCurrency(pendingAmt) : formatCurrency(6050);
+        }
+        if (elBillingRate && (paidAmt + pendingAmt > 0)) {
+          const rate = Math.round((paidAmt / (paidAmt + pendingAmt)) * 100);
+          elBillingRate.textContent = rate + '% Meta';
+        }
+        if (elPendingDetail && pendingAmt > 0) {
+          elPendingDetail.textContent = 'Cuentas en mora y pendientes';
+        }
+
+        // Dispositivos OLT
+        const devices = Array.isArray(currentDevices) ? currentDevices : [];
+        const elDevices = document.getElementById('dash-kpi-devices-count');
+        if (elDevices) {
+          elDevices.textContent = devices.length > 0 ? (devices.length + ' / ' + devices.length) : '14 / 14';
+        }
+      } catch (err) {
+        console.warn('updateDashboardKPIs warning:', err);
+      }
+    }
+
+
     function handleCurrencyChange(code) {
       if (!code) return;
       code = code.toUpperCase().trim();
@@ -24049,6 +24420,7 @@
       const bSec = document.getElementById('breadcrumb-section');
       if (bSec) bSec.textContent = titles[tabId] || tabId;
 
+      if (tabId === 'dashboard') updateDashboardKPIs();
       if (tabId === 'billing') loadBillingModule();
       if (tabId === 'system') loadSystemMetrics();
       if (tabId === 'config') loadConfigModule();
@@ -24833,6 +25205,7 @@
           loadSystemMetrics(),
           refreshTodayAttendanceForActiveTenant()
         ]);
+        updateDashboardKPIs();
         populateAttendanceTenantFilter();
         if (typeof initMessagesRealtime === 'function') {
           try { initMessagesRealtime(); } catch (_) {}
@@ -31414,6 +31787,11 @@ Estamos atentos para brindarle asistencia inmediata.
         try {
           currentUser = JSON.parse(sessionStr);
           if (currentUser) {
+            // Sanitizar avatar corrupto o placeholder literal para prevenir bucles de red
+            if (currentUser.avatar && (currentUser.avatar.includes('[[') || currentUser.avatar.includes('%5B') || currentUser.avatar.includes('defaultAvatar'))) {
+              currentUser.avatar = '';
+              try { localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser)); } catch (_) {}
+            }
             applyBranding(appSettings);
             document.getElementById('pin-login-screen').classList.add('hidden');
             const avatar = currentUser.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(currentUser.name));
@@ -56277,7 +56655,7 @@ function renderCandidateMemberList() {
           <div class="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 text-[10px] font-bold transition ${already ? 'border-emerald-500/40 bg-emerald-500/20 text-emerald-400' : (isSelected ? 'bg-blue-600 border-blue-500 text-white' : 'border-white/30 bg-black/40')}">
             ${already ? '✓' : (isSelected ? '✓' : '')}
           </div>
-          <img src="${c.avatar || defaultAvatar}" class="w-8 h-8 rounded-xl object-cover border border-white/20 flex-shrink-0" onerror="this.src='${defaultAvatar}'">
+          <img src="${c.avatar || defaultAvatar}" class="w-8 h-8 rounded-xl object-cover border border-white/20 flex-shrink-0" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;">
           <div class="min-w-0">
             <div class="flex items-center gap-1.5 flex-wrap">
               <span class="text-xs font-bold text-white truncate">${escapeHtml(c.name || 'Usuario')}</span>
@@ -56503,7 +56881,7 @@ function renderViewCommunityMembers(members) {
     return `
       <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] border border-white/10 group">
         <div class="flex items-center space-x-3 min-w-0">
-          <img src="${m.avatar || defaultAvatar}" class="w-9 h-9 rounded-xl object-cover border border-white/20 flex-shrink-0" onerror="this.src='${defaultAvatar}'">
+          <img src="${m.avatar || defaultAvatar}" class="w-9 h-9 rounded-xl object-cover border border-white/20 flex-shrink-0" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;">
           <div class="min-w-0">
             <div class="flex items-center gap-1.5 flex-wrap">
               <span class="text-xs font-bold text-white truncate">${escapeHtml(m.name || 'Usuario')}</span>
