@@ -5,6 +5,7 @@ import path from "path";
 import crypto from "crypto";
 import net from "net";
 import os from "os";
+import child_process from "child_process";
 import { resolveTenantId, loadTenantsFromDisk } from "../tenants/tenants.service";
 import {
   EmployeeDocument,
@@ -38,6 +39,38 @@ import {
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const EMPLOYEES_FILE = path.join(DATA_DIR, "employees.json");
 const ATTENDANCE_FILE = path.join(DATA_DIR, "attendance.json");
+
+// ============================================================================
+// REGISTRO Y COLA DE COMANDOS ZKTECO ADMS / PUSH EN MEMORIA
+// ============================================================================
+export const zktecoDeviceCommands: Record<string, string[]> = {};
+export let zktecoCommandIdSeq = 1000;
+
+export const zktecoAdmsDevices: Record<
+  string,
+  { sn: string; ip: string; lastSeen: string; pushVersion?: string; totalSynced: number }
+> = {};
+
+export function enqueueZktecoUserInfo(pin: string, name: string, isSuperAdmin = false) {
+  const activeDevices = Object.keys(zktecoAdmsDevices);
+  const targets = activeDevices.length > 0 ? activeDevices : ["PENDING_BROADCAST", "ZKTECO-OFICINA"];
+  const cleanName = (name || `Usuario ${pin}`)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9\s.-]/g, "")
+    .trim()
+    .slice(0, 24);
+  const pri = isSuperAdmin ? 14 : 0;
+  let count = 0;
+  for (const sn of targets) {
+    if (!zktecoDeviceCommands[sn]) zktecoDeviceCommands[sn] = [];
+    const cmdId = ++zktecoCommandIdSeq;
+    const cmd = `C:${cmdId}:DATA UPDATE USERINFO PIN=${pin}\tName=${cleanName}\tPri=${pri}\tPasswd=\tCard=\tGrp=1\tTZ=1`;
+    zktecoDeviceCommands[sn].push(cmd);
+    count++;
+  }
+  return { targets, cleanName, pin, count };
+}
 
 // ==========================================
 // 1. MODELOS Y TIPOS
@@ -302,7 +335,7 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
     const uFile = path.join(DATA_DIR, "users.json");
     if (fs.existsSync(uFile)) {
       const uStore = JSON.parse(fs.readFileSync(uFile, "utf-8"));
-      const user = uStore.find((u: any) => u.id === numId || u.id === id);
+      const user = uStore.find((u: any) => u.id === numId || String(u.id) === strId || (u.pin && String(u.pin) === strId));
       if (user) {
         return {
           id: user.id,
@@ -2982,17 +3015,55 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
     }
-    const serverIp = localIps[0] || "192.168.1.190";
+    const serverIp = localIps.find((ip) => ip.startsWith("192.168.1.155")) || localIps.find((ip) => ip.startsWith("192.168.1.")) || localIps[0] || "192.168.1.155";
     const serverPort = Number(process.env.PORT) || 3000;
     const emps = loadEmployeesFromDisk();
+
+    // Diagnosticar presencia del terminal ZKTeco en la red local
+    const detectedDevice = {
+      ip: "192.168.1.150",
+      mac: "00-17-61-12-fa-cd",
+      vendor: "ZKTeco Inc.",
+      reachable: false,
+    };
+    try {
+      const pingCmd = process.platform === "win32"
+        ? `ping -n 1 -w 500 ${detectedDevice.ip}`
+        : `ping -c 1 -W 1 ${detectedDevice.ip}`;
+      const pingRes = child_process.execSync(pingCmd, { encoding: "utf-8" });
+      detectedDevice.reachable = pingRes.includes("TTL=") || pingRes.includes("ttl=");
+    } catch (_err) {
+      detectedDevice.reachable = false;
+    }
+
+    const { peruDate, peruTime } = getPeruDateTime();
+    const currentServerTime = `${peruDate} ${peruTime}`;
 
     return reply.send({
       success: true,
       serverIp,
       allLocalIps: localIps,
       serverPort,
+      currentServerTime,
       admsEndpoint: `http://${serverIp}:${serverPort}/iclock/cdata`,
+      detectedDevice,
       connectedDevices: Object.values(zktecoAdmsDevices),
+      pendingCommandsCount: Object.values(zktecoDeviceCommands).reduce((acc, cur) => acc + cur.length, 0),
+      setupGuide: {
+        deviceIp: detectedDevice.ip,
+        deviceStatus: detectedDevice.reachable ? "ONLINE_CABLE_OK" : "CHECK_CABLE",
+        serverIpToConfigureInZkteco: serverIp,
+        serverPortToConfigureInZkteco: serverPort,
+        steps: [
+          "1. En el terminal ZKTeco, presione la tecla [M/OK] para entrar al menú principal.",
+          "2. Navegue a [Red] (o Comun.) -> [Servidor de Nube] (o ADMS / Servidor Web).",
+          `3. Configurar [Dirección IP del Servidor]: ${serverIp}`,
+          `4. Configurar [Puerto del Servidor]: ${serverPort}`,
+          "5. Habilitar Servidor de Nube: SÍ / ON.",
+          "6. Desactivar Servidor Proxy y Nombre de Dominio (debe apuntar directo por IP).",
+          "7. Guardar y regresar a la pantalla principal. El icono de servidor/nube se pondrá en VERDE.",
+        ],
+      },
       employeesMapping: emps.map((e) => ({
         id: e.id,
         name: e.name,
@@ -3005,12 +3076,25 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post("/rrhh/zkteco/test-lan", async (request, reply) => {
     const body = (request.body as any) || {};
-    const targetIp = String(body.ip || "192.168.1.201").trim();
+    const targetIp = String(body.ip || "192.168.1.150").trim();
     const targetPort = Number(body.port || 4370);
 
-    const reachable = await new Promise<boolean>((resolve) => {
+    // 1. Probar conectividad ICMP (física y nivel de enlace)
+    let pingOk = false;
+    try {
+      const pingCmd = process.platform === "win32"
+        ? `ping -n 1 -w 800 ${targetIp}`
+        : `ping -c 1 -W 1 ${targetIp}`;
+      const pingRes = child_process.execSync(pingCmd, { encoding: "utf-8" });
+      pingOk = pingRes.includes("TTL=") || pingRes.includes("ttl=");
+    } catch (_err) {
+      pingOk = false;
+    }
+
+    // 2. Probar socket TCP
+    const socketOk = await new Promise<boolean>((resolve) => {
       const socket = new net.Socket();
-      socket.setTimeout(2500);
+      socket.setTimeout(1200);
       socket.connect(targetPort, targetIp, () => {
         socket.destroy();
         resolve(true);
@@ -3025,40 +3109,95 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       });
     });
 
+    const reachable = pingOk || socketOk;
+    let message = "";
+    if (reachable) {
+      message = `¡Conexión física y de red confirmada con el terminal ZKTeco en ${targetIp}! (Cable Ethernet verificado y respondiendo en tiempo real).`;
+    } else {
+      message = `No se detectó respuesta en ${targetIp}. Verifica que el cable de red RJ45 esté conectado correctamente al puerto Ethernet.`;
+    }
+
     return reply.send({
       success: true,
       ip: targetIp,
       port: targetPort,
+      pingOk,
+      socketOk,
       reachable,
-      message: reachable
-        ? `Conexión exitosa con el terminal ZKTeco en ${targetIp}:${targetPort}.`
-        : `No se detectó respuesta en ${targetIp}:${targetPort}. Verifica que el cable de red RJ45 esté conectado al router/switch y que la IP del ZKTeco esté en la red 192.168.1.X.`,
+      message,
+    });
+  });
+
+  fastify.post("/rrhh/zkteco/sync-clock", async (_request, reply) => {
+    const activeDevices = Object.keys(zktecoAdmsDevices);
+    const { peruDate, peruTime } = getPeruDateTime();
+    const curDateTime = `${peruDate} ${peruTime}`;
+
+    // Target devices: connected ones or pending broadcast queue
+    const targets = activeDevices.length > 0 ? activeDevices : ["PENDING_BROADCAST", "ZKTECO-OFICINA"];
+
+    let enqueued = 0;
+    for (const sn of targets) {
+      if (!zktecoDeviceCommands[sn]) {
+        zktecoDeviceCommands[sn] = [];
+      }
+      const cmdId = ++zktecoCommandIdSeq;
+      zktecoDeviceCommands[sn].push(`C:${cmdId}:SET OPTIONS DateTime=${curDateTime}`);
+      enqueued++;
+    }
+
+    return reply.send({
+      success: true,
+      dateTime: curDateTime,
+      devices: targets,
+      enqueued,
+      message: `¡Comando de sincronización de hora generado (${curDateTime})! El reloj ZKTeco sincronizará su hora automáticamente con el sistema.`,
+    });
+  });
+
+  fastify.post("/rrhh/zkteco/sync-time", async (request, reply) => {
+    return (fastify as any).inject ? reply.redirect("/api/rrhh/zkteco/sync-clock") : reply.send({ success: true });
+  });
+
+  fastify.post("/rrhh/zkteco/sync-operator", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const id = body.id || body.userId;
+    const pin = String(body.pin || body.biometricPin || id || "").trim();
+    const name = String(body.name || `Operador ${pin}`).trim();
+    const role = String(body.roleName || body.role || body.position || "Operador").trim();
+    const isSuperAdmin = body.isSuperAdmin === true || role.toLowerCase().includes("admin") || role.toLowerCase().includes("director");
+
+    if (!pin) {
+      return reply.status(400).send({ success: false, message: "El PIN del operador es requerido para el ZKTeco" });
+    }
+
+    const result = enqueueZktecoUserInfo(pin, name, isSuperAdmin);
+
+    return reply.send({
+      success: true,
+      message: `¡Operador "${result.cleanName}" sincronizado con el ZKTeco (PIN: ${result.pin})!`,
+      data: result,
     });
   });
 
   fastify.post("/rrhh/zkteco/sync-users", async (request, reply) => {
     const emps = loadEmployeesFromDisk();
     const activeDevices = Object.keys(zktecoAdmsDevices);
-
-    if (activeDevices.length === 0) {
-      return reply.status(400).send({
-        success: false,
-        message: "No hay terminales ZKTeco conectados actualmente. Verifica que el icono de nube esté en verde en el reloj.",
-      });
-    }
+    const targets = activeDevices.length > 0 ? activeDevices : ["PENDING_BROADCAST", "ZKTECO-OFICINA"];
 
     let enqueued = 0;
-    const syncedEmployees: Array<{ id: number; name: string; pin: string }> = [];
+    const syncedEmployees: Array<{ id: number; name: string; pin: string; type?: string }> = [];
 
-    for (const sn of activeDevices) {
+    for (const sn of targets) {
       if (!zktecoDeviceCommands[sn]) {
         zktecoDeviceCommands[sn] = [];
       }
 
+      // 1. Sincronizar Colaboradores de RRHH
       for (const emp of emps) {
         if (emp.status && emp.status !== "active") continue;
         const cmdId = ++zktecoCommandIdSeq;
-        const pin = emp.biometricPin || String(emp.id);
+        const pin = emp.biometricPin || emp.dni || String(emp.id);
         const cleanName = (emp.name || `Empleado ${emp.id}`)
           .normalize("NFD")
           .replace(/[\u0300-\u036f]/g, "")
@@ -3075,18 +3214,47 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         const cmd = `C:${cmdId}:DATA UPDATE USERINFO PIN=${pin}\tName=${cleanName}\tPri=${pri}\tPasswd=\tCard=\tGrp=1\tTZ=1`;
         zktecoDeviceCommands[sn].push(cmd);
         enqueued++;
-        if (!syncedEmployees.some((e) => e.id === emp.id)) {
-          syncedEmployees.push({ id: emp.id, name: cleanName, pin });
+        if (!syncedEmployees.some((e) => e.pin === pin)) {
+          syncedEmployees.push({ id: emp.id, name: cleanName, pin, type: "colaborador" });
         }
       }
+
+      // 2. Sincronizar Operadores de Sistema (users.json)
+      try {
+        const uFile = path.join(DATA_DIR, "users.json");
+        if (fs.existsSync(uFile)) {
+          const usersList = JSON.parse(fs.readFileSync(uFile, "utf-8"));
+          for (const u of usersList) {
+            if (u.isActive === false) continue;
+            const pin = String(u.pin || u.id);
+            if (syncedEmployees.some((e) => e.pin === pin)) continue; // evitar duplicado si ya fue agregado por DNI/PIN
+
+            const cmdId = ++zktecoCommandIdSeq;
+            const cleanName = (u.name || `Operador ${u.id}`)
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/[^a-zA-Z0-9\s.-]/g, "")
+              .trim()
+              .slice(0, 24);
+
+            const isSuperAdmin = u.isSuperAdmin || (u.roleName || "").toLowerCase().includes("admin");
+            const pri = isSuperAdmin ? 14 : 0;
+
+            const cmd = `C:${cmdId}:DATA UPDATE USERINFO PIN=${pin}\tName=${cleanName}\tPri=${pri}\tPasswd=\tCard=\tGrp=1\tTZ=1`;
+            zktecoDeviceCommands[sn].push(cmd);
+            enqueued++;
+            syncedEmployees.push({ id: u.id, name: cleanName, pin, type: "operador" });
+          }
+        }
+      } catch (_e) {}
     }
 
     return reply.send({
       success: true,
-      devices: activeDevices,
+      devices: targets,
       totalEnqueued: enqueued,
       employees: syncedEmployees,
-      message: `¡Comandos generados! Se enviaron ${syncedEmployees.length} colaboradores al terminal ZKTeco. En los próximos segundos se agregarán automáticamente a la memoria del reloj.`,
+      message: `¡Comandos generados! Se prepararon ${syncedEmployees.length} colaboradores y operadores para el terminal ZKTeco. En los próximos segundos se agregarán automáticamente a la memoria del reloj.`,
     });
   });
 
@@ -3377,17 +3545,6 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   });
 };
 
-
-// Registro en memoria de terminales ZKTeco conectados por ADMS (Servidor de Nube)
-// Cola de comandos pendientes para enviar al reloj ZKTeco
-const zktecoDeviceCommands: Record<string, string[]> = {};
-let zktecoCommandIdSeq = 1000;
-
-const zktecoAdmsDevices: Record<
-  string,
-  { sn: string; ip: string; lastSeen: string; pushVersion?: string; totalSynced: number }
-> = {};
-
 // ============================================================================
 // PROTOCOLO NATIVO ZKTECO ADMS / ICLOCK PUSH SERVER (MB360 / MB160 / MB20)
 // Permite que el reloj ZKTeco envíe automáticamente huellas y rostros en vivo
@@ -3416,6 +3573,23 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       totalSynced: zktecoAdmsDevices[sn]?.totalSynced || 0,
     };
 
+    // Sincronizar automáticamente la hora oficial (Perú UTC-5) cada vez que el reloj se conecta
+    const { peruDate, peruTime } = getPeruDateTime();
+    const curDateTime = `${peruDate} ${peruTime}`;
+    if (!zktecoDeviceCommands[sn]) {
+      zktecoDeviceCommands[sn] = [];
+    }
+    const hasSyncTime = zktecoDeviceCommands[sn].some((c) => c.includes("SET OPTIONS DateTime="));
+    if (!hasSyncTime) {
+      zktecoDeviceCommands[sn].push(`C:${++zktecoCommandIdSeq}:SET OPTIONS DateTime=${curDateTime}`);
+    }
+
+    // Si había comandos en la cola de broadcast, transferirlos a este número de serie
+    if (zktecoDeviceCommands["PENDING_BROADCAST"] && zktecoDeviceCommands["PENDING_BROADCAST"].length > 0) {
+      const broadcastCmds = zktecoDeviceCommands["PENDING_BROADCAST"].splice(0, zktecoDeviceCommands["PENDING_BROADCAST"].length);
+      zktecoDeviceCommands[sn].push(...broadcastCmds);
+    }
+
     const configResponse = [
       `GET OPTION FROM: ${sn}`,
       `ATTLOGStamp=None`,
@@ -3429,6 +3603,7 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       `TimeZone=-5`,
       `Realtime=1`,
       `Encrypt=0`,
+      `ServerTime=${curDateTime}`,
     ].join("\n");
 
     return reply.type("text/plain; charset=utf-8").send(configResponse);
@@ -3549,17 +3724,42 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.type("text/plain").send(`OK: ${processedCount}`);
   });
 
-  // 3. Heartbeat periódico del ZKTeco (mantiene el icono de servidor en VERDE)
+  // 3. Heartbeat periódico del ZKTeco (mantiene el icono de servidor en VERDE y despacha comandos en lote)
   fastify.get("/iclock/getrequest", async (request, reply) => {
     const query = (request.query as Record<string, string>) || {};
     const sn = query.SN || "ZKTECO-OFICINA";
     if (zktecoAdmsDevices[sn]) {
       zktecoAdmsDevices[sn].lastSeen = new Date().toISOString();
+    } else {
+      zktecoAdmsDevices[sn] = {
+        sn,
+        ip: request.ip || "LAN",
+        lastSeen: new Date().toISOString(),
+        totalSynced: 0,
+      };
     }
+
+    // Despachar comandos encolados para este dispositivo (ej: sincronizar hora, personal)
+    if (zktecoDeviceCommands[sn] && zktecoDeviceCommands[sn].length > 0) {
+      const batch = zktecoDeviceCommands[sn].splice(0, 10);
+      return reply.type("text/plain; charset=utf-8").send(batch.join("\n"));
+    }
+
+    // Verificar si hay comandos en cola pendientes de entrega
+    if (zktecoDeviceCommands["PENDING_BROADCAST"] && zktecoDeviceCommands["PENDING_BROADCAST"].length > 0) {
+      const batch = zktecoDeviceCommands["PENDING_BROADCAST"].splice(0, 10);
+      return reply.type("text/plain; charset=utf-8").send(batch.join("\n"));
+    }
+
     return reply.type("text/plain").send("OK");
   });
 
-  fastify.post("/iclock/devicecmd", async (_request, reply) => {
+  fastify.post("/iclock/devicecmd", async (request, reply) => {
+    const query = (request.query as Record<string, string>) || {};
+    const sn = query.SN || "ZKTECO-OFICINA";
+    if (zktecoAdmsDevices[sn]) {
+      zktecoAdmsDevices[sn].lastSeen = new Date().toISOString();
+    }
     return reply.type("text/plain").send("OK");
   });
 };

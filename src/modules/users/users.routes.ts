@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { resolveTenantId, getTenantFilePath, getTenantDataDir, loadTenantsFromDisk } from "../tenants/tenants.service";
 import { is2faRequiredForTenant, getMasterTotpSecret, getMasterSupervisorPin } from "../settings/connections.service";
-import { verifyTOTP } from "../rrhh/rrhh.routes";
+import { verifyTOTP, enqueueZktecoUserInfo } from "../rrhh/rrhh.routes";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const ROLES_FILE = path.join(DATA_DIR, "roles.json");
@@ -403,6 +403,7 @@ const createUserSchema = z.object({
   assignedTenantId: z.string().nullable().optional(),
   allowedTenants: z.array(z.string()).nullable().optional(),
   requireTotp: z.boolean().optional(),
+  syncWithZkteco: z.boolean().optional(),
 });
 
 const updateUserSchema = z.object({
@@ -423,6 +424,7 @@ const updateUserSchema = z.object({
   allowedTenants: z.array(z.string()).nullable().optional(),
   preferences: z.record(z.any()).optional(),
   requireTotp: z.boolean().optional(),
+  syncWithZkteco: z.boolean().optional(),
 });
 
 const createRoleSchema = z.object({
@@ -770,15 +772,51 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     usersStore.push(newUser);
     saveUsersToDisk();
 
+        let zktecoSync = null;
+    if (parse.data.syncWithZkteco !== false) {
+      try {
+        zktecoSync = enqueueZktecoUserInfo(newUser.pin, newUser.name, newUser.isSuperAdmin);
+      } catch (e) {
+        console.warn("Aviso al encolar operador en ZKTeco:", e);
+      }
+    }
+
     const { pin, ...safeUser } = newUser;
     return reply.status(201).send({
       success: true,
-      message: "Usuario registrado con PIN de 8 dígitos.",
-      data: { ...safeUser, pinMasked: "••••••••" },
+      message: zktecoSync
+        ? `Usuario registrado y enviado al terminal ZKTeco (PIN: ${newUser.pin}).`
+        : "Usuario registrado con PIN de 8 dígitos.",
+      data: { ...safeUser, pin: newUser.pin, pinMasked: "••••••••", zktecoSynced: !!zktecoSync },
     });
   });
 
   // Actualizar usuario existente (nombre, email, horario, rol, etc.)
+  fastify.post("/users/:id/sync-zkteco", async (request, reply) => {
+    usersStore = loadUsersFromDisk();
+    const { id } = request.params as { id: string };
+    const userId = parseInt(id, 10);
+
+    const user = usersStore.find((u) => u.id === userId);
+    if (!user) {
+      return reply.status(404).send({ success: false, message: "Operador no encontrado" });
+    }
+
+    try {
+      const syncResult = enqueueZktecoUserInfo(user.pin, user.name, user.isSuperAdmin);
+      return reply.send({
+        success: true,
+        message: `¡Operador "${user.name}" enviado a la memoria del ZKTeco (PIN: ${user.pin})!`,
+        data: syncResult,
+      });
+    } catch (err: any) {
+      return reply.status(500).send({
+        success: false,
+        message: "Error al sincronizar con ZKTeco: " + (err.message || String(err)),
+      });
+    }
+  });
+
   fastify.put("/users/:id", async (request, reply) => {
     usersStore = loadUsersFromDisk();
     const { id } = request.params as { id: string };

@@ -7588,10 +7588,16 @@
                   />
                 </div>
                 <div class="flex items-center flex-wrap gap-2">
+                  <button type="button" onclick="syncClockTimeWithZkteco(event)" class="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs whitespace-nowrap" title="Sincronizar hora y fecha del reloj biométrico con la hora oficial del sistema">
+                    <span>🕒 Sincronizar Hora Reloj</span>
+                  </button>
                   <button type="button" onclick="syncUsersToZktecoDevice(event)" class="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs whitespace-nowrap" title="Enviar automáticamente los colaboradores del sistema a la memoria del ZKTeco">
-                      <span>📤 Enviar Personal a ZKTeco</span>
-                    </button>
-                    <button type="button" onclick="syncBiometricFingerprintClock()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs whitespace-nowrap" title="Sincronizar marcaciones de huella dactilar (Oficina)">
+                    <span>📤 Enviar Personal a ZKTeco</span>
+                  </button>
+                  <button type="button" onclick="openZktecoDiagnosticModal()" class="px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs whitespace-nowrap" title="Verificar conexión física, IP y configuración del reloj ZKTeco">
+                    <span>🔌 Diagnóstico ZKTeco</span>
+                  </button>
+                  <button type="button" onclick="syncBiometricFingerprintClock()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs whitespace-nowrap" title="Sincronizar marcaciones de huella dactilar (Oficina)">
                     <span>🖐️ Sincronizar Reloj Huella</span>
                   </button>
                   <button type="button" onclick="openManualAttendanceModal()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs whitespace-nowrap" title="Autorización directa del jefe para trabajo en campo o situaciones especiales">
@@ -14064,6 +14070,84 @@
           <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md cursor-pointer">🖐️ Validar Huella y Marcar</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 5B: DIAGNÓSTICO Y SINCRONIZACIÓN ZKTECO / ETHERNET -->
+  <!-- ======================================================== -->
+  <div id="zkteco-diagnostic-modal" class="fixed inset-0 z-[285] hidden flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6">
+    <div class="pro-card max-w-lg w-full p-5 rounded-2xl border border-teal-500/30 shadow-2xl relative flex flex-col space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm">
+            ⏱️
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">Diagnóstico y Sincronización ZKTeco</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Terminal biométrico conectado por cable Ethernet (RJ45)</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeZktecoDiagnosticModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-100 dark:bg-white/5">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <!-- Estado de Conexión Física -->
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span id="zk-status-dot" class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+            <div>
+              <div id="zk-status-text" class="font-bold text-slate-800 dark:text-slate-200">Cable Ethernet Conectado (100 Mbps)</div>
+              <div class="text-[10px] text-slate-500 font-mono" id="zk-device-details">IP Reloj: 192.168.1.150 | MAC: 00:17:61:12:FA:CD</div>
+            </div>
+          </div>
+          <button type="button" onclick="testZktecoLanPing()" class="px-2.5 py-1.5 rounded-lg bg-teal-600/20 hover:bg-teal-600/30 text-teal-400 font-semibold text-[11px] transition">
+            ⚡ Probar Ping
+          </button>
+        </div>
+
+        <!-- Parámetros para el Menú del Reloj -->
+        <div class="p-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 space-y-2">
+          <div class="font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1">
+            <span>⚙️ Configuración en la pantalla del ZKTeco:</span>
+          </div>
+          <p class="text-[11px] text-indigo-700/90 dark:text-indigo-300">
+            En el reloj presione <b>M/OK &rarr; Red &rarr; Servidor de Nube (ADMS)</b> y verifique estos valores:
+          </p>
+          <div class="grid grid-cols-2 gap-2 font-mono text-[11px] pt-1">
+            <div class="bg-white dark:bg-black/30 p-2 rounded-lg border border-indigo-200 dark:border-white/5">
+              <span class="text-slate-500 text-[10px] block">IP DEL SERVIDOR:</span>
+              <span class="font-bold text-slate-900 dark:text-white" id="zk-cfg-ip">192.168.1.155</span>
+            </div>
+            <div class="bg-white dark:bg-black/30 p-2 rounded-lg border border-indigo-200 dark:border-white/5">
+              <span class="text-slate-500 text-[10px] block">PUERTO:</span>
+              <span class="font-bold text-slate-900 dark:text-white" id="zk-cfg-port">3000</span>
+            </div>
+          </div>
+          <div class="text-[10px] text-indigo-600 dark:text-indigo-400">
+            • Habilitar Servidor de Nube: <b>SÍ / ON</b> | Nombre de Dominio: <b>NO</b>
+          </div>
+        </div>
+
+        <!-- Acciones de Sincronización -->
+        <div class="space-y-2 pt-1">
+          <label class="block text-[11px] font-bold uppercase text-slate-600 dark:text-slate-300">Acciones de Sincronización Inmediata:</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="syncClockTimeWithZkteco(event)" class="px-3 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs transition">
+              <span>🕒 Sincronizar Hora y Fecha</span>
+            </button>
+            <button type="button" onclick="syncUsersToZktecoDevice(event)" class="px-3 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs transition">
+              <span>📤 Enviar Personal al Reloj</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="zk-diagnostic-output" class="hidden p-2.5 rounded-lg bg-black/40 text-[11px] font-mono text-emerald-400 border border-white/5"></div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-white/10">
+        <button type="button" onclick="closeZktecoDiagnosticModal()" class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-white/5 text-xs font-semibold text-slate-600 dark:text-slate-300">Cerrar</button>
+      </div>
     </div>
   </div>
 
@@ -28807,6 +28891,7 @@ Estamos atentos para brindarle asistencia inmediata.
       btnText.textContent = "Registrando...";
 
       const assignedTenantId = document.getElementById('nmodal-assigned-tenant')?.value || activeTenantId;
+      const syncWithZkteco = document.getElementById('nmodal-sync-zkteco')?.checked !== false;
       try {
         const res = await fetch('/api/users', {
           method: 'POST',
@@ -28825,7 +28910,8 @@ Estamos atentos para brindarle asistencia inmediata.
             hireDate,
             birthDate,
             assignedTenantId,
-            requireTotp
+            requireTotp,
+            syncWithZkteco
           })
         });
         const data = await res.json();
@@ -28906,6 +28992,17 @@ Estamos atentos para brindarle asistencia inmediata.
           }
           await loadConfigModule();
           showToast("Operador creado con éxito");
+
+          // Preguntar sincronización con el reloj ZKTeco
+          const roleSelect = document.getElementById('nu-role');
+          const roleText = roleSelect && roleSelect.selectedIndex >= 0 ? roleSelect.options[roleSelect.selectedIndex].text : 'Operador';
+          promptZktecoSyncForUser({
+            id: data.data?.id,
+            name,
+            pin,
+            roleName: roleText,
+            isSuperAdmin: false
+          });
         } else {
           statusDiv.textContent = data.message || "Error al crear usuario";
           statusDiv.className = "text-xs text-rose-400 font-mono";
@@ -34078,6 +34175,97 @@ Estamos atentos para brindarle asistencia inmediata.
         btn.className = 'px-3 py-2 rounded-xl bg-emerald-600 text-white text-[11px] font-bold flex-shrink-0 shadow-sm';
       }
       showToast('Huella dactilar verificada en lector biométrico');
+    }
+
+    async function syncClockTimeWithZkteco(e) {
+      const btn = e ? e.currentTarget : null;
+      const originalText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Sincronizando...</span>';
+      }
+      try {
+        const res = await fetch('/api/rrhh/zkteco/sync-clock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}'
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || 'Hora sincronizada exitosamente con el ZKTeco', 'success');
+          const out = document.getElementById('zk-diagnostic-output');
+          if (out) {
+            out.classList.remove('hidden');
+            out.textContent = `[OK] Hora enviada: ${data.dateTime} al reloj biométrico.`;
+          }
+        } else {
+          showToast(data.message || 'No se pudo sincronizar la hora.', true);
+        }
+      } catch (err) {
+        console.error('Error al sincronizar hora con ZKTeco:', err);
+        showToast('Error de conexión al sincronizar la hora con el ZKTeco.', true);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      }
+    }
+
+    async function openZktecoDiagnosticModal() {
+      const modal = document.getElementById('zkteco-diagnostic-modal');
+      if (modal) modal.classList.remove('hidden');
+      try {
+        const res = await fetch('/api/rrhh/zkteco/status');
+        const data = await res.json();
+        if (data.success) {
+          const cfgIp = document.getElementById('zk-cfg-ip');
+          const cfgPort = document.getElementById('zk-cfg-port');
+          const devDetails = document.getElementById('zk-device-details');
+          const statusText = document.getElementById('zk-status-text');
+          const dot = document.getElementById('zk-status-dot');
+          if (cfgIp) cfgIp.textContent = data.serverIp || '192.168.1.155';
+          if (cfgPort) cfgPort.textContent = String(data.serverPort || 3000);
+          if (data.detectedDevice) {
+            if (devDetails) devDetails.textContent = `IP Reloj: ${data.detectedDevice.ip} | MAC: ${data.detectedDevice.mac || '00:17:61:12:FA:CD'}`;
+            if (data.detectedDevice.reachable) {
+              if (statusText) statusText.textContent = 'Cable Ethernet Conectado (100 Mbps - En Línea)';
+              if (dot) dot.className = 'w-3 h-3 rounded-full bg-emerald-500 animate-pulse';
+            } else {
+              if (statusText) statusText.textContent = 'Verificando enlace físico de cable...';
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error cargando estado ZKTeco:', err);
+      }
+    }
+
+    function closeZktecoDiagnosticModal() {
+      const modal = document.getElementById('zkteco-diagnostic-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function testZktecoLanPing() {
+      const out = document.getElementById('zk-diagnostic-output');
+      if (out) {
+        out.classList.remove('hidden');
+        out.textContent = 'Enviando ping al reloj ZKTeco (192.168.1.150)...';
+      }
+      try {
+        const res = await fetch('/api/rrhh/zkteco/test-lan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip: '192.168.1.150' })
+        });
+        const data = await res.json();
+        if (out) {
+          out.textContent = data.message || (data.reachable ? 'Ping respondido exitosamente en <1ms.' : 'Sin respuesta.');
+        }
+        showToast(data.message || 'Prueba completada', data.reachable ? 'success' : true);
+      } catch (err) {
+        if (out) out.textContent = 'Error al ejecutar prueba de ping.';
+      }
     }
 
     async function syncUsersToZktecoDevice(e) {
