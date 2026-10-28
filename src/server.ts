@@ -355,7 +355,9 @@ export async function buildApp() {
 
   fastify.get("/[[defaultAvatar]]", serveDefaultAvatar);
   fastify.get("/%5B%5BdefaultAvatar%5D%5D", serveDefaultAvatar);
-  fastify.get("/assets/default-avatar.svg", serveDefaultAvatar);
+  fastify.get('/%7BdefaultAvatar%7D', serveDefaultAvatar);
+  fastify.get('/{defaultAvatar}', serveDefaultAvatar);
+  fastify.get('/assets/default-avatar.svg', serveDefaultAvatar);
 
   // Manejador 404 seguro: si se solicita cualquier variante de avatar inexistente, retornar SVG en vez de 404
   fastify.setNotFoundHandler((req, reply) => {

@@ -78,7 +78,7 @@
       var target = event.target;
       if (target && target.tagName === 'IMG') {
         var src = target.getAttribute('src') || '';
-        if (src.indexOf('defaultAvatar') !== -1 || src.indexOf('%5B') !== -1 || src.indexOf('[[') !== -1 || !src) {
+        if (src.indexOf('defaultAvatar') !== -1 || src.indexOf('%5B') !== -1 || src.indexOf('[[') !== -1 || src.indexOf('%7B') !== -1 || src.indexOf('{') !== -1 || !src) {
           target.onerror = null;
           target.src = window.SAFE_DEFAULT_AVATAR;
         }
@@ -31788,7 +31788,7 @@ Estamos atentos para brindarle asistencia inmediata.
           currentUser = JSON.parse(sessionStr);
           if (currentUser) {
             // Sanitizar avatar corrupto o placeholder literal para prevenir bucles de red
-            if (currentUser.avatar && (currentUser.avatar.includes('[[') || currentUser.avatar.includes('%5B') || currentUser.avatar.includes('defaultAvatar'))) {
+            if (currentUser.avatar && (currentUser.avatar.includes('[[') || currentUser.avatar.includes('%5B') || currentUser.avatar.includes('{') || currentUser.avatar.includes('%7B') || currentUser.avatar.includes('defaultAvatar'))) {
               currentUser.avatar = '';
               try { localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser)); } catch (_) {}
             }
