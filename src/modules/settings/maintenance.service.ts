@@ -734,10 +734,26 @@ export async function executeSystemUpdate(options: {
     const snapshotInfo = snapshotLiveOperationalData();
     log(`✅ ${snapshotInfo.totalFiles} archivos de datos en vivo asegurados contra sobreescritura.`);
 
-    // PASO 3: Preparar directorio Git sin alterar datos locales
-    log("📦 [3/7] Validando permisos Git y preparando árbol de trabajo...");
+    // PASO 3: Preparar directorio Git sin alterar datos locales y resguardar cambios pendientes
+    log("📦 [3/7] Validando permisos Git y asegurando cambios locales...");
     try {
       await execAsync('git config --global --add safe.directory "*"', { cwd: ROOT_DIR });
+      // Blindaje de seguridad: Si existen modificaciones locales en código o assets, resguardarlas en rama Git antes de pull
+      try {
+        const { stdout: statusOut } = await execAsync("git status --porcelain", { cwd: ROOT_DIR });
+        if (statusOut && statusOut.trim().length > 0) {
+          const { stdout: stashCommit } = await execAsync("git stash create", { cwd: ROOT_DIR });
+          const trimmedCommit = stashCommit ? stashCommit.trim() : "";
+          if (trimmedCommit) {
+            const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+            const autoBranch = `backup-local-${todayStr}-pre-update`;
+            await execAsync(`git branch -f ${autoBranch} ${trimmedCommit}`, { cwd: ROOT_DIR });
+            log(`🛡️ Modificaciones locales aseguradas en rama de respaldo '${autoBranch}' antes de sincronizar.`);
+          }
+        }
+      } catch (backupLocalErr) {
+        console.warn("Aviso al crear rama de respaldo preventiva local:", backupLocalErr);
+      }
       try {
         await execAsync("git checkout HEAD -- public/assets/ public/index.html src/", { cwd: ROOT_DIR });
       } catch (e) {}

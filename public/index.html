@@ -6428,12 +6428,16 @@
                     <div>
                       <div class="flex items-center space-x-2">
                         <h3 class="text-sm font-semibold tracking-tight">Operadores Autorizados</h3>
-                        <span id="users-company-scope-badge" class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20"></span>
+                        <span id="users-company-scope-badge" class="hidden px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20"></span>
                       </div>
                       <p class="text-xs text-slate-400 mt-0.5">Usuarios del sistema con acceso por PIN numérico para esta empresa</p>
                     </div>
                     <div class="flex items-center space-x-2 flex-wrap sm:flex-nowrap">
-                      <select id="users-list-filter-tenant" onchange="handleUsersFilterTenantChange(this.value)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer shadow-xs"></select>
+                      <select id="users-list-filter-tenant" onchange="handleUsersFilterTenantChange(this.value)" style="min-width: 220px;" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer shadow-xs">
+                        <option value="all">🌐 Todas las Empresas (Global)</option>
+                        <option value="turbonetwork">🏢 TurboNetwork Perú S.A.C.</option>
+                        <option value="loanetwork">🏢 LoaNetwork S.A.C.</option>
+                      </select>
                       <button type="button" onclick="openCreateUserModal()" class="px-3.5 py-1.5 rounded-lg btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -7836,6 +7840,10 @@
                 <span>5. Permisos y Vacaciones</span>
                 <span id="rrhh-leaves-pending-pill" class="hidden px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold">0</span>
               </button>
+              <button type="button" onclick="switchRRHHSubTab('operators')" id="btn-rrhh-operators" class="px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center space-x-1.5">
+                <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span>6. Operadores & Acceso</span>
+              </button>
             </div>
           </div>
 
@@ -8527,6 +8535,140 @@
 
             <!-- Bandeja Mobile-First de Solicitudes con Aprobación en 1 Clic -->
             <div id="leaves-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+          </div>
+
+          <!-- ======================================================== -->
+          <!-- SUBTAB 6: OPERADORES & PIN DE ACCESO (VINCULADO A RRHH)   -->
+          <!-- ======================================================== -->
+          <div id="rrhh-subtab-operators" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <!-- Alta de Operador -->
+              <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <h3 class="text-sm font-semibold tracking-tight">Alta de Operador</h3>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Sincronizado RR.HH</span>
+                  </div>
+                  <p class="text-xs text-slate-400 mt-0.5">Asigna datos de acceso, horario laboral y fechas</p>
+
+                  <form id="rrhh-new-user-form" onsubmit="handleCreateUserFromRRHH(event)" class="space-y-3 mt-4">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre y Apellido *</label>
+                      <input type="text" id="rnu-name" required placeholder="Ej. Juan Pérez" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Correo Corporativo *</label>
+                      <input type="email" id="rnu-email" required placeholder="juan@turbonetwork.com" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Rol Operativo *</label>
+                      <select id="rnu-role" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer shadow-xs"></select>
+                    </div>
+
+                    <!-- Horario Laboral -->
+                    <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-2">
+                      <div class="flex items-center justify-between">
+                        <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                          <span>Horario Laboral / Turno (Reloj)</span>
+                        </label>
+                        <span class="text-[9px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-500/10 px-1.5 py-0.5 rounded">Asistencia & Puntualidad</span>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-2">
+                        <div>
+                          <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span>Desde (Entrada)</span>
+                          </label>
+                          <input type="time" id="rnu-time-start" value="08:00" onchange="syncScheduleInputs('rnu')" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
+                        </div>
+                        <div>
+                          <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                            <span>Hasta (Salida)</span>
+                          </label>
+                          <input type="time" id="rnu-time-end" value="17:00" onchange="syncScheduleInputs('rnu')" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
+                        </div>
+                      </div>
+
+                      <div>
+                        <input type="text" id="rnu-schedule" value="08:00 - 17:00" placeholder="Ej: Lun - Vie 08:00 a 17:00 / Sáb 08:00 a 13:00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-200">
+                      </div>
+
+                      <div class="flex items-center gap-1 pt-0.5 flex-wrap">
+                        <span class="text-[9px] text-slate-400">Preajustes:</span>
+                        <button type="button" onclick="setQuickShift('rnu', '08:00', '17:00')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">08:00 - 17:00</button>
+                        <button type="button" onclick="setQuickShift('rnu', '08:30', '17:30')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">08:30 - 17:30</button>
+                        <button type="button" onclick="setQuickShift('rnu', '09:00', '18:00')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">09:00 - 18:00</button>
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                      <div>
+                        <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Fecha Ingreso</label>
+                        <input type="date" id="rnu-hire-date" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-200">
+                      </div>
+                      <div>
+                        <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Cumpleaños</label>
+                        <input type="date" id="rnu-birth-date" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-200">
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Sede / Negocio Asignado *</label>
+                      <select id="rnu-assigned-tenant" required onchange="onUserFormTenantChange('rnu', this.value)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100 cursor-pointer shadow-xs">
+                        <option value="" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Cargando sedes...</option>
+                      </select>
+                      <p class="text-[10px] text-slate-500 mt-1">El operador pertenecerá a esta sede y solo aparecerá en ella.</p>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">PIN de 8 Dígitos *</label>
+                        <button type="button" onclick="generateRandomPinForRRHH()" class="text-[10px] dynamic-primary-text hover:underline font-mono">Generar Aleatorio</button>
+                      </div>
+                      <input type="text" id="rnu-pin" required maxlength="8" pattern="\d{8}" placeholder="Ej. 49201948" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-mono tracking-widest text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div id="rrhh-create-user-status" class="text-xs min-h-[16px]"></div>
+
+                    <button type="submit" class="w-full py-2 rounded-lg btn-brand-primary font-semibold text-xs transition">
+                      Registrar Operador
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Lista de Operadores Autorizados -->
+              <div class="pro-card lg:col-span-2 p-5 rounded-xl flex flex-col justify-between">
+                <div>
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                      <div class="flex items-center space-x-2">
+                        <h3 class="text-sm font-semibold tracking-tight">Operadores Autorizados</h3>
+                        <span id="rrhh-users-company-scope-badge" class="hidden px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20"></span>
+                      </div>
+                      <p class="text-xs text-slate-400 mt-0.5">Usuarios con acceso por PIN numérico y sincronizados con ZKTeco</p>
+                    </div>
+                    <div class="flex items-center space-x-2 flex-wrap sm:flex-nowrap">
+                      <select id="rrhh-users-list-filter-tenant" onchange="handleUsersFilterTenantChange(this.value)" style="min-width: 220px;" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer shadow-xs">
+                        <option value="all">🌐 Todas las Empresas (Global)</option>
+                        <option value="turbonetwork">🏢 TurboNetwork Perú S.A.C.</option>
+                        <option value="loanetwork">🏢 LoaNetwork S.A.C.</option>
+                      </select>
+                      <button type="button" onclick="openCreateUserModal()" class="px-3.5 py-1.5 rounded-lg btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        <span>Nuevo Operador</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="mt-4 space-y-2.5" id="rrhh-users-list-container"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -14040,10 +14182,30 @@
         </button>
       </div>
 
+      <!-- Selector de Pestañas del Modal (Expediente RRHH vs Operador ZKTeco) -->
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pt-2 pb-2 px-1 flex-shrink-0">
+        <div class="flex items-center space-x-2">
+          <button type="button" id="emp-modal-tab-btn-hr" onclick="switchEmployeeModalTab('hr')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-2 btn-brand-primary shadow-xs">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span>👤 1. Expediente RR.HH</span>
+          </button>
+          <button type="button" id="emp-modal-tab-btn-op" onclick="switchEmployeeModalTab('op')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition flex items-center space-x-2">
+            <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            <span>🛡️ 2. Operador del Sistema & Reloj ZKTeco</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          </button>
+        </div>
+        <span class="text-[10px] text-slate-400 font-mono hidden sm:inline-flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Sincronización Automática
+        </span>
+      </div>
+
       <!-- Body Form -->
       <form id="employee-form" onsubmit="handleSaveEmployee(event)" class="flex-1 overflow-y-auto pr-1.5 py-3 space-y-4 my-1 text-xs">
         <input type="hidden" id="emp-id" value="">
 
+        <!-- VISTA TAB 1: EXPEDIENTE RRHH -->
+        <div id="emp-modal-view-hr" class="space-y-4">
         <!-- BLOQUE 1: DATOS PERSONALES & CONTACTO -->
         <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 space-y-3.5 shadow-xs">
           <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2">
@@ -14282,6 +14444,146 @@
               <option value="active">🟢 Activo / En funciones (Habilitado para turnos y asistencias)</option>
               <option value="inactive">🔴 Inactivo / Baja laboral (Bloqueado temporal o definitivamente)</option>
             </select>
+          </div>
+        </div>
+        </div> <!-- Fin #emp-modal-view-hr -->
+
+        <!-- VISTA TAB 2: OPERADOR DEL SISTEMA & ALTA EN RELOJ BIOMÉTRICO -->
+        <div id="emp-modal-view-op" class="space-y-4 hidden">
+          <!-- Banner Informativo con Toggle Switch de Creación -->
+          <div class="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 via-emerald-500/10 to-purple-500/10 border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-500 flex items-center justify-center font-bold text-base flex-shrink-0">
+                🛡️
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
+                  <span>Crear Usuario Operador & Enviar a Reloj ZKTeco</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">Auto-Sincronizado</span>
+                </h4>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Habilita el acceso con PIN numérico a la plataforma y registra automáticamente al colaborador en el reloj biométrico con su PIN de 8 dígitos.
+                </p>
+              </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+              <input type="checkbox" id="emp-op-create-switch" checked onchange="toggleEmployeeOpFields(this.checked)" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
+              <span class="ml-2 text-xs font-bold text-slate-700 dark:text-slate-300">Habilitar Operador</span>
+            </label>
+          </div>
+
+          <!-- Formulario de Alta de Operador (Exacto a Gobernanza & Marca) -->
+          <div id="emp-op-fields-container" class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 space-y-4 shadow-xs">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2">
+              <div>
+                <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Alta de Operador</h3>
+                <p class="text-[10px] text-slate-400 mt-0.5">Asigna datos de acceso, horario laboral y fechas</p>
+              </div>
+              <span class="text-[10px] text-blue-500 dark:text-blue-400 font-mono font-semibold bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">Reflejo en tiempo real de RR.HH</span>
+            </div>
+
+            <!-- Nombre y Correo -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Nombre y Apellido *</label>
+                <input type="text" id="emp-op-name" placeholder="Ej. Juan Pérez" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Correo Corporativo *</label>
+                <input type="email" id="emp-op-email" placeholder="juan@turbonetwork.com" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+
+            <!-- Sede / Negocio Asignado y Rol Operativo -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Sede / Negocio Asignado *</label>
+                <select id="emp-op-tenant" onchange="onEmployeeOpTenantChange(this.value)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer shadow-xs">
+                  <!-- Opciones cargadas dinámicamente -->
+                </select>
+                <p class="text-[10px] text-slate-500 mt-1">El operador pertenecerá a esta sede y solo aparecerá en ella.</p>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Rol Operativo *</label>
+                <select id="emp-op-role" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer shadow-xs">
+                  <!-- Roles cargados dinámicamente según sede -->
+                </select>
+                <p class="text-[10px] text-slate-500 mt-1">Permisos en el sistema y nivel de acceso (Admin/Usuario en reloj).</p>
+              </div>
+            </div>
+
+            <!-- Horario Laboral / Turno (Reloj) -->
+            <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <span>Horario Laboral / Turno (Reloj)</span>
+                </label>
+                <span class="text-[9px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-500/10 px-1.5 py-0.5 rounded">Asistencia & Puntualidad</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>Desde (Entrada)</span>
+                  </label>
+                  <input type="time" id="emp-op-time-start" value="08:00" onchange="syncEmployeeOpScheduleInputs()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    <span>Hasta (Salida)</span>
+                  </label>
+                  <input type="time" id="emp-op-time-end" value="17:00" onchange="syncEmployeeOpScheduleInputs()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
+                </div>
+              </div>
+
+              <div>
+                <input type="text" id="emp-op-schedule" value="08:00 - 17:00" placeholder="Ej: Lun - Vie 08:00 a 17:00 / Sáb 08:00 a 13:00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500 text-slate-700 dark:text-slate-200">
+              </div>
+
+              <div class="flex items-center gap-1 pt-0.5 flex-wrap">
+                <span class="text-[9px] text-slate-400">Preajustes:</span>
+                <button type="button" onclick="setEmployeeOpQuickShift('08:00', '17:00')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">08:00 - 17:00</button>
+                <button type="button" onclick="setEmployeeOpQuickShift('08:30', '17:30')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">08:30 - 17:30</button>
+                <button type="button" onclick="setEmployeeOpQuickShift('09:00', '18:00')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">09:00 - 18:00</button>
+              </div>
+            </div>
+
+            <!-- Fechas -->
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Fecha Ingreso</label>
+                <input type="date" id="emp-op-hire-date" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Cumpleaños</label>
+                <input type="date" id="emp-op-birth-date" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+
+            <!-- PIN DE 8 DÍGITOS Y ENROLAMIENTO ZKTECO -->
+            <div class="p-3.5 rounded-xl bg-blue-500/[0.05] dark:bg-blue-500/10 border border-blue-500/20 space-y-2">
+              <div class="flex justify-between items-center">
+                <label class="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🔢 PIN de 8 Dígitos (Acceso Web & Reloj ZKTeco) *</span>
+                </label>
+                <button type="button" onclick="generateEmployeeOpRandomPin()" class="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-mono font-bold flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                  <span>Generar Aleatorio</span>
+                </button>
+              </div>
+              <div class="relative">
+                <input type="text" id="emp-op-pin" maxlength="8" pattern="\d{8}" placeholder="Ej. 40231948" class="w-full bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-500/40 rounded-lg px-3 py-2 text-sm font-mono tracking-widest text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:border-blue-500 shadow-inner">
+              </div>
+              <div class="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+                <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                <span>Este PIN servirá tanto para ingresar al software como para el registro y marcado biométrico en el reloj.</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -21988,6 +22290,8 @@
           </div>
         `;
       }).join('');
+      if (container) container.innerHTML = cardsHtml;
+      if (rrhhContainer) rrhhContainer.innerHTML = cardsHtml;
     }
 
     function closeManageTenantsModal() {
@@ -28535,7 +28839,7 @@ Estamos atentos para brindarle asistencia inmediata.
         const res = await fetch(`/api/roles?tenantId=${encodeURIComponent(targetTenantId)}`);
         const data = await res.json();
         if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-          let roleSelectId = prefix === 'nu' ? 'nu-role' : (prefix === 'nmodal' ? 'nmodal-role' : 'ue-role');
+          let roleSelectId = prefix === 'nu' ? 'nu-role' : (prefix === 'nmodal' ? 'nmodal-role' : (prefix === 'rnu' ? 'rnu-role' : (prefix === 'emp-op' ? 'emp-op-role' : 'ue-role')));
           const sel = document.getElementById(roleSelectId);
           if (sel) {
             const prev = sel.value;
@@ -28552,6 +28856,10 @@ Estamos atentos para brindarle asistencia inmediata.
 
     async function handleUsersFilterTenantChange(tenantId) {
       currentUsersFilterTenant = tenantId;
+      const f1 = document.getElementById('users-list-filter-tenant');
+      const f2 = document.getElementById('rrhh-users-list-filter-tenant');
+      if (f1) f1.value = tenantId;
+      if (f2) f2.value = tenantId;
       await loadConfigModule(tenantId);
     }
 
@@ -28575,11 +28883,12 @@ Estamos atentos para brindarle asistencia inmediata.
 
         // Actualizar badge de sede y contador de operadores
         const scopeBadge = document.getElementById('users-company-scope-badge');
-        if (scopeBadge) {
-          const tenantObj = (typeof tenantsList !== 'undefined' ? tenantsList : []).find(t => t.id === tenantForUsers);
-          const tName = tenantForUsers === 'all' ? 'Todas las Empresas' : (tenantObj ? tenantObj.name : tenantForUsers);
-          scopeBadge.textContent = `${tName} (${currentUsers.length})`;
-        }
+        const rrhhScopeBadge = document.getElementById('rrhh-users-company-scope-badge');
+        const tenantObj = (typeof tenantsList !== 'undefined' ? tenantsList : []).find(t => t.id === tenantForUsers);
+        const tName = tenantForUsers === 'all' ? 'Todas las Empresas' : (tenantObj ? tenantObj.name : tenantForUsers);
+        const scopeText = `${tName} (${currentUsers.length})`;
+        if (scopeBadge) scopeBadge.textContent = scopeText;
+        if (rrhhScopeBadge) rrhhScopeBadge.textContent = scopeText;
 
         // Sincronizar permisos y módulos del usuario activo si su rol fue modificado
         if (currentUser && currentRoles.length > 0) {
@@ -28622,11 +28931,14 @@ Estamos atentos para brindarle asistencia inmediata.
 
     function renderUsers(list) {
       const container = document.getElementById('users-list-container');
+      const rrhhContainer = document.getElementById('rrhh-users-list-container');
       if (!list || list.length === 0) {
-        container.innerHTML = '<div class="py-8 text-center text-xs text-slate-400">No hay operadores registrados en el sistema</div>';
+        const emptyHtml = '<div class="py-8 text-center text-xs text-slate-400">No hay operadores registrados en el sistema</div>';
+        if (container) container.innerHTML = emptyHtml;
+        if (rrhhContainer) rrhhContainer.innerHTML = emptyHtml;
         return;
       }
-      container.innerHTML = list.map(u => {
+      const cardsHtml = list.map(u => {
         const isActive = u.isActive !== false;
         const isProtectedRoot = u.id === 1;
         const isSelf = currentUser && currentUser.id === u.id;
@@ -28705,6 +29017,9 @@ Estamos atentos para brindarle asistencia inmediata.
         </div>
         `;
       }).join('');
+
+      if (container) container.innerHTML = cardsHtml;
+      if (rrhhContainer) rrhhContainer.innerHTML = cardsHtml;
     }
 
     function renderRoles(roles) {
@@ -29298,7 +29613,9 @@ Estamos atentos para brindarle asistencia inmediata.
       
       let optionsHtml = tenants.map(t => `<option value="${escapeHtml(t.id)}" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">🏢 ${escapeHtml(t.name)}</option>`).join('');
 
-      [createSelect, editSelect, inlineSelect].forEach(sel => {
+      const rrhhSelect = document.getElementById('rnu-assigned-tenant');
+      const empOpSelect = document.getElementById('emp-op-tenant');
+      [createSelect, editSelect, inlineSelect, rrhhSelect, empOpSelect].forEach(sel => {
         if (sel) {
           const prevVal = forceActive ? null : sel.value;
           sel.innerHTML = optionsHtml;
@@ -29312,22 +29629,26 @@ Estamos atentos para brindarle asistencia inmediata.
         }
       });
 
-      // Sincronizar el selector de filtro en la cabecera de Operadores Autorizados
+      // Sincronizar el selector de filtro en la cabecera de Operadores Autorizados (ambas pestañas)
       const filterSelect = document.getElementById('users-list-filter-tenant');
-      if (filterSelect) {
-        const curFilter = filterSelect.value;
-        const activeTenantObj = tenants.find(t => t.id === activeTenantId);
-        const activeName = activeTenantObj ? activeTenantObj.name : (activeTenantId || 'Sede Activa');
-        let filterHtml = `<option value="${escapeHtml(activeTenantId || '')}">🏢 Solo Sede Activa (${escapeHtml(activeName)})</option>`;
-        filterHtml += `<option value="all">🌐 Todas las Empresas (Global)</option>`;
-        filterHtml += tenants.filter(t => t.id !== activeTenantId).map(t => `<option value="${escapeHtml(t.id)}">🏢 ${escapeHtml(t.name)}</option>`).join('');
-        filterSelect.innerHTML = filterHtml;
-        if (curFilter && (curFilter === 'all' || tenants.some(t => t.id === curFilter))) {
-          filterSelect.value = curFilter;
-        } else {
-          filterSelect.value = activeTenantId || '';
+      const rrhhFilterSelect = document.getElementById('rrhh-users-list-filter-tenant');
+      const activeTenantObj = tenants.find(t => t.id === activeTenantId);
+      const activeName = activeTenantObj ? activeTenantObj.name : (activeTenantId || 'Sede Activa');
+      let filterHtml = `<option value="${escapeHtml(activeTenantId || '')}">🏢 Solo Sede Activa (${escapeHtml(activeName)})</option>`;
+      filterHtml += `<option value="all">🌐 Todas las Empresas (Global)</option>`;
+      filterHtml += tenants.filter(t => t.id !== activeTenantId).map(t => `<option value="${escapeHtml(t.id)}">🏢 ${escapeHtml(t.name)}</option>`).join('');
+
+      [filterSelect, rrhhFilterSelect].forEach(sel => {
+        if (sel) {
+          const curFilter = sel.value || currentUsersFilterTenant;
+          sel.innerHTML = filterHtml;
+          if (curFilter && (curFilter === 'all' || tenants.some(t => t.id === curFilter))) {
+            sel.value = curFilter;
+          } else {
+            sel.value = activeTenantId || '';
+          }
         }
-      }
+      });
     }
 
     function openCreateUserModal() {
@@ -32027,7 +32348,7 @@ Estamos atentos para brindarle asistencia inmediata.
 
     function switchRRHHSubTab(tab) {
       activeRRHHSubTab = tab;
-      const tabs = ['attendance', 'payroll', 'commissions', 'personnel', 'leaves'];
+      const tabs = ['attendance', 'payroll', 'commissions', 'personnel', 'leaves', 'operators'];
       const activeClass = "px-3.5 py-2 rounded-lg btn-brand-primary transition flex items-center space-x-1.5 shadow-sm";
       const inactiveClass = "px-3.5 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center space-x-1.5";
 
@@ -32046,6 +32367,13 @@ Estamos atentos para brindarle asistencia inmediata.
       else if (tab === 'commissions') loadCommissionsModule();
       else if (tab === 'personnel') loadEmployees();
       else if (tab === 'leaves') loadLeavesModule();
+      else if (tab === 'operators') {
+        loadConfigModule();
+        populateAssignedTenantSelects();
+        const rRole = document.getElementById('rnu-role');
+        if (!rRole || rRole.children.length === 0) onUserFormTenantChange('rnu', activeTenantId);
+        generateRandomPinForRRHH();
+      }
     }
 
     function renderHRAlertsBanner(alerts) {
@@ -33461,6 +33789,16 @@ function copyRemoteScannerLink() {
       if (bonusDescEl) bonusDescEl.value = '';
       updateEmployeeCompPreview();
 
+      // Inicializar pestaña y datos de operador
+      switchEmployeeModalTab('hr');
+      const opSwitchCreate = document.getElementById('emp-op-create-switch');
+      if (opSwitchCreate) {
+        opSwitchCreate.checked = true;
+        toggleEmployeeOpFields(true);
+      }
+      generateEmployeeOpRandomPin();
+      initEmployeeOpTenantAndRoles();
+
       modal.classList.remove('hidden');
     }
 
@@ -33545,6 +33883,56 @@ function copyRemoteScannerLink() {
       const vacEl = document.getElementById('emp-vacation-acc');
       if (vacEl) vacEl.value = emp.vacationDaysAccumulated ?? 15;
 
+      switchEmployeeModalTab('hr');
+
+      // Comprobar si tiene operador vinculado en users
+      const opUser = (typeof currentUsers !== 'undefined' ? currentUsers : []).find(u => 
+        (emp.operatorPin && u.pin === emp.operatorPin) || 
+        (emp.biometricPin && u.pin === emp.biometricPin) || 
+        (emp.email && u.email && u.email.toLowerCase() === emp.email.toLowerCase()) || 
+        (emp.operatorId && u.id === emp.operatorId)
+      );
+
+      const opSwitchEdit = document.getElementById('emp-op-create-switch');
+      if (opUser) {
+        if (opSwitchEdit) opSwitchEdit.checked = true;
+        toggleEmployeeOpFields(true);
+        const opNameEl = document.getElementById('emp-op-name');
+        if (opNameEl) opNameEl.value = opUser.name || emp.name || '';
+        const opEmailEl = document.getElementById('emp-op-email');
+        if (opEmailEl) opEmailEl.value = opUser.email || emp.email || '';
+        const opPinEl = document.getElementById('emp-op-pin');
+        if (opPinEl) opPinEl.value = opUser.pin || emp.operatorPin || emp.biometricPin || '';
+        initEmployeeOpTenantAndRoles(opUser.assignedTenantId, opUser.roleId);
+        const opSchedEl = document.getElementById('emp-op-schedule');
+        if (opSchedEl) opSchedEl.value = opUser.workSchedule || emp.workSchedule || '08:00 - 17:00';
+        const opStartEl = document.getElementById('emp-op-time-start');
+        if (opStartEl) opStartEl.value = opUser.expectedCheckInTime || emp.expectedCheckInTime || '08:00';
+        const opEndEl = document.getElementById('emp-op-time-end');
+        if (opEndEl) opEndEl.value = opUser.expectedCheckOutTime || '17:00';
+        const opHireEl = document.getElementById('emp-op-hire-date');
+        if (opHireEl) opHireEl.value = opUser.hireDate || emp.hireDate || '';
+        const opBirthEl = document.getElementById('emp-op-birth-date');
+        if (opBirthEl) opBirthEl.value = opUser.birthDate || emp.birthDate || '';
+      } else {
+        if (opSwitchEdit) opSwitchEdit.checked = false;
+        toggleEmployeeOpFields(false);
+        const opNameEl = document.getElementById('emp-op-name');
+        if (opNameEl) opNameEl.value = emp.name || '';
+        const opEmailEl = document.getElementById('emp-op-email');
+        if (opEmailEl) opEmailEl.value = emp.email || '';
+        const opPinEl = document.getElementById('emp-op-pin');
+        if (opPinEl) opPinEl.value = (emp.biometricPin && /^\d{8}$/.test(emp.biometricPin)) ? emp.biometricPin : '';
+        if (!opPinEl.value) generateEmployeeOpRandomPin();
+        initEmployeeOpTenantAndRoles(emp.operatorTenantId || activeTenantId, emp.operatorRoleId);
+        const opSchedEl = document.getElementById('emp-op-schedule');
+        if (opSchedEl) opSchedEl.value = emp.workSchedule || '08:00 - 17:00';
+        const opStartEl = document.getElementById('emp-op-time-start');
+        if (opStartEl) opStartEl.value = emp.expectedCheckInTime || '08:00';
+        const opHireEl = document.getElementById('emp-op-hire-date');
+        if (opHireEl) opHireEl.value = emp.hireDate || '';
+      }
+
       modal.classList.remove('hidden');
     }
 
@@ -33576,6 +33964,205 @@ function copyRemoteScannerLink() {
     function closeEmployeeModal() {
       const modal = document.getElementById('employee-modal');
       if (modal) modal.classList.add('hidden');
+    }
+
+    
+    // FUNCIONES DE CONTROL DE PESTAÑAS Y OPERADOR EN MODAL DE COLABORADOR
+    function switchEmployeeModalTab(tab) {
+      const hrView = document.getElementById('emp-modal-view-hr');
+      const opView = document.getElementById('emp-modal-view-op');
+      const btnHr = document.getElementById('emp-modal-tab-btn-hr');
+      const btnOp = document.getElementById('emp-modal-tab-btn-op');
+
+      const activeClass = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-2 btn-brand-primary shadow-xs";
+      const inactiveClass = "px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition flex items-center space-x-2";
+
+      if (tab === 'op') {
+        if (hrView) hrView.classList.add('hidden');
+        if (opView) opView.classList.remove('hidden');
+        if (btnHr) btnHr.className = inactiveClass;
+        if (btnOp) btnOp.className = activeClass;
+        syncEmployeeToOperatorFields();
+      } else {
+        if (hrView) hrView.classList.remove('hidden');
+        if (opView) opView.classList.add('hidden');
+        if (btnHr) btnHr.className = activeClass;
+        if (btnOp) btnOp.className = inactiveClass;
+      }
+    }
+
+    function toggleEmployeeOpFields(enabled) {
+      const container = document.getElementById('emp-op-fields-container');
+      if (!container) return;
+      if (enabled) {
+        container.classList.remove('opacity-40', 'pointer-events-none');
+      } else {
+        container.classList.add('opacity-40', 'pointer-events-none');
+      }
+    }
+
+    function syncEmployeeToOperatorFields() {
+      const empName = document.getElementById('emp-name')?.value || '';
+      const empEmail = document.getElementById('emp-email')?.value || '';
+      const empSchedule = document.getElementById('emp-schedule')?.value || '08:00 - 17:00';
+      const empExpected = document.getElementById('emp-expected-time')?.value || '08:00';
+      const empHire = document.getElementById('emp-hire-date')?.value || '';
+
+      const opName = document.getElementById('emp-op-name');
+      const opEmail = document.getElementById('emp-op-email');
+      const opSched = document.getElementById('emp-op-schedule');
+      const opStart = document.getElementById('emp-op-time-start');
+      const opEnd = document.getElementById('emp-op-time-end');
+      const opHire = document.getElementById('emp-op-hire-date');
+
+      if (opName && (!opName.value || opName.dataset.autoSynced === 'true')) {
+        opName.value = empName;
+        opName.dataset.autoSynced = 'true';
+      }
+      if (opEmail && (!opEmail.value || opEmail.dataset.autoSynced === 'true')) {
+        opEmail.value = empEmail;
+        opEmail.dataset.autoSynced = 'true';
+      }
+      if (opSched && (!opSched.value || opSched.dataset.autoSynced === 'true')) {
+        opSched.value = empSchedule;
+        opSched.dataset.autoSynced = 'true';
+      }
+      if (opStart && (!opStart.value || opStart.dataset.autoSynced === 'true')) {
+        opStart.value = empExpected;
+        opStart.dataset.autoSynced = 'true';
+      }
+      if (opHire && (!opHire.value || opHire.dataset.autoSynced === 'true')) {
+        opHire.value = empHire;
+        opHire.dataset.autoSynced = 'true';
+      }
+    }
+
+    function generateEmployeeOpRandomPin() {
+      const pin = Math.floor(10000000 + Math.random() * 90000000).toString();
+      const el = document.getElementById('emp-op-pin');
+      if (el) el.value = pin;
+    }
+
+    function generateRandomPinForRRHH() {
+      const pin = Math.floor(10000000 + Math.random() * 90000000).toString();
+      const el = document.getElementById('rnu-pin');
+      if (el) el.value = pin;
+    }
+
+    function syncEmployeeOpScheduleInputs() {
+      const start = document.getElementById('emp-op-time-start')?.value || '08:00';
+      const end = document.getElementById('emp-op-time-end')?.value || '17:00';
+      const schedEl = document.getElementById('emp-op-schedule');
+      if (schedEl) {
+        schedEl.value = `${start} - ${end}`;
+        schedEl.dataset.autoSynced = 'false';
+      }
+    }
+
+    function setEmployeeOpQuickShift(start, end) {
+      const startEl = document.getElementById('emp-op-time-start');
+      const endEl = document.getElementById('emp-op-time-end');
+      const schedEl = document.getElementById('emp-op-schedule');
+      if (startEl) { startEl.value = start; startEl.dataset.autoSynced = 'false'; }
+      if (endEl) { endEl.value = end; endEl.dataset.autoSynced = 'false'; }
+      if (schedEl) { schedEl.value = `${start} - ${end}`; schedEl.dataset.autoSynced = 'false'; }
+    }
+
+    async function initEmployeeOpTenantAndRoles(selectedTenant = null, selectedRoleId = null) {
+      if (!tenantsList || tenantsList.length === 0) {
+        try {
+          const res = await fetch('/api/tenants');
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data)) tenantsList = data.data;
+        } catch (e) {}
+      }
+      const tenants = tenantsList || [];
+      const tenantSelect = document.getElementById('emp-op-tenant');
+      if (tenantSelect) {
+        tenantSelect.innerHTML = tenants.map(t => `<option value="${escapeHtml(t.id)}">🏢 ${escapeHtml(t.name)}</option>`).join('');
+        const chosen = selectedTenant || (typeof activeTenantId !== 'undefined' && activeTenantId ? activeTenantId : (tenants[0]?.id || 'turbonetwork'));
+        tenantSelect.value = chosen;
+        await onEmployeeOpTenantChange(chosen, selectedRoleId);
+      }
+    }
+
+    async function onEmployeeOpTenantChange(targetTenantId, selectedRoleId = null) {
+      if (!targetTenantId) return;
+      try {
+        const res = await fetch(`/api/roles?tenantId=${encodeURIComponent(targetTenantId)}`);
+        const data = await res.json();
+        const roleSelect = document.getElementById('emp-op-role');
+        if (roleSelect && data.success && Array.isArray(data.data) && data.data.length > 0) {
+          const prevVal = selectedRoleId || roleSelect.value;
+          roleSelect.innerHTML = data.data.map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
+          if (prevVal && data.data.some(r => String(r.id) === String(prevVal))) {
+            roleSelect.value = prevVal;
+          }
+        }
+      } catch (err) {
+        console.warn("Aviso al refrescar roles de operador para modal RRHH:", err);
+      }
+    }
+
+    async function handleCreateUserFromRRHH(e) {
+      e.preventDefault();
+      const statusDiv = document.getElementById('rrhh-create-user-status');
+      statusDiv.textContent = "Registrando operador...";
+      statusDiv.className = "text-xs dynamic-primary-text font-mono";
+
+      const name = document.getElementById('rnu-name').value.trim();
+      const email = document.getElementById('rnu-email').value.trim();
+      const roleId = parseInt(document.getElementById('rnu-role').value, 10);
+      const timeStart = document.getElementById('rnu-time-start')?.value || '08:00';
+      const timeEnd = document.getElementById('rnu-time-end')?.value || '17:00';
+      let schedule = document.getElementById('rnu-schedule')?.value.trim();
+      if (!schedule) schedule = `${timeStart} - ${timeEnd}`;
+      const hireDate = document.getElementById('rnu-hire-date').value;
+      const birthDate = document.getElementById('rnu-birth-date').value;
+      const pin = document.getElementById('rnu-pin').value.trim();
+      const assignedTenantId = document.getElementById('rnu-assigned-tenant')?.value || activeTenantId;
+
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-tenant-id': assignedTenantId
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            roleId,
+            pin,
+            workSchedule: schedule,
+            expectedCheckInTime: timeStart,
+            expectedCheckOutTime: timeEnd,
+            hireDate,
+            birthDate,
+            assignedTenantId,
+            syncWithZkteco: true
+          })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          statusDiv.textContent = "Operador registrado y sincronizado con ZKTeco";
+          statusDiv.className = "text-xs dynamic-accent-text font-mono";
+          document.getElementById('rrhh-new-user-form').reset();
+          const rnuAssigned = document.getElementById('rnu-assigned-tenant');
+          if (rnuAssigned) rnuAssigned.value = activeTenantId;
+          generateRandomPinForRRHH();
+          await loadConfigModule();
+          await loadEmployees();
+          showToast("Operador creado y sincronizado con el reloj biométrico ZKTeco exitosamente");
+        } else {
+          statusDiv.textContent = data.message || "Error al crear usuario";
+          statusDiv.className = "text-xs text-rose-400 font-mono";
+        }
+      } catch {
+        statusDiv.textContent = "Error de conexión";
+        statusDiv.className = "text-xs text-rose-400 font-mono";
+      }
     }
 
     async function handleSaveEmployee(e) {
@@ -33615,6 +34202,33 @@ function copyRemoteScannerLink() {
         status: document.getElementById('emp-status').value
       };
 
+      const createOpSwitch = document.getElementById('emp-op-create-switch');
+      const createOperator = createOpSwitch ? createOpSwitch.checked : false;
+
+      if (createOperator) {
+        const opPin = (document.getElementById('emp-op-pin')?.value || '').trim();
+        if (!opPin || !/^\d{8}$/.test(opPin)) {
+          errBox.textContent = 'El PIN del operador debe ser exactamente de 8 dígitos numéricos.';
+          switchEmployeeModalTab('op');
+          btn.disabled = false;
+          btnText.textContent = id ? 'Guardar Cambios' : 'Guardar Colaborador';
+          return;
+        }
+        payload.createOperator = true;
+        payload.operatorPin = opPin;
+        payload.biometricPin = opPin;
+        payload.operatorRoleId = document.getElementById('emp-op-role')?.value || 1;
+        payload.operatorTenantId = document.getElementById('emp-op-tenant')?.value || activeTenantId;
+        payload.operatorName = (document.getElementById('emp-op-name')?.value || payload.name).trim();
+        payload.operatorEmail = (document.getElementById('emp-op-email')?.value || payload.email).trim();
+        payload.operatorSchedule = (document.getElementById('emp-op-schedule')?.value || payload.workSchedule).trim();
+        payload.operatorExpectedIn = document.getElementById('emp-op-time-start')?.value || payload.expectedCheckInTime || '08:00';
+        payload.operatorExpectedOut = document.getElementById('emp-op-time-end')?.value || '17:00';
+        payload.operatorHireDate = document.getElementById('emp-op-hire-date')?.value || payload.hireDate;
+        payload.operatorBirthDate = document.getElementById('emp-op-birth-date')?.value || '';
+        payload.syncWithZkteco = true;
+      }
+
       const url = id ? `/api/rrhh/employees/${id}` : '/api/rrhh/employees';
       const method = id ? 'PUT' : 'POST';
 
@@ -33626,7 +34240,11 @@ function copyRemoteScannerLink() {
         });
         const data = await res.json();
         if (data.success) {
-          showToast(id ? 'Colaborador y expediente actualizados' : 'Colaborador registrado exitosamente');
+          const successMsg = payload.createOperator
+            ? (id ? 'Colaborador y Operador actualizados y sincronizados con ZKTeco' : 'Colaborador y Operador creados y sincronizados con ZKTeco')
+            : (id ? 'Colaborador y expediente actualizados' : 'Colaborador registrado exitosamente');
+          showToast(successMsg);
+          if (typeof loadConfigModule === 'function') loadConfigModule();
           closeEmployeeModal();
           await loadEmployees();
         } else {

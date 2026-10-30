@@ -117,6 +117,11 @@ export interface Employee {
   bankName?: string;
   bankAccount?: string;
   documents?: EmployeeDocument[];
+  operatorId?: number;
+  operatorPin?: string;
+  operatorTenantId?: string;
+  operatorRoleId?: number;
+  operatorRoleName?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -460,6 +465,44 @@ let attendanceStore = loadAttendanceFromDisk();
 // Ejecutar purga de 60 días al iniciar
 purgeOldAttendancePhotos(60);
 
+export function loadSystemUsersFromDisk(): any[] {
+  try {
+    const uFile = path.join(DATA_DIR, "users.json");
+    if (fs.existsSync(uFile)) {
+      const parsed = JSON.parse(fs.readFileSync(uFile, "utf-8"));
+      return Array.isArray(parsed) ? parsed : [];
+    }
+  } catch (err) {
+    console.error("Error al leer users.json:", err);
+  }
+  return [];
+}
+
+export function saveSystemUsersToDisk(users: any[]): void {
+  try {
+    const uFile = path.join(DATA_DIR, "users.json");
+    fs.writeFileSync(uFile, JSON.stringify(users, null, 2), "utf-8");
+  } catch (err) {
+    console.error("Error al guardar users.json:", err);
+  }
+}
+
+export function getTenantRolesList(tenantId: string): any[] {
+  try {
+    const safeTenant = tenantId.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase() || "turbonetwork";
+    const filePath = path.join(DATA_DIR, "tenants", safeTenant, "roles.json");
+    if (fs.existsSync(filePath)) {
+      const list = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      if (Array.isArray(list) && list.length > 0) return list;
+    }
+  } catch {}
+  return [
+    { id: 1, name: "Superadministrador" },
+    { id: 2, name: "Operador" },
+    { id: 3, name: "Técnico" },
+  ];
+}
+
 // ==========================================
 // 4. ESQUEMAS DE VALIDACIÓN
 // ==========================================
@@ -505,6 +548,18 @@ const createEmployeeSchema = z
       .transform((s) => s.toLowerCase() as "active" | "inactive")
       .default("active"),
     avatar: z.string().optional(),
+    createOperator: z.boolean().optional().default(false),
+    operatorRoleId: z.union([z.number(), z.string()]).optional(),
+    operatorPin: z.string().optional(),
+    operatorTenantId: z.string().optional(),
+    operatorName: z.string().optional(),
+    operatorEmail: z.string().optional(),
+    operatorSchedule: z.string().optional(),
+    operatorExpectedIn: z.string().optional(),
+    operatorExpectedOut: z.string().optional(),
+    operatorBirthDate: z.string().optional(),
+    operatorHireDate: z.string().optional(),
+    syncWithZkteco: z.boolean().optional().default(true),
   })
   .transform((data) => ({
     ...data,
@@ -1341,6 +1396,80 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const slugName = body.name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 15);
     const publicToken = `emp-${slugName}-${randomHex}`;
     const totpSecret = "JBSWY3DPEHPK3PXP";
+    // Sincronización automática de Operador y Reloj ZKTeco si se solicita
+    let operatorCreated = false;
+    const operatorPin = body.operatorPin ? String(body.operatorPin).trim() : "";
+    let operatorUser: any = null;
+
+    if (body.createOperator && operatorPin) {
+      const targetTenant = (body.operatorTenantId || (request.headers["x-tenant-id"] as string) || "turbonetwork").trim().toLowerCase();
+      const usersList = loadSystemUsersFromDisk();
+      const rolesList = getTenantRolesList(targetTenant);
+      const chosenRoleId = body.operatorRoleId ? parseInt(String(body.operatorRoleId), 10) : (rolesList[0]?.id || 1);
+      const chosenRole = rolesList.find((r: any) => r.id === chosenRoleId) || { id: chosenRoleId, name: "Operador" };
+      const isSuperAdmin = chosenRole.name.toLowerCase().includes("superadmin") || chosenRole.name.toLowerCase().includes("administrador");
+
+      const opName = (body.operatorName || body.name).trim();
+      const opEmail = (body.operatorEmail || body.email).trim().toLowerCase();
+      const opSched = body.operatorSchedule || body.workSchedule || "08:00 - 17:00";
+      const opIn = body.operatorExpectedIn || body.expectedCheckInTime || "08:00";
+      const opOut = body.operatorExpectedOut || "17:00";
+
+      const existingUserIdx = usersList.findIndex((u: any) => u.pin === operatorPin || (u.email && u.email.toLowerCase() === opEmail));
+
+      if (existingUserIdx >= 0) {
+        usersList[existingUserIdx] = {
+          ...usersList[existingUserIdx],
+          name: opName,
+          email: opEmail,
+          pin: operatorPin,
+          roleId: chosenRole.id,
+          roleName: chosenRole.name,
+          assignedTenantId: targetTenant,
+          allowedTenants: [targetTenant],
+          workSchedule: opSched,
+          expectedCheckInTime: opIn,
+          expectedCheckOutTime: opOut,
+          isSuperAdmin: usersList[existingUserIdx].isSuperAdmin || isSuperAdmin,
+          isActive: body.status === "active",
+        };
+        operatorUser = usersList[existingUserIdx];
+      } else {
+        operatorUser = {
+          id: Date.now(),
+          name: opName,
+          email: opEmail,
+          pin: operatorPin,
+          roleId: chosenRole.id,
+          roleName: chosenRole.name,
+          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(opName)}`,
+          isActive: body.status === "active",
+          createdAt: new Date().toISOString(),
+          isSuperAdmin,
+          assignedTenantId: targetTenant,
+          allowedTenants: [targetTenant],
+          workSchedule: opSched,
+          expectedCheckInTime: opIn,
+          expectedCheckOutTime: opOut,
+          hireDate: body.operatorHireDate || body.hireDate || "",
+          birthDate: body.operatorBirthDate || body.birthDate || "",
+          preferences: {},
+          requireTotp: false,
+        };
+        usersList.push(operatorUser);
+      }
+
+      saveSystemUsersToDisk(usersList);
+      operatorCreated = true;
+
+      if (body.syncWithZkteco !== false) {
+        try {
+          enqueueZktecoUserInfo(operatorPin, opName, isSuperAdmin);
+        } catch (zErr) {
+          console.warn("Aviso al encolar en ZKTeco:", zErr);
+        }
+      }
+    }
 
     const newEmp: Employee = {
       id: nextId,
@@ -1364,7 +1493,12 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       contractStartDate: body.contractStartDate || body.hireDate || new Date().toISOString().slice(0, 10),
       contractEndDate: body.contractEndDate || "",
       workModality: body.workModality || "office",
-      biometricPin: body.biometricPin || String(1000 + nextId),
+      biometricPin: operatorPin || body.biometricPin || body.dni || String(1000 + nextId),
+      operatorPin: operatorPin || undefined,
+      operatorId: operatorUser ? operatorUser.id : undefined,
+      operatorTenantId: operatorUser ? operatorUser.assignedTenantId : undefined,
+      operatorRoleId: operatorUser ? operatorUser.roleId : undefined,
+      operatorRoleName: operatorUser ? operatorUser.roleName : undefined,
       vacationDaysAccumulated: body.vacationDaysAccumulated,
       vacationDaysBaseTaken: body.vacationDaysBaseTaken,
       afpType: body.afpType || "AFP Integra",
@@ -1386,7 +1520,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     return reply.status(201).send({
       success: true,
-      message: "Acta de personal creada exitosamente",
+      message: operatorCreated
+        ? `Colaborador y Operador (${operatorUser?.roleName || 'Operador'} - PIN: ${operatorPin}) creados y sincronizados con ZKTeco exitosamente.`
+        : "Acta de personal creada exitosamente",
       data: enrichEmployeeExpediente(newEmp, leaves, peruDate),
     });
   });
@@ -1404,6 +1540,80 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     const current = employeesStore[index];
     const body = request.body as Partial<Employee>;
+    const bodyAny = request.body as any;
+    let operatorUpdated = false;
+    let operatorPin = bodyAny.operatorPin ? String(bodyAny.operatorPin).trim() : (current.operatorPin || "");
+    let operatorUser: any = null;
+
+    if (bodyAny.createOperator && operatorPin) {
+      const targetTenant = (bodyAny.operatorTenantId || current.operatorTenantId || (request.headers["x-tenant-id"] as string) || "turbonetwork").trim().toLowerCase();
+      const usersList = loadSystemUsersFromDisk();
+      const rolesList = getTenantRolesList(targetTenant);
+      const chosenRoleId = bodyAny.operatorRoleId ? parseInt(String(bodyAny.operatorRoleId), 10) : (rolesList[0]?.id || 1);
+      const chosenRole = rolesList.find((r: any) => r.id === chosenRoleId) || { id: chosenRoleId, name: "Operador" };
+      const isSuperAdmin = chosenRole.name.toLowerCase().includes("superadmin") || chosenRole.name.toLowerCase().includes("administrador");
+
+      const opName = (bodyAny.operatorName || body.name || current.name).trim();
+      const opEmail = (bodyAny.operatorEmail || body.email || current.email).trim().toLowerCase();
+      const opSched = bodyAny.operatorSchedule || body.workSchedule || current.workSchedule || "08:00 - 17:00";
+      const opIn = bodyAny.operatorExpectedIn || body.expectedCheckInTime || current.expectedCheckInTime || "08:00";
+      const opOut = bodyAny.operatorExpectedOut || "17:00";
+
+      const userIdx = usersList.findIndex((u: any) => (current.operatorId && u.id === current.operatorId) || u.pin === operatorPin || (u.email && u.email.toLowerCase() === opEmail));
+
+      if (userIdx >= 0) {
+        usersList[userIdx] = {
+          ...usersList[userIdx],
+          name: opName,
+          email: opEmail,
+          pin: operatorPin,
+          roleId: chosenRole.id,
+          roleName: chosenRole.name,
+          assignedTenantId: targetTenant,
+          allowedTenants: [targetTenant],
+          workSchedule: opSched,
+          expectedCheckInTime: opIn,
+          expectedCheckOutTime: opOut,
+          isSuperAdmin: usersList[userIdx].isSuperAdmin || isSuperAdmin,
+          isActive: body.status ? body.status === "active" : usersList[userIdx].isActive,
+        };
+        operatorUser = usersList[userIdx];
+      } else {
+        operatorUser = {
+          id: Date.now(),
+          name: opName,
+          email: opEmail,
+          pin: operatorPin,
+          roleId: chosenRole.id,
+          roleName: chosenRole.name,
+          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(opName)}`,
+          isActive: (body.status || current.status) === "active",
+          createdAt: new Date().toISOString(),
+          isSuperAdmin,
+          assignedTenantId: targetTenant,
+          allowedTenants: [targetTenant],
+          workSchedule: opSched,
+          expectedCheckInTime: opIn,
+          expectedCheckOutTime: opOut,
+          hireDate: bodyAny.operatorHireDate || body.hireDate || current.hireDate || "",
+          birthDate: bodyAny.operatorBirthDate || body.birthDate || current.birthDate || "",
+          preferences: {},
+          requireTotp: false,
+        };
+        usersList.push(operatorUser);
+      }
+
+      saveSystemUsersToDisk(usersList);
+      operatorUpdated = true;
+
+      if (bodyAny.syncWithZkteco !== false) {
+        try {
+          enqueueZktecoUserInfo(operatorPin, opName, isSuperAdmin);
+        } catch (zErr) {
+          console.warn("Aviso al encolar en ZKTeco:", zErr);
+        }
+      }
+    }
 
     let expectedTime = body.expectedCheckInTime || current.expectedCheckInTime;
     if (body.workSchedule && !body.expectedCheckInTime) {
@@ -1420,6 +1630,12 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       specialSchedules: (body as any).specialSchedules !== undefined ? (body as any).specialSchedules : (current.specialSchedules || {}),
       bonus: body.bonus !== undefined ? (typeof body.bonus === "number" ? (body.bonus as number).toFixed(2) : String(body.bonus).trim()) : (current.bonus || "0.00"),
       bonusDescription: body.bonusDescription !== undefined ? String(body.bonusDescription).trim() : (current.bonusDescription || ""),
+      operatorPin: operatorPin || current.operatorPin,
+      biometricPin: operatorPin || body.biometricPin || current.biometricPin,
+      operatorId: operatorUser ? operatorUser.id : current.operatorId,
+      operatorTenantId: operatorUser ? operatorUser.assignedTenantId : current.operatorTenantId,
+      operatorRoleId: operatorUser ? operatorUser.roleId : current.operatorRoleId,
+      operatorRoleName: operatorUser ? operatorUser.roleName : current.operatorRoleName,
       updatedAt: new Date().toISOString(),
     };
 
@@ -1802,6 +2018,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     attendanceStore.unshift(newRecord);
     saveAttendanceToDisk(attendanceStore);
     purgeOldAttendancePhotos(60);
+
+
 
     const isBlocked = status === "very_late_blocked";
     const modalityLabel =
