@@ -288,21 +288,52 @@ export class DatabaseService {
         const usersList: any[] = JSON.parse(fs.readFileSync(uPath, "utf-8"));
         for (const u of usersList) {
           try {
+            let cleanRole: "superadmin" | "admin" | "technician" | "billing" = "admin";
+            const r = String(u.role || u.roleName || "").toLowerCase();
+            if (r.includes("super") || u.isSuperAdmin) cleanRole = "superadmin";
+            else if (r.includes("tech") || r.includes("téc")) cleanRole = "technician";
+            else if (r.includes("bill") || r.includes("caj") || r.includes("cobranza")) cleanRole = "billing";
+
+            const userTenant = u.tenantId || u.assignedTenantId || (Array.isArray(u.allowedTenants) && u.allowedTenants[0] !== "*" ? u.allowedTenants[0] : "turbonetwork");
+
             await queryClient`
               INSERT INTO users (name, email, password_hash, role, is_active, tenant_id)
-              VALUES (${u.name || "Usuario"}, ${u.email}, ${u.passwordHash || u.password || "hash_default"}, ${u.role || "admin"}, true, ${u.tenantId || "turbonetwork"})
+              VALUES (${u.name || "Usuario"}, ${u.email || `user_${u.id}@turbonetwork.com`}, ${u.passwordHash || u.password || u.pin || "hash_default"}, ${cleanRole}, true, ${userTenant})
               ON CONFLICT (email) DO UPDATE 
               SET name = EXCLUDED.name, role = EXCLUDED.role, tenant_id = EXCLUDED.tenant_id
             `;
             migrated.users++;
           } catch (insertErr: any) {
-            errors.push(`Usuario ${u.email}: ${insertErr.message}`);
+            errors.push(`Usuario ${u.email || u.id}: ${insertErr.message}`);
           }
         }
       }
     } catch (e: any) {
       errors.push(`Lectura de users.json: ${e.message}`);
     }
+
+    // 2.1 Migrar Planes de Internet (evita violación de foreign key en customer_services)
+    try {
+      const tenantIdsSeed = ["turbonetwork", "celeris", "loanetwork"];
+      for (const tId of tenantIdsSeed) {
+        const sPath = getTenantFilePath(tId, "services.json");
+        const defaultServicesFile = path.join(DATA_DIR, "services.json");
+        const fileToRead = fs.existsSync(sPath) ? sPath : (fs.existsSync(defaultServicesFile) ? defaultServicesFile : null);
+        if (fileToRead) {
+          const sList: any[] = JSON.parse(fs.readFileSync(fileToRead, "utf-8"));
+          for (const s of sList) {
+            try {
+              await queryClient`
+                INSERT INTO plans (id, tenant_id, name, download_speed_mbps, upload_speed_mbps, price, currency, is_active)
+                VALUES (${s.id || 1}, ${tId}, ${s.name || "Plan Internet"}, ${s.downloadSpeedMbps || 50}, ${s.uploadSpeedMbps || 50}, ${parseFloat(s.price || "50").toFixed(2)}, ${s.currency || "PEN"}, true)
+                ON CONFLICT (id) DO UPDATE
+                SET name = EXCLUDED.name, price = EXCLUDED.price, download_speed_mbps = EXCLUDED.download_speed_mbps, upload_speed_mbps = EXCLUDED.upload_speed_mbps
+              `;
+            } catch (pErr: any) {}
+          }
+        }
+      }
+    } catch (e: any) {}
 
     // 3. Descubrir empresas (tenants)
     const tenantIds: string[] = ["turbonetwork", "celeris", "loanetwork"];

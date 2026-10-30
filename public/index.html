@@ -22212,9 +22212,18 @@
         if (data.success && Array.isArray(data.data)) {
           tenantsList = data.data;
           renderManageTenantsGrid(tenantsList);
+        } else if (Array.isArray(tenantsList) && tenantsList.length > 0) {
+          renderManageTenantsGrid(tenantsList);
+        } else {
+          grid.innerHTML = '<div class="col-span-2 text-center py-8 text-rose-400 text-xs">' + (data && data.message ? data.message : 'Error al cargar listado de empresas.') + '</div>';
         }
       } catch (err) {
-        grid.innerHTML = '<div class="col-span-2 text-center py-8 text-rose-400 text-xs">Error al cargar listado de empresas.</div>';
+        console.error('Error al cargar listado de empresas:', err);
+        if (Array.isArray(tenantsList) && tenantsList.length > 0) {
+          renderManageTenantsGrid(tenantsList);
+        } else {
+          grid.innerHTML = '<div class="col-span-2 text-center py-8 text-rose-400 text-xs">Error al cargar listado de empresas. Verifique la conexión con el servidor.</div>';
+        }
       }
     }
 
@@ -22276,8 +22285,6 @@
           </div>
         `;
       }).join('');
-      if (container) container.innerHTML = cardsHtml;
-      if (rrhhContainer) rrhhContainer.innerHTML = cardsHtml;
     }
 
     function closeManageTenantsModal() {
