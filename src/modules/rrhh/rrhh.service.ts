@@ -380,8 +380,13 @@ export function enrichEmployeeExpediente(emp: any, approvedLeaves: LeaveRequest[
 
   const bioPin = emp.biometricId || emp.biometricPin || `BIO-${String(emp.id || 1).padStart(3, "0")}`;
 
+  const resolvedIn = emp.expectedCheckInTime || (emp.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00";
+  const resolvedOut = emp.expectedCheckOutTime || (emp.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00";
+
   return {
     ...emp,
+    expectedCheckInTime: resolvedIn,
+    expectedCheckOutTime: resolvedOut,
     contractType,
     contractStartDate,
     contractEndDate: contractEndDate || "",
