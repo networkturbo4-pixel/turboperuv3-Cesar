@@ -14302,9 +14302,27 @@
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-            <div class="sm:col-span-2 space-y-1.5">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Hora Ingreso Oficial (Reloj) *</span>
+              </label>
+              <input type="time" id="emp-expected-time" value="08:00" onchange="syncEmployeeScheduleFromTimes()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
+              <p class="text-[9px] text-slate-400 mt-1">Base para cálculo de puntualidad / tardanza</p>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                <span>Hora Salida Oficial (Reloj) *</span>
+              </label>
+              <input type="time" id="emp-expected-out-time" value="17:00" onchange="syncEmployeeScheduleFromTimes()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
+              <p class="text-[9px] text-slate-400 mt-1">Control de fin de jornada y horas extras</p>
+            </div>
+
+            <div class="space-y-1.5">
               <div class="flex items-center justify-between">
-                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Horario Laboral / Turno *</label>
+                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Horario Laboral / Turno</label>
                 <div class="flex items-center gap-1">
                   <span class="text-[9px] text-slate-400">Preajustes:</span>
                   <button type="button" onclick="setEmployeeQuickShift('08:00', '17:00')" class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">08:00 - 17:00</button>
@@ -14312,12 +14330,7 @@
                   <button type="button" onclick="setEmployeeQuickShift('09:00', '18:00')" class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">09:00 - 18:00</button>
                 </div>
               </div>
-              <input type="text" id="emp-schedule" required placeholder="Ej: 08:00 - 17:00 / Sáb 08:00 - 13:00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
-            </div>
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Hora Entrada Oficial</label>
-              <input type="time" id="emp-expected-time" value="08:00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
-              <p class="text-[9px] text-slate-400 mt-1">Base para cálculo de tardanzas</p>
+              <input type="text" id="emp-schedule" required value="08:00 - 17:00" placeholder="Ej: 08:00 - 17:00 / Sáb 08:00 - 13:00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
             </div>
           </div>
           <!-- SELECTOR DE DÍAS LABORALES DE LA SEMANA -->
@@ -14514,43 +14527,16 @@
               </div>
             </div>
 
-            <!-- Horario Laboral / Turno (Reloj) -->
-            <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-2">
-              <div class="flex items-center justify-between">
-                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                  <span>Horario Laboral / Turno (Reloj)</span>
-                </label>
-                <span class="text-[9px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-500/10 px-1.5 py-0.5 rounded">Asistencia & Puntualidad</span>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
+            <!-- Horario heredado automáticamente del Expediente de RR.HH -->
+            <div class="p-2.5 rounded-xl bg-blue-500/[0.06] dark:bg-blue-500/10 border border-blue-500/20 flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <span class="text-blue-500 text-sm">🕒</span>
                 <div>
-                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    <span>Desde (Entrada)</span>
-                  </label>
-                  <input type="time" id="emp-op-time-start" value="08:00" onchange="syncEmployeeOpScheduleInputs()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
-                </div>
-                <div>
-                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                    <span>Hasta (Salida)</span>
-                  </label>
-                  <input type="time" id="emp-op-time-end" value="17:00" onchange="syncEmployeeOpScheduleInputs()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
+                  <span class="text-slate-800 dark:text-slate-200 font-semibold text-[11px] block">Horario de Entrada y Salida (Reloj ZKTeco)</span>
+                  <span class="text-[10px] text-slate-500 dark:text-slate-400">Vinculado a la Hora de Ingreso y Hora de Salida definidas en el Expediente RR.HH (Pestaña 1).</span>
                 </div>
               </div>
-
-              <div>
-                <input type="text" id="emp-op-schedule" value="08:00 - 17:00" placeholder="Ej: Lun - Vie 08:00 a 17:00 / Sáb 08:00 a 13:00" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500 text-slate-700 dark:text-slate-200">
-              </div>
-
-              <div class="flex items-center gap-1 pt-0.5 flex-wrap">
-                <span class="text-[9px] text-slate-400">Preajustes:</span>
-                <button type="button" onclick="setEmployeeOpQuickShift('08:00', '17:00')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">08:00 - 17:00</button>
-                <button type="button" onclick="setEmployeeOpQuickShift('08:30', '17:30')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">08:30 - 17:30</button>
-                <button type="button" onclick="setEmployeeOpQuickShift('09:00', '18:00')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">09:00 - 18:00</button>
-              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/20 text-blue-600 dark:text-blue-400">Sincronizado</span>
             </div>
 
             <!-- Fechas -->
@@ -33372,8 +33358,17 @@ function copyRemoteScannerLink() {
     function setEmployeeQuickShift(start, end) {
       const sched = document.getElementById('emp-schedule');
       const expected = document.getElementById('emp-expected-time');
+      const expectedOut = document.getElementById('emp-expected-out-time');
       if (sched) sched.value = `${start} - ${end}`;
       if (expected) expected.value = start;
+      if (expectedOut) expectedOut.value = end;
+    }
+
+    function syncEmployeeScheduleFromTimes() {
+      const start = document.getElementById('emp-expected-time')?.value || '08:00';
+      const end = document.getElementById('emp-expected-out-time')?.value || '17:00';
+      const sched = document.getElementById('emp-schedule');
+      if (sched) sched.value = `${start} - ${end}`;
     }
 
     
@@ -33770,6 +33765,8 @@ function copyRemoteScannerLink() {
       renderEmployeeSpecialSchedules();
       const expTimeEl = document.getElementById('emp-expected-time');
       if (expTimeEl) expTimeEl.value = '08:00';
+      const expOutEl = document.getElementById('emp-expected-out-time');
+      if (expOutEl) expOutEl.value = '17:00';
       const afpEl = document.getElementById('emp-afp-type');
       if (afpEl) afpEl.value = 'AFP_INTEGRA_MIXTA';
       const cTypeEl = document.getElementById('emp-contract-type');
@@ -33842,6 +33839,15 @@ function copyRemoteScannerLink() {
       renderEmployeeWorkDaysButtons();
       renderEmployeeSpecialSchedules();
       document.getElementById('emp-expected-time').value = emp.expectedCheckInTime || '08:00';
+      const expOutTimeEl = document.getElementById('emp-expected-out-time');
+      if (expOutTimeEl) {
+        let outVal = emp.expectedCheckOutTime;
+        if (!outVal && emp.workSchedule) {
+          const match = emp.workSchedule.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/);
+          if (match) outVal = match[1];
+        }
+        expOutTimeEl.value = outVal || '17:00';
+      }
       document.getElementById('emp-salary').value = emp.salary || '2500.00';
       const bonusEl = document.getElementById('emp-bonus');
       if (bonusEl) bonusEl.value = (emp.bonus !== undefined && emp.bonus !== null && emp.bonus !== '' && Number(emp.bonus) > 0) ? emp.bonus : '';
@@ -33904,12 +33910,6 @@ function copyRemoteScannerLink() {
         const opPinEl = document.getElementById('emp-op-pin');
         if (opPinEl) opPinEl.value = opUser.pin || emp.operatorPin || emp.biometricPin || '';
         initEmployeeOpTenantAndRoles(opUser.assignedTenantId, opUser.roleId);
-        const opSchedEl = document.getElementById('emp-op-schedule');
-        if (opSchedEl) opSchedEl.value = opUser.workSchedule || emp.workSchedule || '08:00 - 17:00';
-        const opStartEl = document.getElementById('emp-op-time-start');
-        if (opStartEl) opStartEl.value = opUser.expectedCheckInTime || emp.expectedCheckInTime || '08:00';
-        const opEndEl = document.getElementById('emp-op-time-end');
-        if (opEndEl) opEndEl.value = opUser.expectedCheckOutTime || '17:00';
         const opHireEl = document.getElementById('emp-op-hire-date');
         if (opHireEl) opHireEl.value = opUser.hireDate || emp.hireDate || '';
         const opBirthEl = document.getElementById('emp-op-birth-date');
@@ -33925,10 +33925,6 @@ function copyRemoteScannerLink() {
         if (opPinEl) opPinEl.value = (emp.biometricPin && /^\d{8}$/.test(emp.biometricPin)) ? emp.biometricPin : '';
         if (!opPinEl.value) generateEmployeeOpRandomPin();
         initEmployeeOpTenantAndRoles(emp.operatorTenantId || activeTenantId, emp.operatorRoleId);
-        const opSchedEl = document.getElementById('emp-op-schedule');
-        if (opSchedEl) opSchedEl.value = emp.workSchedule || '08:00 - 17:00';
-        const opStartEl = document.getElementById('emp-op-time-start');
-        if (opStartEl) opStartEl.value = emp.expectedCheckInTime || '08:00';
         const opHireEl = document.getElementById('emp-op-hire-date');
         if (opHireEl) opHireEl.value = emp.hireDate || '';
       }
@@ -34010,9 +34006,6 @@ function copyRemoteScannerLink() {
 
       const opName = document.getElementById('emp-op-name');
       const opEmail = document.getElementById('emp-op-email');
-      const opSched = document.getElementById('emp-op-schedule');
-      const opStart = document.getElementById('emp-op-time-start');
-      const opEnd = document.getElementById('emp-op-time-end');
       const opHire = document.getElementById('emp-op-hire-date');
 
       if (opName && (!opName.value || opName.dataset.autoSynced === 'true')) {
@@ -34022,14 +34015,6 @@ function copyRemoteScannerLink() {
       if (opEmail && (!opEmail.value || opEmail.dataset.autoSynced === 'true')) {
         opEmail.value = empEmail;
         opEmail.dataset.autoSynced = 'true';
-      }
-      if (opSched && (!opSched.value || opSched.dataset.autoSynced === 'true')) {
-        opSched.value = empSchedule;
-        opSched.dataset.autoSynced = 'true';
-      }
-      if (opStart && (!opStart.value || opStart.dataset.autoSynced === 'true')) {
-        opStart.value = empExpected;
-        opStart.dataset.autoSynced = 'true';
       }
       if (opHire && (!opHire.value || opHire.dataset.autoSynced === 'true')) {
         opHire.value = empHire;
@@ -34047,25 +34032,6 @@ function copyRemoteScannerLink() {
       const pin = Math.floor(10000000 + Math.random() * 90000000).toString();
       const el = document.getElementById('rnu-pin');
       if (el) el.value = pin;
-    }
-
-    function syncEmployeeOpScheduleInputs() {
-      const start = document.getElementById('emp-op-time-start')?.value || '08:00';
-      const end = document.getElementById('emp-op-time-end')?.value || '17:00';
-      const schedEl = document.getElementById('emp-op-schedule');
-      if (schedEl) {
-        schedEl.value = `${start} - ${end}`;
-        schedEl.dataset.autoSynced = 'false';
-      }
-    }
-
-    function setEmployeeOpQuickShift(start, end) {
-      const startEl = document.getElementById('emp-op-time-start');
-      const endEl = document.getElementById('emp-op-time-end');
-      const schedEl = document.getElementById('emp-op-schedule');
-      if (startEl) { startEl.value = start; startEl.dataset.autoSynced = 'false'; }
-      if (endEl) { endEl.value = end; endEl.dataset.autoSynced = 'false'; }
-      if (schedEl) { schedEl.value = `${start} - ${end}`; schedEl.dataset.autoSynced = 'false'; }
     }
 
     async function initEmployeeOpTenantAndRoles(selectedTenant = null, selectedRoleId = null) {
@@ -34187,7 +34153,8 @@ function copyRemoteScannerLink() {
         workSchedule: document.getElementById('emp-schedule').value.trim(),
         workDays: currentEmployeeWorkDays,
         specialSchedules: currentEmployeeSpecialSchedules,
-        expectedCheckInTime: document.getElementById('emp-expected-time').value,
+        expectedCheckInTime: document.getElementById('emp-expected-time').value || '08:00',
+        expectedCheckOutTime: document.getElementById('emp-expected-out-time')?.value || '17:00',
         salary: document.getElementById('emp-salary').value.trim(),
         bonus: document.getElementById('emp-bonus')?.value ? document.getElementById('emp-bonus').value.trim() : '0.00',
         bonusDescription: document.getElementById('emp-bonus-desc')?.value ? document.getElementById('emp-bonus-desc').value.trim() : '',
@@ -34221,9 +34188,9 @@ function copyRemoteScannerLink() {
         payload.operatorTenantId = document.getElementById('emp-op-tenant')?.value || activeTenantId;
         payload.operatorName = (document.getElementById('emp-op-name')?.value || payload.name).trim();
         payload.operatorEmail = (document.getElementById('emp-op-email')?.value || payload.email).trim();
-        payload.operatorSchedule = (document.getElementById('emp-op-schedule')?.value || payload.workSchedule).trim();
-        payload.operatorExpectedIn = document.getElementById('emp-op-time-start')?.value || payload.expectedCheckInTime || '08:00';
-        payload.operatorExpectedOut = document.getElementById('emp-op-time-end')?.value || '17:00';
+        payload.operatorSchedule = payload.workSchedule || `${payload.expectedCheckInTime} - ${payload.expectedCheckOutTime}`;
+        payload.operatorExpectedIn = payload.expectedCheckInTime || '08:00';
+        payload.operatorExpectedOut = payload.expectedCheckOutTime || '17:00';
         payload.operatorHireDate = document.getElementById('emp-op-hire-date')?.value || payload.hireDate;
         payload.operatorBirthDate = document.getElementById('emp-op-birth-date')?.value || '';
         payload.syncWithZkteco = true;

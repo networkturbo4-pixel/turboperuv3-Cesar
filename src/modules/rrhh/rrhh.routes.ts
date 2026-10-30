@@ -87,6 +87,7 @@ export interface Employee {
   workDays?: string[]; // ej: ["lun", "mar", "mie", "jue", "vie"]
   specialSchedules?: Record<string, { schedule: string; expectedCheckInTime?: string }>;
   expectedCheckInTime: string; // ej: "08:00"
+  expectedCheckOutTime?: string; // ej: "17:00"
   salary: string;
   bonus?: string;
   bonusDescription?: string;
@@ -323,7 +324,8 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
       phone: emp.phone,
       email: emp.email,
       workSchedule: emp.workSchedule,
-      expectedCheckInTime: emp.expectedCheckInTime || "08:00",
+      expectedCheckInTime: emp.expectedCheckInTime || (emp.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00",
+      expectedCheckOutTime: emp.expectedCheckOutTime || (emp.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00",
       salary: emp.salary,
       currency: emp.currency || "$",
       hireDate: emp.hireDate,
@@ -519,6 +521,7 @@ const createEmployeeSchema = z
     workDays: z.array(z.string()).optional(),
     specialSchedules: z.record(z.object({ schedule: z.string(), expectedCheckInTime: z.string().optional() })).optional(),
     expectedCheckInTime: z.string().optional(),
+    expectedCheckOutTime: z.string().optional(),
     salary: z
       .union([z.string(), z.number()])
       .transform((val) => (typeof val === "number" ? val.toFixed(2) : val))
@@ -1392,6 +1395,12 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       expectedTime = match ? match[1] : "08:00";
     }
 
+    let expectedOutTime = body.expectedCheckOutTime;
+    if (!expectedOutTime && body.workSchedule) {
+      const match = body.workSchedule.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/);
+      expectedOutTime = match ? match[1] : "17:00";
+    }
+
     const randomHex = crypto.randomBytes(4).toString("hex");
     const slugName = body.name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 15);
     const publicToken = `emp-${slugName}-${randomHex}`;
@@ -1482,6 +1491,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       workDays: (body as any).workDays && (body as any).workDays.length > 0 ? (body as any).workDays : ["lun", "mar", "mie", "jue", "vie"],
       specialSchedules: (body as any).specialSchedules || {},
       expectedCheckInTime: expectedTime || "08:00",
+      expectedCheckOutTime: expectedOutTime || "17:00",
       salary: body.salary,
       bonus: body.bonus || "0.00",
       bonusDescription: body.bonusDescription || "",
@@ -1621,11 +1631,18 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       if (match) expectedTime = match[1];
     }
 
+    let expectedOutTime = body.expectedCheckOutTime || current.expectedCheckOutTime;
+    if (body.workSchedule && !body.expectedCheckOutTime) {
+      const match = body.workSchedule.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/);
+      if (match) expectedOutTime = match[1];
+    }
+
     const updated: Employee = {
       ...current,
       ...body,
       id: current.id,
       expectedCheckInTime: expectedTime,
+      expectedCheckOutTime: expectedOutTime || "17:00",
       workDays: body.workDays !== undefined ? body.workDays : (current.workDays || ["lun", "mar", "mie", "jue", "vie"]),
       specialSchedules: (body as any).specialSchedules !== undefined ? (body as any).specialSchedules : (current.specialSchedules || {}),
       bonus: body.bonus !== undefined ? (typeof body.bonus === "number" ? (body.bonus as number).toFixed(2) : String(body.bonus).trim()) : (current.bonus || "0.00"),
@@ -3904,7 +3921,14 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
 
       const existing = attendanceList.find((a) => a.employeeId === emp.id && a.date === dateStr);
       const [curH, curM] = timeStr.split(":").map(Number);
-      const isCheckout = statusFlag === 1 || statusFlag === 5 || (existing && curH >= 13);
+      const curMinutes = curH * 60 + curM;
+
+      // Determinar hora oficial de salida configurada en el expediente
+      const [expOutH, expOutM] = (emp.expectedCheckOutTime || "17:00").split(":").map(Number);
+      const expOutMinutes = expOutH * 60 + expOutM;
+
+      // Es salida si el reloj envió statusFlag 1 o 5, o si ya existe entrada previa y es posterior a las 13:00 o dentro de 90 min de la salida esperada
+      const isCheckout = statusFlag === 1 || statusFlag === 5 || (existing && (curH >= 13 || curMinutes >= (expOutMinutes - 90)));
 
       if (existing) {
         if (statusFlag === 2) {
