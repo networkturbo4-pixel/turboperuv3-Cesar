@@ -2,7 +2,7 @@
   {
     "id": 1,
     "name": "EMMANUELLE",
-    "email": "cesar@turbonetwork.com",
+    "email": "emmanuelle@turbonetwork.com",
     "pin": "12345678",
     "roleId": 1,
     "roleName": "Superadministrador",
@@ -11,7 +11,7 @@
     "createdAt": "2026-09-01T00:00:00Z",
     "isSuperAdmin": true,
     "allowedTenants": [
-      "*"
+      "turbonetwork"
     ],
     "workSchedule": "08:00 - 17:00",
     "preferences": {
@@ -26,5 +26,30 @@
     "expectedCheckInTime": "08:00",
     "expectedCheckOutTime": "17:00",
     "assignedTenantId": "turbonetwork"
+  },
+  {
+    "id": 1794348071929,
+    "name": "pepito",
+    "email": "das@adsadf.com",
+    "pin": "11111111",
+    "roleId": 1,
+    "roleName": "Superadministrador",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=pepito",
+    "isActive": true,
+    "createdAt": "2026-11-10T22:01:11.929Z",
+    "isSuperAdmin": false,
+    "assignedTenantId": "turbonetwork",
+    "allowedTenants": [
+      "turbonetwork"
+    ],
+    "workSchedule": "08:00 - 17:00",
+    "expectedCheckInTime": "08:00",
+    "expectedCheckOutTime": "17:00",
+    "scheduleStartDate": "",
+    "scheduleEndDate": "",
+    "hireDate": "",
+    "birthDate": "",
+    "preferences": {},
+    "requireTotp": false
   }
 ]

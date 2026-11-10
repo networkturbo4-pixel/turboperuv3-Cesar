@@ -7,8 +7,10 @@
   "primaryColor": "#2563eb",
   "accentColor": "#059669",
   "lightBgColor": "#f8fafc",
-  "darkBgColor": "#090a0f",
+  "darkBgColor": "#000000",
   "fontFamily": "inter",
   "fontSizeScale": "normal",
-  "themeMode": "light"
+  "themeMode": "light",
+  "currency": "PEN",
+  "globalCurrency": "PEN"
 }

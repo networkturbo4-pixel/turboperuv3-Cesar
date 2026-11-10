@@ -2617,6 +2617,33 @@
         max-width: calc(100vw - 3rem) !important;
       }
     }
+
+    /* ======================================================== */
+    /* SEGURIDAD Y PROTECCIÓN DE FOTOS DE PERFIL / AVATARES     */
+    /* ======================================================== */
+    .protected-avatar,
+    .protected-avatar-wrapper,
+    [data-protected-avatar="true"] {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      -webkit-touch-callout: none !important;
+    }
+    .protected-avatar img,
+    .protected-avatar-wrapper img,
+    [data-protected-avatar="true"] img {
+      pointer-events: none !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      -webkit-touch-callout: none !important;
+    }
+    .protected-avatar-shield {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: transparent;
+      cursor: not-allowed;
+      border-radius: inherit;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white antialiased">
@@ -3207,7 +3234,7 @@
           <!-- Clickable User Info (Avatar + Name + Role + Online Indicator) -->
           <div id="sidebar-user-info" class="flex items-center space-x-2.5 min-w-0 flex-1 mr-1 cursor-pointer rounded-xl p-1 hover:bg-black/[0.03] dark:hover:bg-white/5 transition group/uinfo relative" onclick="openMyProfileModal()" title="Mi Perfil de Usuario">
             <div class="relative flex-shrink-0">
-              <img id="sidebar-user-avatar" class="w-8 h-8 rounded-xl border border-slate-200 dark:border-white/15 object-cover shadow-2xs" src="/assets/default-avatar.svg" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;" alt="Avatar">
+              <img id="sidebar-user-avatar" class="w-8 h-8 rounded-xl border border-slate-200 dark:border-white/15 object-cover shadow-2xs select-none" src="/assets/default-avatar.svg" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;" alt="Avatar" draggable="false" ondragstart="return false;" oncontextmenu="event.preventDefault(); return false;">
               <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#0f172a]" title="En línea"></span>
             </div>
             <div class="sidebar-text min-w-0 flex-1 text-left truncate">
@@ -3398,7 +3425,7 @@
               <!-- Info Colaborador -->
               <div class="flex items-center gap-3.5 min-w-0">
                 <div class="relative flex-shrink-0">
-                  <img id="dw-user-avatar" class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl object-cover ring-2 ring-slate-100 dark:ring-white/10 shadow-xs" src="/assets/default-avatar.svg" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;" alt="Avatar">
+                  <img id="dw-user-avatar" class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl object-cover ring-2 ring-slate-100 dark:ring-white/10 shadow-xs select-none" src="/assets/default-avatar.svg" onerror="this.onerror=null; this.src=window.SAFE_DEFAULT_AVATAR;" alt="Avatar" draggable="false" ondragstart="return false;" oncontextmenu="event.preventDefault(); return false;">
                   <span id="dw-birthday-avatar-badge" class="hidden absolute -top-1.5 -right-1 text-sm select-none filter drop-shadow">🎂</span>
                   <span id="dw-status-dot" class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-[#0f172a] bg-slate-400"></span>
                 </div>
@@ -8184,6 +8211,12 @@
                     </div>
                   </div>
                 </div>
+                <button type="button" onclick="clearCurrentPayroll()" title="Limpiar toda la información de este periodo de planilla" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-rose-500/15 text-slate-700 hover:text-rose-600 dark:bg-white/5 dark:text-slate-200 dark:hover:text-rose-400 border border-slate-200 dark:border-white/10 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+                  <span>🗑️ Limpiar Planilla</span>
+                </button>
+                <button type="button" onclick="generateCurrentPayroll()" title="Calcular planilla con colaboradores y asistencias activas" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                  <span>⚡ Calcular Mes</span>
+                </button>
                 <button type="button" onclick="openPayrollIncidentModal()" class="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                   <span>+ Descuento / Bono</span>
                 </button>
@@ -8197,8 +8230,8 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
               <div class="pro-card p-3 rounded-xl border border-slate-200 dark:border-white/10">
                 <span class="text-[10px] font-bold uppercase text-slate-400 block">Personal Activo</span>
-                <div id="kpi-pay-count" class="mt-0.5 text-base lg:text-lg font-bold font-mono text-slate-900 dark:text-white">30 colaboradores</div>
-                <span class="text-[9px] text-slate-400 block mt-0.5">20 CDS • 9 ADM • 1 VTA</span>
+                <div id="kpi-pay-count" class="mt-0.5 text-base lg:text-lg font-bold font-mono text-slate-900 dark:text-white">0 colaboradores</div>
+                <span id="kpi-pay-count-sub" class="text-[9px] text-slate-400 block mt-0.5">0 CDS • 0 ADM • 0 VTA</span>
               </div>
               <div class="pro-card p-3 rounded-xl border border-slate-200 dark:border-white/10">
                 <span class="text-[10px] font-bold uppercase text-slate-400 block">Básicos Contratados</span>
@@ -8252,10 +8285,10 @@
               <!-- Filtro de Área / Centro de Costo (CDS / ADM / VTAS) -->
               <div id="payroll-area-filters" class="flex items-center gap-1.5 text-[11px] font-bold">
                 <span class="text-slate-400 uppercase text-[10px] mr-1">Área:</span>
-                <button type="button" onclick="filterPayrollArea('ALL')" id="btn-pay-area-ALL" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white shadow-2xs cursor-pointer">Todos (30)</button>
-                <button type="button" onclick="filterPayrollArea('CDS')" id="btn-pay-area-CDS" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-white cursor-pointer">CDS (20)</button>
-                <button type="button" onclick="filterPayrollArea('ADM')" id="btn-pay-area-ADM" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-white cursor-pointer">ADM (9)</button>
-                <button type="button" onclick="filterPayrollArea('VTAS')" id="btn-pay-area-VTAS" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-white cursor-pointer">VTAS (1)</button>
+                <button type="button" onclick="filterPayrollArea('ALL')" id="btn-pay-area-ALL" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white shadow-2xs cursor-pointer">Todos (0)</button>
+                <button type="button" onclick="filterPayrollArea('CDS')" id="btn-pay-area-CDS" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-white cursor-pointer">CDS (0)</button>
+                <button type="button" onclick="filterPayrollArea('ADM')" id="btn-pay-area-ADM" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-white cursor-pointer">ADM (0)</button>
+                <button type="button" onclick="filterPayrollArea('VTAS')" id="btn-pay-area-VTAS" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-white cursor-pointer">VTAS (0)</button>
               </div>
             </div>
 
@@ -16294,9 +16327,9 @@
             <span class="w-2 h-2 rounded-full bg-blue-600"></span> 1. Información Personal y Contractual del Colaborador
           </h4>
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-            <!-- Foto Avatar -->
-            <div class="flex flex-col items-center justify-center p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-center">
-              <img id="a4-card-avatar" class="w-24 h-24 rounded-xl object-cover border-2 border-white dark:border-slate-800 shadow-md bg-slate-800" src="" alt="Foto">
+            <!-- Foto Avatar Protegida -->
+            <div class="flex flex-col items-center justify-center p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-center select-none protected-avatar-wrapper" data-protected-avatar="true">
+              <img id="a4-card-avatar" class="w-24 h-24 rounded-xl object-cover border-2 border-white dark:border-slate-800 shadow-md bg-slate-800 pointer-events-none select-none" src="" alt="Foto" draggable="false" ondragstart="return false;" oncontextmenu="return false;">
               <span id="a4-card-status-badge" class="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                 Activo / En funciones
               </span>
@@ -17941,17 +17974,23 @@
                   </button>
                 </div>
 
-                <!-- Input búsqueda Técnico -->
-                <div class="relative">
+                <!-- Input búsqueda Técnico con lista desplegable combinada -->
+                <div class="relative" id="asm-tech-search-container">
                   <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                   <input 
                     type="text" 
                     id="asm-tech-search-input" 
-                    placeholder="Escribe nombre, DNI, rol o ID..." 
-                    class="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
+                    placeholder="Escribe nombre, DNI o selecciona de la lista..." 
+                    class="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl pl-8 pr-9 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    onfocus="handleAjaxTechSearch(this.value)"
+                    onclick="handleAjaxTechSearch(this.value)"
                     oninput="handleAjaxTechSearch(this.value)"
+                    autocomplete="off"
                   />
-                  <div id="asm-tech-results-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-xl max-h-48 overflow-y-auto z-20 hidden divide-y divide-slate-100 dark:divide-white/5"></div>
+                  <button type="button" id="asm-tech-dropdown-toggle" onclick="toggleTechDropdown(event)" class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white transition rounded-md hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer" title="Ver lista completa de técnicos y colaboradores">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div id="asm-tech-results-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl max-h-72 overflow-y-auto z-30 hidden divide-y divide-slate-100 dark:divide-white/5"></div>
                 </div>
 
                 <!-- Tarjeta Técnico Seleccionado -->
@@ -29012,6 +29051,64 @@ Estamos atentos para brindarle asistencia inmediata.
       }
     }
 
+    // ========================================================
+    // SEGURIDAD DE IDENTIDAD: PROTECCIÓN DE FOTOS DE PERFIL
+    // ========================================================
+    function handleProtectedAvatarClick(e, isSelf, userId) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (isSelf) {
+        // Únicamente la persona que ha iniciado sesión en ese usuario puede abrir o gestionar su perfil y foto
+        if (typeof openMyProfileModal === 'function') {
+          openMyProfileModal();
+        } else if (userId && typeof openEditUserModal === 'function') {
+          openEditUserModal(userId);
+        }
+        return false;
+      }
+      // Para cualquier otro usuario o visitante: Bloqueo estricto
+      if (typeof showToast === 'function') {
+        showToast("🔒 Foto protegida: Solo la persona dueña de este usuario puede abrir o gestionar su foto de perfil.", "info");
+      }
+      return false;
+    }
+
+    function handleProtectedAvatarRightClick(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (typeof showToast === 'function') {
+        showToast("🔒 Seguridad de Identidad: Las fotos de perfil están protegidas contra descarga o apertura.", "warning");
+      }
+      return false;
+    }
+
+    // Interceptor global en captura para bloquear contextmenu y dragstart sobre avatares protegidos
+    if (!window._protectedAvatarListenersAttached) {
+      window._protectedAvatarListenersAttached = true;
+      document.addEventListener('contextmenu', function(e) {
+        var el = e.target && e.target.closest ? e.target.closest('.protected-avatar-wrapper, [data-protected-avatar="true"], .protected-avatar') : null;
+        if (el) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleProtectedAvatarRightClick(e);
+          return false;
+        }
+      }, true);
+
+      document.addEventListener('dragstart', function(e) {
+        var el = e.target && e.target.closest ? e.target.closest('.protected-avatar-wrapper, [data-protected-avatar="true"], .protected-avatar') : null;
+        if (el) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }, true);
+    }
+
     function renderUsers(list) {
       const container = document.getElementById('users-list-container');
       const rrhhContainer = document.getElementById('rrhh-users-list-container');
@@ -29030,10 +29127,23 @@ Estamos atentos para brindarle asistencia inmediata.
         return `
         <div class="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-white/10 transition">
           <div class="flex items-center space-x-3 min-w-0">
-            <div class="relative flex-shrink-0">
-              <img class="w-10 h-10 rounded-full border border-white/10 object-cover ${isActive ? '' : 'grayscale opacity-60'}" src="${u.avatar}" alt="${escapeHtml(u.name)}">
+            ${isSelf ? `
+            <!-- Avatar PROPIO: Únicamente la persona logueada en este usuario puede abrirlo e interactuar -->
+            <div class="relative flex-shrink-0 cursor-pointer group/self-avatar select-none" onclick="handleProtectedAvatarClick(event, true, ${u.id})" title="Mi perfil: Click para cambiar o gestionar tu foto">
+              <img class="w-10 h-10 rounded-full border-2 border-blue-500/50 object-cover ring-2 ring-blue-500/20 group-hover/self-avatar:scale-105 transition-all select-none ${isActive ? '' : 'grayscale opacity-60'}" src="${u.avatar}" alt="${escapeHtml(u.name)}" draggable="false" oncontextmenu="event.preventDefault(); return false;">
               <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#0e121b] ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+              <div class="absolute inset-0 bg-blue-500/15 rounded-full opacity-0 group-hover/self-avatar:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                <svg class="w-3.5 h-3.5 text-white drop-shadow" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+              </div>
             </div>
+            ` : `
+            <!-- Avatar DE OTRO USUARIO: Protegido contra click, click derecho y apertura -->
+            <div class="relative flex-shrink-0 select-none protected-avatar-wrapper" data-protected-avatar="true" onclick="handleProtectedAvatarClick(event, false, ${u.id})" oncontextmenu="handleProtectedAvatarRightClick(event); return false;" title="Foto de perfil protegida por seguridad">
+              <img class="w-10 h-10 rounded-full border border-white/10 object-cover pointer-events-none select-none ${isActive ? '' : 'grayscale opacity-60'}" src="${u.avatar}" alt="${escapeHtml(u.name)}" draggable="false" ondragstart="return false;" oncontextmenu="return false;">
+              <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#0e121b] ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+              <div class="absolute inset-0 rounded-full z-10 cursor-not-allowed"></div>
+            </div>
+            `}
             <div class="min-w-0 truncate">
               <div class="flex items-center space-x-2">
                 <span class="font-semibold text-xs text-slate-200 truncate">${escapeHtml(u.name)}</span>
@@ -33549,6 +33659,11 @@ function copyRemoteScannerLink() {
 
       container.innerHTML = list.map(emp => {
         const isActive = emp.status === 'active';
+        const isSelf = currentUser && (
+          (currentUser.id && emp.id === currentUser.id) ||
+          (currentUser.email && emp.email && currentUser.email.toLowerCase() === emp.email.toLowerCase()) ||
+          (currentUser.dni && emp.dni && currentUser.dni === emp.dni)
+        );
         const modLabels = {
           office: '🖐️ Oficina (Huella)',
           store: '📍 Tienda (GPS)',
@@ -33579,9 +33694,26 @@ function copyRemoteScannerLink() {
               </div>
 
               <div class="flex items-center space-x-3.5 my-3.5">
-                <img class="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-white/10 shadow-sm" src="${emp.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(emp.name)}" alt="Avatar">
+                ${isSelf ? `
+                <!-- Avatar PROPIO: Únicamente la persona logueada en este usuario puede abrirlo e interactuar -->
+                <div class="relative flex-shrink-0 cursor-pointer group/self-avatar select-none" onclick="handleProtectedAvatarClick(event, true, ${emp.id})" title="Mi perfil: Click para cambiar o gestionar tu foto">
+                  <img class="w-12 h-12 rounded-xl object-cover border-2 border-blue-500/50 ring-2 ring-blue-500/20 shadow-sm group-hover/self-avatar:scale-105 transition-all select-none" src="${emp.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(emp.name)}" alt="Avatar" draggable="false" oncontextmenu="event.preventDefault(); return false;">
+                  <div class="absolute inset-0 bg-blue-500/15 rounded-xl opacity-0 group-hover/self-avatar:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <svg class="w-4 h-4 text-white drop-shadow" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </div>
+                </div>
+                ` : `
+                <!-- Avatar DE OTRO COLABORADOR: Protegido contra click, click derecho y apertura -->
+                <div class="relative flex-shrink-0 select-none protected-avatar-wrapper" data-protected-avatar="true" onclick="handleProtectedAvatarClick(event, false, ${emp.id})" oncontextmenu="handleProtectedAvatarRightClick(event); return false;" title="Foto de perfil protegida por seguridad">
+                  <img class="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-white/10 shadow-sm pointer-events-none select-none" src="${emp.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(emp.name)}" alt="Avatar" draggable="false" ondragstart="return false;" oncontextmenu="return false;">
+                  <div class="absolute inset-0 rounded-xl z-10 cursor-not-allowed"></div>
+                </div>
+                `}
                 <div class="min-w-0">
-                  <h4 class="font-bold text-sm text-slate-900 dark:text-slate-100 truncate">${escapeHtml(emp.name)}</h4>
+                  <div class="flex items-center gap-1.5">
+                    <h4 class="font-bold text-sm text-slate-900 dark:text-slate-100 truncate">${escapeHtml(emp.name)}</h4>
+                    ${isSelf ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-mono dynamic-primary-subtle border">Tú</span>' : ''}
+                  </div>
                   <p class="text-xs text-blue-600 dark:text-blue-400 font-medium truncate">${escapeHtml(emp.position)}</p>
                   <span class="text-[10px] font-mono text-slate-400">DNI: ${escapeHtml(emp.dni)} • ${modLabels[emp.workModality || 'office'] || 'Oficina'}</span>
                 </div>
@@ -36342,11 +36474,59 @@ function copyRemoteScannerLink() {
       }
     }
 
+    async function clearCurrentPayroll() {
+      const periodInp = document.getElementById('payroll-period-input');
+      const period = (periodInp && periodInp.value) ? periodInp.value : '2026-09';
+      if (!confirm(`¿Estás seguro de LIMPIAR la planilla del periodo ${period}? Toda la información y cálculos quedarán vacíos.`)) return;
+
+      try {
+        const res = await fetch('/api/rrhh/payroll/clear', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ period, tenantId: activeTenantId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✓ Planilla limpiada correctamente');
+          await loadPayrollModule();
+        } else {
+          showToast(data.message || 'Error al limpiar planilla', true);
+        }
+      } catch (err) {
+        console.error('Error al limpiar planilla:', err);
+        showToast('Error de conexión al limpiar planilla', true);
+      }
+    }
+
+    async function generateCurrentPayroll() {
+      const periodInp = document.getElementById('payroll-period-input');
+      const period = (periodInp && periodInp.value) ? periodInp.value : '2026-09';
+
+      try {
+        const res = await fetch('/api/rrhh/payroll/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ period, tenantId: activeTenantId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || '✓ Planilla calculada exitosamente');
+          await loadPayrollModule();
+        } else {
+          showToast(data.message || 'Error al generar planilla', true);
+        }
+      } catch (err) {
+        console.error('Error al generar planilla:', err);
+        showToast('Error de conexión al generar planilla', true);
+      }
+    }
+
     function renderPayrollSummaryKPIs(summary) {
       const sym = getSystemCurrencySymbol();
       const fmt = v => `${sym} ${Number(v || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
       const kCount = document.getElementById('kpi-pay-count');
+      const kCountSub = document.getElementById('kpi-pay-count-sub');
       const kBase = document.getElementById('kpi-pay-base');
       const kOt = document.getElementById('kpi-pay-overtime');
       const kOtSub = document.getElementById('kpi-pay-overtime-sub');
@@ -36355,14 +36535,32 @@ function copyRemoteScannerLink() {
       const kQuin = document.getElementById('kpi-pay-quincena');
       const kNet = document.getElementById('kpi-pay-net');
 
-      if (kCount) kCount.textContent = `${summary.employeesCount || 30} colaboradores`;
-      if (kBase) kBase.textContent = fmt(summary.totalBaseSalary || summary.totalSueldoReal);
-      if (kOt) kOt.textContent = `+${fmt(summary.totalOvertimePay)}`;
-      if (kOtSub) kOtSub.textContent = `25%: ${fmt(summary.totalOvertime25)} • 35%: ${fmt(summary.totalOvertime35)}`;
-      if (kEss) kEss.textContent = fmt(summary.totalEssalud);
-      if (kPen) kPen.textContent = `-${fmt(summary.totalPensionDeduction || summary.totalAfp + summary.totalOnp)}`;
-      if (kQuin) kQuin.textContent = `-${fmt(summary.totalQuincena)}`;
-      if (kNet) kNet.textContent = fmt(summary.totalFinDeMes || summary.totalNetPayroll);
+      const count = Number(summary?.employeesCount || 0);
+      if (kCount) kCount.textContent = `${count} colaborador${count === 1 ? '' : 'es'}`;
+
+      const items = (currentPayrollData && Array.isArray(currentPayrollData.items)) ? currentPayrollData.items : [];
+      const cdsCount = items.filter(i => (i.area || '').toUpperCase() === 'CDS').length;
+      const admCount = items.filter(i => (i.area || '').toUpperCase() === 'ADM').length;
+      const vtasCount = items.filter(i => (i.area || '').toUpperCase() === 'VTAS').length;
+
+      if (kCountSub) kCountSub.textContent = `${cdsCount} CDS • ${admCount} ADM • ${vtasCount} VTA`;
+
+      const btnAll = document.getElementById('btn-pay-area-ALL');
+      const btnCds = document.getElementById('btn-pay-area-CDS');
+      const btnAdm = document.getElementById('btn-pay-area-ADM');
+      const btnVtas = document.getElementById('btn-pay-area-VTAS');
+      if (btnAll) btnAll.textContent = `Todos (${items.length})`;
+      if (btnCds) btnCds.textContent = `CDS (${cdsCount})`;
+      if (btnAdm) btnAdm.textContent = `ADM (${admCount})`;
+      if (btnVtas) btnVtas.textContent = `VTAS (${vtasCount})`;
+
+      if (kBase) kBase.textContent = fmt(summary?.totalBaseSalary || summary?.totalSueldoReal || 0);
+      if (kOt) kOt.textContent = `+${fmt(summary?.totalOvertimePay || 0)}`;
+      if (kOtSub) kOtSub.textContent = `25%: ${fmt(summary?.totalOvertime25 || 0)} • 35%: ${fmt(summary?.totalOvertime35 || 0)}`;
+      if (kEss) kEss.textContent = fmt(summary?.totalEssalud || 0);
+      if (kPen) kPen.textContent = `-${fmt(summary?.totalPensionDeduction || ((summary?.totalAfp || 0) + (summary?.totalOnp || 0)))}`;
+      if (kQuin) kQuin.textContent = `-${fmt(summary?.totalQuincena || 0)}`;
+      if (kNet) kNet.textContent = fmt(summary?.totalFinDeMes || summary?.totalNetPayroll || 0);
     }
 
     function filterPayrollTable() {
@@ -36394,9 +36592,20 @@ function copyRemoteScannerLink() {
       const mobileCards = document.getElementById('payroll-mobile-cards');
 
       if (!items || items.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="17" class="py-12 text-center text-slate-400 text-xs">No se encontraron colaboradores para este filtro.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="17" class="py-16 text-center text-slate-400 text-xs">
+          <div class="flex flex-col items-center justify-center gap-2 py-4">
+            <span class="text-3xl">📋</span>
+            <span class="font-bold text-slate-700 dark:text-slate-200 text-sm">Planilla limpia sin información</span>
+            <span class="text-xs text-slate-400 max-w-md">No hay colaboradores registrados para este periodo. Puedes pulsar <strong class="text-blue-500 font-semibold">⚡ Calcular Mes</strong> o usar <strong class="text-slate-600 dark:text-slate-300 font-semibold">📊 Importar / Exportar</strong> para cargar un archivo Excel o CSV.</span>
+          </div>
+        </td></tr>`;
         if (tfoot) tfoot.innerHTML = '';
-        if (mobileCards) mobileCards.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">No se encontraron colaboradores.</div>`;
+        if (mobileCards) mobileCards.innerHTML = `
+          <div class="p-8 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-2">
+            <span class="text-2xl">📋</span>
+            <span class="font-bold text-slate-700 dark:text-slate-200">Planilla limpia sin información</span>
+            <span class="text-[11px]">No hay colaboradores registrados para este periodo.</span>
+          </div>`;
         return;
       }
 
@@ -49679,17 +49888,9 @@ async function handleTechCodeScanned(rawCode) {
   if (!rawCode) return;
   const q = rawCode.trim();
 
-  // Asegurar carga de usuarios si aún no están en memoria
-  if (!currentUsers || currentUsers.length === 0) {
-    try {
-      const res = await fetch('/api/users');
-      const data = await res.json();
-      if (data.success && data.data) {
-        currentUsers = data.data;
-      }
-    } catch (e) {
-      console.warn("Error cargando usuarios:", e);
-    }
+  // Asegurar carga de usuarios y colaboradores si aún no están en memoria
+  if (!currentUsers || currentUsers.length === 0 || !currentEmployees || currentEmployees.length === 0) {
+    await ensureTechAndPersonnelLoaded();
   }
 
   let candidateId = null;
@@ -49701,7 +49902,7 @@ async function handleTechCodeScanned(rawCode) {
   try {
     if (q.startsWith('{') && q.endsWith('}')) {
       const parsed = JSON.parse(q);
-      candidateId = parsed.id || parsed.userId || parsed.collaboratorId;
+      candidateId = parsed.id || parsed.userId || parsed.collaboratorId || parsed.employeeId;
       candidateDni = parsed.dni || parsed.document || parsed.docNumber;
       candidateEmail = parsed.email;
       candidateName = parsed.name || parsed.username;
@@ -49712,12 +49913,14 @@ async function handleTechCodeScanned(rawCode) {
   if (!candidateId && (q.startsWith('http://') || q.startsWith('https://'))) {
     try {
       const urlObj = new URL(q);
-      candidateId = urlObj.searchParams.get('id') || urlObj.searchParams.get('userId');
+      candidateId = urlObj.searchParams.get('id') || urlObj.searchParams.get('userId') || urlObj.searchParams.get('employeeId');
       if (!candidateId) {
         const parts = urlObj.pathname.split('/').filter(Boolean);
         const lastPart = parts[parts.length - 1];
         if (!isNaN(Number(lastPart))) {
           candidateId = lastPart;
+        } else if (lastPart.startsWith('tok_') || lastPart.startsWith('colab-') || lastPart.startsWith('emp-')) {
+          candidateDni = lastPart;
         }
       }
     } catch (e) {}
@@ -49726,17 +49929,18 @@ async function handleTechCodeScanned(rawCode) {
   const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").trim();
   const searchQ = norm(q);
 
-  const tech = (currentUsers || []).find(u => {
-    if (candidateId && String(u.id) === String(candidateId)) return true;
-    if (String(u.id) === searchQ) return true;
-    if (candidateDni && (String(u.dni || '') === String(candidateDni) || String(u.document || '') === String(candidateDni))) return true;
+  const personnelList = getUnifiedTechPersonnelList();
+  const tech = personnelList.find(u => {
+    if (candidateId && (String(u.id) === String(candidateId) || String(u.originalId) === String(candidateId))) return true;
+    if (String(u.id) === searchQ || String(u.originalId) === searchQ) return true;
+    if (candidateDni && (String(u.dni || '') === String(candidateDni) || String(u.publicToken || '') === String(candidateDni))) return true;
     if (u.dni && norm(String(u.dni)) === searchQ) return true;
-    if (u.document && norm(String(u.document)) === searchQ) return true;
+    if (u.publicToken && norm(String(u.publicToken)) === searchQ) return true;
+    if (u.biometricPin && norm(String(u.biometricPin)) === searchQ) return true;
     if (candidateEmail && norm(u.email) === norm(candidateEmail)) return true;
     if (u.email && norm(u.email) === searchQ) return true;
     if (candidateName && norm(u.name).includes(norm(candidateName))) return true;
     if (u.name && norm(u.name).includes(searchQ)) return true;
-    if (u.username && norm(u.username) === searchQ) return true;
     return false;
   });
 
@@ -49949,13 +50153,17 @@ function openAssignmentManagerModal(preselectedTechId = null, preselectedNodeId 
     updateNodeCountBadge();
   }
 
+  // Asegurar que tanto currentUsers como currentEmployees estén cargados
+  ensureTechAndPersonnelLoaded();
+
   if (preselectedNodeId) {
     switchAssignmentTargetType('node');
     const node = (inventoryAssets || []).find(a => String(a.id) === String(preselectedNodeId) && a.category === 'nodo');
     if (node) selectNode(node);
   } else if (preselectedTechId) {
     switchAssignmentTargetType('tech');
-    const tech = (currentUsers || []).find(u => u.id === preselectedTechId);
+    const allPersonnel = getUnifiedTechPersonnelList();
+    const tech = allPersonnel.find(u => String(u.id) === String(preselectedTechId) || String(u.originalId) === String(preselectedTechId)) || (currentUsers || []).find(u => u.id === preselectedTechId);
     if (tech) selectTech(tech);
   } else {
     switchAssignmentTargetType('tech');
@@ -50278,52 +50486,235 @@ function switchAssignmentManagerMode(mode) {
   }
 }
 
-function handleAjaxTechSearch(val) {
-  const q = (val || '').trim().toLowerCase();
-  const dropdown = document.getElementById('asm-tech-results-dropdown');
-  if (!dropdown) return;
+let cachedUnifiedTechPersonnel = [];
 
-  if (techSearchDebounceTimer) clearTimeout(techSearchDebounceTimer);
-  techSearchDebounceTimer = setTimeout(() => {
-    if (q.length < 2) {
-      dropdown.classList.add('hidden');
-      dropdown.innerHTML = '';
+async function ensureTechAndPersonnelLoaded(force = false) {
+  const tasks = [];
+  if (force || !currentUsers || currentUsers.length === 0) {
+    tasks.push(
+      fetch('/api/users')
+        .then(r => r.json())
+        .then(d => { if (d && d.data) currentUsers = d.data; })
+        .catch(e => console.warn('Error cargando usuarios:', e))
+    );
+  }
+  if (force || !currentEmployees || currentEmployees.length === 0) {
+    tasks.push(
+      fetch('/api/rrhh/employees')
+        .then(r => r.json())
+        .then(d => { if (d && d.data) currentEmployees = d.data; })
+        .catch(e => console.warn('Error cargando colaboradores:', e))
+    );
+  }
+  if (tasks.length > 0) {
+    await Promise.all(tasks);
+  }
+}
+
+function getUnifiedTechPersonnelList() {
+  const unified = [];
+  const seenKeys = new Set();
+
+  const isTechRole = (pos) => /t[eé]cnic|instalad|cuadrill|campo|soporte|red|fibra|operaci[oó]n|ayudante|planta/i.test(pos || '');
+
+  // 1. Colaboradores de RRHH (Técnicos de campo, cuadrillas, soporte, etc.)
+  const emps = Array.isArray(currentEmployees) ? currentEmployees : [];
+  emps.forEach(e => {
+    if (e.status && e.status !== 'active') return;
+    const normName = (e.name || '').trim().toLowerCase();
+    const dni = (e.dni || '').trim();
+    const pos = (e.position || 'Colaborador').trim();
+    const isTech = isTechRole(pos);
+
+    const item = {
+      id: e.id,
+      originalId: e.id,
+      source: 'employee',
+      name: e.name,
+      roleName: pos,
+      position: pos,
+      dni: dni,
+      email: e.email || '',
+      area: e.area || e.department || 'CDS',
+      avatar: e.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(e.name)),
+      isTechnician: isTech,
+      publicToken: e.publicToken || '',
+      biometricPin: e.biometricPin || ''
+    };
+
+    const key = dni ? `dni_${dni}` : (e.email ? `email_${e.email.toLowerCase()}` : `name_${normName}`);
+    seenKeys.add(key);
+    unified.push(item);
+  });
+
+  // 2. Usuarios del sistema / operadores
+  const users = Array.isArray(currentUsers) ? currentUsers : [];
+  users.forEach(u => {
+    if (u.isActive === false) return;
+    const normName = (u.name || '').trim().toLowerCase();
+    const dni = (u.dni || u.document || '').trim();
+    const role = (u.roleName || 'Operador').trim();
+    const isTech = isTechRole(role);
+
+    const key = dni ? `dni_${dni}` : (u.email ? `email_${u.email.toLowerCase()}` : `name_${normName}`);
+    if (seenKeys.has(key)) {
+      const existing = unified.find(x => (dni && x.dni === dni) || (u.email && x.email.toLowerCase() === u.email.toLowerCase()) || x.name.toLowerCase() === normName);
+      if (existing) {
+        if (!existing.roleName || existing.roleName === 'Colaborador') existing.roleName = role;
+        if (u.avatar && !existing.avatar) existing.avatar = u.avatar;
+      }
       return;
     }
 
-    const matched = (currentUsers || []).filter(u => {
-      const name = (u.name || '').toLowerCase();
-      const role = (u.roleName || '').toLowerCase();
-      const email = (u.email || '').toLowerCase();
-      const id = String(u.id);
-      return name.includes(q) || role.includes(q) || email.includes(q) || id.includes(q);
+    seenKeys.add(key);
+    unified.push({
+      id: u.id,
+      originalId: u.id,
+      source: 'user',
+      name: u.name,
+      roleName: role,
+      position: role,
+      dni: dni,
+      email: u.email || '',
+      area: u.department || 'SISTEMA',
+      avatar: u.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(u.name)),
+      isTechnician: isTech,
+      publicToken: u.publicToken || '',
+      biometricPin: ''
     });
+  });
 
-    if (matched.length === 0) {
-      dropdown.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center">No se encontraron colaboradores</div>';
-    } else {
-      dropdown.innerHTML = matched.map(u => {
-        const avatar = u.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(u.name));
-        return `
-          <div onclick="selectTechById(${u.id})" class="p-2.5 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer transition">
-            <div class="flex items-center space-x-2.5">
-              <img src="${avatar}" class="w-7 h-7 rounded-lg object-cover">
-              <div>
-                <p class="font-bold text-slate-800 dark:text-white text-xs">${escapeHtml(u.name)}</p>
-                <p class="text-[10.5px] text-slate-400">${escapeHtml(u.roleName || 'Operador')} • ID: ${u.id}</p>
-              </div>
-            </div>
-            <span class="text-[11px] font-semibold text-purple-600 dark:text-purple-400">Seleccionar</span>
-          </div>
-        `;
-      }).join('');
-    }
+  // Ordenar: Técnicos de campo primero, luego el resto de colaboradores y usuarios
+  unified.sort((a, b) => {
+    if (a.isTechnician && !b.isTechnician) return -1;
+    if (!a.isTechnician && b.isTechnician) return 1;
+    return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+  });
+
+  cachedUnifiedTechPersonnel = unified;
+  return unified;
+}
+
+function toggleTechDropdown(event) {
+  if (event) event.stopPropagation();
+  const dropdown = document.getElementById('asm-tech-results-dropdown');
+  const input = document.getElementById('asm-tech-search-input');
+  if (!dropdown) return;
+  if (!dropdown.classList.contains('hidden') && !input?.value) {
+    dropdown.classList.add('hidden');
+  } else {
+    if (input) input.focus();
+    handleAjaxTechSearch(input ? input.value : '');
+  }
+}
+
+async function handleAjaxTechSearch(val) {
+  const dropdown = document.getElementById('asm-tech-results-dropdown');
+  if (!dropdown) return;
+
+  // Si no están cargados, cargarlos de inmediato
+  if ((!currentEmployees || currentEmployees.length === 0) || (!currentUsers || currentUsers.length === 0)) {
+    dropdown.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center flex items-center justify-center gap-2"><div class="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div><span>Cargando lista de técnicos y colaboradores...</span></div>';
     dropdown.classList.remove('hidden');
-  }, 150);
+    await ensureTechAndPersonnelLoaded();
+  }
+
+  const q = (val || '').trim().toLowerCase();
+  const allPersonnel = getUnifiedTechPersonnelList();
+
+  const matched = allPersonnel.filter(u => {
+    if (!q) return true;
+    const name = (u.name || '').toLowerCase();
+    const role = (u.roleName || '').toLowerCase();
+    const dni = (u.dni || '').toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    const area = (u.area || '').toLowerCase();
+    const id = String(u.id);
+    return name.includes(q) || role.includes(q) || dni.includes(q) || email.includes(q) || area.includes(q) || id.includes(q);
+  });
+
+  if (matched.length === 0) {
+    dropdown.innerHTML = `
+      <div class="p-4 text-xs text-slate-400 text-center">
+        <p class="font-semibold text-slate-600 dark:text-slate-300">No se encontraron colaboradores</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">No hay coincidencias para "${escapeHtml(val)}".</p>
+      </div>`;
+  } else {
+    const techCount = matched.filter(x => x.isTechnician).length;
+    const otherCount = matched.length - techCount;
+
+    let html = `
+      <div class="px-3 py-2 bg-slate-50 dark:bg-white/[0.04] border-b border-slate-100 dark:border-white/5 flex items-center justify-between text-[10.5px] text-slate-500 sticky top-0 z-10 backdrop-blur-md">
+        <div class="flex items-center gap-1.5 font-bold">
+          <span>👥 Personal (${matched.length})</span>
+          ${techCount > 0 ? `<span class="px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9.5px]">🔧 ${techCount} Técnicos</span>` : ''}
+          ${otherCount > 0 ? `<span class="px-1.5 py-0.2 rounded bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300 text-[9.5px]">${otherCount} Otros</span>` : ''}
+        </div>
+        <span class="text-[10px] text-slate-400 hidden sm:inline">Escribe o selecciona</span>
+      </div>
+    `;
+
+    // Si no hay búsqueda (lista completa), agrupamos visualmente por categoría
+    if (!q && techCount > 0 && otherCount > 0) {
+      const techs = matched.filter(x => x.isTechnician);
+      const others = matched.filter(x => !x.isTechnician);
+
+      html += `<div class="px-3 py-1 bg-blue-500/5 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider">🔧 Técnicos de Campo / Cuadrillas (${techs.length})</div>`;
+      html += techs.map((u) => renderTechDropdownItem(u)).join('');
+
+      html += `<div class="px-3 py-1 bg-slate-100 dark:bg-white/5 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-t border-slate-100 dark:border-white/5">👤 Otros Colaboradores y Operadores (${others.length})</div>`;
+      html += others.map((u) => renderTechDropdownItem(u)).join('');
+    } else {
+      html += matched.map((u) => renderTechDropdownItem(u)).join('');
+    }
+
+    dropdown.innerHTML = html;
+  }
+  dropdown.classList.remove('hidden');
+}
+
+function renderTechDropdownItem(u) {
+  const avatar = u.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(u.name));
+  const badgeClass = u.isTechnician
+    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
+    : (u.source === 'user'
+      ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20'
+      : 'bg-slate-500/10 text-slate-600 dark:text-slate-300 border border-slate-500/20');
+  const badgeLabel = u.isTechnician ? '🔧 Técnico' : (u.source === 'user' ? '💻 Operador' : '👤 Colaborador');
+  const dniText = u.dni ? `• DNI: ${escapeHtml(u.dni)}` : '';
+  const areaText = u.area ? `• <span class="font-bold text-slate-500 dark:text-slate-300">${escapeHtml(u.area)}</span>` : '';
+
+  return `
+    <div onclick="selectTechByJson('${encodeURIComponent(JSON.stringify(u))}')" class="p-2.5 flex items-center justify-between hover:bg-blue-500/10 dark:hover:bg-white/5 cursor-pointer transition group">
+      <div class="flex items-center space-x-2.5 min-w-0">
+        <img src="${avatar}" class="w-8 h-8 rounded-xl object-cover border border-slate-200 dark:border-white/10 flex-shrink-0 group-hover:scale-105 transition" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'">
+        <div class="truncate">
+          <div class="flex items-center gap-1.5 truncate">
+            <p class="font-bold text-slate-800 dark:text-white text-xs truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">${escapeHtml(u.name)}</p>
+            <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${badgeClass}">${badgeLabel}</span>
+          </div>
+          <p class="text-[10.5px] text-slate-400 truncate mt-0.5 font-mono">${escapeHtml(u.roleName || 'Colaborador')} ${dniText} ${areaText}</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-1.5 flex-shrink-0 ml-2">
+        <span class="text-[11px] font-semibold text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition">Seleccionar ➔</span>
+      </div>
+    </div>
+  `;
+}
+
+function selectTechByJson(encodedJson) {
+  try {
+    const tech = JSON.parse(decodeURIComponent(encodedJson));
+    selectTech(tech);
+  } catch (err) {
+    console.error('Error parseando técnico:', err);
+  }
 }
 
 function selectTechById(id) {
-  const tech = (currentUsers || []).find(u => u.id === id);
+  const allPersonnel = getUnifiedTechPersonnelList();
+  const tech = allPersonnel.find(u => String(u.id) === String(id) || String(u.originalId) === String(id));
   if (tech) selectTech(tech);
 }
 
@@ -50339,7 +50730,8 @@ function selectTech(tech) {
 
   if (avatar) avatar.src = tech.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(tech.name));
   if (name) name.textContent = tech.name;
-  if (role) role.textContent = `${tech.roleName || 'Técnico'} • ID: #${tech.id}`;
+  const dniText = tech.dni ? ` • DNI: ${tech.dni}` : '';
+  if (role) role.textContent = `${tech.roleName || tech.position || 'Técnico'}${dniText} • ID: #${tech.id}`;
   if (manifestTechName) manifestTechName.textContent = tech.name;
 
   if (dropdown) dropdown.classList.add('hidden');
@@ -50364,7 +50756,8 @@ function syncUnassignTechView(tech) {
   const role = document.getElementById('asm-unassign-tech-role');
   if (avatar) avatar.src = tech.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(tech.name));
   if (name) name.textContent = tech.name;
-  if (role) role.textContent = `${tech.roleName || 'Técnico'} • ID: #${tech.id}`;
+  const dniText = tech.dni ? ` • DNI: ${tech.dni}` : '';
+  if (role) role.textContent = `${tech.roleName || tech.position || 'Técnico'}${dniText} • ID: #${tech.id}`;
 }
 
 function clearSelectedTech() {
@@ -50390,15 +50783,22 @@ function clearSelectedTech() {
 }
 
 function openQrScannerForAssignment() {
-  if (!currentUsers || currentUsers.length === 0) {
-    fetch('/api/users').then(r => r.json()).then(d => {
-      if (d && d.data) currentUsers = d.data;
-    }).catch(() => {});
-  }
+  ensureTechAndPersonnelLoaded();
   openCameraScannerModal({
     mode: 'assignment_tech'
   });
 }
+
+// Cerrar dropdown de técnicos al hacer clic fuera
+document.addEventListener('click', (e) => {
+  const container = document.getElementById('asm-tech-search-container');
+  const dropdown = document.getElementById('asm-tech-results-dropdown');
+  if (dropdown && !dropdown.classList.contains('hidden')) {
+    if (container && !container.contains(e.target)) {
+      dropdown.classList.add('hidden');
+    }
+  }
+});
 
 function handleAjaxProductSearch(val) {
   const raw = (val || '').trim();

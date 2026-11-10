@@ -33,6 +33,7 @@ import {
   saveMonthlyPayrollItem,
   saveMonthlyPayrollToDisk,
   getMonthlyPayrollForTenant,
+  clearMonthlyPayrollForTenant,
   loadMonthlyPayrollsFromDisk,
 } from "./rrhh.service";
 
@@ -3115,9 +3116,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete("/rrhh/incidents/:id", handleDeleteIncident);
   fastify.delete("/rrhh/payroll/incidents/:id", handleDeleteIncident);
 
-  // Calcular Planilla (Nómina) Mensual Automática
+  // Calcular / Cargar Planilla (Nómina) Mensual
   fastify.get("/rrhh/payroll", async (request, reply) => {
-    const { period, tenantId } = request.query as { period?: string; tenantId?: string };
+    const { period, tenantId, calculate } = request.query as { period?: string; tenantId?: string; calculate?: string };
     const { peruDate } = getPeruDateTime();
     const targetPeriod = period || peruDate.slice(0, 7);
     const activeTenant = (tenantId || resolveTenantId(request)).toLowerCase();
@@ -3134,17 +3135,33 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const enrichedEmployees = employeesStore.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
 
     const savedPeriodData = getMonthlyPayrollForTenant(activeTenant, targetPeriod);
-    let items = (savedPeriodData && Array.isArray(savedPeriodData.items) && savedPeriodData.items.length > 0)
-      ? savedPeriodData.items
-      : calculateMonthlyPayroll({
-          period: targetPeriod,
-          tenantId: activeTenant,
-          employees: enrichedEmployees,
-          attendances: attendanceStore,
-          leaves,
-          commissions,
-          incidents,
-        });
+    let items: any[] = [];
+    if (calculate === "true" || calculate === "1") {
+      items = calculateMonthlyPayroll({
+        period: targetPeriod,
+        tenantId: activeTenant,
+        employees: enrichedEmployees,
+        attendances: attendanceStore,
+        leaves,
+        commissions,
+        incidents,
+      });
+      const allTenants = loadTenantsFromDisk();
+      const tenantObj = allTenants.find((t) => t.id === activeTenant);
+      const companyName = tenantObj?.name || (activeTenant === "loanetwork" ? "LOA NETWORK JL SAC" : "TurboNetwork Perú S.A.C.");
+      const companyRuc = tenantObj?.ruc || (activeTenant === "loanetwork" ? "20607511579" : "20601234567");
+
+      saveMonthlyPayrollToDisk(targetPeriod, {
+        period: targetPeriod,
+        tenantId: activeTenant,
+        company: { name: companyName, ruc: companyRuc, regimen: "PEQ. EMPRESA" },
+        items,
+      }, activeTenant);
+    } else if (savedPeriodData && Array.isArray(savedPeriodData.items)) {
+      items = savedPeriodData.items;
+    } else {
+      items = [];
+    }
 
     const totalTardinessDeduction = +items.reduce((s, i) => s + i.tardinessDeduction, 0).toFixed(2);
     const totalIncidentDeductions = +items
@@ -3556,6 +3573,80 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       success: true,
       message: `Valores de planilla actualizados para ${updated.employeeName || "el colaborador"}.`,
       item: updated,
+    });
+  });
+
+  // Limpiar / Vaciar planilla de un periodo o de todo el tenant
+  fastify.post("/rrhh/payroll/clear", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const { period } = body;
+    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
+
+    clearMonthlyPayrollForTenant(activeTenant, period);
+
+    // Limpiar también estados de pago para ese periodo
+    if (period) {
+      const payrollStatus = loadPayrollsStatusFromDisk();
+      for (const k of Object.keys(payrollStatus)) {
+        if (k.startsWith(`${period}_`)) {
+          delete payrollStatus[k];
+        }
+      }
+      savePayrollsStatusToDisk(payrollStatus);
+    }
+
+    return reply.send({
+      success: true,
+      message: period
+        ? `Planilla del periodo ${period} limpiada exitosamente.`
+        : `Planilla limpiada exitosamente.`,
+    });
+  });
+
+  // Generar / Recalcular planilla completa del periodo
+  fastify.post("/rrhh/payroll/generate", async (request, reply) => {
+    const body = (request.body as any) || {};
+    const { period } = body;
+    const { peruDate } = getPeruDateTime();
+    const targetPeriod = period || peruDate.slice(0, 7);
+    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
+
+    syncDamagedInventoryAssignmentsToPayroll(activeTenant, targetPeriod);
+
+    employeesStore = loadEmployeesFromDisk();
+    attendanceStore = loadAttendanceFromDisk();
+    const leaves = loadLeavesFromDisk();
+    const commissions = loadCommissionsFromDisk();
+    const incidents = loadIncidentsFromDisk();
+
+    const enrichedEmployees = employeesStore.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
+
+    const items = calculateMonthlyPayroll({
+      period: targetPeriod,
+      tenantId: activeTenant,
+      employees: enrichedEmployees,
+      attendances: attendanceStore,
+      leaves,
+      commissions,
+      incidents,
+    });
+
+    const allTenants = loadTenantsFromDisk();
+    const tenantObj = allTenants.find((t) => t.id === activeTenant);
+    const companyName = tenantObj?.name || (activeTenant === "loanetwork" ? "LOA NETWORK JL SAC" : "TurboNetwork Perú S.A.C.");
+    const companyRuc = tenantObj?.ruc || (activeTenant === "loanetwork" ? "20607511579" : "20601234567");
+
+    saveMonthlyPayrollToDisk(targetPeriod, {
+      period: targetPeriod,
+      tenantId: activeTenant,
+      company: { name: companyName, ruc: companyRuc, regimen: "PEQ. EMPRESA" },
+      items,
+    }, activeTenant);
+
+    return reply.send({
+      success: true,
+      message: `Planilla del periodo ${targetPeriod} generada exitosamente (${items.length} colaboradores).`,
+      count: items.length,
     });
   });
 

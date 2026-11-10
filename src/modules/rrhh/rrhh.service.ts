@@ -719,7 +719,7 @@ export function calculateMonthlyPayroll(params: {
 
 const MONTHLY_PAYROLL_FILE = path.join(DATA_DIR, "rrhh_monthly_payroll.json");
 
-export function loadMonthlyPayrollsFromDisk(): Record<string, { period: string; company?: any; items: any[] }> {
+export function loadMonthlyPayrollsFromDisk(): Record<string, { period: string; tenantId?: string; company?: any; items: any[] }> {
   try {
     if (fs.existsSync(MONTHLY_PAYROLL_FILE)) {
       return JSON.parse(fs.readFileSync(MONTHLY_PAYROLL_FILE, "utf-8"));
@@ -737,6 +737,33 @@ export function getMonthlyPayrollForTenant(tenantId: string | undefined, period:
   if (all[tenantKey]) return all[tenantKey];
   if (all[period]) return all[period];
   return null;
+}
+
+export function clearMonthlyPayrollForTenant(tenantId: string | undefined, period?: string) {
+  try {
+    const all = loadMonthlyPayrollsFromDisk();
+    const safeTenant = (tenantId || "turbonetwork").toLowerCase().trim();
+    if (period) {
+      const tenantKey = `${safeTenant}_${period}`;
+      all[tenantKey] = {
+        period,
+        tenantId: safeTenant,
+        items: [],
+      };
+      if (all[period] && (all[period].tenantId === safeTenant || !all[period].tenantId)) {
+        delete all[period];
+      }
+    } else {
+      for (const k of Object.keys(all)) {
+        if (k.startsWith(`${safeTenant}_`) || all[k]?.tenantId === safeTenant) {
+          delete all[k];
+        }
+      }
+    }
+    fs.writeFileSync(MONTHLY_PAYROLL_FILE, JSON.stringify(all, null, 2), "utf-8");
+  } catch (err) {
+    console.error("Error clearing rrhh_monthly_payroll.json:", err);
+  }
 }
 
 export function saveMonthlyPayrollToDisk(period: string, data: any, tenantId?: string) {
