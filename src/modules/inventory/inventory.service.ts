@@ -1044,6 +1044,7 @@ export function adjustStock(
     operatorName?: string;
     technicianName?: string;
     selectedUnitSkus?: string[];
+    targetStatus?: ProductItemUnit["status"];
   }
 ): (InventoryProduct & { lastUnitsAffected?: string[] }) | null {
   const products = loadProducts(tenantId);
@@ -1099,23 +1100,28 @@ export function adjustStock(
         unitsAffected.push(unitSku);
       }
     } else if (params.type === "out") {
-      let targetStatus: ProductItemUnit["status"] = "entregado";
-      const lowerReason = (params.reason || "").toLowerCase();
-      if (/merma|dañado|baja|quemado|roto|fallado/i.test(lowerReason)) {
-        targetStatus = "baja";
-      } else if (/garantia|rma/i.test(lowerReason)) {
-        targetStatus = "en_garantia";
-      } else if (/cliente|instalacion/i.test(lowerReason)) {
-        targetStatus = "instalado";
+      let targetStatus: ProductItemUnit["status"] = params.targetStatus || "entregado";
+      if (!params.targetStatus) {
+        const lowerReason = (params.reason || "").toLowerCase();
+        if (/merma|dañado|baja|quemado|roto|fallado/i.test(lowerReason)) {
+          targetStatus = "baja";
+        } else if (/garantia|rma/i.test(lowerReason)) {
+          targetStatus = "en_garantia";
+        } else if (/cliente|instalacion|instalado|abonado|ftth/i.test(lowerReason)) {
+          targetStatus = "instalado";
+        } else if (/tecnico|técnico|personal|cuadrilla|asign/i.test(lowerReason)) {
+          targetStatus = "asignado";
+        }
       }
 
       if (p.itemUnits && p.itemUnits.length > 0) {
+        const assignedName = params.technicianName || params.operatorName || "Despacho";
         if (params.selectedUnitSkus && params.selectedUnitSkus.length > 0) {
           const skuSet = new Set(params.selectedUnitSkus);
           p.itemUnits.forEach((u) => {
             if (skuSet.has(u.sku)) {
               u.status = targetStatus;
-              u.assignedTo = params.technicianName || params.operatorName || "Despacho";
+              u.assignedTo = assignedName;
               u.assignedAt = now;
               u.notes = params.reason;
               unitsAffected.push(u.sku);
@@ -1126,7 +1132,7 @@ export function adjustStock(
           for (const u of p.itemUnits) {
             if (u.status === "disponible") {
               u.status = targetStatus;
-              u.assignedTo = params.technicianName || params.operatorName || "Despacho";
+              u.assignedTo = assignedName;
               u.assignedAt = now;
               u.notes = params.reason;
               unitsAffected.push(u.sku);
@@ -1883,12 +1889,41 @@ export function createClientInstallation(
   installations.unshift(newInstallation);
   saveInstallations(tenantId, installations);
 
-  // Descontar del almacén
+  // Buscar unidades seleccionadas si se especificó serial/MAC o SKU de unidad
+  const products = loadProducts(tenantId);
+  const prod = products.find((p) => p.id === payload.productId);
+  let selectedUnitSkus: string[] | undefined = (payload as any).selectedUnitSkus;
+
+  if (!selectedUnitSkus && (payload as any).unitSku) {
+    selectedUnitSkus = [(payload as any).unitSku];
+  }
+
+  if (!selectedUnitSkus && payload.serialOrMac && prod && Array.isArray(prod.itemUnits)) {
+    const cleanKey = (s?: string) => (s || "").toLowerCase().replace(/[\s\-_./]/g, "");
+    const target = cleanKey(payload.serialOrMac);
+    const matchedUnit = prod.itemUnits.find(
+      (u) =>
+        cleanKey(u.sku) === target ||
+        cleanKey(u.barcode) === target ||
+        cleanKey(u.serialNumber) === target
+    );
+    if (matchedUnit) {
+      selectedUnitSkus = [matchedUnit.sku];
+      if (!matchedUnit.serialNumber) {
+        matchedUnit.serialNumber = payload.serialOrMac;
+      }
+    }
+  }
+
+  // Descontar del almacén y registrar la salida como instalada
   adjustStock(tenantId, payload.productId, {
     type: "out",
-    quantity: payload.quantity || 1,
+    quantity: payload.quantity || (selectedUnitSkus ? selectedUnitSkus.length : 1),
     reason: `Instalación Cliente: ${clientName}`,
     operatorName: technicianName,
+    technicianName: technicianName,
+    selectedUnitSkus,
+    targetStatus: "instalado",
   });
 
   return newInstallation;

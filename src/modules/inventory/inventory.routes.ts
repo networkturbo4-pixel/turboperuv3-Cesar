@@ -230,7 +230,15 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
     if (!body || !Array.isArray(body.units)) {
       return reply.status(400).send({ success: false, message: "Lista de unidades requerida" });
     }
-    const updated = updateProduct(tenantId, numId, { itemUnits: body.units });
+    const existingProduct = getProductById(tenantId, numId);
+    let newStock = existingProduct ? existingProduct.stock : undefined;
+    if (existingProduct && existingProduct.type !== "bulk" && body.units.length > 0) {
+      newStock = body.units.filter((u: any) => u.status === "disponible").length;
+    }
+    const updated = updateProduct(tenantId, numId, { 
+      itemUnits: body.units,
+      ...(newStock !== undefined ? { stock: newStock } : {})
+    });
     if (!updated) {
       return reply.status(404).send({ success: false, message: "Producto no encontrado" });
     }
@@ -238,6 +246,7 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       success: true,
       message: "Unidades individuales y SKUs actualizados correctamente",
       data: updated.itemUnits || [],
+      stock: updated.stock,
     };
   });
 

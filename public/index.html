@@ -7234,6 +7234,85 @@
                 </div>
               </div>
 
+              
+              <!-- TARJETA 3: FACTURALO API (CONSULTA VEHICULAR SUNARP / SOAT) -->
+              <div class="pro-card p-6 rounded-2xl space-y-5 border border-blue-500/20 bg-gradient-to-br from-blue-500/[0.02] to-cyan-500/[0.02]">
+                <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center flex-shrink-0 font-black text-base">
+                      🚗
+                    </div>
+                    <div>
+                      <div class="flex items-center space-x-2">
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">Facturalo API (SUNARP / MTC / SOAT)</h4>
+                        <span id="facturalo-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-500/15 text-slate-700 dark:text-slate-400 border border-slate-300 dark:border-slate-500/30">Inactivo</span>
+                      </div>
+                      <a href="https://docs.facturalo.pe" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center space-x-1 mt-0.5">
+                        <span>Documentación docs.facturalo.pe</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                      </a>
+                    </div>
+                  </div>
+
+                  <!-- Toggle Habilitar -->
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="facturalo-enabled-toggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div class="space-y-4">
+                  <!-- Token Directo Facturalo -->
+                  <div>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Token de API Facturalo (Authorization Header)</label>
+                      <span id="facturalo-token-badge" class="text-[10px] text-slate-500 font-mono font-medium"></span>
+                    </div>
+                    <input type="password" id="facturalo-token" placeholder="Ej: sk_live_... o user_sk_..." class="w-full bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs">
+                  </div>
+
+                  <!-- Base URL -->
+                  <div>
+                    <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Base URL de Facturalo API</label>
+                    <input type="text" id="facturalo-base-url" value="https://api.facturalo.pe/api/v3" class="w-full bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs">
+                  </div>
+
+                  <!-- Switches de Autocompletado -->
+                  <div class="space-y-2 pt-1">
+                    <label class="flex items-center space-x-2.5 cursor-pointer">
+                      <input type="checkbox" id="facturalo-autofill-vehicle" checked class="rounded border-slate-400 dark:border-slate-700 text-blue-600 focus:ring-blue-500">
+                      <div>
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Autocompletar Activos Vehiculares por Placa</span>
+                        <p class="text-[10.5px] text-slate-600 dark:text-slate-400 font-medium">Rellena automáticamente marca, modelo, VIN, color, motor y póliza SOAT en inventario</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  <!-- Tester en Vivo de Consulta Placa SUNARP -->
+                  <div class="p-3.5 rounded-xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 space-y-2.5 shadow-2xs">
+                    <div class="text-[11px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider flex items-center justify-between">
+                      <span>Tester en Vivo Facturalo</span>
+                      <span class="text-[10px] text-slate-600 dark:text-slate-400 font-bold">SUNARP / SOAT</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <input type="text" id="facturalo-test-plate" placeholder="Ej: F3H792 o ABC-123" class="flex-1 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs uppercase font-mono text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 shadow-2xs">
+                      <button type="button" onclick="testFacturaloLiveQuery()" id="btn-test-facturalo" class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white transition flex items-center space-x-1 shadow-sm">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <span>Consultar Placa</span>
+                      </button>
+                    </div>
+                    <div id="facturalo-test-result" class="hidden p-2.5 rounded-lg bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-[11px] text-slate-800 dark:text-slate-300 font-mono shadow-2xs"></div>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-end pt-4 border-t border-slate-200 dark:border-white/5">
+                  <button type="button" onclick="saveFacturaloSettings()" id="btn-save-facturalo" class="px-5 py-2 rounded-xl text-xs font-semibold btn-brand-primary transition flex items-center space-x-1.5 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span>Guardar Facturalo</span>
+                  </button>
+                </div>
+              </div>
+
               <!-- TARJETA: MAPBOX API & MAPAS SATELITALES -->
               <div class="pro-card p-6 rounded-2xl space-y-5 border border-blue-500/20 bg-gradient-to-br from-blue-500/[0.02] to-cyan-500/[0.02] lg:col-span-2">
                 <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4">
@@ -17601,19 +17680,19 @@
           </div>
           <span class="text-xl">🟢</span>
         </div>
+        <div class="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 block">Instaladas / Salidas</span>
+            <span id="units-kpi-installed" class="font-mono font-bold text-base text-cyan-600 dark:text-cyan-400">0</span>
+          </div>
+          <span class="text-xl">🏠</span>
+        </div>
         <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">Asignadas</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">Asignadas / Bajas</span>
             <span id="units-kpi-assigned" class="font-mono font-bold text-base text-amber-600 dark:text-amber-400">0</span>
           </div>
           <span class="text-xl">👷</span>
-        </div>
-        <div class="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-between">
-          <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block">En Uso / Bajas</span>
-            <span id="units-kpi-used" class="font-mono font-bold text-base text-blue-600 dark:text-blue-400">0</span>
-          </div>
-          <span class="text-xl">⚡</span>
         </div>
       </div>
 
@@ -17635,8 +17714,9 @@
         <div class="flex items-center gap-1 overflow-x-auto scrollbar-none text-[11px]">
           <button type="button" id="units-filter-all" onclick="filterUnitsByStatus('all')" class="px-2.5 py-1 rounded-lg font-bold bg-purple-600 text-white transition shadow-2xs">Todos</button>
           <button type="button" id="units-filter-available" onclick="filterUnitsByStatus('disponible')" class="px-2.5 py-1 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition">Disponibles</button>
+          <button type="button" id="units-filter-installed" onclick="filterUnitsByStatus('instalado')" class="px-2.5 py-1 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition">Instalados / Salidas</button>
           <button type="button" id="units-filter-assigned" onclick="filterUnitsByStatus('asignado')" class="px-2.5 py-1 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition">Asignados</button>
-          <button type="button" id="units-filter-used" onclick="filterUnitsByStatus('en_uso')" class="px-2.5 py-1 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition">En Uso</button>
+          <button type="button" id="units-filter-used" onclick="filterUnitsByStatus('en_uso')" class="px-2.5 py-1 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition">En Uso / Bajas</button>
         </div>
 
         <!-- Botones de Acción Masivos -->
@@ -17649,6 +17729,11 @@
           <button type="button" onclick="promptRegenerateUnitSkus()" class="px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs font-semibold flex items-center gap-1 transition border border-purple-200 dark:border-purple-700/50 cursor-pointer active:scale-95" title="Regenerar todos los SKUs con el sistema infinito de supermercado (código único e individual por cada ítem)">
             <svg class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             <span>🛒 Regenerar SKUs Infinitos</span>
+          </button>
+
+          <button type="button" onclick="syncCurrentUnitsWithHistory(true)" class="px-2.5 py-1.5 rounded-xl bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-900/30 dark:hover:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 text-xs font-semibold flex items-center gap-1 transition border border-cyan-200 dark:border-cyan-700/50 cursor-pointer active:scale-95" title="Sincronizar estados de las unidades con los movimientos e instalaciones registrados">
+            <svg class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>🔄 Sincronizar Historial</span>
           </button>
 
           <button type="button" onclick="exportUnitsToCsv()" class="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs transition border border-slate-200 dark:border-white/10" title="Exportar a CSV">
@@ -19053,7 +19138,12 @@
               <input type="text" id="inv-asset-model" placeholder="Ej: Hilux 2.4 TDI / 90S+ / MT9085C" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
             </div>
             <div id="inv-asset-plate-container">
-              <label id="inv-asset-plate-label" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Placa / N° Serie</label>
+              <div class="flex items-center justify-between mb-1">
+                <label id="inv-asset-plate-label" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Placa / N° Serie</label>
+                <button type="button" id="btn-sunarp-query" onclick="consultarPlacaSunarp()" class="text-[10.5px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center space-x-1 py-0.5 px-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700/50 transition cursor-pointer" title="Consultar en vivo con SUNARP/MTC vía Facturalo">
+                  <span>🔍 Consultar SUNARP</span>
+                </button>
+              </div>
               <input type="text" id="inv-asset-plate" placeholder="Ej: ABC-123 o S/N" class="w-full bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono uppercase text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-semibold">
             </div>
           </div>
@@ -31055,6 +31145,28 @@ Estamos atentos para brindarle asistencia inmediata.
           const kSecBadge = document.getElementById('kuti-secret-badge');
           if (kSecBadge) kSecBadge.textContent = k.hasSecretKey ? 'Configurado ✓' : 'Pendiente';
 
+          
+          // Facturalo UI
+          const f = connData.data.facturalo || {};
+          const fToggle = document.getElementById('facturalo-enabled-toggle');
+          if (fToggle) fToggle.checked = !!f.enabled;
+          const fToken = document.getElementById('facturalo-token');
+          if (fToken) fToken.value = f.tokenMasked || '';
+          const fBase = document.getElementById('facturalo-base-url');
+          if (fBase) fBase.value = f.baseUrl || 'https://api.facturalo.pe/api/v3';
+          const fVeh = document.getElementById('facturalo-autofill-vehicle');
+          if (fVeh) fVeh.checked = f.autoFillVehicle !== false;
+
+          const fBadge = document.getElementById('facturalo-status-badge');
+          if (fBadge) {
+            fBadge.textContent = f.enabled ? 'Activo' : 'Inactivo';
+            fBadge.className = f.enabled
+              ? 'px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              : 'px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20';
+          }
+          const fTokBadge = document.getElementById('facturalo-token-badge');
+          if (fTokBadge) fTokBadge.textContent = f.hasToken ? 'Token Guardado ✓' : 'Sin Token';
+
           // jsonpe UI
           const jToggle = document.getElementById('jsonpe-enabled-toggle');
           if (jToggle) jToggle.checked = !!j.enabled;
@@ -31365,6 +31477,195 @@ Estamos atentos para brindarle asistencia inmediata.
       }).catch(() => {
         showToast("URL seleccionada para copiar", "info");
       });
+    }
+
+    
+    async function saveFacturaloSettings() {
+      const btn = document.getElementById('btn-save-facturalo');
+      if (btn) btn.disabled = true;
+
+      const enabled = document.getElementById('facturalo-enabled-toggle')?.checked || false;
+      const token = document.getElementById('facturalo-token')?.value?.trim() || '';
+      const baseUrl = document.getElementById('facturalo-base-url')?.value?.trim() || 'https://api.facturalo.pe/api/v3';
+      const autoFillVehicle = document.getElementById('facturalo-autofill-vehicle')?.checked !== false;
+
+      try {
+        const curTenant = (typeof activeTenantId !== 'undefined' ? activeTenantId : (localStorage.getItem('turbonetwork_active_tenant') || 'turbonetwork'));
+        const res = await fetch(`/api/settings/connections?tenantId=${encodeURIComponent(curTenant)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            facturalo: {
+              enabled,
+              token,
+              baseUrl,
+              autoFillVehicle
+            }
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast("Configuración de Facturalo API guardada exitosamente", "success");
+          if (typeof loadConnectionsConfigUI === 'function') await loadConnectionsConfigUI();
+        } else {
+          showToast(data.message || "Error al guardar Facturalo API", "error");
+        }
+      } catch (err) {
+        showToast("Error de conexión al guardar Facturalo API", "error");
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function testFacturaloLiveQuery() {
+      const btn = document.getElementById('btn-test-facturalo');
+      const input = document.getElementById('facturalo-test-plate');
+      const resultBox = document.getElementById('facturalo-test-result');
+      const val = (input?.value || '').trim();
+
+      if (!val) {
+        showToast("Ingresa un número de placa para probar (ej: F3H792)", "warning");
+        return;
+      }
+
+      if (btn) btn.disabled = true;
+      if (resultBox) {
+        resultBox.classList.remove('hidden');
+        resultBox.innerHTML = '<span class="text-slate-400">Consultando placa en Facturalo API (docs.facturalo.pe)...</span>';
+      }
+
+      try {
+        const curTenant = (typeof activeTenantId !== 'undefined' ? activeTenantId : (localStorage.getItem('turbonetwork_active_tenant') || 'turbonetwork'));
+        const res = await fetch(`/api/settings/connections/facturalo/placa/${encodeURIComponent(val)}?tenantId=${encodeURIComponent(curTenant)}`);
+        const data = await res.json();
+
+        if (data.success && data.data) {
+          const d = data.data;
+          resultBox.innerHTML = `
+            <div class="space-y-1">
+              <div class="text-emerald-400 font-bold">Placa ${escapeHtml(d.placa || val)} - SUNARP / MTC Verificado ✓</div>
+              <div><span class="text-slate-400">Marca / Modelo:</span> <strong class="text-white">${escapeHtml(d.marca || '--')} ${escapeHtml(d.modelo || '')}</strong></div>
+              <div><span class="text-slate-400">Color:</span> <span class="text-slate-200">${escapeHtml(d.color || '--')}</span></div>
+              <div><span class="text-slate-400">N° Motor:</span> <span class="text-slate-200 font-mono">${escapeHtml(d.motor || '--')}</span></div>
+              <div><span class="text-slate-400">N° Serie / VIN:</span> <span class="text-slate-200 font-mono">${escapeHtml(d.vin || d.serie || '--')}</span></div>
+              ${d.soat ? `<div><span class="text-slate-400">SOAT:</span> <span class="text-emerald-300 font-semibold">${escapeHtml(d.soat.aseguradora || 'Asegurado')} (${escapeHtml(d.soat.numeroPoliza || '--')})</span></div>` : ''}
+            </div>
+          `;
+        } else {
+          resultBox.innerHTML = `
+            <div class="text-rose-400 font-medium">
+              <strong>Aviso:</strong> ${escapeHtml(data.message || 'No se pudo obtener información de la placa.')}
+            </div>
+          `;
+        }
+      } catch (err) {
+        if (resultBox) {
+          resultBox.innerHTML = `<span class="text-rose-400">Error de conexión: ${escapeHtml(err.message)}</span>`;
+        }
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function consultarPlacaSunarp() {
+      const plateInput = document.getElementById('inv-asset-plate');
+      const plateVal = (plateInput?.value || '').trim();
+      const btn = document.getElementById('btn-sunarp-query');
+
+      if (!plateVal) {
+        showToast("Ingresa un número de placa (ej: F3H792 o ABC-123)", "warning");
+        if (plateInput) plateInput.focus();
+        return;
+      }
+
+      const clean = plateVal.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (clean.length < 5 || clean.length > 8) {
+        showToast("Formato de placa inválido. Debe tener entre 5 y 8 caracteres.", "error");
+        return;
+      }
+
+      const originalBtnHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Consultando...</span>';
+      }
+
+      try {
+        const curTenant = (typeof activeTenantId !== 'undefined' ? activeTenantId : (localStorage.getItem('turbonetwork_active_tenant') || 'turbonetwork'));
+        const res = await fetch(`/api/settings/connections/facturalo/placa/${encodeURIComponent(clean)}?tenantId=${encodeURIComponent(curTenant)}`);
+        const result = await res.json();
+
+        if (result.success && result.data) {
+          const d = result.data;
+
+          // Autocompletar datos principales del activo
+          const brandEl = document.getElementById('inv-asset-brand');
+          if (brandEl && d.marca && !brandEl.value) brandEl.value = d.marca;
+
+          const modelEl = document.getElementById('inv-asset-model');
+          if (modelEl && d.modelo && !modelEl.value) modelEl.value = d.modelo;
+
+          // Nombre del activo si está vacío
+          const nameEl = document.getElementById('inv-asset-name');
+          if (nameEl && !nameEl.value && (d.marca || d.modelo)) {
+            nameEl.value = `${d.marca || ''} ${d.modelo || ''} (${d.placa || clean})`.trim();
+          }
+
+          // N° Serie / VIN
+          const serialEl = document.getElementById('inv-asset-serial');
+          if (serialEl && (d.serie || d.vin)) serialEl.value = d.serie || d.vin;
+
+          // Ficha TIV (SUNARP)
+          const tivEngine = document.getElementById('inv-veh-tiv-engine');
+          if (tivEngine && d.motor) tivEngine.value = d.motor;
+
+          const tivColor = document.getElementById('inv-veh-tiv-color');
+          if (tivColor && d.color) tivColor.value = d.color;
+
+          const tivFuel = document.getElementById('inv-veh-tiv-fuel');
+          if (tivFuel && d.combustible) {
+            const opts = Array.from(tivFuel.options).map(o => o.value.toLowerCase());
+            const match = opts.find(o => d.combustible.toLowerCase().includes(o));
+            if (match) tivFuel.value = tivFuel.querySelector(`option[value*="${match}" i]`)?.value || d.combustible;
+          }
+
+          const tivYear = document.getElementById('inv-veh-tiv-year');
+          if (tivYear && d.anio) tivYear.value = d.anio;
+
+          const tivOwner = document.getElementById('inv-veh-tiv-owner');
+          if (tivOwner && d.propietario) tivOwner.value = d.propietario;
+
+          const tivReg = document.getElementById('inv-veh-tiv-registry');
+          if (tivReg && d.sedeRegistral) tivReg.value = d.sedeRegistral;
+
+          // Autocompletar SOAT si vino en la respuesta
+          if (d.soat) {
+            const soatPol = document.getElementById('inv-veh-soat-policy');
+            if (soatPol && d.soat.numeroPoliza) soatPol.value = d.soat.numeroPoliza;
+
+            const soatIns = document.getElementById('inv-veh-soat-insurer');
+            if (soatIns && d.soat.aseguradora) soatIns.value = d.soat.aseguradora;
+
+            const soatStart = document.getElementById('inv-veh-soat-start');
+            if (soatStart && d.soat.fechaInicio) soatStart.value = d.soat.fechaInicio;
+
+            const soatEnd = document.getElementById('inv-veh-soat-end');
+            if (soatEnd && d.soat.fechaFin) soatEnd.value = d.soat.fechaFin;
+          }
+
+          showToast(`Datos SUNARP de ${clean} cargados exitosamente: ${d.marca || ''} ${d.modelo || ''}`, "success");
+        } else {
+          showToast(result.message || `No se encontraron datos para la placa ${clean}`, "warning");
+        }
+      } catch (err) {
+        showToast("Error al conectar con el servicio de consulta vehicular", "error");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalBtnHtml;
+        }
+      }
     }
 
     async function saveJsonPeSettings() {
@@ -41252,6 +41553,7 @@ function filterUnitsByStatus(status) {
 
   const btnAll = document.getElementById('units-filter-all');
   const btnAvail = document.getElementById('units-filter-available');
+  const btnInstalled = document.getElementById('units-filter-installed');
   const btnAssigned = document.getElementById('units-filter-assigned');
   const btnUsed = document.getElementById('units-filter-used');
 
@@ -41260,6 +41562,7 @@ function filterUnitsByStatus(status) {
 
   if (btnAll) btnAll.className = currentUnitsFilterStatus === 'all' ? activeClass : inactiveClass;
   if (btnAvail) btnAvail.className = currentUnitsFilterStatus === 'disponible' ? activeClass : inactiveClass;
+  if (btnInstalled) btnInstalled.className = currentUnitsFilterStatus === 'instalado' ? activeClass : inactiveClass;
   if (btnAssigned) btnAssigned.className = currentUnitsFilterStatus === 'asignado' ? activeClass : inactiveClass;
   if (btnUsed) btnUsed.className = currentUnitsFilterStatus === 'en_uso' ? activeClass : inactiveClass;
 
@@ -41271,17 +41574,20 @@ function updateUnitsKPIs() {
   const units = currentUnitsProduct.itemUnits;
   const total = units.length;
   const available = units.filter(u => u.status === 'disponible').length;
+  const installed = units.filter(u => u.status === 'instalado' || u.status === 'entregado').length;
   const assigned = units.filter(u => u.status === 'asignado').length;
-  const used = units.filter(u => u.status === 'en_uso' || u.status === 'baja').length;
+  const used = units.filter(u => u.status === 'en_uso' || u.status === 'baja' || u.status === 'en_garantia').length;
 
   const kpiTotal = document.getElementById('units-kpi-total');
   const kpiAvail = document.getElementById('units-kpi-available');
+  const kpiInstalled = document.getElementById('units-kpi-installed');
   const kpiAssigned = document.getElementById('units-kpi-assigned');
   const kpiUsed = document.getElementById('units-kpi-used');
 
   if (kpiTotal) kpiTotal.textContent = total;
   if (kpiAvail) kpiAvail.textContent = available;
-  if (kpiAssigned) kpiAssigned.textContent = assigned;
+  if (kpiInstalled) kpiInstalled.textContent = installed;
+  if (kpiAssigned) kpiAssigned.textContent = assigned + used;
   if (kpiUsed) kpiUsed.textContent = used;
 
   const infoEl = document.getElementById('units-footer-info');
@@ -41303,8 +41609,14 @@ function renderProductUnitsTable() {
   const searchVal = (document.getElementById('units-search-inp')?.value || '').trim().toLowerCase();
   let units = (currentUnitsProduct.itemUnits || []);
 
-  if (currentUnitsFilterStatus !== 'all') {
-    units = units.filter(u => u.status === currentUnitsFilterStatus);
+  if (currentUnitsFilterStatus === 'disponible') {
+    units = units.filter(u => u.status === 'disponible');
+  } else if (currentUnitsFilterStatus === 'instalado') {
+    units = units.filter(u => u.status === 'instalado' || u.status === 'entregado');
+  } else if (currentUnitsFilterStatus === 'asignado') {
+    units = units.filter(u => u.status === 'asignado');
+  } else if (currentUnitsFilterStatus === 'en_uso') {
+    units = units.filter(u => u.status === 'en_uso' || u.status === 'baja' || u.status === 'en_garantia');
   }
 
   if (searchVal) {
@@ -41371,8 +41683,24 @@ function renderProductUnitsTable() {
       </div>
     ` : '';
 
+    const statusBorderColor = u.status === 'disponible' 
+      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' 
+      : (u.status === 'instalado'
+          ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-800 dark:text-cyan-200 font-bold'
+          : (u.status === 'entregado'
+              ? 'border-amber-500/40 bg-amber-500/15 text-amber-800 dark:text-amber-200 font-bold'
+              : (u.status === 'asignado'
+                  ? 'border-purple-500/40 bg-purple-500/15 text-purple-800 dark:text-purple-200 font-bold'
+                  : (u.status === 'baja'
+                      ? 'border-rose-500/40 bg-rose-500/15 text-rose-800 dark:text-rose-200 font-bold'
+                      : 'border-blue-500/40 bg-blue-500/15 text-blue-800 dark:text-blue-200 font-bold'
+                    )
+                )
+            )
+        );
+
     return `
-      <tr class="hover:bg-slate-50/70 dark:hover:bg-white/[0.02] transition">
+      <tr class="hover:bg-slate-50/70 dark:hover:bg-white/[0.02] transition ${u.status !== 'disponible' ? 'bg-slate-50/40 dark:bg-white/[0.01]' : ''}">
         <!-- Nro Unidad -->
         <td class="px-3 py-2 text-center">
           <span class="font-mono font-bold text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300">
@@ -41401,11 +41729,14 @@ function renderProductUnitsTable() {
         <td class="px-3 py-2">
           <select 
             onchange="updateUnitProperty(${masterIdx}, 'status', this.value)" 
-            class="w-full bg-transparent border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 text-[11px] font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-purple-500 cursor-pointer"
+            class="w-full border rounded-lg px-2 py-1 text-[11px] font-semibold focus:outline-none focus:border-purple-500 cursor-pointer ${statusBorderColor}"
           >
-            <option value="disponible" ${u.status === 'disponible' ? 'selected' : ''}>🟢 Disponible</option>
-            <option value="asignado" ${u.status === 'asignado' ? 'selected' : ''}>🟡 Asignado</option>
-            <option value="en_uso" ${u.status === 'en_uso' ? 'selected' : ''}>🔵 En Uso</option>
+            <option value="disponible" ${u.status === 'disponible' ? 'selected' : ''}>🟢 Disponible (Almacén)</option>
+            <option value="instalado" ${u.status === 'instalado' ? 'selected' : ''}>🏠 Instalado en Cliente</option>
+            <option value="entregado" ${u.status === 'entregado' ? 'selected' : ''}>📦 Salida / Entregado</option>
+            <option value="asignado" ${u.status === 'asignado' ? 'selected' : ''}>🟡 Asignado a Personal</option>
+            <option value="en_uso" ${u.status === 'en_uso' ? 'selected' : ''}>🔵 En Uso / Operativo</option>
+            <option value="en_garantia" ${u.status === 'en_garantia' ? 'selected' : ''}>🛡️ En Garantía / RMA</option>
             <option value="baja" ${u.status === 'baja' ? 'selected' : ''}>🔴 Baja / Dañado</option>
           </select>
           ${conditionHtml}
@@ -41453,6 +41784,14 @@ function renderProductUnitsTable() {
 function updateUnitProperty(index, property, value) {
   if (!currentUnitsProduct || !currentUnitsProduct.itemUnits || !currentUnitsProduct.itemUnits[index]) return;
   currentUnitsProduct.itemUnits[index][property] = value;
+  
+  if (property === 'status') {
+    const availCount = currentUnitsProduct.itemUnits.filter(u => u.status === 'disponible').length;
+    currentUnitsProduct.stock = availCount;
+    updateUnitsKPIs();
+    renderProductUnitsTable();
+  }
+
   if (window._unitSaveTimeout) clearTimeout(window._unitSaveTimeout);
   window._unitSaveTimeout = setTimeout(() => {
     saveProductUnitsToBackend(currentUnitsProduct.id, currentUnitsProduct.itemUnits);
@@ -41517,6 +41856,9 @@ async function saveAllCurrentProductUnits(showToastMsg = false) {
       const pIdx = inventoryProducts.findIndex(p => p.id === currentUnitsProduct.id);
       if (pIdx !== -1) {
         inventoryProducts[pIdx].itemUnits = currentUnitsProduct.itemUnits;
+        if (data.stock !== undefined) {
+          inventoryProducts[pIdx].stock = data.stock;
+        }
         try {
           const tenant = currentTenant ? currentTenant.id : 'default';
           localStorage.setItem(`turbonetwork_cached_products_${tenant}`, JSON.stringify(inventoryProducts));
@@ -41533,14 +41875,18 @@ async function saveAllCurrentProductUnits(showToastMsg = false) {
 
 async function saveProductUnitsToBackend(productId, units) {
   try {
-    await fetch(`/api/inventory/products/${productId}/units`, {
+    const res = await fetch(`/api/inventory/products/${productId}/units`, {
       method: 'PUT',
       headers: getInventoryHeaders(),
       body: JSON.stringify({ units })
     });
+    const data = await res.json();
     const pIdx = inventoryProducts.findIndex(p => p.id === productId);
     if (pIdx !== -1) {
       inventoryProducts[pIdx].itemUnits = units;
+      if (data && data.stock !== undefined) {
+        inventoryProducts[pIdx].stock = data.stock;
+      }
       try {
         const tenant = currentTenant ? currentTenant.id : 'default';
         localStorage.setItem(`turbonetwork_cached_products_${tenant}`, JSON.stringify(inventoryProducts));
@@ -41548,6 +41894,84 @@ async function saveProductUnitsToBackend(productId, units) {
     }
   } catch (err) {
     console.warn('Silently saving product units failed:', err);
+  }
+}
+
+async function syncCurrentUnitsWithHistory(showToastMsg = false) {
+  if (!currentUnitsProduct) return;
+  const p = currentUnitsProduct;
+  let changed = 0;
+
+  try {
+    const tenant = (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork';
+    const res = await fetch(`/api/inventory/traceability/${encodeURIComponent(p.sku || p.id)}?tenantId=${encodeURIComponent(tenant)}`, {
+      headers: getInventoryHeaders()
+    });
+    const traceData = await res.json();
+    if (traceData.success && traceData.data) {
+      const movements = traceData.data.movements || [];
+      const installations = traceData.data.installations || [];
+
+      // Mapear unidades afectadas por salidas
+      const outMovements = movements.filter(m => m.type === 'out');
+      const unitOutMap = new Map();
+      outMovements.forEach(m => {
+        if (Array.isArray(m.unitsAffected)) {
+          m.unitsAffected.forEach(sku => {
+            if (!unitOutMap.has(sku)) unitOutMap.set(sku, m);
+          });
+        }
+      });
+
+      // Mapear instalaciones en clientes
+      const instMap = new Map();
+      installations.forEach(ins => {
+        if (ins.unitSku) instMap.set(ins.unitSku, ins);
+        if (ins.serialOrMac) instMap.set(ins.serialOrMac, ins);
+      });
+
+      // Actualizar estados de cada unidad física si están en movimientos/instalaciones
+      (p.itemUnits || []).forEach(u => {
+        const matchingInst = instMap.get(u.sku) || (u.serialNumber ? instMap.get(u.serialNumber) : null);
+        const matchingOut = unitOutMap.get(u.sku);
+
+        if (matchingInst && u.status === 'disponible') {
+          u.status = 'instalado';
+          if (!u.assignedTo) u.assignedTo = matchingInst.clientName || matchingInst.customerName;
+          if (!u.notes) u.notes = `Instalación Cliente: ${matchingInst.clientName || matchingInst.customerName}`;
+          changed++;
+        } else if (matchingOut && u.status === 'disponible') {
+          const reason = (matchingOut.reason || '').toLowerCase();
+          if (/cliente|instalacion|instalado|abonado|ftth/i.test(reason)) {
+            u.status = 'instalado';
+          } else if (/merma|dañado|baja|quemado|roto|fallado/i.test(reason)) {
+            u.status = 'baja';
+          } else if (/garantia|rma/i.test(reason)) {
+            u.status = 'en_garantia';
+          } else if (/tecnico|técnico|personal|cuadrilla|asign/i.test(reason)) {
+            u.status = 'asignado';
+          } else {
+            u.status = 'entregado';
+          }
+          if (!u.assignedTo) u.assignedTo = matchingOut.technicianName || matchingOut.operatorName || 'Despacho';
+          if (!u.notes) u.notes = matchingOut.reason;
+          changed++;
+        }
+      });
+
+      if (changed > 0) {
+        const availCount = p.itemUnits.filter(u => u.status === 'disponible').length;
+        p.stock = availCount;
+        renderProductUnitsTable();
+        await saveAllCurrentProductUnits(false);
+        if (showToastMsg) showToast(`¡${changed} unidad(es) sincronizada(s) con el historial de salidas e instalaciones!`, 'success');
+      } else {
+        if (showToastMsg) showToast('Todas las unidades ya están sincronizadas con el historial', 'info');
+      }
+    }
+  } catch (err) {
+    console.warn('Error sincronizando unidades con historial:', err);
+    if (showToastMsg) showToast('Error al consultar historial para sincronización', 'error');
   }
 }
 

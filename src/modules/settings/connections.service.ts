@@ -37,6 +37,13 @@ export interface KutiSettings {
   autoProcessInvoices: boolean;
 }
 
+export interface FacturaloSettings {
+  enabled: boolean;
+  token: string;
+  baseUrl: string;
+  autoFillVehicle: boolean;
+}
+
 export interface JsonPeSettings {
   enabled: boolean;
   token: string;
@@ -92,6 +99,7 @@ export interface WhatsAppConfig {
 export interface ConnectionsConfig {
   kuti: KutiSettings;
   jsonpe: JsonPeSettings;
+  facturalo: FacturaloSettings;
   security: MasterSecuritySettings;
   mapbox: MapboxSettings;
   whatsapp: WhatsAppConfig;
@@ -136,6 +144,12 @@ const defaultConnections: ConnectionsConfig = {
     webhookSecret: "",
     currency: "PEN",
     autoProcessInvoices: true,
+  },
+  facturalo: {
+    enabled: false,
+    token: "",
+    baseUrl: "https://api.facturalo.pe/api/v3",
+    autoFillVehicle: true,
   },
   jsonpe: {
     enabled: false,
@@ -260,6 +274,7 @@ export function saveConnectionsConfig(config: Partial<ConnectionsConfig>, tenant
   const updated: ConnectionsConfig = {
     kuti: { ...current.kuti, ...(config.kuti || {}) },
     jsonpe: { ...current.jsonpe, ...(config.jsonpe || {}) },
+    facturalo: { ...current.facturalo, ...(config.facturalo || {}) },
     security: { ...current.security, ...(config.security || {}) },
     mapbox: { ...current.mapbox, ...(config.mapbox || {}) },
     whatsapp: {

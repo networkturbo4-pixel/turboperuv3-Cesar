@@ -29,5 +29,11 @@
       -12.097
     ],
     "defaultZoom": 14
+  },
+  "facturalo": {
+    "enabled": false,
+    "token": "",
+    "baseUrl": "https://api.facturalo.pe/api/v3",
+    "autoFillVehicle": true
   }
 }

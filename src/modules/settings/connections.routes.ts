@@ -27,6 +27,9 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
     const safeKutiWebhook = config.kuti.webhookSecret
       ? "••••••••" + config.kuti.webhookSecret.slice(-4)
       : "";
+    const safeFacturaloToken = config.facturalo?.token
+      ? config.facturalo.token.substring(0, 4) + "••••••••" + config.facturalo.token.slice(-4)
+      : "";
     const safeJsonPeToken = config.jsonpe.token
       ? config.jsonpe.token.substring(0, 4) + "••••••••" + config.jsonpe.token.slice(-4)
       : "";
@@ -52,6 +55,17 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
           hasSecretKey: !!config.kuti.secretKey,
           hasWebhookSecret: !!config.kuti.webhookSecret,
         },
+        facturalo: {
+          ...(config.facturalo || {
+            enabled: false,
+            token: "",
+            baseUrl: "https://api.facturalo.pe/api/v3",
+            autoFillVehicle: true,
+          }),
+          tokenMasked: safeFacturaloToken,
+          hasToken: !!config.facturalo?.token,
+        },
+        
         jsonpe: {
           ...config.jsonpe,
           tokenMasked: safeJsonPeToken,
@@ -103,6 +117,10 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
       webhookSecret = body.kuti.webhookSecret.trim();
     }
 
+    let facturaloToken = current.facturalo?.token || "";
+    if (body.facturalo?.token && !body.facturalo.token.includes("••••")) {
+      facturaloToken = body.facturalo.token.trim();
+    }
     let jsonPeToken = current.jsonpe.token;
     if (body.jsonpe?.token && !body.jsonpe.token.includes("••••")) {
       jsonPeToken = body.jsonpe.token.trim();
@@ -133,6 +151,12 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
           webhookSecret,
           currency: body.kuti?.currency || "PEN",
           autoProcessInvoices: body.kuti?.autoProcessInvoices !== false,
+        },
+        facturalo: {
+          enabled: Boolean(body.facturalo?.enabled),
+          token: facturaloToken,
+          baseUrl: (body.facturalo?.baseUrl || "https://api.facturalo.pe/api/v3").trim(),
+          autoFillVehicle: body.facturalo?.autoFillVehicle !== false,
         },
         jsonpe: {
           enabled: Boolean(body.jsonpe?.enabled),
@@ -531,6 +555,223 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // 7. Información del Google Authenticator Maestro (Supervisor TOTP) por Negocio
+  
+  // 4.1 Test en vivo de Facturalo API (docs.facturalo.pe)
+  fastify.post("/settings/connections/facturalo/test", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const config = loadConnectionsConfig(tenantId);
+    const body = (request.body as any) || {};
+
+    let token = config.facturalo?.token;
+    if (body.token && !body.token.includes("••••")) {
+      token = body.token.trim();
+    }
+
+    if (!token) {
+      return reply.status(400).send({
+        success: false,
+        message: "Debe ingresar o configurar el Token de Facturalo API para realizar el test.",
+      });
+    }
+
+    const baseUrl = (body.baseUrl || config.facturalo?.baseUrl || "https://api.facturalo.pe/api/v3").replace(/\/+$/, "");
+    const testPlate = (body.plate || "F3H792").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+    const cleanToken = token.replace(/^Bearer\s+/i, "").trim();
+
+    try {
+      const res = await fetch(`${baseUrl}/consulta/placa/${testPlate}`, {
+        headers: {
+          Authorization: cleanToken,
+          Accept: "application/json",
+        },
+      });
+
+      const data: any = await res.json().catch(() => null);
+
+      if (res.status === 401) {
+        return reply.status(401).send({
+          success: false,
+          message: "Token inválido o no autorizado en Facturalo API (HTTP 401). Verifique su token en docs.facturalo.pe",
+          raw: data,
+        });
+      }
+
+      if (res.ok && data) {
+        return reply.send({
+          success: true,
+          message: `¡Conexión exitosa con Facturalo API! Se consultó la placa de prueba ${testPlate}.`,
+          data,
+        });
+      } else if (res.status === 404) {
+        return reply.send({
+          success: true,
+          message: `Conexión exitosa con Facturalo API (Autenticado). La placa de prueba ${testPlate} no arrojó registros (HTTP 404).`,
+          data,
+        });
+      } else {
+        return reply.status(res.status || 400).send({
+          success: false,
+          message: data?.message || `Facturalo API respondió con estado ${res.status}`,
+          raw: data,
+        });
+      }
+    } catch (err: any) {
+      return reply.status(500).send({
+        success: false,
+        message: `Error de conexión con Facturalo API (${baseUrl}): ${err.message}`,
+      });
+    }
+  });
+
+  // 4.2 Consulta en vivo de placa vehicular (SUNARP / MTC) vía Facturalo API
+  fastify.get("/settings/connections/facturalo/placa/:placa", async (request, reply) => {
+    const { placa } = request.params as { placa: string };
+    const cleanPlaca = (placa || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+
+    if (!cleanPlaca || cleanPlaca.length < 5 || cleanPlaca.length > 8) {
+      return reply.status(400).send({
+        success: false,
+        message: "El número de placa debe contener entre 5 y 8 caracteres (ej: F3H792 o ABC-123).",
+      });
+    }
+
+    const tenantId = resolveTenantId(request);
+    const config = loadConnectionsConfig(tenantId);
+    const token = config.facturalo?.token;
+
+    if (!token) {
+      return reply.status(400).send({
+        success: false,
+        message: "No se ha configurado el Token de Facturalo API en Configuración > Conexiones.",
+      });
+    }
+
+    const baseUrl = (config.facturalo?.baseUrl || "https://api.facturalo.pe/api/v3").replace(/\/+$/, "");
+    const cleanToken = token.replace(/^Bearer\s+/i, "").trim();
+
+    try {
+      // 1. Consulta vehicular principal (SUNARP / MTC)
+      const resVeh = await fetch(`${baseUrl}/consulta/placa/${cleanPlaca}`, {
+        headers: {
+          Authorization: cleanToken,
+          Accept: "application/json",
+        },
+      });
+
+      const dataVeh: any = await resVeh.json().catch(() => null);
+
+      if (!resVeh.ok || !dataVeh) {
+        return reply.status(resVeh.status || 400).send({
+          success: false,
+          message: dataVeh?.message || `No se encontró información registral para la placa ${cleanPlaca}.`,
+          raw: dataVeh,
+        });
+      }
+
+      const vehInfo = dataVeh.data || dataVeh;
+
+      // 2. Consulta opcional de SOAT en paralelo
+      let soatInfo: any = null;
+      try {
+        const resSoat = await fetch(`${baseUrl}/consulta/placa/${cleanPlaca}/soat`, {
+          headers: {
+            Authorization: cleanToken,
+            Accept: "application/json",
+          },
+        });
+        if (resSoat.ok) {
+          const dataSoat: any = await resSoat.json().catch(() => null);
+          soatInfo = dataSoat?.data || dataSoat;
+        }
+      } catch (e) {
+        // Fallback si SOAT no está disponible
+      }
+
+      return reply.send({
+        success: true,
+        placa: cleanPlaca,
+        data: {
+          placa: vehInfo.placa || cleanPlaca,
+          marca: vehInfo.marca || "",
+          modelo: vehInfo.modelo || "",
+          serie: vehInfo.serie || vehInfo.vin || vehInfo.chasis || "",
+          color: vehInfo.color || "",
+          motor: vehInfo.motor || "",
+          vin: vehInfo.vin || vehInfo.serie || "",
+          combustible: vehInfo.combustible || vehInfo.tipoCombustible || "",
+          anio: vehInfo.anio || vehInfo.anioFabricacion || vehInfo.year || "",
+          propietario: vehInfo.propietario || vehInfo.titular || "",
+          sedeRegistral: vehInfo.sede || vehInfo.oficina || "SUNARP - Registro Vehicular",
+          soat: soatInfo ? {
+            aseguradora: soatInfo.aseguradora || soatInfo.compania || "",
+            numeroPoliza: soatInfo.numeroPoliza || soatInfo.poliza || "",
+            fechaInicio: soatInfo.fechaInicio || soatInfo.inicio || "",
+            fechaFin: soatInfo.fechaFin || soatInfo.vencimiento || "",
+            estado: soatInfo.estado || "vigente",
+          } : null,
+          raw: {
+            vehiculo: dataVeh,
+            soat: soatInfo,
+          },
+        },
+      });
+    } catch (err: any) {
+      return reply.status(500).send({
+        success: false,
+        message: `Error al consultar Facturalo API: ${err.message}`,
+      });
+    }
+  });
+
+  // 4.3 Consulta en vivo de SOAT por placa vía Facturalo API
+  fastify.get("/settings/connections/facturalo/soat/:placa", async (request, reply) => {
+    const { placa } = request.params as { placa: string };
+    const cleanPlaca = (placa || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+
+    const tenantId = resolveTenantId(request);
+    const config = loadConnectionsConfig(tenantId);
+    const token = config.facturalo?.token;
+
+    if (!token) {
+      return reply.status(400).send({
+        success: false,
+        message: "No se ha configurado el Token de Facturalo API en Configuración > Conexiones.",
+      });
+    }
+
+    const baseUrl = (config.facturalo?.baseUrl || "https://api.facturalo.pe/api/v3").replace(/\/+$/, "");
+    const cleanToken = token.replace(/^Bearer\s+/i, "").trim();
+
+    try {
+      const res = await fetch(`${baseUrl}/consulta/placa/${cleanPlaca}/soat`, {
+        headers: {
+          Authorization: cleanToken,
+          Accept: "application/json",
+        },
+      });
+
+      const data: any = await res.json().catch(() => null);
+
+      if (res.ok && data) {
+        return reply.send({
+          success: true,
+          placa: cleanPlaca,
+          data: data.data || data,
+        });
+      } else {
+        return reply.status(res.status || 400).send({
+          success: false,
+          message: data?.message || "No se encontraron datos de SOAT para la placa consultada.",
+        });
+      }
+    } catch (err: any) {
+      return reply.status(500).send({
+        success: false,
+        message: `Error al consultar SOAT en Facturalo API: ${err.message}`,
+      });
+    }
+  });
+
   fastify.get("/settings/connections/master-totp", async (request, reply) => {
     const queryTenant = (request.query as any)?.tenantId;
     const tenantId = (queryTenant && queryTenant !== "undefined" && queryTenant !== "null") ? queryTenant : resolveTenantId(request);
