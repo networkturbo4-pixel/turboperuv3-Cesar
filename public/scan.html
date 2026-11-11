@@ -858,7 +858,8 @@
       if (!code) return;
       showToast(`Consultando "${code}" en inventario...`, 'info');
       try {
-        const res = await fetch(`/api/inventory/traceability/${encodeURIComponent(code)}`);
+        const headers = currentSessionId ? { 'x-scanner-session': currentSessionId } : {};
+        const res = await fetch(`/api/inventory/traceability/${encodeURIComponent(code)}`, { headers });
         const data = await res.json();
         if (data.success && data.data) {
           showToast(`Encontrado: ${data.data.product?.name || 'Producto registrado'}`, 'success');

@@ -7,6 +7,7 @@ import net from "net";
 import os from "os";
 import child_process from "child_process";
 import { resolveTenantId, loadTenantsFromDisk } from "../tenants/tenants.service";
+import { SecurityService } from "../security/security.service";
 import {
   EmployeeDocument,
   LeaveRequest,
@@ -343,13 +344,20 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
     const uFile = path.join(DATA_DIR, "users.json");
     if (fs.existsSync(uFile)) {
       const uStore = JSON.parse(fs.readFileSync(uFile, "utf-8"));
-      const user = uStore.find((u: any) => u.id === numId || String(u.id) === strId || (u.pin && String(u.pin) === strId));
+      const lookupHmac = /^\d{4,12}$/.test(strId) ? SecurityService.hmacPinLookup(strId) : "";
+      const user = uStore.find(
+        (u: any) =>
+          u.id === numId ||
+          String(u.id) === strId ||
+          (u.pin && String(u.pin) === strId) ||
+          (lookupHmac && u.pinLookup === lookupHmac)
+      );
       if (user) {
         return {
           id: user.id,
           name: user.name || fallbackName,
           position: user.roleName || "Operador de Red",
-          dni: user.pin || "74214636",
+          dni: (!SecurityService.isHashedPin(user.pin) && user.pin) ? user.pin : String(user.biometricPin || user.id),
           phone: "+51 987 654 321",
           email: user.email || "",
           workSchedule: user.workSchedule || "08:00 - 17:00",
@@ -1312,7 +1320,6 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const issuer = "TurboNetwork";
     const label = encodeURIComponent(`${emp.name} (${emp.email || "ISP"})`);
     const otpauthUrl = `otpauth://totp/${issuer}:${label}?secret=${secret}&issuer=${issuer}`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(otpauthUrl)}`;
 
     return reply.send({
       success: true,
@@ -1322,8 +1329,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         email: emp.email,
         totpSecret: secret,
         otpauthUrl,
-        qrCodeUrl,
-        masterCode: "998877",
+        qrCodeUrl: "",
       },
     });
   });
@@ -1335,7 +1341,6 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const issuer = "TurboNetwork";
     const label = encodeURIComponent(`${emp.name} (${emp.email || "ISP"})`);
     const otpauthUrl = `otpauth://totp/${issuer}:${label}?secret=${secret}&issuer=${issuer}`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(otpauthUrl)}`;
 
     return reply.send({
       success: true,
@@ -1345,8 +1350,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         email: emp.email,
         totpSecret: secret,
         otpauthUrl,
-        qrCodeUrl,
-        masterCode: "998877",
+        qrCodeUrl: "",
       },
     });
   });
@@ -1425,14 +1429,21 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       const opIn = body.operatorExpectedIn || body.expectedCheckInTime || "08:00";
       const opOut = body.operatorExpectedOut || "17:00";
 
-      const existingUserIdx = usersList.findIndex((u: any) => u.pin === operatorPin || (u.email && u.email.toLowerCase() === opEmail));
+      const opPinHash = SecurityService.hashPin(operatorPin);
+      const opPinLookup = SecurityService.hmacPinLookup(operatorPin);
+      const existingUserIdx = usersList.findIndex(
+        (u: any) => u.pin === operatorPin || u.pinLookup === opPinLookup || (u.email && u.email.toLowerCase() === opEmail)
+      );
 
       if (existingUserIdx >= 0) {
+        const prev = { ...usersList[existingUserIdx] };
+        delete prev.pin;
         usersList[existingUserIdx] = {
-          ...usersList[existingUserIdx],
+          ...prev,
           name: opName,
           email: opEmail,
-          pin: operatorPin,
+          pinHash: opPinHash,
+          pinLookup: opPinLookup,
           roleId: chosenRole.id,
           roleName: chosenRole.name,
           assignedTenantId: targetTenant,
@@ -1440,7 +1451,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           workSchedule: opSched,
           expectedCheckInTime: opIn,
           expectedCheckOutTime: opOut,
-          isSuperAdmin: usersList[existingUserIdx].isSuperAdmin || isSuperAdmin,
+          isSuperAdmin: prev.isSuperAdmin || isSuperAdmin,
           isActive: body.status === "active",
         };
         operatorUser = usersList[existingUserIdx];
@@ -1449,7 +1460,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           id: Date.now(),
           name: opName,
           email: opEmail,
-          pin: operatorPin,
+          pinHash: opPinHash,
+          pinLookup: opPinLookup,
           roleId: chosenRole.id,
           roleName: chosenRole.name,
           avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(opName)}`,
@@ -1570,14 +1582,25 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       const opIn = bodyAny.operatorExpectedIn || body.expectedCheckInTime || current.expectedCheckInTime || "08:00";
       const opOut = bodyAny.operatorExpectedOut || "17:00";
 
-      const userIdx = usersList.findIndex((u: any) => (current.operatorId && u.id === current.operatorId) || u.pin === operatorPin || (u.email && u.email.toLowerCase() === opEmail));
+      const opPinHash = SecurityService.hashPin(operatorPin);
+      const opPinLookup = SecurityService.hmacPinLookup(operatorPin);
+      const userIdx = usersList.findIndex(
+        (u: any) =>
+          (current.operatorId && u.id === current.operatorId) ||
+          u.pin === operatorPin ||
+          u.pinLookup === opPinLookup ||
+          (u.email && u.email.toLowerCase() === opEmail)
+      );
 
       if (userIdx >= 0) {
+        const prev = { ...usersList[userIdx] };
+        delete prev.pin;
         usersList[userIdx] = {
-          ...usersList[userIdx],
+          ...prev,
           name: opName,
           email: opEmail,
-          pin: operatorPin,
+          pinHash: opPinHash,
+          pinLookup: opPinLookup,
           roleId: chosenRole.id,
           roleName: chosenRole.name,
           assignedTenantId: targetTenant,
@@ -1585,8 +1608,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           workSchedule: opSched,
           expectedCheckInTime: opIn,
           expectedCheckOutTime: opOut,
-          isSuperAdmin: usersList[userIdx].isSuperAdmin || isSuperAdmin,
-          isActive: body.status ? body.status === "active" : usersList[userIdx].isActive,
+          isSuperAdmin: prev.isSuperAdmin || isSuperAdmin,
+          isActive: body.status ? body.status === "active" : prev.isActive,
         };
         operatorUser = usersList[userIdx];
       } else {
@@ -1594,7 +1617,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           id: Date.now(),
           name: opName,
           email: opEmail,
-          pin: operatorPin,
+          pinHash: opPinHash,
+          pinLookup: opPinLookup,
           roleId: chosenRole.id,
           roleName: chosenRole.name,
           avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(opName)}`,
@@ -3479,7 +3503,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           const usersList = JSON.parse(fs.readFileSync(uFile, "utf-8"));
           for (const u of usersList) {
             if (u.isActive === false) continue;
-            const pin = String(u.pin || u.id);
+            const pin = (!SecurityService.isHashedPin(u.pin) && u.pin) ? String(u.pin) : String(u.biometricPin || u.id);
             if (syncedEmployees.some((e) => e.pin === pin)) continue; // evitar duplicado si ya fue agregado por DNI/PIN
 
             const cmdId = ++zktecoCommandIdSeq;

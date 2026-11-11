@@ -28,11 +28,16 @@ Thumbs.db
 # Antigravity agent temp files
 .system_generated/
 
-# Backups and temporary deployment markers
+# Backups, secrets, sessions, audit logs and temporary deployment markers
 data/backups/
+data/.jwt_secret
+data/.sessions.json
+data/audit_logs.json
+data/uploads/
 data/updates_history.json
 data/connections_settings.json
 data/tenants/*/connections.json
+dist-desktop/*.exe
 tmp/
 scratch/
 

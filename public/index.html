@@ -40,6 +40,7 @@
   <link rel="stylesheet" href="/assets/tailwind.min.css?v=apartados_v3">
   <script src="/js/jsQR.min.js"></script>
   <script src="/js/qrcode.min.js"></script>
+  <script src="/js/session-guard.js"></script>
   <script src="/js/tesseract.min.js"></script>
   <link rel="stylesheet" href="/assets/mapbox-gl.css">
   <script src="/js/mapbox-gl.js"></script>
@@ -65,8 +66,8 @@
       if (!imgEl || imgEl.dataset.fallbackTried) return;
       imgEl.dataset.fallbackTried = "true";
       const raw = imgEl.dataset.rawOtpUrl;
-      if (raw) {
-        imgEl.src = `https://quickchart.io/qr?size=220&text=${encodeURIComponent(raw)}`;
+      if (raw && typeof window.renderLocalQrToImg === 'function') {
+        window.renderLocalQrToImg(imgEl, raw);
       }
     };
 
@@ -87,43 +88,7 @@
   </script>
   
   <script>
-    // Interceptor global para inyectar x-tenant-id y x-user-id en todas las llamadas API
-    (function() {
-      var origFetch = window.fetch;
-      window.fetch = function(url, options) {
-        options = options || {};
-        var activeTenant = localStorage.getItem('turbonetwork_active_tenant') || 'turbonetwork';
-        if (typeof url === 'string' && (url.startsWith('/api') || url.includes('/api/'))) {
-          if (!options.headers) {
-            options.headers = { 'x-tenant-id': activeTenant };
-          } else if (options.headers instanceof Headers) {
-            if (!options.headers.has('x-tenant-id')) options.headers.set('x-tenant-id', activeTenant);
-          } else if (Array.isArray(options.headers)) {
-            if (!options.headers.some(function(h) { return h[0].toLowerCase() === 'x-tenant-id'; })) {
-              options.headers.push(['x-tenant-id', activeTenant]);
-            }
-          } else {
-            if (!options.headers['x-tenant-id']) options.headers['x-tenant-id'] = activeTenant;
-          }
-          try {
-            var sess = localStorage.getItem('turbonetwork_session');
-            if (sess) {
-              var u = JSON.parse(sess);
-              if (u && u.id) {
-                if (options.headers instanceof Headers) {
-                  if (!options.headers.has('x-user-id')) options.headers.set('x-user-id', String(u.id));
-                } else if (!Array.isArray(options.headers)) {
-                  if (!options.headers['x-user-id']) options.headers['x-user-id'] = String(u.id);
-                }
-              }
-            }
-          } catch (e) {}
-        }
-        return origFetch.call(this, url, options);
-      };
-    })();
-
-    // Restaurar sesión, tema y colores antes de pintar la pantalla para evitar parpadeos
+    // Restaurar sesión validada por session-guard.js, tema y colores antes de pintar la pantalla para evitar parpadeos
     try {
       if (localStorage.getItem('turbonetwork_pending_2fa')) {
         document.documentElement.classList.remove('has-session');
@@ -25076,6 +25041,17 @@
     });
 
     async function completeLoginSuccess(data) {
+      if (data?.data?.token) {
+        try {
+          const now = Date.now();
+          localStorage.setItem('turbonetwork_auth_meta', JSON.stringify({
+            token: data.data.token,
+            expiresAt: data.data.expiresAt || (now + 8 * 3600 * 1000),
+            lastActivityAt: now,
+            idleTimeoutMs: data.data.idleTimeoutMs || (15 * 60 * 1000)
+          }));
+        } catch (e) {}
+      }
       const loggedUser = data?.data?.user;
       if (loggedUser && !loggedUser.isSuperAdmin && loggedUser.roleId !== 1) {
         try {
@@ -25134,6 +25110,16 @@
           body: JSON.stringify({ pin: currentPin })
         });
         const data = await res.json();
+
+        if (data.requires2fa) {
+          pendingLoginPin = currentPin;
+          pendingLoginTenantId = data.tenantId || activeTenantId;
+          try {
+            localStorage.setItem('turbonetwork_pending_2fa', '1');
+          } catch (e) {}
+          showLogin2faStep(data);
+          return;
+        }
 
         if (data.success) {
           try {
@@ -25395,9 +25381,15 @@
       }, 1350);
     }
 
-    function logout() {
+    function logout(fromGuard) {
+      if (!fromGuard && window.TurboSessionGuard && typeof window.TurboSessionGuard.logout === 'function') {
+        window.TurboSessionGuard.logout();
+        return;
+      }
       try {
         localStorage.removeItem('turbonetwork_session');
+        localStorage.removeItem('turbonetwork_auth_meta');
+        localStorage.removeItem('turbonetwork_active_user');
         localStorage.removeItem('turbonetwork_pending_2fa');
       } catch (e) {}
       document.documentElement.classList.remove('has-session');
@@ -31401,7 +31393,11 @@ Estamos atentos para brindarle asistencia inmediata.
           if (qrImg) {
             qrImg.dataset.rawOtpUrl = t.otpauthUrl;
             delete qrImg.dataset.fallbackTried;
-            qrImg.src = t.qrCodeUrl;
+            if (typeof window.renderLocalQrToImg === 'function' && t.otpauthUrl) {
+              window.renderLocalQrToImg(qrImg, t.otpauthUrl);
+            } else if (t.qrCodeUrl) {
+              qrImg.src = t.qrCodeUrl;
+            }
           }
           const secText = document.getElementById('master-totp-secret-text');
           if (secText) secText.textContent = t.masterSecret;
@@ -32218,9 +32214,8 @@ Estamos atentos para brindarle asistencia inmediata.
       if (!imgEl || imgEl.dataset.fallbackTried) return;
       imgEl.dataset.fallbackTried = "true";
       const raw = imgEl.dataset.rawOtpUrl;
-      if (raw) {
-        // Fallback a QuickChart QR API si qrserver tiene bloqueo de red
-        imgEl.src = `https://quickchart.io/qr?size=220&text=${encodeURIComponent(raw)}`;
+      if (raw && typeof window.renderLocalQrToImg === 'function') {
+        window.renderLocalQrToImg(imgEl, raw);
       }
     }
 
@@ -32266,7 +32261,11 @@ Estamos atentos para brindarle asistencia inmediata.
           if (qrImg) {
             qrImg.dataset.rawOtpUrl = t.otpauthUrl;
             delete qrImg.dataset.fallbackTried;
-            qrImg.src = t.qrCodeUrl;
+            if (typeof window.renderLocalQrToImg === 'function' && t.otpauthUrl) {
+              window.renderLocalQrToImg(qrImg, t.otpauthUrl);
+            } else if (t.qrCodeUrl) {
+              qrImg.src = t.qrCodeUrl;
+            }
           }
           const secText = document.getElementById('master-totp-secret-text');
           if (secText) secText.textContent = t.masterSecret;
@@ -39004,7 +39003,14 @@ function copyRemoteScannerLink() {
         const res = await fetch(`/api/rrhh/employees/${employeeId}/totp`);
         const data = await res.json();
         if (data.success) {
-          document.getElementById('ga-qr-img').src = data.data.qrCodeUrl;
+          const gaImg = document.getElementById('ga-qr-img');
+          if (gaImg) {
+            if (typeof window.renderLocalQrToImg === 'function' && data.data.otpauthUrl) {
+              window.renderLocalQrToImg(gaImg, data.data.otpauthUrl);
+            } else if (data.data.qrCodeUrl) {
+              gaImg.src = data.data.qrCodeUrl;
+            }
+          }
           document.getElementById('ga-secret-key').textContent = data.data.totpSecret;
         }
       } catch (err) {
@@ -39072,7 +39078,13 @@ function copyRemoteScannerLink() {
         if (data.success) {
           const img = document.getElementById('totp-lock-qr-img');
           const txt = document.getElementById('totp-lock-secret-text');
-          if (img) img.src = data.data.qrCodeUrl;
+          if (img) {
+            if (typeof window.renderLocalQrToImg === 'function' && data.data.otpauthUrl) {
+              window.renderLocalQrToImg(img, data.data.otpauthUrl);
+            } else if (data.data.qrCodeUrl) {
+              img.src = data.data.qrCodeUrl;
+            }
+          }
           if (txt) txt.textContent = data.data.totpSecret;
         }
       } catch (e) {}

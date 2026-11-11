@@ -1,9 +1,23 @@
 import fs from "fs";
 import path from "path";
-import { exec } from "child_process";
+import { exec, execFile } from "child_process";
 import { promisify } from "util";
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+
+export function sanitizeGitBranch(rawBranch?: string): string {
+  const candidate = (rawBranch || "main").trim();
+  if (
+    !candidate ||
+    candidate.startsWith("-") ||
+    candidate.includes("..") ||
+    !/^[a-zA-Z0-9._/-]{1,64}$/.test(candidate)
+  ) {
+    throw new Error("Nombre de rama Git inválido o no permitido por políticas de seguridad.");
+  }
+  return candidate;
+}
 
 const ROOT_DIR = process.cwd();
 const DATA_DIR = path.resolve(ROOT_DIR, "data");
@@ -694,7 +708,7 @@ export async function executeSystemUpdate(options: {
     console.log(line);
   };
 
-  const branch = options.branch || "main";
+  const branch = sanitizeGitBranch(options.branch);
   const shouldBackup = options.createBackup !== false;
   const shouldMigrate = options.runMigrations !== false;
   const shouldRebuild = options.rebuild !== false;
@@ -765,16 +779,16 @@ export async function executeSystemUpdate(options: {
       log("ℹ️ Directorio Git preparado.");
     }
 
-    // PASO 4: Git Pull desde GitHub con Auto-Recuperación Resiliente
+    // PASO 4: Git Pull desde GitHub con Auto-Recuperación Resiliente (execFile sin interpolación de shell)
     log(`⬇️ [4/7] Descargando últimas actualizaciones desde GitHub (git pull origin ${branch})...`);
     let pullOut = "";
     try {
-      const res = await execAsync(`git pull origin ${branch}`, { cwd: ROOT_DIR, timeout: 60000 });
+      const res = await execFileAsync("git", ["pull", "origin", branch], { cwd: ROOT_DIR, timeout: 60000 });
       pullOut = res.stdout;
     } catch (pullErr: any) {
       log(`⚠️ git pull detectó modificaciones locales en assets compilados (${pullErr.message}). Aplicando auto-recuperación limpia con origin/${branch}...`);
-      await execAsync(`git fetch origin ${branch}`, { cwd: ROOT_DIR, timeout: 60000 });
-      const resetRes = await execAsync(`git reset --hard origin/${branch}`, { cwd: ROOT_DIR, timeout: 30000 });
+      await execFileAsync("git", ["fetch", "origin", branch], { cwd: ROOT_DIR, timeout: 60000 });
+      const resetRes = await execFileAsync("git", ["reset", "--hard", `origin/${branch}`], { cwd: ROOT_DIR, timeout: 30000 });
       pullOut = resetRes.stdout || `Sincronización forzada a origin/${branch} completada con éxito.`;
     }
     log(`📥 Resultado Git Pull:\n${pullOut.trim()}`);

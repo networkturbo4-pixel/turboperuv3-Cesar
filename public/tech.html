@@ -27,6 +27,7 @@
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
 
   <link rel="stylesheet" href="/assets/tailwind.min.css?v=apartados_v3">
+  <script src="/js/session-guard.js"></script>
   <script src="/js/jsQR.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -509,6 +510,15 @@
         });
         const data = await res.json();
         if (data.success && data.data?.user) {
+          if (data.data.token) {
+            const now = Date.now();
+            localStorage.setItem('turbonetwork_auth_meta', JSON.stringify({
+              token: data.data.token,
+              expiresAt: data.data.expiresAt || (now + 8 * 3600 * 1000),
+              lastActivityAt: now,
+              idleTimeoutMs: data.data.idleTimeoutMs || (15 * 60 * 1000)
+            }));
+          }
           techUser = data.data.user;
           localStorage.setItem('turbonetwork_session', JSON.stringify(techUser));
           document.getElementById('tech-login-overlay').classList.add('hidden');
@@ -528,9 +538,14 @@
       }
     }
 
-    function techLogout() {
+    function techLogout(fromGuard) {
+      if (!fromGuard && window.TurboSessionGuard && typeof window.TurboSessionGuard.logout === 'function') {
+        window.TurboSessionGuard.logout();
+        return;
+      }
       try {
         localStorage.removeItem('turbonetwork_session');
+        localStorage.removeItem('turbonetwork_auth_meta');
       } catch (e) {}
       techUser = null;
       document.getElementById('tech-login-overlay').classList.remove('hidden');

@@ -1,10 +1,13 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
+import fastifyJwt from "@fastify/jwt";
 import fastifyStatic from "@fastify/static";
 import path from "path";
 import fs from "fs";
 import { env } from "./config/env";
+import { registerGlobalAuthGuard } from "./middleware/auth.guard";
+import { queryClient } from "./db";
 
 // Rutas de módulos
 import { healthRoutes } from "./modules/health/health.routes";
@@ -53,15 +56,36 @@ export async function buildApp() {
     }
   });
 
-  // Seguridad y CORS
+  // Seguridad HTTP, CORS controlado y JWT firmado
   await fastify.register(helmet, {
-    contentSecurityPolicy: false, // Permite cargar assets del dashboard embebido
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "same-site" },
   });
 
+  const allowedOrigins = env.CORS_ORIGINS
+    ? env.CORS_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)
+    : [];
+
   await fastify.register(cors, {
-    origin: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.length === 0) {
+        return cb(null, true);
+      }
+      if (allowedOrigins.includes(origin)) {
+        return cb(null, true);
+      }
+      return cb(new Error("Origen no permitido por CORS"), false);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   });
+
+  await fastify.register(fastifyJwt, {
+    secret: env.JWT_SECRET,
+  });
+
+  // Activar Guard Global de Autenticación, Expiración por Inactividad, Aislamiento Multi-Tenant y RBAC
+  registerGlobalAuthGuard(fastify);
 
   // Rutas directas de credencial digital pública (sin requerir autenticación)
   fastify.get("/credencial/:token", async (req, reply) => {
@@ -100,16 +124,33 @@ export async function buildApp() {
     return reply.type("text/html; charset=utf-8").send(html);
   });
 
-  // Servir frontend estático y renderizado dinámico de Open Graph por Negocio
+  // Servir frontend estático con caché inteligente en RAM y renderizado dinámico de Open Graph por Negocio
   const publicPath = path.resolve(process.cwd(), "public");
+  const htmlTemplateCache = new Map<string, { mtimeMs: number; content: string }>();
+
+  const readPublicHtmlCached = (fileName: string): string | null => {
+    const filePath = path.join(publicPath, fileName);
+    try {
+      const stat = fs.statSync(filePath);
+      const cached = htmlTemplateCache.get(fileName);
+      if (cached && cached.mtimeMs === stat.mtimeMs) {
+        return cached.content;
+      }
+      const content = fs.readFileSync(filePath, "utf-8");
+      htmlTemplateCache.set(fileName, { mtimeMs: stat.mtimeMs, content });
+      return content;
+    } catch {
+      return null;
+    }
+  };
+
   if (fs.existsSync(publicPath)) {
     // Función centralizada para inyectar Open Graph según el negocio solicitado
     const serveDynamicHtml = (req: any, reply: any, tenantSlug?: string) => {
-      const indexPath = path.join(publicPath, "index.html");
-      if (!fs.existsSync(indexPath)) {
+      const rawHtml = readPublicHtmlCached("index.html");
+      if (!rawHtml) {
         return reply.status(404).send("index.html not found");
       }
-      const rawHtml = fs.readFileSync(indexPath, "utf-8");
       const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
       const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
       const baseUrl = `${proto}://${host}`;
@@ -123,11 +164,10 @@ export async function buildApp() {
 
     // Función para servir la aplicación desacoplada de mensajería (TurboChat)
     const serveDynamicChatHtml = (req: any, reply: any, tenantSlug?: string) => {
-      const chatPath = path.join(publicPath, "chat.html");
-      if (!fs.existsSync(chatPath)) {
+      const rawHtml = readPublicHtmlCached("chat.html");
+      if (!rawHtml) {
         return reply.status(404).send("chat.html not found");
       }
-      const rawHtml = fs.readFileSync(chatPath, "utf-8");
       const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
       const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
       const baseUrl = `${proto}://${host}`;
@@ -159,11 +199,10 @@ export async function buildApp() {
 
     // 1.1b Rutas de Apartado Móvil de Técnicos (TurboTech Standalone App)
     const serveDynamicTechHtml = (req: any, reply: any, tenantSlug?: string) => {
-      const techPath = path.join(publicPath, "tech.html");
-      if (!fs.existsSync(techPath)) {
+      const rawHtml = readPublicHtmlCached("tech.html");
+      if (!rawHtml) {
         return reply.status(404).send("tech.html not found");
       }
-      const rawHtml = fs.readFileSync(techPath, "utf-8");
       const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
       const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
       const baseUrl = `${proto}://${host}`;
@@ -188,11 +227,10 @@ export async function buildApp() {
 
     // 1.1c Rutas del Escáner Móvil con OCR (TurboScanner Standalone & Paired)
     const serveDynamicScannerHtml = (req: any, reply: any, tenantSlug?: string) => {
-      const scanPath = path.join(publicPath, "scan.html");
-      if (!fs.existsSync(scanPath)) {
+      const rawHtml = readPublicHtmlCached("scan.html");
+      if (!rawHtml) {
         return reply.status(404).send("scan.html not found");
       }
-      const rawHtml = fs.readFileSync(scanPath, "utf-8");
       const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
       const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
       const baseUrl = `${proto}://${host}`;
@@ -409,6 +447,21 @@ async function start() {
     const host = env.HOST;
 
     await app.listen({ port, host });
+
+    const gracefulShutdown = async (signal: string) => {
+      console.log(`🛑 [TurboServer] Señal ${signal} recibida. Cerrando conexiones ordenadamente...`);
+      try {
+        await app.close();
+        await queryClient.end({ timeout: 5 });
+      } catch (closeErr) {
+        console.warn("Aviso durante cierre limpio:", closeErr);
+      }
+      process.exit(0);
+    };
+
+    process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
+    process.once("SIGINT", () => gracefulShutdown("SIGINT"));
+
     console.log(`
 ┌─────────────────────────────────────────────────────────────┐
 │  ⚡ TurboNetwork SaaS Engine iniciado exitosamente          │

@@ -166,3 +166,79 @@ export const payments = pgTable("payments", {
 }, (table) => ({
   tenantIdx: index("idx_payments_tenant").on(table.tenantId),
 }));
+
+// 10. Sedes / Empresas Multi-Tenant
+export const tenants = pgTable("tenants", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  ruc: text("ruc"),
+  phone: text("phone"),
+  email: text("email"),
+  address: text("address"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// 11. Inventario: Categorías de Productos
+export const inventoryCategories = pgTable("inventory_categories", {
+  id: serial("id").primaryKey(),
+  tenantId: text("tenant_id").notNull().default("turbonetwork"),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("idx_inv_cat_tenant").on(table.tenantId),
+}));
+
+// 12. Inventario: Productos / Materiales / Equipos
+export const inventoryProducts = pgTable("inventory_products", {
+  id: serial("id").primaryKey(),
+  tenantId: text("tenant_id").notNull().default("turbonetwork"),
+  categoryId: integer("category_id").references(() => inventoryCategories.id),
+  sku: text("sku").notNull(),
+  name: text("name").notNull(),
+  unit: text("unit").default("UND").notNull(),
+  stock: numeric("stock", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  minStock: numeric("min_stock", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  costPrice: numeric("cost_price", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  salePrice: numeric("sale_price", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("idx_inv_prod_tenant").on(table.tenantId),
+  tenantSkuIdx: uniqueIndex("idx_inv_prod_tenant_sku").on(table.tenantId, table.sku),
+}));
+
+// 13. Inventario: Movimientos / Kárdex (Entradas, Salidas, Ajustes)
+export const inventoryMovements = pgTable("inventory_movements", {
+  id: serial("id").primaryKey(),
+  tenantId: text("tenant_id").notNull().default("turbonetwork"),
+  productId: integer("product_id").references(() => inventoryProducts.id).notNull(),
+  type: text("type").notNull(), // IN, OUT, ADJUST, DISPATCH
+  quantity: numeric("quantity", { precision: 12, scale: 2 }).notNull(),
+  previousStock: numeric("previous_stock", { precision: 12, scale: 2 }).notNull(),
+  newStock: numeric("new_stock", { precision: 12, scale: 2 }).notNull(),
+  reference: text("reference"),
+  notes: text("notes"),
+  registeredByUserId: integer("registered_by_user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("idx_inv_mov_tenant").on(table.tenantId),
+}));
+
+// 14. Logs de Auditoría del Sistema
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  tenantId: text("tenant_id").notNull().default("turbonetwork"),
+  actorUserId: integer("actor_user_id").references(() => users.id),
+  actorName: text("actor_name"),
+  ip: text("ip"),
+  action: text("action").notNull(),
+  entity: text("entity").notNull(),
+  details: text("details"), // JSON serializado
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("idx_audit_logs_tenant").on(table.tenantId),
+  actionIdx: index("idx_audit_logs_action").on(table.action),
+}));

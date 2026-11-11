@@ -783,7 +783,6 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
     const cleanIssuer = tenantName.replace(/[:?&=]/g, " ").trim();
     const label = `Supervisor (${cleanIssuer})`;
     const otpauthUrl = `otpauth://totp/${encodeURIComponent(cleanIssuer)}:${encodeURIComponent(label)}?secret=${masterSecret}&issuer=${encodeURIComponent(cleanIssuer)}&algorithm=SHA1&digits=6&period=30`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(otpauthUrl)}`;
     const require2faOnLogin = is2faRequiredForTenant(tenantId);
 
     return reply.send({
@@ -792,13 +791,11 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
         tenantId,
         tenantName,
         masterSecret,
-        supervisorPin: DEFAULT_SUPERVISOR_PIN,
         otpauthUrl,
-        qrCodeUrl,
+        qrCodeUrl: "",
         label,
         issuer: cleanIssuer,
         require2faOnLogin,
-        currentOtp: generateTOTP(masterSecret),
       },
     });
   });
@@ -817,7 +814,6 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
     const cleanIssuer = tenantName.replace(/[:?&=]/g, " ").trim();
     const label = `Supervisor (${cleanIssuer})`;
     const otpauthUrl = `otpauth://totp/${encodeURIComponent(cleanIssuer)}:${encodeURIComponent(label)}?secret=${newSecret}&issuer=${encodeURIComponent(cleanIssuer)}&algorithm=SHA1&digits=6&period=30`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(otpauthUrl)}`;
 
     return reply.send({
       success: true,
@@ -827,7 +823,7 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
         tenantName,
         masterSecret: newSecret,
         otpauthUrl,
-        qrCodeUrl,
+        qrCodeUrl: "",
       },
     });
   });
@@ -838,7 +834,7 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
     const tenantId = body.tenantId || (request.query as any)?.tenantId || resolveTenantId(request);
     const required = Boolean(body.required);
 
-    setTenant2faRequirement(tenantId, required);
+    const updatedState = setTenant2faRequirement(tenantId, required);
 
     const tenants = loadTenantsFromDisk();
     const tenant = tenants.find((t) => t.id === tenantId);
@@ -846,8 +842,10 @@ export const connectionsRoutes: FastifyPluginAsync = async (fastify) => {
 
     return reply.send({
       success: true,
-      require2faOnLogin: false,
-      message: `El inicio de sesión opera directamente mediante PIN. Google Authenticator está asignado exclusivamente al Desbloqueo de Tardanzas de ${tenantName}.`,
+      require2faOnLogin: updatedState,
+      message: updatedState
+        ? `Verificación obligatoria 2FA (Google Authenticator) ACTIVADA al iniciar sesión en ${tenantName}.`
+        : `Verificación obligatoria 2FA en login DESACTIVADA para ${tenantName}.`,
     });
   });
 

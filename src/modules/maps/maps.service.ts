@@ -923,10 +923,11 @@ export function extractKmlFromZipBuffer(buf: Buffer): string | null {
       if (buf[offset] !== 0x50 || buf[offset + 1] !== 0x4b || buf[offset + 2] !== 0x03 || buf[offset + 3] !== 0x04) {
         break;
       }
-      const compMethod = buf.readUInt16LE(offset + 8);
-      const compSize = buf.readUInt32LE(offset + 18);
-      const nameLen = buf.readUInt16LE(offset + 26);
-      const extraLen = buf.readUInt16LE(offset + 28);
+      const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+      const compMethod = dv.getUint16(offset + 8, true);
+      const compSize = dv.getUint32(offset + 18, true);
+      const nameLen = dv.getUint16(offset + 26, true);
+      const extraLen = dv.getUint16(offset + 28, true);
       const fileName = buf.toString("utf8", offset + 30, offset + 30 + nameLen);
       const dataStart = offset + 30 + nameLen + extraLen;
       const dataEnd = dataStart + compSize;

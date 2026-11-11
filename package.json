@@ -8,6 +8,7 @@
     "build:css": "tailwindcss -i src/styles/input.css -o public/assets/tailwind.min.css --minify",
     "build": "npm run build:css && (tsup || node ./node_modules/tsup/dist/cli-default.js)",
     "start": "node dist/server.js",
+    "test": "tsx src/tests/security-session.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",

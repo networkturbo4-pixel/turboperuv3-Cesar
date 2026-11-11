@@ -2,13 +2,18 @@ import { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
-import { resolveTenantId, getTenantFilePath, getTenantDataDir, loadTenantsFromDisk } from "../tenants/tenants.service";
-import { is2faRequiredForTenant, getMasterTotpSecret, getMasterSupervisorPin } from "../settings/connections.service";
+import { env } from "../../config/env";
+import { resolveTenantId, getTenantFilePath, loadTenantsFromDisk } from "../tenants/tenants.service";
+import { is2faRequiredForTenant, getMasterTotpSecret } from "../settings/connections.service";
 import { verifyTOTP, enqueueZktecoUserInfo } from "../rrhh/rrhh.routes";
+import { SecurityService } from "../security/security.service";
+import { AuditService } from "../security/audit.service";
+import { MediaService } from "../storage/media.service";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const ROLES_FILE = path.join(DATA_DIR, "roles.json");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
+const EMPLOYEES_FILE = path.join(DATA_DIR, "employees.json");
 
 export interface PermissionDefinition {
   id: string;
@@ -99,7 +104,9 @@ export interface SystemUser {
   id: number;
   name: string;
   email: string;
-  pin: string; // 8 dígitos
+  pin?: string; // Legado: migrado automáticamente a pinHash + pinLookup
+  pinHash?: string;
+  pinLookup?: string;
   roleId: number;
   roleName: string;
   avatar: string;
@@ -184,17 +191,17 @@ export function loadRolesForTenant(tenantId: string): Role[] {
       const raw = fs.readFileSync(filePath, "utf-8");
       const list = JSON.parse(raw);
       if (Array.isArray(list) && list.length > 0) {
-        return list.map(r => ({
+        return list.map((r) => ({
           ...r,
-          allowedModules: Array.isArray(r.allowedModules) && r.allowedModules.length > 0
-            ? r.allowedModules
-            : [...ALL_MODULE_IDS]
+          allowedModules:
+            Array.isArray(r.allowedModules) && r.allowedModules.length > 0
+              ? r.allowedModules
+              : [...ALL_MODULE_IDS],
         }));
       }
     }
-  } catch (err) {}
+  } catch {}
 
-  // Fallback / inicialización por tenant
   let initialRoles: Role[] = DEFAULT_ROLES;
   if (safeTenant === "loanetwork") {
     initialRoles = [
@@ -221,7 +228,7 @@ export function loadRolesForTenant(tenantId: string): Role[] {
         description: "Cobros en ventanilla y cierre de caja diario",
         permissions: ["customers:view", "billing:view", "billing:collect"],
         allowedModules: ["dashboard", "customers", "billing"],
-      }
+      },
     ];
   } else if (safeTenant === "celeris") {
     initialRoles = [
@@ -240,19 +247,22 @@ export function loadRolesForTenant(tenantId: string): Role[] {
         description: "Monitoreo de enlaces troncales, BGP y OLTs",
         permissions: ["network:view", "network:control", "network:manage", "plans:manage", "system:config"],
         allowedModules: ["dashboard", "network", "plans", "system"],
-      }
+      },
     ];
   } else if (fs.existsSync(ROLES_FILE)) {
     try {
       const rawGlobal = fs.readFileSync(ROLES_FILE, "utf-8");
       const parsedGlobal = JSON.parse(rawGlobal);
       if (Array.isArray(parsedGlobal) && parsedGlobal.length > 0) {
-        initialRoles = parsedGlobal.map(r => ({
+        initialRoles = parsedGlobal.map((r) => ({
           ...r,
-          allowedModules: Array.isArray(r.allowedModules) && r.allowedModules.length > 0 ? r.allowedModules : [...ALL_MODULE_IDS]
+          allowedModules:
+            Array.isArray(r.allowedModules) && r.allowedModules.length > 0
+              ? r.allowedModules
+              : [...ALL_MODULE_IDS],
         }));
       }
-    } catch (e) {}
+    } catch {}
   }
 
   saveRolesForTenant(safeTenant, initialRoles);
@@ -276,7 +286,8 @@ let usersStore: SystemUser[] = [
     id: 1,
     name: "César Administrador",
     email: "cesar@turbonetwork.com",
-    pin: "12345678",
+    pinHash: SecurityService.hashPin("12345678"),
+    pinLookup: SecurityService.hmacPinLookup("12345678"),
     roleId: 1,
     roleName: "Superadministrador",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
@@ -288,47 +299,14 @@ let usersStore: SystemUser[] = [
     preferences: {},
     requireTotp: false,
   },
-  {
-    id: 2,
-    name: "Ing. Alejandro Torres",
-    email: "alejandro.redes@turbonetwork.com",
-    pin: "87654321",
-    roleId: 2,
-    roleName: "Administrador de Red / NOC",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
-    isActive: true,
-    createdAt: "2026-09-05T00:00:00Z",
-    isSuperAdmin: false,
-    allowedTenants: ["turbonetwork", "loanetwork"],
-    workSchedule: "08:30 - 17:30",
-    preferences: {},
-    requireTotp: false,
-  },
-  {
-    id: 3,
-    name: "Ana Morales",
-    email: "ana.caja@turbonetwork.com",
-    pin: "11223344",
-    roleId: 3,
-    roleName: "Cajero / Cobranzas",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
-    isActive: true,
-    createdAt: "2026-09-10T00:00:00Z",
-    isSuperAdmin: false,
-    allowedTenants: ["turbonetwork"],
-    workSchedule: "08:00 - 16:30",
-    preferences: {},
-    requireTotp: false,
-  },
 ];
 
-// Cargar roles y usuarios persistidos si existen
 function loadRolesFromDisk(): Role[] {
   try {
     if (fs.existsSync(ROLES_FILE)) {
       return JSON.parse(fs.readFileSync(ROLES_FILE, "utf-8"));
     }
-  } catch (err) {}
+  } catch {}
   return rolesStore;
 }
 
@@ -336,9 +314,13 @@ function saveRolesToDisk() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(ROLES_FILE, JSON.stringify(rolesStore, null, 2), "utf-8");
-  } catch (err) {}
+  } catch {}
 }
 
+/**
+ * Carga usuarios desde disco, migrando automáticamente PINs en texto plano a scrypt + HMAC
+ * y extrayendo avatares Base64 pesados a archivos estáticos optimizados.
+ */
 function loadUsersFromDisk(): SystemUser[] {
   try {
     if (fs.existsSync(USERS_FILE)) {
@@ -347,17 +329,43 @@ function loadUsersFromDisk(): SystemUser[] {
         let changed = false;
         const normalized = parsed.map((u: any) => {
           if (!u.assignedTenantId) {
-            u.assignedTenantId = (Array.isArray(u.allowedTenants) && u.allowedTenants.length > 0 && !u.allowedTenants.includes("*"))
-              ? u.allowedTenants[0]
-              : "turbonetwork";
+            u.assignedTenantId =
+              Array.isArray(u.allowedTenants) && u.allowedTenants.length > 0 && !u.allowedTenants.includes("*")
+                ? u.allowedTenants[0]
+                : "turbonetwork";
             changed = true;
           }
           if (!Array.isArray(u.allowedTenants) || u.allowedTenants.length === 0) {
-            u.allowedTenants = [u.assignedTenantId];
+            u.allowedTenants = u.isSuperAdmin ? ["*"] : [u.assignedTenantId];
             changed = true;
           }
+
+          // Migrar PIN en texto plano a hash scrypt + índice HMAC sin romper accesos existentes
+          if (typeof u.pin === "string" && u.pin.length > 0) {
+            if (SecurityService.isHashedPin(u.pin)) {
+              u.pinHash = u.pin;
+              delete u.pin;
+              changed = true;
+            } else {
+              u.pinHash = SecurityService.hashPin(u.pin);
+              u.pinLookup = SecurityService.hmacPinLookup(u.pin);
+              delete u.pin;
+              changed = true;
+            }
+          }
+
+          // Extraer avatares Base64 incrustados en JSON hacia data/uploads/avatars
+          if (typeof u.avatar === "string" && u.avatar.startsWith("data:image/") && !u.avatar.startsWith("data:image/svg+xml")) {
+            const externalUrl = MediaService.externalizeAvatarIfNeeded(u.avatar, `usr${u.id || ""}`);
+            if (externalUrl && externalUrl !== u.avatar) {
+              u.avatar = externalUrl;
+              changed = true;
+            }
+          }
+
           return u as SystemUser;
         });
+
         if (changed) {
           try {
             fs.writeFileSync(USERS_FILE, JSON.stringify(normalized, null, 2), "utf-8");
@@ -366,7 +374,7 @@ function loadUsersFromDisk(): SystemUser[] {
         return normalized;
       }
     }
-  } catch (err) {}
+  } catch {}
   return usersStore;
 }
 
@@ -374,7 +382,79 @@ function saveUsersToDisk() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(USERS_FILE, JSON.stringify(usersStore, null, 2), "utf-8");
-  } catch (err) {}
+  } catch {}
+}
+
+function sanitizeUserOutput(u: SystemUser) {
+  const { pin, pinHash, pinLookup, ...safeUser } = u;
+  return safeUser;
+}
+
+function resolveUserTotpSecret(user: SystemUser): string | null {
+  try {
+    if (fs.existsSync(EMPLOYEES_FILE)) {
+      const list = JSON.parse(fs.readFileSync(EMPLOYEES_FILE, "utf-8"));
+      if (Array.isArray(list)) {
+        const emp = list.find(
+          (e: any) =>
+            e.operatorId === user.id ||
+            (e.email && user.email && String(e.email).toLowerCase() === user.email.toLowerCase())
+        );
+        if (emp && typeof emp.totpSecret === "string" && emp.totpSecret.length >= 16) {
+          return emp.totpSecret;
+        }
+      }
+    }
+  } catch {}
+  return null;
+}
+
+function buildAuthenticatedUserResponse(user: SystemUser, requestedTenant?: string) {
+  const assignedTenant =
+    requestedTenant ||
+    user.assignedTenantId ||
+    (user.allowedTenants && user.allowedTenants[0] !== "*" ? user.allowedTenants[0] : "turbonetwork");
+
+  const tenantRoles = loadRolesForTenant(assignedTenant);
+  const role = tenantRoles.find((r) => r.id === user.roleId) || rolesStore.find((r) => r.id === user.roleId);
+
+  const userPermissions = user.isSuperAdmin ? ALL_PERMISSIONS.map((p) => p.id) : role?.permissions || [];
+  const userAllowedModules = user.isSuperAdmin
+    ? [...ALL_MODULE_IDS]
+    : role?.allowedModules || [...ALL_MODULE_IDS];
+  const allowedTenants = user.isSuperAdmin
+    ? ["*"]
+    : (user.allowedTenants || [assignedTenant]).filter(Boolean);
+
+  return {
+    assignedTenant,
+    userPermissions,
+    userAllowedModules,
+    allowedTenants,
+    userPayload: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      roleId: user.roleId,
+      roleName: user.roleName,
+      avatar: user.avatar,
+      isSuperAdmin: !!user.isSuperAdmin,
+      assignedTenantId: assignedTenant,
+      allowedTenants,
+      workSchedule: user.workSchedule || "08:00 - 17:00",
+      expectedCheckInTime:
+        user.expectedCheckInTime || user.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1] || "08:00",
+      expectedCheckOutTime:
+        user.expectedCheckOutTime || user.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1] || "17:00",
+      scheduleStartDate: user.scheduleStartDate || "",
+      scheduleEndDate: user.scheduleEndDate || "",
+      hireDate: user.hireDate || "",
+      birthDate: user.birthDate || "",
+      preferences: user.preferences || {},
+      permissions: userPermissions,
+      allowedModules: userAllowedModules,
+    },
+  };
 }
 
 rolesStore = loadRolesFromDisk();
@@ -435,118 +515,343 @@ const createRoleSchema = z.object({
 });
 
 export const usersRoutes: FastifyPluginAsync = async (fastify) => {
-  // Autenticación por PIN de 8 dígitos con soporte de regla estricta Google Authenticator (TOTP)
-  fastify.post("/auth/pin-login", async (request, reply) => {
-    // Recargar usuarios desde disco para asegurar que cambios recientes estén disponibles
-    usersStore = loadUsersFromDisk();
-
-    const parse = pinLoginSchema.safeParse(request.body);
-    if (!parse.success) {
-      return reply.status(400).send({ success: false, message: "El PIN debe ser exactamente de 8 dígitos numéricos" });
-    }
-
-    const { pin, totpCode, tenantId: requestedTenant } = parse.data;
-    const user = usersStore.find((u) => u.pin === pin && u.isActive);
-
-    if (!user) {
-      return reply.status(401).send({
-        success: false,
-        message: "PIN no válido o usuario inactivo. Intente nuevamente.",
-      });
-    }
-
-    const assignedTenant = requestedTenant || user.assignedTenantId || (user.allowedTenants && user.allowedTenants[0] !== "*" ? user.allowedTenants[0] : "turbonetwork");
-
-    const tenantRoles = loadRolesForTenant(assignedTenant);
-    const role = tenantRoles.find((r) => r.id === user.roleId) || rolesStore.find((r) => r.id === user.roleId);
-
-    const userPermissions = user.isSuperAdmin ? ALL_PERMISSIONS.map((p) => p.id) : (role?.permissions || []);
-    const userAllowedModules = user.isSuperAdmin ? [...ALL_MODULE_IDS] : (role?.allowedModules || [...ALL_MODULE_IDS]);
-
+  // Configuración pública de política de sesión e inactividad
+  fastify.get("/auth/session-config", async (_request, reply) => {
     return reply.send({
       success: true,
-      message: `¡Bienvenido de nuevo, ${user.name}!`,
       data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          roleId: user.roleId,
-          roleName: user.roleName,
-          avatar: user.avatar,
-          isSuperAdmin: !!user.isSuperAdmin,
-          assignedTenantId: assignedTenant,
-          allowedTenants: (user.allowedTenants || (user.isSuperAdmin ? ["*"] : [assignedTenant])).filter(Boolean),
-          workSchedule: user.workSchedule || "08:00 - 17:00",
-          expectedCheckInTime: user.expectedCheckInTime || (user.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00",
-          expectedCheckOutTime: user.expectedCheckOutTime || (user.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00",
-          scheduleStartDate: user.scheduleStartDate || "",
-          scheduleEndDate: user.scheduleEndDate || "",
-          hireDate: user.hireDate || "",
-          birthDate: user.birthDate || "",
-          preferences: user.preferences || {},
-          permissions: userPermissions,
-          allowedModules: userAllowedModules,
-        },
-        permissions: userPermissions,
-        token: `mock_jwt_session_${user.id}_${Date.now()}`,
+        idleTimeoutMinutes: env.SESSION_IDLE_TIMEOUT_MINUTES,
+        idleTimeoutMs: SecurityService.getIdleTimeoutMs(),
+        maxSessionHours: env.SESSION_MAX_HOURS,
+        maxSessionMs: SecurityService.getMaxSessionMs(),
+        warningBeforeSeconds: 60,
       },
     });
   });
 
-  // 1.1 Obtener sesión del usuario actual (GET /auth/me)
-  fastify.get("/auth/me", async (request, reply) => {
+  // Autenticación por PIN de 8 dígitos con Rate Limit, scrypt, JWT real y soporte TOTP 2FA
+  fastify.post("/auth/pin-login", async (request, reply) => {
+    const clientIp =
+      (request.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+      request.ip ||
+      "unknown";
+
+    const rateCheck = SecurityService.checkLoginRateLimit(clientIp);
+    if (!rateCheck.allowed) {
+      return reply.status(429).send({
+        success: false,
+        code: "RATE_LIMITED",
+        retryAfterSeconds: rateCheck.retryAfterSeconds,
+        message: `Demasiados intentos fallidos. Intente nuevamente en ${Math.ceil(rateCheck.retryAfterSeconds / 60)} min (${rateCheck.retryAfterSeconds}s).`,
+      });
+    }
+
     usersStore = loadUsersFromDisk();
-    const query = request.query as { userId?: string } | undefined;
-    const userIdParam = (request.headers["x-user-id"] as string) || query?.userId;
-    const authHeader = request.headers.authorization;
 
-    let targetUserId = userIdParam ? String(userIdParam).trim() : "";
-
-    if (!targetUserId && authHeader && authHeader.startsWith("Bearer mock_jwt_session_")) {
-      const parts = authHeader.replace("Bearer mock_jwt_session_", "").split("_");
-      if (parts[0]) targetUserId = parts[0];
+    const parse = pinLoginSchema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({
+        success: false,
+        message: "El PIN debe ser exactamente de 8 dígitos numéricos",
+      });
     }
 
-    let user = targetUserId ? usersStore.find((u) => String(u.id) === targetUserId && u.isActive) : null;
-    if (!user) {
-      user = usersStore.find((u) => u.isActive && (u.isSuperAdmin || u.roleId === 1)) || usersStore[0];
+    const { pin, totpCode, tenantId: requestedTenant } = parse.data;
+    const candidateLookup = SecurityService.hmacPinLookup(pin);
+
+    let matchedUser: SystemUser | undefined;
+    for (const u of usersStore) {
+      if (!u.isActive) continue;
+      if (u.pinLookup && u.pinLookup !== candidateLookup && !u.pin) continue;
+      const check = SecurityService.verifyPin(pin, u);
+      if (check.valid) {
+        matchedUser = u;
+        if (check.needsMigration) {
+          u.pinHash = SecurityService.hashPin(pin);
+          u.pinLookup = candidateLookup;
+          delete u.pin;
+          saveUsersToDisk();
+        }
+        break;
+      }
     }
 
-    if (!user) {
-      return reply.send({ success: true, user: null });
+    if (!matchedUser) {
+      const failInfo = SecurityService.recordLoginFailure(clientIp);
+      AuditService.log({
+        ip: clientIp,
+        action: "auth.login_failed",
+        entity: "auth",
+        details: { reason: "invalid_pin", remainingAttempts: failInfo.remainingAttempts },
+      });
+      return reply.status(401).send({
+        success: false,
+        message: failInfo.locked
+          ? "Cuenta temporalmente protegida por múltiples intentos fallidos (10 min)."
+          : `PIN no válido o usuario inactivo. Intentos restantes: ${failInfo.remainingAttempts}.`,
+      });
     }
 
-    const assignedTenant = user.assignedTenantId || (user.allowedTenants && user.allowedTenants[0] !== "*" ? user.allowedTenants[0] : "turbonetwork");
-    const tenantRoles = loadRolesForTenant(assignedTenant);
-    const role = tenantRoles.find((r) => r.id === user.roleId) || rolesStore.find((r) => r.id === user.roleId);
+    const authInfo = buildAuthenticatedUserResponse(matchedUser, requestedTenant);
+    const assignedTenant = authInfo.assignedTenant;
 
-    const userPermissions = user.isSuperAdmin ? ALL_PERMISSIONS.map((p) => p.id) : (role?.permissions || []);
-    const userAllowedModules = user.isSuperAdmin ? [...ALL_MODULE_IDS] : (role?.allowedModules || [...ALL_MODULE_IDS]);
+    // Validar acceso a la empresa solicitada si no es SuperAdmin
+    if (
+      requestedTenant &&
+      !matchedUser.isSuperAdmin &&
+      !authInfo.allowedTenants.includes("*") &&
+      !authInfo.allowedTenants.map((t) => t.toLowerCase()).includes(requestedTenant.toLowerCase())
+    ) {
+      return reply.status(403).send({
+        success: false,
+        message: "No tienes acceso asignado a esta sede o empresa.",
+      });
+    }
+
+    // Verificación estricta de 2FA (Google Authenticator) cuando esté activada por usuario o por empresa
+    const tenantRequires2fa = is2faRequiredForTenant(assignedTenant);
+    const mustVerify2fa = Boolean(matchedUser.requireTotp) || tenantRequires2fa;
+
+    if (mustVerify2fa) {
+      const tenants = loadTenantsFromDisk();
+      const tenantObj = tenants.find((t) => t.id === assignedTenant);
+      const tenantName = tenantObj?.name || assignedTenant;
+
+      if (!totpCode || !totpCode.trim()) {
+        AuditService.log({
+          actorUserId: matchedUser.id,
+          actorName: matchedUser.name,
+          tenantId: assignedTenant,
+          ip: clientIp,
+          action: "auth.2fa_challenge",
+          entity: "auth",
+        });
+        return reply.send({
+          success: false,
+          requires2fa: true,
+          tenantId: assignedTenant,
+          tenantName,
+          message: tenantRequires2fa
+            ? "La política de seguridad de esta empresa exige verificación en 2 pasos."
+            : "Tu perfil tiene activada la verificación en 2 pasos.",
+          user: {
+            id: matchedUser.id,
+            name: matchedUser.name,
+            avatar: matchedUser.avatar,
+          },
+        });
+      }
+
+      const cleanCode = totpCode.trim();
+      const masterSecret = getMasterTotpSecret(assignedTenant);
+      const individualSecret = resolveUserTotpSecret(matchedUser);
+      const validTotp =
+        verifyTOTP(cleanCode, masterSecret) ||
+        (individualSecret ? verifyTOTP(cleanCode, individualSecret) : false);
+
+      if (!validTotp) {
+        const failInfo = SecurityService.recordLoginFailure(clientIp);
+        AuditService.log({
+          actorUserId: matchedUser.id,
+          actorName: matchedUser.name,
+          tenantId: assignedTenant,
+          ip: clientIp,
+          action: "auth.2fa_failed",
+          entity: "auth",
+          details: { remainingAttempts: failInfo.remainingAttempts },
+        });
+        return reply.status(401).send({
+          success: false,
+          message: "Código de Google Authenticator incorrecto o expirado.",
+        });
+      }
+    }
+
+    SecurityService.clearLoginFailures(clientIp);
+
+    const sessionRecord = SecurityService.createSession({
+      userId: matchedUser.id,
+      tenantId: assignedTenant,
+      ip: clientIp,
+      userAgent: (request.headers["user-agent"] as string) || "",
+    });
+
+    const jwtToken = fastify.jwt.sign(
+      {
+        jti: sessionRecord.jti,
+        sub: matchedUser.id,
+        name: matchedUser.name,
+        email: matchedUser.email,
+        roleId: matchedUser.roleId,
+        roleName: matchedUser.roleName,
+        isSuperAdmin: !!matchedUser.isSuperAdmin,
+        assignedTenantId: assignedTenant,
+        allowedTenants: authInfo.allowedTenants,
+        permissions: authInfo.userPermissions,
+      },
+      { expiresIn: `${env.SESSION_MAX_HOURS}h` }
+    );
+
+    const isSecure =
+      request.protocol === "https" ||
+      request.headers["x-forwarded-proto"] === "https";
+    reply.header("Set-Cookie", SecurityService.buildSessionCookie(jwtToken, isSecure));
+
+    AuditService.log({
+      actorUserId: matchedUser.id,
+      actorName: matchedUser.name,
+      tenantId: assignedTenant,
+      ip: clientIp,
+      action: "auth.login",
+      entity: "session",
+      details: { roleName: matchedUser.roleName },
+    });
 
     return reply.send({
       success: true,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        roleId: user.roleId,
-        roleName: user.roleName,
-        avatar: user.avatar,
-        isSuperAdmin: !!user.isSuperAdmin,
-        assignedTenantId: assignedTenant,
-        allowedTenants: (user.allowedTenants || (user.isSuperAdmin ? ["*"] : [assignedTenant])).filter(Boolean),
-        workSchedule: user.workSchedule || "08:00 - 17:00",
-        expectedCheckInTime: user.expectedCheckInTime || (user.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00",
-        expectedCheckOutTime: user.expectedCheckOutTime || (user.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00",
-        scheduleStartDate: user.scheduleStartDate || "",
-        scheduleEndDate: user.scheduleEndDate || "",
-        hireDate: user.hireDate || "",
-        birthDate: user.birthDate || "",
-        preferences: user.preferences || {},
-        permissions: userPermissions,
-        allowedModules: userAllowedModules,
-      }
+      message: `¡Bienvenido de nuevo, ${matchedUser.name}!`,
+      data: {
+        user: authInfo.userPayload,
+        permissions: authInfo.userPermissions,
+        allowedModules: authInfo.userAllowedModules,
+        token: jwtToken,
+        expiresAt: sessionRecord.maxExpiresAt,
+        lastActivityAt: sessionRecord.lastActivityAt,
+        idleTimeoutMs: sessionRecord.idleTimeoutMs,
+        idleTimeoutMinutes: env.SESSION_IDLE_TIMEOUT_MINUTES,
+      },
+    });
+  });
+
+  // Cerrar sesión explícitamente: revoca el token en el servidor y limpia la cookie HttpOnly
+  fastify.post("/auth/logout", async (request, reply) => {
+    const rawCookieToken = SecurityService.parseCookie(request.headers.cookie, "tn_session");
+    const authHeader = request.headers.authorization;
+    const rawBearer = authHeader && authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+    const token = rawBearer || rawCookieToken;
+
+    let actorId: number | null = request.authUser?.sub ?? null;
+    let actorName = request.authUser?.name || "Operador";
+    let tenantId = request.authUser?.assignedTenantId || "turbonetwork";
+
+    if (request.authUser?.jti) {
+      SecurityService.revokeSession(request.authUser.jti);
+    } else if (token) {
+      try {
+        const decoded: any = fastify.jwt.decode(token);
+        if (decoded?.jti) {
+          SecurityService.revokeSession(decoded.jti);
+          actorId = decoded.sub || null;
+          actorName = decoded.name || actorName;
+          tenantId = decoded.assignedTenantId || tenantId;
+        }
+      } catch {}
+    }
+
+    reply.header("Set-Cookie", SecurityService.buildClearSessionCookie());
+
+    if (actorId) {
+      AuditService.log({
+        actorUserId: actorId,
+        actorName,
+        tenantId,
+        ip: request.ip,
+        action: "auth.logout",
+        entity: "session",
+      });
+    }
+
+    return reply.send({
+      success: true,
+      message: "Sesión cerrada correctamente.",
+    });
+  });
+
+  // Renovar marca de actividad de sesión activa (mientras no supere maxExpiresAt)
+  fastify.post("/auth/refresh", async (request, reply) => {
+    if (!request.authUser || !request.sessionRecord) {
+      return reply.status(401).send({ success: false, message: "Sesión no válida" });
+    }
+    const check = SecurityService.validateSession(request.authUser.jti, true);
+    if (!check.valid || !check.session) {
+      reply.header("Set-Cookie", SecurityService.buildClearSessionCookie());
+      return reply.status(401).send({ success: false, message: "Sesión expirada" });
+    }
+    return reply.send({
+      success: true,
+      data: {
+        lastActivityAt: check.session.lastActivityAt,
+        expiresAt: check.session.maxExpiresAt,
+        idleTimeoutMs: check.session.idleTimeoutMs,
+      },
+    });
+  });
+
+  // Obtener sesión del usuario autenticado (SIN fallback a Superadministrador)
+  fastify.get("/auth/me", async (request, reply) => {
+    if (!request.authUser) {
+      return reply.status(401).send({
+        success: false,
+        code: "AUTH_REQUIRED",
+        message: "No hay una sesión activa válida.",
+      });
+    }
+
+    usersStore = loadUsersFromDisk();
+    const user = usersStore.find((u) => u.id === request.authUser!.sub && u.isActive);
+
+    if (!user) {
+      SecurityService.revokeSession(request.authUser.jti);
+      reply.header("Set-Cookie", SecurityService.buildClearSessionCookie());
+      return reply.status(401).send({
+        success: false,
+        code: "USER_INACTIVE",
+        message: "El operador ya no se encuentra activo.",
+      });
+    }
+
+    const authInfo = buildAuthenticatedUserResponse(user);
+    return reply.send({
+      success: true,
+      user: authInfo.userPayload,
+      session: request.sessionRecord
+        ? {
+            expiresAt: request.sessionRecord.maxExpiresAt,
+            lastActivityAt: request.sessionRecord.lastActivityAt,
+            idleTimeoutMs: request.sessionRecord.idleTimeoutMs,
+          }
+        : undefined,
+    });
+  });
+
+  // Servir avatares extraídos de Base64 de forma segura y cacheable
+  fastify.get("/media/avatars/:fileName", async (request, reply) => {
+    const { fileName } = request.params as { fileName: string };
+    const resolved = MediaService.resolveAvatarFile(fileName);
+    if (!resolved) {
+      return reply.status(404).send({ success: false, message: "Avatar no encontrado" });
+    }
+    const stream = fs.createReadStream(resolved.filePath);
+    return reply
+      .type(resolved.mimeType)
+      .header("Cache-Control", "public, max-age=86400")
+      .send(stream);
+  });
+
+  // Consultar bitácora inmutable de auditoría (restringido por RBAC a system:config / Superadmin)
+  fastify.get("/security/audit-logs", async (request, reply) => {
+    const query = request.query as { limit?: string; tenantId?: string } | undefined;
+    const limit = query?.limit ? parseInt(query.limit, 10) : 100;
+    const tenantId = query?.tenantId || resolveTenantId(request);
+    const logs = AuditService.list({
+      tenantId,
+      isSuperAdmin: Boolean(request.authUser?.isSuperAdmin),
+      limit,
+    });
+    return reply.send({
+      success: true,
+      count: logs.length,
+      data: logs,
     });
   });
 
@@ -577,12 +882,23 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       slug: parse.data.name.toLowerCase().replace(/\s+/g, "_"),
       description: parse.data.description || "Rol personalizado del sistema",
       permissions: parse.data.permissions,
-      allowedModules: Array.isArray(parse.data.allowedModules) && parse.data.allowedModules.length > 0
-        ? parse.data.allowedModules
-        : [...ALL_MODULE_IDS],
+      allowedModules:
+        Array.isArray(parse.data.allowedModules) && parse.data.allowedModules.length > 0
+          ? parse.data.allowedModules
+          : [...ALL_MODULE_IDS],
     };
     roles.push(newRole);
     saveRolesForTenant(tenantId, roles);
+
+    AuditService.log({
+      actorUserId: request.authUser?.sub,
+      actorName: request.authUser?.name,
+      tenantId,
+      ip: request.ip,
+      action: "roles.create",
+      entity: `role:${newRole.id}`,
+      details: { name: newRole.name, permissionsCount: newRole.permissions.length },
+    });
 
     return reply.status(201).send({ success: true, tenantId, data: newRole });
   });
@@ -592,7 +908,12 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     const tenantId = resolveTenantId(request);
     const { id } = request.params as { id: string };
     const roleId = parseInt(id, 10);
-    const body = request.body as { name?: string; description?: string; permissions?: string[]; allowedModules?: string[] };
+    const body = request.body as {
+      name?: string;
+      description?: string;
+      permissions?: string[];
+      allowedModules?: string[];
+    };
 
     const roles = loadRolesForTenant(tenantId);
     const role = roles.find((r) => r.id === roleId);
@@ -615,6 +936,17 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     saveRolesForTenant(tenantId, roles);
+
+    AuditService.log({
+      actorUserId: request.authUser?.sub,
+      actorName: request.authUser?.name,
+      tenantId,
+      ip: request.ip,
+      action: "roles.update",
+      entity: `role:${role.id}`,
+      details: { name: role.name },
+    });
+
     return reply.send({ success: true, tenantId, message: "Rol actualizado correctamente", data: role });
   });
 
@@ -625,7 +957,9 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     const roleId = parseInt(id, 10);
 
     if (roleId === 1) {
-      return reply.status(403).send({ success: false, message: "No es posible eliminar el rol Superadministrador del sistema" });
+      return reply
+        .status(403)
+        .send({ success: false, message: "No es posible eliminar el rol Superadministrador del sistema" });
     }
 
     const roles = loadRolesForTenant(tenantId);
@@ -640,14 +974,25 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       return userTenant === tenantId && u.roleId === roleId;
     });
     if (hasAssignedUsers) {
-      return reply.status(400).send({ 
-        success: false, 
-        message: "No se puede eliminar este rol porque tiene operadores asignados en esta empresa. Reasigne los operadores primero." 
+      return reply.status(400).send({
+        success: false,
+        message:
+          "No se puede eliminar este rol porque tiene operadores asignados en esta empresa. Reasigne los operadores primero.",
       });
     }
 
     const deleted = roles.splice(index, 1)[0];
     saveRolesForTenant(tenantId, roles);
+
+    AuditService.log({
+      actorUserId: request.authUser?.sub,
+      actorName: request.authUser?.name,
+      tenantId,
+      ip: request.ip,
+      action: "roles.delete",
+      entity: `role:${roleId}`,
+      details: { name: deleted.name },
+    });
 
     return reply.send({ success: true, tenantId, message: "Rol eliminado exitosamente", data: deleted });
   });
@@ -656,34 +1001,49 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get("/users", async (request, reply) => {
     usersStore = loadUsersFromDisk();
     const query = request.query as Record<string, any> | undefined;
-    const showAll = query?.all === "true" || query?.all === true;
-    const requestedTenant = (query?.tenantId || query?.tenant || request.headers["x-tenant-id"]) as string | undefined;
+    const showAll = (query?.all === "true" || query?.all === true) && Boolean(request.authUser?.isSuperAdmin);
+    const requestedTenant = (query?.tenantId || query?.tenant || request.headers["x-tenant-id"]) as
+      | string
+      | undefined;
     const tenantId = requestedTenant ? requestedTenant.trim().toLowerCase() : resolveTenantId(request);
 
     let list = usersStore;
     if (!showAll && tenantId) {
       list = usersStore.filter((u) => {
-        const uTenant = (u.assignedTenantId
-          ? u.assignedTenantId
-          : (Array.isArray(u.allowedTenants) && u.allowedTenants.length > 0 && !u.allowedTenants.includes("*")
+        const uTenant = (
+          u.assignedTenantId
+            ? u.assignedTenantId
+            : Array.isArray(u.allowedTenants) && u.allowedTenants.length > 0 && !u.allowedTenants.includes("*")
               ? u.allowedTenants[0]
-              : "turbonetwork")).trim().toLowerCase();
+              : "turbonetwork"
+        )
+          .trim()
+          .toLowerCase();
 
         if (uTenant === "*") return true;
         return uTenant === tenantId;
       });
     }
 
-    const sanitized = list.map(({ pin, ...safeUser }) => ({
-      ...safeUser,
-      assignedTenantId: safeUser.assignedTenantId || (Array.isArray(safeUser.allowedTenants) && safeUser.allowedTenants.length > 0 && !safeUser.allowedTenants.includes("*") ? safeUser.allowedTenants[0] : "turbonetwork"),
-      workSchedule: safeUser.workSchedule || "08:00 - 17:00",
-      scheduleStartDate: safeUser.scheduleStartDate || "",
-      scheduleEndDate: safeUser.scheduleEndDate || "",
-      preferences: safeUser.preferences || {},
-      requireTotp: Boolean(safeUser.requireTotp),
-      pinMasked: "••••••••",
-    }));
+    const sanitized = list.map((u) => {
+      const safeUser = sanitizeUserOutput(u);
+      return {
+        ...safeUser,
+        assignedTenantId:
+          safeUser.assignedTenantId ||
+          (Array.isArray(safeUser.allowedTenants) &&
+          safeUser.allowedTenants.length > 0 &&
+          !safeUser.allowedTenants.includes("*")
+            ? safeUser.allowedTenants[0]
+            : "turbonetwork"),
+        workSchedule: safeUser.workSchedule || "08:00 - 17:00",
+        scheduleStartDate: safeUser.scheduleStartDate || "",
+        scheduleEndDate: safeUser.scheduleEndDate || "",
+        preferences: safeUser.preferences || {},
+        requireTotp: Boolean(safeUser.requireTotp),
+        pinMasked: "••••••••",
+      };
+    });
     return reply.send({ success: true, count: sanitized.length, tenantId, data: sanitized });
   });
 
@@ -707,7 +1067,17 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     saveUsersToDisk();
 
-    const { pin, ...safeUser } = user;
+    AuditService.log({
+      actorUserId: request.authUser?.sub,
+      actorName: request.authUser?.name,
+      tenantId: resolveTenantId(request),
+      ip: request.ip,
+      action: "users.toggle_totp",
+      entity: `user:${user.id}`,
+      details: { targetName: user.name, requireTotp: user.requireTotp },
+    });
+
+    const safeUser = sanitizeUserOutput(user);
     return reply.send({
       success: true,
       message: user.requireTotp
@@ -718,14 +1088,21 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
-  // Registrar nuevo usuario con rol, PIN de 8 dígitos y horario
+  // Registrar nuevo usuario con rol, PIN hasheado con scrypt y horario
   fastify.post("/users", async (request, reply) => {
     const parse = createUserSchema.safeParse(request.body);
     if (!parse.success) {
       return reply.status(400).send({ success: false, errors: parse.error.format() });
     }
 
-    const rawTargetTenant = (parse.data.assignedTenantId || (parse.data.allowedTenants && parse.data.allowedTenants[0]) || resolveTenantId(request) || "turbonetwork").trim().toLowerCase();
+    const rawTargetTenant = (
+      parse.data.assignedTenantId ||
+      (parse.data.allowedTenants && parse.data.allowedTenants[0]) ||
+      resolveTenantId(request) ||
+      "turbonetwork"
+    )
+      .trim()
+      .toLowerCase();
     const targetTenant = rawTargetTenant || "turbonetwork";
     const tenantRoles = loadRolesForTenant(targetTenant);
     const role = tenantRoles.find((r) => r.id === parse.data.roleId) || rolesStore.find((r) => r.id === parse.data.roleId);
@@ -735,13 +1112,16 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     usersStore = loadUsersFromDisk();
 
-    // Comprobar email duplicado
     if (usersStore.some((u) => u.email.toLowerCase() === parse.data.email.toLowerCase())) {
       return reply.status(400).send({ success: false, message: "Ya existe un usuario con este correo" });
     }
 
-    // Comprobar PIN duplicado para evitar colisiones
-    if (usersStore.some((u) => u.pin === parse.data.pin)) {
+    const candidateLookup = SecurityService.hmacPinLookup(parse.data.pin);
+    if (
+      usersStore.some(
+        (u) => u.pinLookup === candidateLookup || SecurityService.verifyPin(parse.data.pin, u).valid
+      )
+    ) {
       return reply.status(400).send({ success: false, message: "Este PIN ya está asignado a otro operador" });
     }
 
@@ -749,7 +1129,8 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       id: Date.now(),
       name: parse.data.name,
       email: parse.data.email,
-      pin: parse.data.pin,
+      pinHash: SecurityService.hashPin(parse.data.pin),
+      pinLookup: candidateLookup,
       roleId: role.id,
       roleName: role.name,
       avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(parse.data.name)}`,
@@ -759,8 +1140,12 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       assignedTenantId: targetTenant,
       allowedTenants: [targetTenant],
       workSchedule: parse.data.workSchedule || "08:00 - 17:00",
-      expectedCheckInTime: parse.data.expectedCheckInTime || (parse.data.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00",
-      expectedCheckOutTime: parse.data.expectedCheckOutTime || (parse.data.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00",
+      expectedCheckInTime:
+        parse.data.expectedCheckInTime || parse.data.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1] || "08:00",
+      expectedCheckOutTime:
+        parse.data.expectedCheckOutTime ||
+        parse.data.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1] ||
+        "17:00",
       scheduleStartDate: parse.data.scheduleStartDate || "",
       scheduleEndDate: parse.data.scheduleEndDate || "",
       hireDate: parse.data.hireDate || "",
@@ -772,26 +1157,36 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     usersStore.push(newUser);
     saveUsersToDisk();
 
-        let zktecoSync = null;
+    let zktecoSync = null;
     if (parse.data.syncWithZkteco !== false) {
       try {
-        zktecoSync = enqueueZktecoUserInfo(newUser.pin, newUser.name, newUser.isSuperAdmin);
+        zktecoSync = enqueueZktecoUserInfo(parse.data.pin, newUser.name, newUser.isSuperAdmin);
       } catch (e) {
         console.warn("Aviso al encolar operador en ZKTeco:", e);
       }
     }
 
-    const { pin, ...safeUser } = newUser;
+    AuditService.log({
+      actorUserId: request.authUser?.sub,
+      actorName: request.authUser?.name,
+      tenantId: targetTenant,
+      ip: request.ip,
+      action: "users.create",
+      entity: `user:${newUser.id}`,
+      details: { name: newUser.name, email: newUser.email, roleName: newUser.roleName },
+    });
+
+    const safeUser = sanitizeUserOutput(newUser);
     return reply.status(201).send({
       success: true,
       message: zktecoSync
-        ? `Usuario registrado y enviado al terminal ZKTeco (PIN: ${newUser.pin}).`
-        : "Usuario registrado con PIN de 8 dígitos.",
-      data: { ...safeUser, pin: newUser.pin, pinMasked: "••••••••", zktecoSynced: !!zktecoSync },
+        ? `Usuario registrado y enviado al terminal ZKTeco.`
+        : "Usuario registrado de forma segura con PIN cifrado.",
+      data: { ...safeUser, pinMasked: "••••••••", zktecoSynced: !!zktecoSync },
     });
   });
 
-  // Actualizar usuario existente (nombre, email, horario, rol, etc.)
+  // Sincronizar usuario con ZKTeco
   fastify.post("/users/:id/sync-zkteco", async (request, reply) => {
     usersStore = loadUsersFromDisk();
     const { id } = request.params as { id: string };
@@ -802,11 +1197,14 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(404).send({ success: false, message: "Operador no encontrado" });
     }
 
+    const body = (request.body as { pin?: string }) || {};
+    const zktecoPin = body.pin && /^\d{4,12}$/.test(body.pin) ? body.pin : String(user.id);
+
     try {
-      const syncResult = enqueueZktecoUserInfo(user.pin, user.name, user.isSuperAdmin);
+      const syncResult = enqueueZktecoUserInfo(zktecoPin, user.name, user.isSuperAdmin);
       return reply.send({
         success: true,
-        message: `¡Operador "${user.name}" enviado a la memoria del ZKTeco (PIN: ${user.pin})!`,
+        message: `¡Operador "${user.name}" enviado a la memoria del ZKTeco!`,
         data: syncResult,
       });
     } catch (err: any) {
@@ -833,18 +1231,39 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const data = parse.data;
+    let shouldRevokeSessions = false;
+
     if (data.name) user.name = data.name;
     if (data.email) user.email = data.email;
-    if (data.avatar) user.avatar = data.avatar;
-    if (data.pin) user.pin = data.pin;
+    if (data.avatar !== undefined) {
+      user.avatar = MediaService.externalizeAvatarIfNeeded(data.avatar, `usr${user.id}`);
+    }
+    if (data.pin) {
+      const newLookup = SecurityService.hmacPinLookup(data.pin);
+      if (
+        usersStore.some(
+          (u) => u.id !== userId && (u.pinLookup === newLookup || SecurityService.verifyPin(data.pin!, u).valid)
+        )
+      ) {
+        return reply.status(400).send({ success: false, message: "Este PIN ya está asignado a otro operador" });
+      }
+      user.pinHash = SecurityService.hashPin(data.pin);
+      user.pinLookup = newLookup;
+      delete user.pin;
+      shouldRevokeSessions = true;
+    }
     if (data.roleId) {
       user.roleId = data.roleId;
       const targetTenant = user.assignedTenantId || resolveTenantId(request);
       const tenantRoles = loadRolesForTenant(targetTenant);
       const role = tenantRoles.find((r) => r.id === data.roleId) || rolesStore.find((r) => r.id === data.roleId);
       if (role) user.roleName = role.name;
+      shouldRevokeSessions = true;
     }
-    if (data.isActive !== undefined) user.isActive = data.isActive;
+    if (data.isActive !== undefined) {
+      user.isActive = data.isActive;
+      if (!data.isActive) shouldRevokeSessions = true;
+    }
     if (data.workSchedule !== undefined) user.workSchedule = data.workSchedule || undefined;
     if (data.expectedCheckInTime !== undefined) user.expectedCheckInTime = data.expectedCheckInTime || undefined;
     else if (data.workSchedule) {
@@ -868,12 +1287,14 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       } else if (assigned === "*") {
         user.allowedTenants = ["*"];
       }
+      shouldRevokeSessions = true;
     }
     if (data.allowedTenants !== undefined) {
       user.allowedTenants = Array.isArray(data.allowedTenants) ? data.allowedTenants.filter(Boolean) : [];
       if (user.allowedTenants.length === 1 && (!user.assignedTenantId || user.assignedTenantId === "*")) {
         user.assignedTenantId = user.allowedTenants[0];
       }
+      shouldRevokeSessions = true;
     }
     if (user.allowedTenants) {
       user.allowedTenants = user.allowedTenants.filter(Boolean);
@@ -883,7 +1304,21 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     saveUsersToDisk();
 
-    const { pin, ...safeUser } = user;
+    if (shouldRevokeSessions && userId !== request.authUser?.sub) {
+      SecurityService.revokeAllUserSessions(userId);
+    }
+
+    AuditService.log({
+      actorUserId: request.authUser?.sub,
+      actorName: request.authUser?.name,
+      tenantId: resolveTenantId(request),
+      ip: request.ip,
+      action: "users.update",
+      entity: `user:${user.id}`,
+      details: { name: user.name, isActive: user.isActive, roleId: user.roleId },
+    });
+
+    const safeUser = sanitizeUserOutput(user);
     return reply.send({
       success: true,
       message: "Operador actualizado correctamente",
@@ -908,25 +1343,63 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const { id, name, email, avatar, pin } = parse.data;
+
+    // Impedir que un usuario sin permiso users:manage edite el perfil de otro operador
+    const canManageUsers =
+      request.authUser?.isSuperAdmin ||
+      request.authUser?.roleId === 1 ||
+      request.authUser?.permissions?.includes("users:manage");
+
+    if (request.authUser && id !== request.authUser.sub && !canManageUsers) {
+      return reply.status(403).send({
+        success: false,
+        message: "Solo puedes modificar tu propio perfil de operador.",
+      });
+    }
+
     const user = usersStore.find((u) => u.id === id);
     if (!user) {
       return reply.status(404).send({ success: false, message: "Usuario no encontrado" });
     }
 
-    // Comprobar colisión de correo/usuario
     const duplicate = usersStore.find((u) => u.id !== id && u.email.toLowerCase() === email.toLowerCase());
     if (duplicate) {
       return reply.status(400).send({ success: false, message: "Este usuario o correo ya está en uso por otro operador" });
     }
 
+    if (pin) {
+      const newLookup = SecurityService.hmacPinLookup(pin);
+      if (
+        usersStore.some(
+          (u) => u.id !== id && (u.pinLookup === newLookup || SecurityService.verifyPin(pin, u).valid)
+        )
+      ) {
+        return reply.status(400).send({ success: false, message: "Este PIN ya está asignado a otro operador" });
+      }
+      user.pinHash = SecurityService.hashPin(pin);
+      user.pinLookup = newLookup;
+      delete user.pin;
+    }
+
     user.name = name;
     user.email = email;
-    if (avatar) user.avatar = avatar;
-    if (pin) user.pin = pin;
+    if (avatar) {
+      user.avatar = MediaService.externalizeAvatarIfNeeded(avatar, `usr${user.id}`);
+    }
 
     saveUsersToDisk();
 
-    const { pin: _, ...safeUser } = user;
+    AuditService.log({
+      actorUserId: request.authUser?.sub ?? id,
+      actorName: request.authUser?.name ?? name,
+      tenantId: resolveTenantId(request),
+      ip: request.ip,
+      action: "users.update_profile",
+      entity: `user:${user.id}`,
+      details: { pinChanged: Boolean(pin) },
+    });
+
+    const safeUser = sanitizeUserOutput(user);
     return reply.send({
       success: true,
       message: "¡Perfil de operador actualizado exitosamente!",
@@ -949,8 +1422,19 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(404).send({ success: false, message: "Operador no encontrado" });
     }
 
-    usersStore.splice(idx, 1);
+    const removed = usersStore.splice(idx, 1)[0];
     saveUsersToDisk();
+    SecurityService.revokeAllUserSessions(userId);
+
+    AuditService.log({
+      actorUserId: request.authUser?.sub,
+      actorName: request.authUser?.name,
+      tenantId: resolveTenantId(request),
+      ip: request.ip,
+      action: "users.delete",
+      entity: `user:${userId}`,
+      details: { name: removed.name, email: removed.email },
+    });
 
     return reply.send({ success: true, message: "Operador eliminado exitosamente" });
   });

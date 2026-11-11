@@ -77,12 +77,39 @@ export const tenantsRoutes: FastifyPluginAsync = async (fastify) => {
       const tenants = Array.isArray(rawTenants) && rawTenants.length > 0 ? rawTenants : [];
       const users = getUsersFromDisk() || [];
 
-      // Obtener información del usuario solicitante (si viene en header o sesión)
-      const rawUserId = request.headers["x-user-id"];
-      const requesterUserId = rawUserId ? parseInt(String(rawUserId), 10) : null;
+      // Si la petición NO está autenticada (ej. pantalla de login), devolver únicamente metadatos públicos básicos
+      if (!request.authUser) {
+        const publicTenants = tenants
+          .filter((t) => t && t.active !== false)
+          .map((t) => ({
+            id: t.id || "turbonetwork",
+            name: t.name,
+            tagline: t.tagline,
+            slug: t.slug,
+            primaryColor: t.primaryColor,
+            accentColor: t.accentColor,
+            logoUrl: t.logoUrl,
+            faviconUrl: t.faviconUrl,
+            pwaIconUrl: t.pwaIconUrl,
+            active: t.active !== false,
+            hasAccess: true,
+          }));
+        return reply.send({
+          success: true,
+          count: publicTenants.length,
+          isSuperAdmin: false,
+          data: publicTenants,
+        });
+      }
 
-      let isSuperAdmin = true; // Por defecto permitimos exploración si no hay usuario estricto
-      let allowedTenants: string[] = ["*"];
+      // Usuario autenticado mediante JWT verificado
+      const requesterUserId = request.authUser.sub;
+      let isSuperAdmin = Boolean(request.authUser.isSuperAdmin);
+      let allowedTenants: string[] = Array.isArray(request.authUser.allowedTenants)
+        ? request.authUser.allowedTenants
+        : isSuperAdmin
+          ? ["*"]
+          : [request.authUser.assignedTenantId || "turbonetwork"];
 
       if (requesterUserId && Array.isArray(users)) {
         const u = users.find((x) => x && x.id === requesterUserId);

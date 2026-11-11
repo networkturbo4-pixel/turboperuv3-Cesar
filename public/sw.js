@@ -1,5 +1,5 @@
 // TurboNetwork PWA - High Performance Service Worker
-const CACHE_NAME = 'turbonetwork-pwa-v10';
+const CACHE_NAME = 'turbonetwork-pwa-v11';
 
 const STATIC_SHELL = [
   '/',
@@ -10,6 +10,8 @@ const STATIC_SHELL = [
   '/icons/icon-512.png',
   '/icons/icon-maskable.png',
   '/icons/icon.svg',
+  '/js/session-guard.js',
+  '/js/qrcode.min.js',
   '/js/maps-module.js',
   '/assets/mapbox-gl.css',
   '/js/mapbox-gl.js',
