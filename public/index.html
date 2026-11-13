@@ -14632,7 +14632,7 @@
             <div class="p-3.5 rounded-xl bg-blue-500/[0.05] dark:bg-blue-500/10 border border-blue-500/20 space-y-2">
               <div class="flex justify-between items-center">
                 <label class="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <span>🔢 PIN de 8 Dígitos (Acceso Web & Reloj ZKTeco) *</span>
+                  <span>🔐 PIN Secreto de 8 Dígitos (Solo Acceso Web) *</span>
                 </label>
                 <button type="button" onclick="generateEmployeeOpRandomPin()" class="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-mono font-bold flex items-center gap-1">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -14644,7 +14644,7 @@
               </div>
               <div class="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
                 <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                <span>Este PIN servirá tanto para ingresar al software como para el registro y marcado biométrico en el reloj.</span>
+                <span>Este PIN es privado para ingresar a la web. En el reloj ZKTeco el usuario se guarda siempre con su <b>ID único numérico (DNI)</b> sin mezclar claves.</span>
               </div>
             </div>
           </div>
@@ -30018,16 +30018,10 @@ Estamos atentos para brindarle asistencia inmediata.
           await loadConfigModule();
           showToast("Operador creado con éxito");
 
-          // Preguntar sincronización con el reloj ZKTeco
-          const roleSelect = document.getElementById('nu-role');
-          const roleText = roleSelect && roleSelect.selectedIndex >= 0 ? roleSelect.options[roleSelect.selectedIndex].text : 'Operador';
-          promptZktecoSyncForUser({
-            id: data.data?.id,
-            name,
-            pin,
-            roleName: roleText,
-            isSuperAdmin: false
-          });
+          // Sincronización automática con ZKTeco usando su ID numérico único (ya encolada al crear en /api/users)
+          if (data.data?.id) {
+            fetch(`/api/users/${data.data.id}/sync-zkteco`, { method: 'POST' }).catch(() => {});
+          }
         } else {
           statusDiv.textContent = data.message || "Error al crear usuario";
           statusDiv.className = "text-xs text-rose-400 font-mono";
@@ -32907,7 +32901,10 @@ Estamos atentos para brindarle asistencia inmediata.
           <td style="padding: 7px 8px; text-align: center; color: #64748b;">${idx + 1}</td>
           <td style="padding: 7px 8px; font-weight: 700; color: #0f172a;">${escapeHtml(a.employeeName)}</td>
           <td style="padding: 7px 8px; font-family: monospace;">${a.date}</td>
-          <td style="padding: 7px 8px; font-family: monospace; font-weight: 700; color: #1e293b;">${a.checkInTime || '--:--'}</td>
+          <td style="padding: 7px 8px; font-family: monospace; font-weight: 700; color: #1e293b;">
+            ${a.checkInTime || '--:--'}
+            <div style="font-size: 9px; font-weight: 500; color: #475569;">Reloj: ${a.biometricCheckInTime || '—'} | Web: ${a.webCheckInTime || '—'}</div>
+          </td>
           <td style="padding: 7px 8px; font-family: monospace; color: #475569;">${a.lunchStart ? `${a.lunchStart} - ${a.lunchEndTime || '...'}` : 'No reg.'}</td>
           <td style="padding: 7px 8px; font-family: monospace; font-weight: 700; color: #1e293b;">${a.checkOut || '--:--'}</td>
           <td style="padding: 7px 8px; text-align: center;">
@@ -33415,8 +33412,8 @@ function copyRemoteScannerLink() {
       const onTime = list.filter(a => a.status === 'on_time').length;
       const late = list.filter(a => a.status === 'late').length;
       const blocked = list.filter(a => a.status === 'very_late_blocked').length;
-      const fpCount = list.filter(a => a.modality === 'fingerprint').length;
-      const gpsCount = list.filter(a => !a.modality || a.modality === 'geolocation').length;
+      const fpCount = list.filter(a => a.modality === 'fingerprint' || a.biometricCheckInTime || a.biometricVerified).length;
+      const gpsCount = list.filter(a => a.webCheckInTime || a.gpsVerified || (!a.modality && !a.biometricCheckInTime) || a.modality === 'geolocation').length;
       const manualCount = list.filter(a => a.modality === 'manual_auth').length;
 
       const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
@@ -33429,11 +33426,39 @@ function copyRemoteScannerLink() {
       setEl('kpi-att-manual', manualCount);
     }
 
+    function getAttendanceDualTimes(a) {
+      const bioIn = a.biometricCheckInTime || ((a.modality === 'fingerprint' || a.biometricVerified) && !a.webCheckInTime ? a.checkInTime : null);
+      const webIn = a.webCheckInTime || (a.modality !== 'fingerprint' && a.modality !== 'manual_auth' && !a.biometricCheckInTime ? a.checkInTime : null);
+      return { bioIn, webIn };
+    }
+
+    function formatDualCheckInHtml(a, compact = false) {
+      const { bioIn, webIn } = getAttendanceDualTimes(a);
+      if (a.modality === 'manual_auth') {
+        return `<span class="font-mono font-bold text-slate-800 dark:text-slate-200">${escapeHtml(a.checkInTime || '--:--')}</span>`;
+      }
+      if (compact) {
+        return `
+          <div class="font-mono">
+            <strong class="block text-slate-900 dark:text-slate-100">${escapeHtml(a.checkInTime || '--:--')}</strong>
+            <span class="block text-[9px] text-indigo-500">🖐️ ${escapeHtml(bioIn || '—')}</span>
+            <span class="block text-[9px] text-emerald-500">🌐 ${escapeHtml(webIn || '—')}</span>
+          </div>
+        `;
+      }
+      return `
+        <div class="space-y-0.5 font-mono leading-tight">
+          <div class="font-bold text-slate-900 dark:text-slate-100 text-xs" title="Hora oficial predominante para puntualidad">${escapeHtml(a.checkInTime || '--:--')}</div>
+          <div class="flex flex-col gap-0.5 pt-0.5">
+            <span class="inline-flex items-center gap-1 text-[10px] ${bioIn ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-400 dark:text-slate-500'}" title="${escapeHtml(a.biometricDeviceId || 'Reloj Biométrico ZKTeco')}">🖐️ Reloj: ${escapeHtml(bioIn || '—')}</span>
+            <span class="inline-flex items-center gap-1 text-[10px] ${webIn ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-400 dark:text-slate-500'}" title="Ingreso al Sistema Web con GPS">🌐 Web: ${escapeHtml(webIn || '—')}</span>
+          </div>
+        </div>
+      `;
+    }
+
     function getAttendanceModalityBadge(a) {
       const mod = a.modality || 'geolocation';
-      if (mod === 'fingerprint') {
-        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20" title="${escapeHtml(a.biometricDeviceId || 'Sensor Huella Oficina')}">🖐️ Huella Oficina</span>`;
-      }
       if (mod === 'manual_auth') {
         const approvalState = a.approvalStatus === 'pending'
           ? '<span class="text-amber-500 font-black">(Pendiente Jefe)</span>'
@@ -33443,7 +33468,23 @@ function copyRemoteScannerLink() {
           ${a.manualAuthReason ? `<div class="text-[9px] text-slate-400 truncate max-w-[150px]" title="${escapeHtml(a.manualAuthReason)}">${escapeHtml(a.manualAuthReason)}</div>` : ''}
         </div>`;
       }
-      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">📍 GPS Móvil</span>`;
+      const { bioIn, webIn } = getAttendanceDualTimes(a);
+      if (bioIn && webIn) {
+        return `<div class="space-y-1">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25" title="${escapeHtml(a.biometricDeviceId || 'ZKTeco + Web GPS')}">🖐️ Huella + 📍 Web</span>
+          ${a.remoteHomeAlert ? `<span class="block w-fit px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30" title="Abrió el sistema Web antes de registrar su huella física en oficina">⚠️ Web antes de Huella</span>` : ''}
+        </div>`;
+      }
+      if (bioIn || mod === 'fingerprint') {
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20" title="${escapeHtml(a.biometricDeviceId || 'Sensor Huella Oficina')}">🖐️ Huella ZKTeco</span>`;
+      }
+      if (a.workModality === 'office') {
+        return `<div class="space-y-0.5">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">📍 Web GPS</span>
+          <span class="block w-fit px-1.5 py-0.5 rounded text-[9px] font-semibold bg-slate-500/10 text-slate-500 dark:text-slate-400">Pend. Huella Oficina</span>
+        </div>`;
+      }
+      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">📍 Web GPS</span>`;
     }
 
     function renderAttendance(list) {
@@ -33515,7 +33556,7 @@ function copyRemoteScannerLink() {
               <td class="px-3.5 py-3.5 whitespace-nowrap">${tenantBadge}</td>
               <td class="px-3.5 py-3.5">${getAttendanceModalityBadge(a)}</td>
               <td class="px-4 py-3.5 font-mono text-slate-600 dark:text-slate-300">${a.date}</td>
-              <td class="px-4 py-3.5 font-mono font-bold text-slate-800 dark:text-slate-200">${a.checkInTime || '--:--'}</td>
+              <td class="px-4 py-3.5">${formatDualCheckInHtml(a, false)}</td>
               <td class="px-4 py-3.5 text-center">
                 <button type="button" onclick="openAttendancePhoto('${safePhotoArg}', '${escapeHtml(a.employeeName).replace(/'/g, "\\'")}', '${a.checkInTime}')" class="group relative inline-block" title="Ver fotografía">
                   <img class="w-8 h-8 rounded-lg object-cover border border-slate-300 dark:border-white/15 group-hover:scale-110 transition shadow-sm" src="${photoPreviewSrc}" alt="Selfie">
@@ -33562,7 +33603,7 @@ function copyRemoteScannerLink() {
                 ${statusBadge}
               </div>
               <div class="grid grid-cols-3 gap-2 p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] text-center text-xs font-mono">
-                <div><span class="text-[9px] text-slate-400 block uppercase">Entrada</span><strong>${a.checkInTime || '--:--'}</strong></div>
+                <div><span class="text-[9px] text-slate-400 block uppercase">Entrada</span>${formatDualCheckInHtml(a, true)}</div>
                 <div><span class="text-[9px] text-slate-400 block uppercase">Refrigerio</span><span>${a.lunchStart || '--:--'}</span></div>
                 <div><span class="text-[9px] text-slate-400 block uppercase">Salida</span><strong>${a.checkOut || '--:--'}</strong></div>
               </div>
@@ -34330,12 +34371,11 @@ function copyRemoteScannerLink() {
 
       switchEmployeeModalTab('hr');
 
-      // Comprobar si tiene operador vinculado en users
+      // Comprobar si tiene operador vinculado en users por ID único canónico
       const opUser = (typeof currentUsers !== 'undefined' ? currentUsers : []).find(u => 
-        (emp.operatorPin && u.pin === emp.operatorPin) || 
-        (emp.biometricPin && u.pin === emp.biometricPin) || 
-        (emp.email && u.email && u.email.toLowerCase() === emp.email.toLowerCase()) || 
-        (emp.operatorId && u.id === emp.operatorId)
+        u.id === emp.id ||
+        (emp.operatorId && u.id === emp.operatorId) ||
+        (emp.email && u.email && u.email.toLowerCase() === emp.email.toLowerCase())
       );
 
       const opSwitchEdit = document.getElementById('emp-op-create-switch');
@@ -34347,7 +34387,10 @@ function copyRemoteScannerLink() {
         const opEmailEl = document.getElementById('emp-op-email');
         if (opEmailEl) opEmailEl.value = opUser.email || emp.email || '';
         const opPinEl = document.getElementById('emp-op-pin');
-        if (opPinEl) opPinEl.value = opUser.pin || emp.operatorPin || emp.biometricPin || '';
+        if (opPinEl) {
+          opPinEl.value = '';
+          opPinEl.placeholder = 'Dejar vacío para conservar PIN actual';
+        }
         initEmployeeOpTenantAndRoles(opUser.assignedTenantId, opUser.roleId);
         const opHireEl = document.getElementById('emp-op-hire-date');
         if (opHireEl) opHireEl.value = opUser.hireDate || emp.hireDate || '';
@@ -34361,8 +34404,11 @@ function copyRemoteScannerLink() {
         const opEmailEl = document.getElementById('emp-op-email');
         if (opEmailEl) opEmailEl.value = emp.email || '';
         const opPinEl = document.getElementById('emp-op-pin');
-        if (opPinEl) opPinEl.value = (emp.biometricPin && /^\d{8}$/.test(emp.biometricPin)) ? emp.biometricPin : '';
-        if (!opPinEl.value) generateEmployeeOpRandomPin();
+        if (opPinEl) {
+          opPinEl.value = '';
+          opPinEl.placeholder = 'Ej. 40231948';
+          generateEmployeeOpRandomPin();
+        }
         initEmployeeOpTenantAndRoles(emp.operatorTenantId || activeTenantId, emp.operatorRoleId);
         const opHireEl = document.getElementById('emp-op-hire-date');
         if (opHireEl) opHireEl.value = emp.hireDate || '';
@@ -34613,16 +34659,16 @@ function copyRemoteScannerLink() {
 
       if (createOperator) {
         const opPin = (document.getElementById('emp-op-pin')?.value || '').trim();
-        if (!opPin || !/^\d{8}$/.test(opPin)) {
-          errBox.textContent = 'El PIN del operador debe ser exactamente de 8 dígitos numéricos.';
+        const existingLinkedOp = id && (typeof currentUsers !== 'undefined' ? currentUsers : []).some(u => Number(u.id) === Number(id));
+        if ((!existingLinkedOp && !opPin) || (opPin && !/^\d{8}$/.test(opPin))) {
+          errBox.textContent = 'El PIN secreto de acceso web debe tener exactamente 8 dígitos numéricos.';
           switchEmployeeModalTab('op');
           btn.disabled = false;
           btnText.textContent = id ? 'Guardar Cambios' : 'Guardar Colaborador';
           return;
         }
         payload.createOperator = true;
-        payload.operatorPin = opPin;
-        payload.biometricPin = opPin;
+        if (opPin) payload.operatorPin = opPin;
         payload.operatorRoleId = document.getElementById('emp-op-role')?.value || 1;
         payload.operatorTenantId = document.getElementById('emp-op-tenant')?.value || activeTenantId;
         payload.operatorName = (document.getElementById('emp-op-name')?.value || payload.name).trim();
@@ -34873,7 +34919,7 @@ function copyRemoteScannerLink() {
               return `
                 <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition font-sans text-xs">
                   <td class="py-2 px-3 font-mono text-slate-800 dark:text-slate-200 font-semibold">${a.date}</td>
-                  <td class="py-2 px-3 font-mono text-slate-900 dark:text-white font-bold">${a.checkInTime || '--:--'}</td>
+                  <td class="py-2 px-3">${formatDualCheckInHtml(a, true)}</td>
                   <td class="py-2 px-3 font-mono text-slate-600 dark:text-slate-400">${a.lunchStart ? `${a.lunchStart} - ${a.lunchEndTime || '...'}` : 'No reg.'}</td>
                   <td class="py-2 px-3 font-mono text-slate-900 dark:text-white font-bold">${a.checkOut || '--:--'}</td>
                   <td class="py-2 px-3 text-center">
@@ -36157,16 +36203,26 @@ function copyRemoteScannerLink() {
           const devDetails = document.getElementById('zk-device-details');
           const statusText = document.getElementById('zk-status-text');
           const dot = document.getElementById('zk-status-dot');
+          const out = document.getElementById('zk-diagnostic-output');
           if (cfgIp) cfgIp.textContent = data.serverIp || '192.168.1.155';
           if (cfgPort) cfgPort.textContent = String(data.serverPort || 3000);
           if (data.detectedDevice) {
-            if (devDetails) devDetails.textContent = `IP Reloj: ${data.detectedDevice.ip} | MAC: ${data.detectedDevice.mac || '00:17:61:12:FA:CD'}`;
+            const admsList = Array.isArray(data.connectedDevices) ? data.connectedDevices : [];
+            const snInfo = admsList.length > 0 ? ` | SN: ${admsList[0].sn}` : '';
+            if (devDetails) devDetails.textContent = `IP Reloj: ${data.detectedDevice.ip} | MAC: ${data.detectedDevice.mac || '00-17-61-12-fa-cd'}${snInfo}`;
             if (data.detectedDevice.reachable) {
-              if (statusText) statusText.textContent = 'Cable Ethernet Conectado (100 Mbps - En Línea)';
+              if (statusText) statusText.textContent = 'Terminal ZKTeco En Línea (Respondiendo en Red Local)';
               if (dot) dot.className = 'w-3 h-3 rounded-full bg-emerald-500 animate-pulse';
             } else {
-              if (statusText) statusText.textContent = 'Verificando enlace físico de cable...';
+              if (statusText) statusText.textContent = 'Terminal ZKTeco Fuera de Línea en Red Actual';
+              if (dot) dot.className = 'w-3 h-3 rounded-full bg-amber-500';
             }
+          }
+          if (out) {
+            out.classList.remove('hidden');
+            const pending = Number(data.pendingCommandsCount || 0);
+            const mapped = Array.isArray(data.employeesMapping) ? data.employeesMapping.length : 0;
+            out.textContent = `Estándar ID Único: DNI numérico (${mapped} usuarios unificados) | Cola persistente lista: ${pending} comando(s) pendientes de entrega al reloj.`;
           }
         }
       } catch (err) {
@@ -38426,7 +38482,7 @@ function copyRemoteScannerLink() {
       const bioBadge = document.getElementById('dossier-bio-badge');
       if (bioBadge) {
         if (emp.fingerprintEnrolled) {
-          bioBadge.textContent = `✓ Huella Activa (${emp.biometricId || 'BIO-' + emp.id})`;
+          bioBadge.textContent = `✓ Huella Activa (ID ${emp.biometricId || emp.id})`;
           bioBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-500';
         } else {
           bioBadge.textContent = 'Pendiente Enrolar';
@@ -38786,7 +38842,7 @@ function copyRemoteScannerLink() {
         const res = await fetch(`/api/rrhh/employees/${empId}/enroll-fingerprint`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ biometricId: `BIO-${String(empId).padStart(3, '0')}` })
+          body: JSON.stringify({ biometricId: String(empId) })
         });
         const data = await res.json();
         if (data.success) {

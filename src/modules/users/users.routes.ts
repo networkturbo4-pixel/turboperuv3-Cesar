@@ -5,10 +5,11 @@ import path from "path";
 import { env } from "../../config/env";
 import { resolveTenantId, getTenantFilePath, loadTenantsFromDisk } from "../tenants/tenants.service";
 import { is2faRequiredForTenant, getMasterTotpSecret } from "../settings/connections.service";
-import { verifyTOTP, enqueueZktecoUserInfo } from "../rrhh/rrhh.routes";
+import { verifyTOTP, enqueueZktecoUserInfo, enqueueZktecoDeleteUser } from "../rrhh/rrhh.routes";
 import { SecurityService } from "../security/security.service";
 import { AuditService } from "../security/audit.service";
 import { MediaService } from "../storage/media.service";
+import { extractCanonicalNumericId, allocateCanonicalUserId, toZktecoPin } from "./identity.service";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const ROLES_FILE = path.join(DATA_DIR, "roles.json");
@@ -102,6 +103,8 @@ export interface Role {
 
 export interface SystemUser {
   id: number;
+  dni?: string;
+  biometricPin?: string;
   name: string;
   email: string;
   pin?: string; // Legado: migrado automáticamente a pinHash + pinLookup
@@ -471,6 +474,7 @@ const pinLoginSchema = z.object({
 const createUserSchema = z.object({
   name: z.string().min(3),
   email: z.string().email(),
+  dni: z.string().nullable().optional(),
   pin: z.string().length(8).regex(/^\d{8}$/),
   roleId: z.number().int().positive(),
   workSchedule: z.string().nullable().optional(),
@@ -489,6 +493,7 @@ const createUserSchema = z.object({
 const updateUserSchema = z.object({
   name: z.string().min(2).optional(),
   email: z.string().email().optional(),
+  dni: z.string().nullable().optional(),
   avatar: z.string().nullable().optional(),
   pin: z.string().length(8).regex(/^\d{8}$/).optional(),
   roleId: z.number().int().positive().optional(),
@@ -562,11 +567,10 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     let matchedUser: SystemUser | undefined;
     for (const u of usersStore) {
       if (!u.isActive) continue;
-      if (u.pinLookup && u.pinLookup !== candidateLookup && !u.pin) continue;
       const check = SecurityService.verifyPin(pin, u);
       if (check.valid) {
         matchedUser = u;
-        if (check.needsMigration) {
+        if (check.needsMigration || u.pinLookup !== candidateLookup) {
           u.pinHash = SecurityService.hashPin(pin);
           u.pinLookup = candidateLookup;
           delete u.pin;
@@ -1125,31 +1129,74 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ success: false, message: "Este PIN ya está asignado a otro operador" });
     }
 
+    // Vincular automáticamente con employees.json si coincide por DNI o correo (un solo ID canónico)
+    const cleanDni = parse.data.dni ? String(parse.data.dni).trim() : "";
+    const dniNum = extractCanonicalNumericId(cleanDni);
+    let empsDisk: any[] = [];
+    try {
+      if (fs.existsSync(EMPLOYEES_FILE)) {
+        const rawEmps = JSON.parse(fs.readFileSync(EMPLOYEES_FILE, "utf-8"));
+        if (Array.isArray(rawEmps)) empsDisk = rawEmps;
+      }
+    } catch {}
+
+    const matchedEmpIdx = empsDisk.findIndex(
+      (e: any) =>
+        (cleanDni && String(e.dni || "").trim() === cleanDni) ||
+        (dniNum !== null && (e.id === dniNum || extractCanonicalNumericId(e.dni) === dniNum)) ||
+        (e.email && String(e.email).toLowerCase() === parse.data.email.toLowerCase())
+    );
+    const matchedEmp = matchedEmpIdx >= 0 ? empsDisk[matchedEmpIdx] : null;
+
+    if (matchedEmp && usersStore.some((u) => u.id === matchedEmp.id)) {
+      return reply.status(400).send({
+        success: false,
+        message: `El colaborador ${matchedEmp.name} (ID ${matchedEmp.id}) ya cuenta con un usuario operador activo.`,
+      });
+    }
+
+    const usedIds = new Set<number>([
+      1,
+      ...usersStore.map((u) => Number(u.id)),
+      ...empsDisk.filter((e: any) => !matchedEmp || e.id !== matchedEmp.id).map((e: any) => Number(e.id)),
+    ]);
+
+    const canonicalId = matchedEmp
+      ? Number(matchedEmp.id)
+      : allocateCanonicalUserId({
+          dni: cleanDni || null,
+          usedIds,
+        });
+    const zkUserIdStr = toZktecoPin(canonicalId);
+
     const newUser: SystemUser = {
-      id: Date.now(),
+      id: canonicalId,
+      dni: cleanDni || matchedEmp?.dni || undefined,
+      biometricPin: zkUserIdStr,
       name: parse.data.name,
       email: parse.data.email,
       pinHash: SecurityService.hashPin(parse.data.pin),
       pinLookup: candidateLookup,
       roleId: role.id,
       roleName: role.name,
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(parse.data.name)}`,
+      avatar: matchedEmp?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(parse.data.name)}`,
       isActive: true,
       createdAt: new Date().toISOString(),
       isSuperAdmin: false,
       assignedTenantId: targetTenant,
       allowedTenants: [targetTenant],
-      workSchedule: parse.data.workSchedule || "08:00 - 17:00",
+      workSchedule: parse.data.workSchedule || matchedEmp?.workSchedule || "08:00 - 17:00",
       expectedCheckInTime:
-        parse.data.expectedCheckInTime || parse.data.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1] || "08:00",
+        parse.data.expectedCheckInTime || parse.data.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1] || matchedEmp?.expectedCheckInTime || "08:00",
       expectedCheckOutTime:
         parse.data.expectedCheckOutTime ||
         parse.data.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1] ||
+        matchedEmp?.expectedCheckOutTime ||
         "17:00",
       scheduleStartDate: parse.data.scheduleStartDate || "",
       scheduleEndDate: parse.data.scheduleEndDate || "",
-      hireDate: parse.data.hireDate || "",
-      birthDate: parse.data.birthDate || "",
+      hireDate: parse.data.hireDate || matchedEmp?.hireDate || "",
+      birthDate: parse.data.birthDate || matchedEmp?.birthDate || "",
       preferences: {},
       requireTotp: parse.data.requireTotp === true,
     };
@@ -1157,10 +1204,26 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     usersStore.push(newUser);
     saveUsersToDisk();
 
+    if (matchedEmpIdx >= 0) {
+      empsDisk[matchedEmpIdx] = {
+        ...empsDisk[matchedEmpIdx],
+        operatorId: canonicalId,
+        operatorTenantId: targetTenant,
+        operatorRoleId: role.id,
+        operatorRoleName: role.name,
+        biometricPin: zkUserIdStr,
+        biometricId: zkUserIdStr,
+      };
+      try {
+        fs.writeFileSync(EMPLOYEES_FILE, JSON.stringify(empsDisk, null, 2), "utf-8");
+      } catch {}
+    }
+
     let zktecoSync = null;
     if (parse.data.syncWithZkteco !== false) {
       try {
-        zktecoSync = enqueueZktecoUserInfo(parse.data.pin, newUser.name, newUser.isSuperAdmin);
+        // IMPORTANTE: Enviar SIEMPRE el ID único numérico (zkUserIdStr), jamás el PIN secreto de login
+        zktecoSync = enqueueZktecoUserInfo(zkUserIdStr, newUser.name, newUser.isSuperAdmin);
       } catch (e) {
         console.warn("Aviso al encolar operador en ZKTeco:", e);
       }
@@ -1173,20 +1236,20 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       ip: request.ip,
       action: "users.create",
       entity: `user:${newUser.id}`,
-      details: { name: newUser.name, email: newUser.email, roleName: newUser.roleName },
+      details: { name: newUser.name, email: newUser.email, roleName: newUser.roleName, zkUserId: zkUserIdStr },
     });
 
     const safeUser = sanitizeUserOutput(newUser);
     return reply.status(201).send({
       success: true,
       message: zktecoSync
-        ? `Usuario registrado y enviado al terminal ZKTeco.`
-        : "Usuario registrado de forma segura con PIN cifrado.",
+        ? `Usuario registrado y encolado para ZKTeco (ID único: ${zkUserIdStr}).`
+        : `Usuario registrado de forma segura (ID único: ${zkUserIdStr}).`,
       data: { ...safeUser, pinMasked: "••••••••", zktecoSynced: !!zktecoSync },
     });
   });
 
-  // Sincronizar usuario con ZKTeco
+  // Sincronizar usuario con ZKTeco usando su ID único numérico (jamás su PIN secreto de acceso web)
   fastify.post("/users/:id/sync-zkteco", async (request, reply) => {
     usersStore = loadUsersFromDisk();
     const { id } = request.params as { id: string };
@@ -1197,14 +1260,20 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(404).send({ success: false, message: "Operador no encontrado" });
     }
 
-    const body = (request.body as { pin?: string }) || {};
-    const zktecoPin = body.pin && /^\d{4,12}$/.test(body.pin) ? body.pin : String(user.id);
+    const numericId = extractCanonicalNumericId(user.dni) || extractCanonicalNumericId(user.id);
+    if (!numericId) {
+      return reply.status(400).send({
+        success: false,
+        message: "El operador no posee un ID numérico válido de 1 a 9 dígitos para ZKTeco.",
+      });
+    }
+    const zktecoPin = toZktecoPin(numericId);
 
     try {
       const syncResult = enqueueZktecoUserInfo(zktecoPin, user.name, user.isSuperAdmin);
       return reply.send({
         success: true,
-        message: `¡Operador "${user.name}" enviado a la memoria del ZKTeco!`,
+        message: `¡Operador "${user.name}" enviado a la cola del ZKTeco (ID único: ${zktecoPin})!`,
         data: syncResult,
       });
     } catch (err: any) {
@@ -1425,6 +1494,37 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     const removed = usersStore.splice(idx, 1)[0];
     saveUsersToDisk();
     SecurityService.revokeAllUserSessions(userId);
+
+    // Desvincular operatorId en employees.json si sigue siendo colaborador activo, o eliminar de ZKTeco si era solo operador
+    let stillActiveEmployee = false;
+    try {
+      if (fs.existsSync(EMPLOYEES_FILE)) {
+        const rawEmps = JSON.parse(fs.readFileSync(EMPLOYEES_FILE, "utf-8"));
+        if (Array.isArray(rawEmps)) {
+          let empChanged = false;
+          for (const emp of rawEmps) {
+            if (emp.id === userId || emp.operatorId === userId) {
+              if (emp.status === "active") stillActiveEmployee = true;
+              delete emp.operatorId;
+              delete emp.operatorRoleId;
+              delete emp.operatorRoleName;
+              delete emp.operatorTenantId;
+              delete emp.operatorPin;
+              empChanged = true;
+            }
+          }
+          if (empChanged) {
+            fs.writeFileSync(EMPLOYEES_FILE, JSON.stringify(rawEmps, null, 2), "utf-8");
+          }
+        }
+      }
+    } catch {}
+
+    if (!stillActiveEmployee) {
+      try {
+        enqueueZktecoDeleteUser(userId);
+      } catch {}
+    }
 
     AuditService.log({
       actorUserId: request.authUser?.sub,

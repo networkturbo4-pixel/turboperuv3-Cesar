@@ -36,6 +36,7 @@ data/audit_logs.json
 data/uploads/
 data/updates_history.json
 data/connections_settings.json
+data/zkteco_state.json
 data/tenants/*/connections.json
 dist-desktop/*.exe
 tmp/

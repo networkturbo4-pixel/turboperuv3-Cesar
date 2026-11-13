@@ -9,6 +9,12 @@ import child_process from "child_process";
 import { resolveTenantId, loadTenantsFromDisk } from "../tenants/tenants.service";
 import { SecurityService } from "../security/security.service";
 import {
+  extractCanonicalNumericId,
+  allocateCanonicalUserId,
+  toZktecoPin,
+  matchesCanonicalIdentity,
+} from "../users/identity.service";
+import {
   EmployeeDocument,
   LeaveRequest,
   CommissionRule,
@@ -41,37 +47,146 @@ import {
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const EMPLOYEES_FILE = path.join(DATA_DIR, "employees.json");
 const ATTENDANCE_FILE = path.join(DATA_DIR, "attendance.json");
+const ZKTECO_STATE_FILE = path.join(DATA_DIR, "zkteco_state.json");
 
 // ============================================================================
-// REGISTRO Y COLA DE COMANDOS ZKTECO ADMS / PUSH EN MEMORIA
+// REGISTRO Y COLA DE COMANDOS ZKTECO ADMS / PUSH (PERSISTENTE EN DISCO + RAM)
 // ============================================================================
+export interface ZktecoDeviceInfo {
+  sn: string;
+  ip: string;
+  lastSeen: string;
+  pushVersion?: string;
+  totalSynced: number;
+  lastAttlogStamp?: string;
+}
+
 export const zktecoDeviceCommands: Record<string, string[]> = {};
 export let zktecoCommandIdSeq = 1000;
+export const zktecoAdmsDevices: Record<string, ZktecoDeviceInfo> = {};
 
-export const zktecoAdmsDevices: Record<
-  string,
-  { sn: string; ip: string; lastSeen: string; pushVersion?: string; totalSynced: number }
-> = {};
+const IGNORED_DIAG_SNS = new Set(["DIAG_CHECK", "TEST_LAN_BIND", "PING_TEST"]);
 
-export function enqueueZktecoUserInfo(pin: string, name: string, isSuperAdmin = false) {
-  const activeDevices = Object.keys(zktecoAdmsDevices);
-  const targets = activeDevices.length > 0 ? activeDevices : ["PENDING_BROADCAST", "ZKTECO-OFICINA"];
+export function isDiagnosticSn(sn: string): boolean {
+  return IGNORED_DIAG_SNS.has(String(sn || "").trim().toUpperCase());
+}
+
+export function loadZktecoStateFromDisk(): void {
+  try {
+    if (!fs.existsSync(ZKTECO_STATE_FILE)) return;
+    const raw = JSON.parse(fs.readFileSync(ZKTECO_STATE_FILE, "utf-8"));
+    if (typeof raw?.commandIdSeq === "number" && raw.commandIdSeq > zktecoCommandIdSeq) {
+      zktecoCommandIdSeq = raw.commandIdSeq;
+    }
+    if (raw?.devices && typeof raw.devices === "object") {
+      for (const sn of Object.keys(zktecoAdmsDevices)) delete zktecoAdmsDevices[sn];
+      for (const [sn, info] of Object.entries(raw.devices as Record<string, ZktecoDeviceInfo>)) {
+        if (!isDiagnosticSn(sn) && info && typeof info === "object") {
+          zktecoAdmsDevices[sn] = info;
+        }
+      }
+    }
+    if (raw?.commands && typeof raw.commands === "object") {
+      for (const sn of Object.keys(zktecoDeviceCommands)) delete zktecoDeviceCommands[sn];
+      for (const [sn, cmds] of Object.entries(raw.commands as Record<string, string[]>)) {
+        if (!isDiagnosticSn(sn) && Array.isArray(cmds)) {
+          zktecoDeviceCommands[sn] = cmds.filter((c) => typeof c === "string" && c.trim().length > 0);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[ZKTeco ADMS] Aviso al leer zkteco_state.json:", err);
+  }
+}
+
+export function saveZktecoStateToDisk(): void {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    const cleanDevices: Record<string, ZktecoDeviceInfo> = {};
+    for (const [sn, info] of Object.entries(zktecoAdmsDevices)) {
+      if (!isDiagnosticSn(sn)) cleanDevices[sn] = info;
+    }
+    const cleanCommands: Record<string, string[]> = {};
+    for (const [sn, cmds] of Object.entries(zktecoDeviceCommands)) {
+      if (!isDiagnosticSn(sn) && Array.isArray(cmds) && cmds.length > 0) {
+        cleanCommands[sn] = cmds;
+      }
+    }
+    fs.writeFileSync(
+      ZKTECO_STATE_FILE,
+      JSON.stringify(
+        {
+          updatedAt: new Date().toISOString(),
+          commandIdSeq: zktecoCommandIdSeq,
+          devices: cleanDevices,
+          commands: cleanCommands,
+        },
+        null,
+        2
+      ),
+      "utf-8"
+    );
+  } catch (err) {
+    console.error("[ZKTeco ADMS] Error al guardar zkteco_state.json:", err);
+  }
+}
+
+loadZktecoStateFromDisk();
+
+export function getZktecoQueueTargets(): string[] {
+  loadZktecoStateFromDisk();
+  const activeDevices = Object.keys(zktecoAdmsDevices).filter((sn) => !isDiagnosticSn(sn));
+  return activeDevices.length > 0 ? activeDevices : ["PENDING_BROADCAST"];
+}
+
+export function enqueueZktecoUserInfo(rawPinOrId: string | number, name: string, isSuperAdmin = false) {
+  const numericId = extractCanonicalNumericId(rawPinOrId);
+  if (!numericId) {
+    throw new Error(`El ID de usuario para ZKTeco debe ser numérico de 1 a 9 dígitos (recibido: "${rawPinOrId}")`);
+  }
+  const pin = toZktecoPin(numericId);
+  const targets = getZktecoQueueTargets();
   const cleanName = (name || `Usuario ${pin}`)
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9\s.-]/g, "")
     .trim()
     .slice(0, 24);
-  const pri = isSuperAdmin ? 14 : 0;
+  // Nunca enviar Pri=14 por defecto sin huella/clave previa, ya que bloquea el menú físico del reloj ZKTeco
+  const pri = 0;
   let count = 0;
   for (const sn of targets) {
     if (!zktecoDeviceCommands[sn]) zktecoDeviceCommands[sn] = [];
+    // Reemplazar comando pendiente previo del mismo PIN para evitar duplicados en cola
+    zktecoDeviceCommands[sn] = zktecoDeviceCommands[sn].filter(
+      (c) => !c.includes(`USERINFO PIN=${pin}\t`) && !c.endsWith(`USERINFO PIN=${pin}`)
+    );
     const cmdId = ++zktecoCommandIdSeq;
     const cmd = `C:${cmdId}:DATA UPDATE USERINFO PIN=${pin}\tName=${cleanName}\tPri=${pri}\tPasswd=\tCard=\tGrp=1\tTZ=1`;
     zktecoDeviceCommands[sn].push(cmd);
     count++;
   }
+  saveZktecoStateToDisk();
   return { targets, cleanName, pin, count };
+}
+
+export function enqueueZktecoDeleteUser(rawPinOrId: string | number) {
+  const numericId = extractCanonicalNumericId(rawPinOrId);
+  if (!numericId) return { targets: [], pin: "", count: 0 };
+  const pin = toZktecoPin(numericId);
+  const targets = getZktecoQueueTargets();
+  let count = 0;
+  for (const sn of targets) {
+    if (!zktecoDeviceCommands[sn]) zktecoDeviceCommands[sn] = [];
+    zktecoDeviceCommands[sn] = zktecoDeviceCommands[sn].filter(
+      (c) => !c.includes(`USERINFO PIN=${pin}\t`) && !c.endsWith(`USERINFO PIN=${pin}`)
+    );
+    const cmdId = ++zktecoCommandIdSeq;
+    zktecoDeviceCommands[sn].push(`C:${cmdId}:DATA DELETE USERINFO PIN=${pin}`);
+    count++;
+  }
+  saveZktecoStateToDisk();
+  return { targets, pin, count };
 }
 
 // ==========================================
@@ -159,8 +274,14 @@ export interface AttendanceRecord {
     accuracy?: number;
     address?: string;
   } | null;
-  // 3 Modalidades: Huella dactilar (oficina), Geolocalización (móvil/tienda), Autorización manual (campo/jefe)
+  // 3 Modalidades + Registro Dual Unificado (Huella ZKTeco + Ingreso Web GPS en una sola fila diaria)
   modality?: "fingerprint" | "geolocation" | "manual_auth";
+  webCheckInTime?: string | null;
+  biometricCheckInTime?: string | null;
+  webCheckOutTime?: string | null;
+  biometricCheckOutTime?: string | null;
+  workModality?: string;
+  remoteHomeAlert?: boolean;
   biometricVerified?: boolean;
   biometricDeviceId?: string;
   gpsVerified?: boolean;
@@ -312,11 +433,12 @@ function saveEmployeesToDisk(list: Employee[]) {
 }
 
 export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colaborador") {
-  const numId = typeof id === "string" ? parseInt(id, 10) : id;
-  // 1. Buscar en employees.json
+  const numId = extractCanonicalNumericId(id) ?? (typeof id === "string" ? parseInt(id, 10) : id);
+  const strId = String(id ?? "").trim();
+
+  // 1. Buscar en employees.json usando coincidencia estricta por ID numérico único / DNI
   const empList = loadEmployeesFromDisk();
-  const strId = String(id).trim();
-  const emp = empList.find((e) => e.id === numId || (strId && (e.biometricPin === strId || e.biometricId === strId || e.dni === strId)));
+  const emp = empList.find((e) => matchesCanonicalIdentity(e, strId));
   if (emp) {
     return {
       id: emp.id,
@@ -329,41 +451,35 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
       expectedCheckInTime: emp.expectedCheckInTime || (emp.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00",
       expectedCheckOutTime: emp.expectedCheckOutTime || (emp.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00",
       salary: emp.salary,
-      currency: emp.currency || "$",
+      currency: emp.currency || "S/",
       hireDate: emp.hireDate,
       avatar: emp.avatar,
       status: emp.status,
       publicToken: emp.publicToken,
       totpSecret: emp.totpSecret || "JBSWY3DPEHPK3PXP",
+      workModality: emp.workModality || "office",
       isRegisteredEmployee: true,
     };
   }
 
-  // 2. Buscar en users.json (operadores, técnicos y cajeros)
+  // 2. Buscar en users.json por ID numérico único / DNI (JAMÁS por PIN secreto de login)
   try {
     const uFile = path.join(DATA_DIR, "users.json");
     if (fs.existsSync(uFile)) {
       const uStore = JSON.parse(fs.readFileSync(uFile, "utf-8"));
-      const lookupHmac = /^\d{4,12}$/.test(strId) ? SecurityService.hmacPinLookup(strId) : "";
-      const user = uStore.find(
-        (u: any) =>
-          u.id === numId ||
-          String(u.id) === strId ||
-          (u.pin && String(u.pin) === strId) ||
-          (lookupHmac && u.pinLookup === lookupHmac)
-      );
+      const user = Array.isArray(uStore) ? uStore.find((u: any) => matchesCanonicalIdentity(u, strId)) : null;
       if (user) {
         return {
           id: user.id,
           name: user.name || fallbackName,
           position: user.roleName || "Operador de Red",
-          dni: (!SecurityService.isHashedPin(user.pin) && user.pin) ? user.pin : String(user.biometricPin || user.id),
-          phone: "+51 987 654 321",
+          dni: user.dni ? String(user.dni) : String(user.id),
+          phone: user.phone || "",
           email: user.email || "",
           workSchedule: user.workSchedule || "08:00 - 17:00",
           expectedCheckInTime: user.expectedCheckInTime || (user.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00",
           expectedCheckOutTime: user.expectedCheckOutTime || (user.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00",
-          salary: "2500.00",
+          salary: "0.00",
           currency: "S/",
           hireDate: user.hireDate || "2026-09-01",
           birthDate: user.birthDate || "",
@@ -371,14 +487,15 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
           status: (user.isActive ? "active" : "inactive") as "active" | "inactive",
           publicToken: `usr-${user.id}`,
           totpSecret: "JBSWY3DPEHPK3PXP",
+          workModality: "hybrid",
           isRegisteredEmployee: false,
         };
       }
     }
-  } catch (e) {}
+  } catch (_e) {}
 
   return {
-    id: numId,
+    id: Number.isFinite(numId) ? numId : 0,
     name: fallbackName,
     position: "Colaborador",
     dni: "",
@@ -386,13 +503,15 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
     email: "",
     workSchedule: "08:00 - 17:00",
     expectedCheckInTime: "08:00",
+    expectedCheckOutTime: "17:00",
     salary: "0",
-    currency: "$",
+    currency: "S/",
     hireDate: "2026-01-01",
     avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(fallbackName)}`,
     status: "active" as "active" | "inactive",
     publicToken: `colab-${numId}`,
     totpSecret: "JBSWY3DPEHPK3PXP",
+    workModality: "office",
     isRegisteredEmployee: false,
   };
 }
@@ -426,15 +545,101 @@ export function purgeOldAttendancePhotos(days = 60): number {
   }
 }
 
+export function timeStrToSeconds(t?: string | null): number {
+  if (!t || typeof t !== "string") return Number.MAX_SAFE_INTEGER;
+  const parts = t.trim().split(":").map(Number);
+  const h = Number.isFinite(parts[0]) ? parts[0] : 0;
+  const m = Number.isFinite(parts[1]) ? parts[1] : 0;
+  const s = Number.isFinite(parts[2]) ? parts[2] : 0;
+  return h * 3600 + m * 60 + s;
+}
+
+export function applyUnifiedCheckInRules(
+  record: AttendanceRecord,
+  resolvedUser?: { expectedCheckInTime?: string; workSchedule?: string; workModality?: string }
+): void {
+  // Backfill de registros previos si aún no tenían desglosados webCheckInTime / biometricCheckInTime
+  if (!record.webCheckInTime && !record.biometricCheckInTime && record.checkInTime) {
+    if (record.modality === "fingerprint" || record.biometricVerified) {
+      record.biometricCheckInTime = record.checkInTime;
+    } else if (record.modality !== "manual_auth") {
+      record.webCheckInTime = record.checkInTime;
+    }
+  }
+
+  const empModality = resolvedUser?.workModality || record.workModality || "hybrid";
+  record.workModality = empModality;
+
+  const hasBio = Boolean(record.biometricCheckInTime);
+  const hasWeb = Boolean(record.webCheckInTime);
+
+  if (hasBio && hasWeb) {
+    const bioSec = timeStrToSeconds(record.biometricCheckInTime);
+    const webSec = timeStrToSeconds(record.webCheckInTime);
+
+    if (empModality === "office") {
+      // Regla Anti-"vivo" para personal 100% de Oficina: la puntualidad oficial la dicta la huella física en el ZKTeco
+      record.checkInTime = record.biometricCheckInTime!;
+      record.remoteHomeAlert = webSec + 120 < bioSec;
+    } else {
+      // Para Campo / Remoto / Tienda GPS / Híbrido: predomina siempre la primera marcación registrada del día
+      record.checkInTime = webSec <= bioSec ? record.webCheckInTime! : record.biometricCheckInTime!;
+      record.remoteHomeAlert = false;
+    }
+    record.biometricVerified = true;
+    if (record.location) record.gpsVerified = true;
+  } else if (hasBio) {
+    record.checkInTime = record.biometricCheckInTime!;
+    record.remoteHomeAlert = false;
+  } else if (hasWeb) {
+    record.checkInTime = record.webCheckInTime!;
+    record.remoteHomeAlert = false;
+  }
+
+  // Recalcular estado de puntualidad usando la hora oficial predominante (excepto autorizaciones manuales)
+  if (record.modality !== "manual_auth" && record.checkInTime) {
+    let expectedTime = resolvedUser?.expectedCheckInTime || "08:00";
+    if (!resolvedUser?.expectedCheckInTime && resolvedUser?.workSchedule) {
+      const m = resolvedUser.workSchedule.match(/(\d{1,2}:\d{2})/);
+      if (m) expectedTime = m[1];
+    }
+    const [expH, expM] = expectedTime.split(":").map(Number);
+    const [curH, curM] = record.checkInTime.split(":").map(Number);
+    const diffMinutes = curH * 60 + curM - (expH * 60 + expM);
+
+    record.minutesLate = Math.max(0, diffMinutes);
+    if (diffMinutes <= 0) {
+      record.status = "on_time";
+    } else if (record.unlockedByTotp || record.lateWaived) {
+      record.status = "unlocked";
+    } else {
+      record.status = "very_late_blocked";
+    }
+  }
+}
+
 export function healAttendanceRecords(list: AttendanceRecord[]): boolean {
   let changed = false;
   for (const record of list) {
-    if (!record.employeeName || record.employeeName === "Colaborador") {
+    const isPlaceholder =
+      !record.employeeName ||
+      record.employeeName === "Colaborador" ||
+      record.employeeName.startsWith("Colaborador #");
+    if (isPlaceholder) {
       const resolved = resolveEmployeeOrUser(record.employeeId);
-      if (resolved && resolved.name && resolved.name !== "Colaborador") {
+      if (resolved && resolved.name && resolved.name !== "Colaborador" && !resolved.name.startsWith("Colaborador #")) {
+        record.employeeId = resolved.id;
         record.employeeName = resolved.name;
         changed = true;
       }
+    }
+    if (!record.webCheckInTime && !record.biometricCheckInTime && record.checkInTime && record.modality !== "manual_auth") {
+      if (record.modality === "fingerprint" || record.biometricVerified) {
+        record.biometricCheckInTime = record.checkInTime;
+      } else {
+        record.webCheckInTime = record.checkInTime;
+      }
+      changed = true;
     }
   }
   return changed;
@@ -497,6 +702,120 @@ export function saveSystemUsersToDisk(users: any[]): void {
     console.error("Error al guardar users.json:", err);
   }
 }
+
+export function autoMigrateUnifiedIdentitiesOnStartup(): void {
+  try {
+    const emps = loadEmployeesFromDisk();
+    const users = loadSystemUsersFromDisk();
+    const att = loadAttendanceFromDisk();
+
+    let empChanged = false;
+    let usersChanged = false;
+    let attChanged = false;
+
+    const oldEmpIdToNew = new Map<number, { newId: number; name: string }>();
+
+    // 1. Migrar colaboradores de IDs secuenciales antiguos (1..N) o BIO-xxx a su DNI numérico canónico
+    for (const emp of emps) {
+      const canonicalDni = extractCanonicalNumericId(emp.dni);
+      if (canonicalDni && canonicalDni > 1) {
+        if (emp.id !== canonicalDni) {
+          oldEmpIdToNew.set(emp.id, { newId: canonicalDni, name: emp.name });
+          emp.id = canonicalDni;
+          empChanged = true;
+        }
+        const pinStr = toZktecoPin(canonicalDni);
+        if (emp.biometricPin !== pinStr || emp.biometricId !== pinStr) {
+          emp.biometricPin = pinStr;
+          emp.biometricId = pinStr;
+          empChanged = true;
+        }
+      }
+      if ("operatorPin" in emp && emp.operatorPin) {
+        delete emp.operatorPin;
+        empChanged = true;
+      }
+    }
+
+    // 2. Normalizar usuarios del sistema (asegurar ID 1..9 dígitos y enlace 1-a-1 con RRHH sin alterar sesiones)
+    const rootAdmin = users.find((u) => u.id === 1);
+    if (rootAdmin && !rootAdmin.biometricPin) {
+      rootAdmin.biometricPin = toZktecoPin(extractCanonicalNumericId(rootAdmin.dni) || 1);
+      usersChanged = true;
+    }
+
+    for (const u of users) {
+      if (u.id === 1) continue;
+      const linkedEmp = emps.find(
+        (e) =>
+          (u.dni && extractCanonicalNumericId(e.dni) === extractCanonicalNumericId(u.dni)) ||
+          (u.email && e.email && String(e.email).trim().toLowerCase() === String(u.email).trim().toLowerCase())
+      );
+      if (linkedEmp) {
+        if (u.id !== linkedEmp.id || u.biometricPin !== toZktecoPin(linkedEmp.id)) {
+          u.id = linkedEmp.id;
+          u.dni = u.dni || linkedEmp.dni;
+          u.biometricPin = toZktecoPin(linkedEmp.id);
+          usersChanged = true;
+        }
+        if (linkedEmp.operatorId !== u.id) {
+          linkedEmp.operatorId = u.id;
+          empChanged = true;
+        }
+      } else if (!extractCanonicalNumericId(u.id)) {
+        const usedIds = [
+          ...emps.map((e) => e.id).filter((id) => Number.isInteger(id)),
+          ...users.filter((x) => x !== u).map((x) => x.id).filter((id) => Number.isInteger(id)),
+        ];
+        const newStandaloneId = allocateCanonicalUserId({ dni: u.dni, usedIds });
+        u.id = newStandaloneId;
+        u.biometricPin = toZktecoPin(newStandaloneId);
+        usersChanged = true;
+      }
+    }
+
+    // 3. Curar registros históricos de asistencia si existía colisión previa en ID=1 o IDs secuenciales antiguos
+    for (const rec of att) {
+      if (rec.employeeId === 1 && rootAdmin && rec.modality !== "fingerprint") {
+        const migratedEmp1 = oldEmpIdToNew.get(1);
+        if (migratedEmp1 && rec.employeeName === migratedEmp1.name) {
+          rec.employeeName = rootAdmin.name;
+          attChanged = true;
+        }
+      } else if (oldEmpIdToNew.has(rec.employeeId)) {
+        const mig = oldEmpIdToNew.get(rec.employeeId)!;
+        if (!rec.employeeName || rec.employeeName === mig.name) {
+          rec.employeeId = mig.newId;
+          rec.employeeName = mig.name;
+          attChanged = true;
+        }
+      }
+    }
+
+    if (healAttendanceRecords(att)) {
+      attChanged = true;
+    }
+
+    if (empChanged) {
+      saveEmployeesToDisk(emps);
+      employeesStore = emps;
+      console.log("[RRHH] ✅ Identidades de colaboradores migradas automáticamente a DNI numérico único.");
+    }
+    if (usersChanged) {
+      saveSystemUsersToDisk(users);
+      console.log("[RRHH] ✅ Identidades de operadores web normalizadas al estándar canónico.");
+    }
+    if (attChanged) {
+      saveAttendanceToDisk(att);
+      attendanceStore = att;
+      console.log("[RRHH] ✅ Historial de asistencias normalizado sin colisiones.");
+    }
+  } catch (err) {
+    console.warn("[RRHH] Aviso en auto-migración de identidades al iniciar:", err);
+  }
+}
+
+autoMigrateUnifiedIdentitiesOnStartup();
 
 export function getTenantRolesList(tenantId: string): any[] {
   try {
@@ -1188,7 +1507,11 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const credentialId = body.credentialId || `fp-webauthn-${empId}-${crypto.randomBytes(6).toString("hex")}`;
-    const biometricPin = body.biometricId || body.biometricPin || employeesStore[idx].biometricPin || `BIO-${String(empId).padStart(3, "0")}`;
+    const canonicalId =
+      extractCanonicalNumericId(employeesStore[idx].dni) ||
+      extractCanonicalNumericId(employeesStore[idx].id) ||
+      empId;
+    const biometricPin = toZktecoPin(canonicalId);
 
     employeesStore[idx] = {
       ...employeesStore[idx],
@@ -1383,7 +1706,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
-  // Crear colaborador (Acta de Personal)
+  // Crear colaborador (Acta de Personal) con Identidad Única (Sistema + ZKTeco)
   fastify.post("/rrhh/employees", async (request, reply) => {
     const parse = createEmployeeSchema.safeParse(request.body);
     if (!parse.success) {
@@ -1391,8 +1714,44 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     employeesStore = loadEmployeesFromDisk();
-    const nextId = employeesStore.length > 0 ? Math.max(...employeesStore.map((e) => e.id)) + 1 : 1;
+    const usersList = loadSystemUsersFromDisk();
     const body = parse.data;
+    const cleanDni = String(body.dni || "").trim();
+    const dniNum = extractCanonicalNumericId(cleanDni);
+
+    // Evitar duplicidad de colaborador por DNI / ID canónico
+    const duplicateEmp = employeesStore.find(
+      (e) =>
+        (cleanDni && String(e.dni || "").trim() === cleanDni) ||
+        (dniNum !== null && (e.id === dniNum || extractCanonicalNumericId(e.dni) === dniNum))
+    );
+    if (duplicateEmp) {
+      return reply.status(400).send({
+        success: false,
+        message: `Ya existe un colaborador registrado con el documento ${cleanDni} (${duplicateEmp.name}).`,
+      });
+    }
+
+    // Reutilizar ID de operador existente si ya había sido creado previamente con el mismo DNI o correo
+    const linkedExistingUser = usersList.find(
+      (u: any) =>
+        u.id !== 1 &&
+        ((dniNum !== null && (u.id === dniNum || extractCanonicalNumericId(u.dni) === dniNum)) ||
+          (body.email && u.email && u.email.toLowerCase() === body.email.trim().toLowerCase()))
+    );
+
+    const usedIds = new Set<number>([
+      1,
+      ...employeesStore.map((e) => e.id),
+      ...usersList.filter((u: any) => u.id !== linkedExistingUser?.id).map((u: any) => Number(u.id)),
+    ]);
+
+    const canonicalId = allocateCanonicalUserId({
+      dni: cleanDni,
+      preferredId: linkedExistingUser?.id,
+      usedIds,
+    });
+    const zkUserIdStr = toZktecoPin(canonicalId);
 
     let expectedTime = body.expectedCheckInTime;
     if (!expectedTime && body.workSchedule) {
@@ -1410,14 +1769,14 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const slugName = body.name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 15);
     const publicToken = `emp-${slugName}-${randomHex}`;
     const totpSecret = "JBSWY3DPEHPK3PXP";
-    // Sincronización automática de Operador y Reloj ZKTeco si se solicita
+
+    // Sincronización unificada de Operador Web (mismo ID numérico, PIN de acceso cifrado y separado de ZKTeco)
     let operatorCreated = false;
     const operatorPin = body.operatorPin ? String(body.operatorPin).trim() : "";
     let operatorUser: any = null;
 
     if (body.createOperator && operatorPin) {
       const targetTenant = (body.operatorTenantId || (request.headers["x-tenant-id"] as string) || "turbonetwork").trim().toLowerCase();
-      const usersList = loadSystemUsersFromDisk();
       const rolesList = getTenantRolesList(targetTenant);
       const chosenRoleId = body.operatorRoleId ? parseInt(String(body.operatorRoleId), 10) : (rolesList[0]?.id || 1);
       const chosenRole = rolesList.find((r: any) => r.id === chosenRoleId) || { id: chosenRoleId, name: "Operador" };
@@ -1426,13 +1785,28 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       const opName = (body.operatorName || body.name).trim();
       const opEmail = (body.operatorEmail || body.email).trim().toLowerCase();
       const opSched = body.operatorSchedule || body.workSchedule || "08:00 - 17:00";
-      const opIn = body.operatorExpectedIn || body.expectedCheckInTime || "08:00";
-      const opOut = body.operatorExpectedOut || "17:00";
+      const opIn = body.operatorExpectedIn || expectedTime || "08:00";
+      const opOut = body.operatorExpectedOut || expectedOutTime || "17:00";
 
       const opPinHash = SecurityService.hashPin(operatorPin);
       const opPinLookup = SecurityService.hmacPinLookup(operatorPin);
+
+      // Validar que el PIN secreto de acceso web no pertenezca a otra persona distinta
+      const pinConflict = usersList.find(
+        (u: any) =>
+          u.id !== canonicalId &&
+          u.id !== linkedExistingUser?.id &&
+          (u.pinLookup === opPinLookup || SecurityService.verifyPin(operatorPin, u).valid)
+      );
+      if (pinConflict) {
+        return reply.status(400).send({
+          success: false,
+          message: "El PIN de acceso web de 8 dígitos ya está asignado a otro operador.",
+        });
+      }
+
       const existingUserIdx = usersList.findIndex(
-        (u: any) => u.pin === operatorPin || u.pinLookup === opPinLookup || (u.email && u.email.toLowerCase() === opEmail)
+        (u: any) => u.id === canonicalId || (linkedExistingUser && u.id === linkedExistingUser.id)
       );
 
       if (existingUserIdx >= 0) {
@@ -1440,6 +1814,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         delete prev.pin;
         usersList[existingUserIdx] = {
           ...prev,
+          id: prev.id === 1 ? 1 : canonicalId,
+          dni: cleanDni,
+          biometricPin: prev.id === 1 ? "1" : zkUserIdStr,
           name: opName,
           email: opEmail,
           pinHash: opPinHash,
@@ -1447,7 +1824,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           roleId: chosenRole.id,
           roleName: chosenRole.name,
           assignedTenantId: targetTenant,
-          allowedTenants: [targetTenant],
+          allowedTenants: prev.isSuperAdmin ? prev.allowedTenants || ["*"] : [targetTenant],
           workSchedule: opSched,
           expectedCheckInTime: opIn,
           expectedCheckOutTime: opOut,
@@ -1457,14 +1834,16 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         operatorUser = usersList[existingUserIdx];
       } else {
         operatorUser = {
-          id: Date.now(),
+          id: canonicalId,
+          dni: cleanDni,
+          biometricPin: zkUserIdStr,
           name: opName,
           email: opEmail,
           pinHash: opPinHash,
           pinLookup: opPinLookup,
           roleId: chosenRole.id,
           roleName: chosenRole.name,
-          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(opName)}`,
+          avatar: body.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(opName)}`,
           isActive: body.status === "active",
           createdAt: new Date().toISOString(),
           isSuperAdmin,
@@ -1483,21 +1862,13 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
       saveSystemUsersToDisk(usersList);
       operatorCreated = true;
-
-      if (body.syncWithZkteco !== false) {
-        try {
-          enqueueZktecoUserInfo(operatorPin, opName, isSuperAdmin);
-        } catch (zErr) {
-          console.warn("Aviso al encolar en ZKTeco:", zErr);
-        }
-      }
     }
 
     const newEmp: Employee = {
-      id: nextId,
+      id: canonicalId,
       name: body.name,
       position: body.position,
-      dni: body.dni,
+      dni: cleanDni,
       phone: body.phone,
       email: body.email,
       workSchedule: body.workSchedule,
@@ -1516,12 +1887,12 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       contractStartDate: body.contractStartDate || body.hireDate || new Date().toISOString().slice(0, 10),
       contractEndDate: body.contractEndDate || "",
       workModality: body.workModality || "office",
-      biometricPin: operatorPin || body.biometricPin || body.dni || String(1000 + nextId),
-      operatorPin: operatorPin || undefined,
-      operatorId: operatorUser ? operatorUser.id : undefined,
-      operatorTenantId: operatorUser ? operatorUser.assignedTenantId : undefined,
-      operatorRoleId: operatorUser ? operatorUser.roleId : undefined,
-      operatorRoleName: operatorUser ? operatorUser.roleName : undefined,
+      biometricPin: zkUserIdStr,
+      biometricId: zkUserIdStr,
+      operatorId: operatorUser ? operatorUser.id : linkedExistingUser?.id,
+      operatorTenantId: operatorUser ? operatorUser.assignedTenantId : linkedExistingUser?.assignedTenantId,
+      operatorRoleId: operatorUser ? operatorUser.roleId : linkedExistingUser?.roleId,
+      operatorRoleName: operatorUser ? operatorUser.roleName : linkedExistingUser?.roleName,
       vacationDaysAccumulated: body.vacationDaysAccumulated,
       vacationDaysBaseTaken: body.vacationDaysBaseTaken,
       afpType: body.afpType || "AFP Integra",
@@ -1538,19 +1909,32 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     employeesStore.unshift(newEmp);
     saveEmployeesToDisk(employeesStore);
 
+    // Sincronizar automáticamente con ZKTeco usando SIEMPRE el ID numérico único (nunca el PIN de login)
+    if (body.syncWithZkteco !== false && body.status === "active") {
+      try {
+        const isDeviceAdmin =
+          Boolean(operatorUser?.isSuperAdmin) ||
+          (body.position || "").toLowerCase().includes("gerente") ||
+          (body.position || "").toLowerCase().includes("director");
+        enqueueZktecoUserInfo(zkUserIdStr, newEmp.name, isDeviceAdmin);
+      } catch (zErr) {
+        console.warn("Aviso al encolar colaborador en ZKTeco:", zErr);
+      }
+    }
+
     const leaves = loadLeavesFromDisk();
     const { peruDate } = getPeruDateTime();
 
     return reply.status(201).send({
       success: true,
       message: operatorCreated
-        ? `Colaborador y Operador (${operatorUser?.roleName || 'Operador'} - PIN: ${operatorPin}) creados y sincronizados con ZKTeco exitosamente.`
-        : "Acta de personal creada exitosamente",
+        ? `Colaborador y Operador creados y sincronizados con ZKTeco (ID único: ${zkUserIdStr}).`
+        : `Acta de personal creada y preparada para ZKTeco (ID único: ${zkUserIdStr}).`,
       data: enrichEmployeeExpediente(newEmp, leaves, peruDate),
     });
   });
 
-  // Editar colaborador
+  // Editar colaborador manteniendo sincronía 1-a-1 con Operadores Web y ZKTeco
   fastify.put("/rrhh/employees/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
     const empId = parseInt(id, 10);
@@ -1564,13 +1948,32 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const current = employeesStore[index];
     const body = request.body as Partial<Employee>;
     const bodyAny = request.body as any;
-    let operatorUpdated = false;
-    let operatorPin = bodyAny.operatorPin ? String(bodyAny.operatorPin).trim() : (current.operatorPin || "");
+    const cleanDni = body.dni !== undefined ? String(body.dni).trim() : String(current.dni || "").trim();
+    const zkUserIdStr = toZktecoPin(current.id);
+    const operatorPin = bodyAny.operatorPin ? String(bodyAny.operatorPin).trim() : "";
     let operatorUser: any = null;
 
-    if (bodyAny.createOperator && operatorPin) {
+    let expectedTime = body.expectedCheckInTime || current.expectedCheckInTime;
+    if (body.workSchedule && !body.expectedCheckInTime) {
+      const match = body.workSchedule.match(/(\d{1,2}:\d{2})/);
+      if (match) expectedTime = match[1];
+    }
+
+    let expectedOutTime = body.expectedCheckOutTime || current.expectedCheckOutTime;
+    if (body.workSchedule && !body.expectedCheckOutTime) {
+      const match = body.workSchedule.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/);
+      if (match) expectedOutTime = match[1];
+    }
+
+    const usersList = loadSystemUsersFromDisk();
+    const linkedIdx = usersList.findIndex(
+      (u: any) =>
+        u.id !== 1 &&
+        (u.id === current.id || (current.operatorId && u.id === current.operatorId))
+    );
+
+    if (bodyAny.createOperator) {
       const targetTenant = (bodyAny.operatorTenantId || current.operatorTenantId || (request.headers["x-tenant-id"] as string) || "turbonetwork").trim().toLowerCase();
-      const usersList = loadSystemUsersFromDisk();
       const rolesList = getTenantRolesList(targetTenant);
       const chosenRoleId = bodyAny.operatorRoleId ? parseInt(String(bodyAny.operatorRoleId), 10) : (rolesList[0]?.id || 1);
       const chosenRole = rolesList.find((r: any) => r.id === chosenRoleId) || { id: chosenRoleId, name: "Operador" };
@@ -1579,24 +1982,45 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       const opName = (bodyAny.operatorName || body.name || current.name).trim();
       const opEmail = (bodyAny.operatorEmail || body.email || current.email).trim().toLowerCase();
       const opSched = bodyAny.operatorSchedule || body.workSchedule || current.workSchedule || "08:00 - 17:00";
-      const opIn = bodyAny.operatorExpectedIn || body.expectedCheckInTime || current.expectedCheckInTime || "08:00";
-      const opOut = bodyAny.operatorExpectedOut || "17:00";
+      const opIn = bodyAny.operatorExpectedIn || expectedTime || "08:00";
+      const opOut = bodyAny.operatorExpectedOut || expectedOutTime || "17:00";
 
-      const opPinHash = SecurityService.hashPin(operatorPin);
-      const opPinLookup = SecurityService.hmacPinLookup(operatorPin);
-      const userIdx = usersList.findIndex(
-        (u: any) =>
-          (current.operatorId && u.id === current.operatorId) ||
-          u.pin === operatorPin ||
-          u.pinLookup === opPinLookup ||
-          (u.email && u.email.toLowerCase() === opEmail)
-      );
+      let opPinHash = linkedIdx >= 0 ? usersList[linkedIdx].pinHash : undefined;
+      let opPinLookup = linkedIdx >= 0 ? usersList[linkedIdx].pinLookup : undefined;
 
-      if (userIdx >= 0) {
-        const prev = { ...usersList[userIdx] };
+      if (operatorPin) {
+        const candidateLookup = SecurityService.hmacPinLookup(operatorPin);
+        const pinConflict = usersList.find(
+          (u: any, i: number) =>
+            i !== linkedIdx &&
+            u.id !== current.id &&
+            (u.pinLookup === candidateLookup || SecurityService.verifyPin(operatorPin, u).valid)
+        );
+        if (pinConflict) {
+          return reply.status(400).send({
+            success: false,
+            message: "El PIN de acceso web de 8 dígitos ya está asignado a otro operador.",
+          });
+        }
+        opPinHash = SecurityService.hashPin(operatorPin);
+        opPinLookup = candidateLookup;
+      }
+
+      if (!opPinHash) {
+        return reply.status(400).send({
+          success: false,
+          message: "Ingresa un PIN de acceso web de 8 dígitos para habilitar al operador.",
+        });
+      }
+
+      if (linkedIdx >= 0) {
+        const prev = { ...usersList[linkedIdx] };
         delete prev.pin;
-        usersList[userIdx] = {
+        usersList[linkedIdx] = {
           ...prev,
+          id: current.id,
+          dni: cleanDni,
+          biometricPin: zkUserIdStr,
           name: opName,
           email: opEmail,
           pinHash: opPinHash,
@@ -1609,19 +2033,21 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           expectedCheckInTime: opIn,
           expectedCheckOutTime: opOut,
           isSuperAdmin: prev.isSuperAdmin || isSuperAdmin,
-          isActive: body.status ? body.status === "active" : prev.isActive,
+          isActive: (body.status || current.status) === "active",
         };
-        operatorUser = usersList[userIdx];
+        operatorUser = usersList[linkedIdx];
       } else {
         operatorUser = {
-          id: Date.now(),
+          id: current.id,
+          dni: cleanDni,
+          biometricPin: zkUserIdStr,
           name: opName,
           email: opEmail,
           pinHash: opPinHash,
           pinLookup: opPinLookup,
           roleId: chosenRole.id,
           roleName: chosenRole.name,
-          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(opName)}`,
+          avatar: body.avatar || current.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(opName)}`,
           isActive: (body.status || current.status) === "active",
           createdAt: new Date().toISOString(),
           isSuperAdmin,
@@ -1639,62 +2065,76 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       saveSystemUsersToDisk(usersList);
-      operatorUpdated = true;
-
-      if (bodyAny.syncWithZkteco !== false) {
-        try {
-          enqueueZktecoUserInfo(operatorPin, opName, isSuperAdmin);
-        } catch (zErr) {
-          console.warn("Aviso al encolar en ZKTeco:", zErr);
-        }
-      }
-    }
-
-    let expectedTime = body.expectedCheckInTime || current.expectedCheckInTime;
-    if (body.workSchedule && !body.expectedCheckInTime) {
-      const match = body.workSchedule.match(/(\d{1,2}:\d{2})/);
-      if (match) expectedTime = match[1];
-    }
-
-    let expectedOutTime = body.expectedCheckOutTime || current.expectedCheckOutTime;
-    if (body.workSchedule && !body.expectedCheckOutTime) {
-      const match = body.workSchedule.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/);
-      if (match) expectedOutTime = match[1];
+    } else if (linkedIdx >= 0) {
+      // Mantener sincronizados datos básicos del operador vinculado con el mismo ID único
+      usersList[linkedIdx] = {
+        ...usersList[linkedIdx],
+        id: current.id,
+        dni: cleanDni,
+        biometricPin: zkUserIdStr,
+        name: (body.name || current.name).trim(),
+        email: (body.email || current.email || usersList[linkedIdx].email || "").trim().toLowerCase(),
+        workSchedule: body.workSchedule || current.workSchedule || usersList[linkedIdx].workSchedule,
+        expectedCheckInTime: expectedTime || "08:00",
+        expectedCheckOutTime: expectedOutTime || "17:00",
+        isActive: (body.status || current.status) === "active",
+      };
+      operatorUser = usersList[linkedIdx];
+      saveSystemUsersToDisk(usersList);
     }
 
     const updated: Employee = {
       ...current,
       ...body,
       id: current.id,
+      dni: cleanDni,
       expectedCheckInTime: expectedTime,
       expectedCheckOutTime: expectedOutTime || "17:00",
       workDays: body.workDays !== undefined ? body.workDays : (current.workDays || ["lun", "mar", "mie", "jue", "vie"]),
       specialSchedules: (body as any).specialSchedules !== undefined ? (body as any).specialSchedules : (current.specialSchedules || {}),
       bonus: body.bonus !== undefined ? (typeof body.bonus === "number" ? (body.bonus as number).toFixed(2) : String(body.bonus).trim()) : (current.bonus || "0.00"),
       bonusDescription: body.bonusDescription !== undefined ? String(body.bonusDescription).trim() : (current.bonusDescription || ""),
-      operatorPin: operatorPin || current.operatorPin,
-      biometricPin: operatorPin || body.biometricPin || current.biometricPin,
+      operatorPin: undefined,
+      biometricPin: zkUserIdStr,
+      biometricId: zkUserIdStr,
       operatorId: operatorUser ? operatorUser.id : current.operatorId,
       operatorTenantId: operatorUser ? operatorUser.assignedTenantId : current.operatorTenantId,
       operatorRoleId: operatorUser ? operatorUser.roleId : current.operatorRoleId,
       operatorRoleName: operatorUser ? operatorUser.roleName : current.operatorRoleName,
       updatedAt: new Date().toISOString(),
     };
+    delete updated.operatorPin;
 
     employeesStore[index] = updated;
     saveEmployeesToDisk(employeesStore);
+
+    if (bodyAny.syncWithZkteco !== false) {
+      try {
+        if (updated.status === "inactive") {
+          enqueueZktecoDeleteUser(zkUserIdStr);
+        } else {
+          const isDeviceAdmin =
+            Boolean(operatorUser?.isSuperAdmin) ||
+            (updated.position || "").toLowerCase().includes("gerente") ||
+            (updated.position || "").toLowerCase().includes("director");
+          enqueueZktecoUserInfo(zkUserIdStr, updated.name, isDeviceAdmin);
+        }
+      } catch (zErr) {
+        console.warn("Aviso al sincronizar colaborador en ZKTeco:", zErr);
+      }
+    }
 
     const leaves = loadLeavesFromDisk();
     const { peruDate } = getPeruDateTime();
 
     return reply.send({
       success: true,
-      message: "Acta de personal actualizada exitosamente",
+      message: `Acta de personal actualizada exitosamente (ID único: ${zkUserIdStr})`,
       data: enrichEmployeeExpediente(updated, leaves, peruDate),
     });
   });
 
-  // Eliminar colaborador
+  // Eliminar colaborador (y limpiar su acceso web vinculado + memoria ZKTeco)
   fastify.delete("/rrhh/employees/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
     const empId = parseInt(id, 10);
@@ -1708,9 +2148,26 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const removed = employeesStore.splice(index, 1)[0];
     saveEmployeesToDisk(employeesStore);
 
+    // Eliminar operador vinculado (salvo Superadministrador raíz id=1)
+    const usersList = loadSystemUsersFromDisk();
+    const filteredUsers = usersList.filter(
+      (u: any) => u.id === 1 || (u.id !== empId && (!removed.operatorId || u.id !== removed.operatorId))
+    );
+    if (filteredUsers.length !== usersList.length) {
+      saveSystemUsersToDisk(filteredUsers);
+      SecurityService.revokeAllUserSessions(empId);
+      if (removed.operatorId && removed.operatorId !== 1) {
+        SecurityService.revokeAllUserSessions(removed.operatorId);
+      }
+    }
+
+    try {
+      enqueueZktecoDeleteUser(empId);
+    } catch (_e) {}
+
     return reply.send({
       success: true,
-      message: `Colaborador ${removed.name} eliminado exitosamente`,
+      message: `Colaborador ${removed.name} eliminado exitosamente del sistema y de la cola ZKTeco`,
       data: removed,
     });
   });
@@ -1762,7 +2219,13 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       );
     }
     if (modality && modality !== "all") {
-      list = list.filter((a) => (a.modality || "geolocation") === modality);
+      if (modality === "fingerprint") {
+        list = list.filter((a) => a.modality === "fingerprint" || Boolean(a.biometricCheckInTime) || Boolean(a.biometricVerified));
+      } else if (modality === "geolocation") {
+        list = list.filter((a) => (!a.modality || a.modality === "geolocation") || Boolean(a.webCheckInTime) || Boolean(a.gpsVerified));
+      } else {
+        list = list.filter((a) => (a.modality || "geolocation") === modality);
+      }
     }
 
     return reply.send({
@@ -1974,6 +2437,31 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
+      // Si hoy ya marcó primero en el reloj biométrico ZKTeco y ahora ingresa por Web,
+      // guardar también su hora de ingreso Web, Selfie y GPS sin pisar la entrada biométrica previa.
+      let updatedDual = false;
+      if (!existing.webCheckInTime && modality !== "fingerprint" && modality !== "manual_auth") {
+        existing.webCheckInTime = currentTimeStr;
+        if (photo && photo.startsWith("data:image/") && (!existing.photo || !existing.photo.startsWith("data:image/"))) {
+          existing.photo = photo;
+        }
+        if (location && location.latitude != null && location.longitude != null) {
+          existing.location = location;
+          existing.gpsVerified = true;
+        }
+        applyUnifiedCheckInRules(existing, resolvedUser);
+        existing.notes = existing.biometricCheckInTime
+          ? `Doble registro verificado — Reloj: ${existing.biometricCheckInTime} | Web: ${existing.webCheckInTime}`
+          : existing.notes;
+        updatedDual = true;
+      } else if (!existing.biometricCheckInTime && modality === "fingerprint") {
+        existing.biometricCheckInTime = currentTimeStr;
+        existing.biometricVerified = true;
+        existing.biometricDeviceId = biometricDeviceId || existing.biometricDeviceId || "ZKTeco / WebAuthn Oficina";
+        applyUnifiedCheckInRules(existing, resolvedUser);
+        updatedDual = true;
+      }
+
       const existingWasLate =
         existing.status === "very_late_blocked" ||
         existing.status === "late" ||
@@ -1981,6 +2469,10 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       const existingStillBlocked = existingWasLate && !existing.unlockedByTotp && !existing.lateWaived;
       if (existingStillBlocked && existing.status !== "very_late_blocked") {
         existing.status = "very_late_blocked";
+        updatedDual = true;
+      }
+
+      if (updatedDual) {
         saveAttendanceToDisk(attendanceStore);
       }
 
@@ -1988,6 +2480,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         success: true,
         message: existingStillBlocked
           ? `Acceso bloqueado por tardanza (+${existing.minutesLate || 1} min tarde). Ingrese código de Google Authenticator.`
+          : updatedDual && existing.biometricCheckInTime
+          ? `Ingreso Web (${currentTimeStr}) vinculado a tu marcación biométrica (${existing.biometricCheckInTime}).`
           : existing.isShared
           ? "Ya cuentas con asistencia compartida registrada para el día de hoy"
           : `Ya registraste tu asistencia para ${existing.tenantName || resolvedTenantName} el día de hoy`,
@@ -2041,6 +2535,10 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       photo,
       location: location || null,
       modality,
+      webCheckInTime: modality !== "fingerprint" && modality !== "manual_auth" ? currentTimeStr : null,
+      biometricCheckInTime: modality === "fingerprint" ? currentTimeStr : null,
+      workModality: resolvedUser.workModality || "hybrid",
+      remoteHomeAlert: false,
       biometricVerified,
       biometricDeviceId: biometricDeviceId || (modality === "fingerprint" ? "ZKTeco / WebAuthn Oficina" : undefined),
       gpsVerified,
@@ -2056,6 +2554,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           ? `Validación biométrica por huella dactilar (${biometricDeviceId || "Oficina"})`
           : undefined,
     };
+    applyUnifiedCheckInRules(newRecord, resolvedUser);
 
     attendanceStore.unshift(newRecord);
     saveAttendanceToDisk(attendanceStore);
@@ -2108,14 +2607,17 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       if (existing) {
         if ((body.action === "check_out" || body.checkOutTime) && !existing.checkOut) {
           existing.checkOut = body.checkOutTime || peruTime;
-          existing.modality = "fingerprint";
+          existing.biometricCheckOutTime = existing.checkOut;
           existing.biometricVerified = true;
           existing.biometricDeviceId = devName;
           synced.push(existing);
         } else if (body.employeeId) {
-          existing.modality = "fingerprint";
+          if (!existing.biometricCheckInTime) {
+            existing.biometricCheckInTime = timeStr;
+          }
           existing.biometricVerified = true;
           existing.biometricDeviceId = devName;
+          applyUnifiedCheckInRules(existing, emp);
           synced.push(existing);
         }
         continue;
@@ -2136,18 +2638,18 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         date: dateStr,
         checkIn: now.toISOString(),
         checkInTime: timeStr,
+        webCheckInTime: null,
+        biometricCheckInTime: body.action === "check_out" ? null : timeStr,
+        biometricCheckOutTime: body.action === "check_out" ? peruTime : (body.checkOutTime || null),
+        workModality: emp.workModality || "office",
+        remoteHomeAlert: false,
         lunchStart: null,
         lunchEndTime: null,
         checkOut: body.action === "check_out" ? peruTime : (body.checkOutTime || null),
         overtimeUnlocked: false,
         overtimeMinutes: 0,
         photo: emp.avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=Fingerprint",
-        location: {
-          latitude: -12.046374,
-          longitude: -77.042793,
-          accuracy: 5,
-          address: `Lector Biométrico de Huella - ${devName}`,
-        },
+        location: null,
         modality: "fingerprint",
         biometricVerified: true,
         biometricDeviceId: devName,
@@ -2157,6 +2659,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         unlockedByTotp: false,
         notes: `Sincronizado desde lector de huella dactilar (${devName})`,
       };
+      applyUnifiedCheckInRules(rec, emp);
 
       attendanceStore.unshift(rec);
       synced.push(rec);
@@ -2616,6 +3119,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     record.checkOut = peruTime;
+    record.webCheckOutTime = peruTime;
     if (location) record.checkOutLocation = location;
 
     // Calcular minutos de horas extras si fue desbloqueado con TOTP o si excedió hora de salida
@@ -3282,6 +3786,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   // E. DIAGNÓSTICO DE RED Y ESTADO DEL TERMINAL ZKTECO (MB360 / MB160)
   // -------------------------------------------------------------
   fastify.get("/rrhh/zkteco/status", async (_request, reply) => {
+    loadZktecoStateFromDisk();
     const nets = os.networkInterfaces();
     const localIps: string[] = [];
     for (const name of Object.keys(nets)) {
@@ -3291,15 +3796,35 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
     }
-    const serverIp = localIps.find((ip) => ip.startsWith("192.168.1.155")) || localIps.find((ip) => ip.startsWith("192.168.1.")) || localIps[0] || "192.168.1.155";
+    const serverIp =
+      localIps.find((ip) => ip === "192.168.1.155") ||
+      localIps.find((ip) => ip.startsWith("192.168.1.")) ||
+      localIps.find((ip) => ip.startsWith("192.168.")) ||
+      localIps[0] ||
+      "192.168.1.155";
     const isPublicServer = !serverIp.startsWith("192.168.") && !serverIp.startsWith("10.") && !serverIp.startsWith("127.");
     const serverPort = isPublicServer ? 80 : (Number(process.env.PORT) || 3000);
     const emps = loadEmployeesFromDisk();
+    const usersList = loadSystemUsersFromDisk();
 
-    // Diagnosticar presencia del terminal ZKTeco en la red local
+    // Diagnosticar presencia del terminal ZKTeco en la red local (ARP + Ping)
+    const knownDevices = Object.values(zktecoAdmsDevices);
+    const lastAdmsIp = knownDevices.find((d) => d.ip && d.ip !== "LAN" && d.ip !== "127.0.0.1")?.ip;
+    let candidateIp = lastAdmsIp || "192.168.1.150";
+    let candidateMac = "00-17-61-12-fa-cd";
+
+    try {
+      const arpOut = child_process.execSync("arp -a", { encoding: "utf-8" });
+      const zkArpMatch = arpOut.match(/(\d+\.\d+\.\d+\.\d+)\s+(00[:-]17[:-]61[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2})/);
+      if (zkArpMatch) {
+        candidateIp = zkArpMatch[1];
+        candidateMac = zkArpMatch[2].toLowerCase().replace(/:/g, "-");
+      }
+    } catch (_e) {}
+
     const detectedDevice = {
-      ip: "192.168.1.150",
-      mac: "00-17-61-12-fa-cd",
+      ip: candidateIp,
+      mac: candidateMac,
       vendor: "ZKTeco Inc.",
       reachable: false,
     };
@@ -3316,19 +3841,47 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const { peruDate, peruTime } = getPeruDateTime();
     const currentServerTime = `${peruDate} ${peruTime}`;
 
+    // Catálogo unificado (Colaboradores + Operadores sin duplicados)
+    const unifiedDirectory: Array<{ id: number; name: string; position: string; zkUserId: string; dni: string; type: string }> = [];
+    for (const e of emps) {
+      if (e.status && e.status !== "active") continue;
+      const zkUserId = String(extractCanonicalNumericId(e.dni) || extractCanonicalNumericId(e.id) || e.id);
+      unifiedDirectory.push({
+        id: e.id,
+        name: e.name,
+        position: e.position,
+        zkUserId,
+        dni: e.dni,
+        type: e.operatorId ? "colaborador+operador" : "colaborador",
+      });
+    }
+    for (const u of usersList) {
+      if (u.isActive === false) continue;
+      if (unifiedDirectory.some((item) => item.id === u.id || item.zkUserId === String(u.id))) continue;
+      unifiedDirectory.push({
+        id: u.id,
+        name: u.name,
+        position: u.roleName || "Operador",
+        zkUserId: String(u.id),
+        dni: u.dni || String(u.id),
+        type: "operador",
+      });
+    }
+
     return reply.send({
       success: true,
       serverIp,
       allLocalIps: localIps,
       serverPort,
       currentServerTime,
+      idStandard: "UNIFIED_NUMERIC_DNI",
       admsEndpoint: `http://${serverIp}:${serverPort}/iclock/cdata`,
       detectedDevice,
-      connectedDevices: Object.values(zktecoAdmsDevices),
+      connectedDevices: knownDevices,
       pendingCommandsCount: Object.values(zktecoDeviceCommands).reduce((acc, cur) => acc + cur.length, 0),
       setupGuide: {
         deviceIp: detectedDevice.ip,
-        deviceStatus: detectedDevice.reachable ? "ONLINE_CABLE_OK" : "CHECK_CABLE",
+        deviceStatus: detectedDevice.reachable ? "ONLINE_CABLE_OK" : "CHECK_CABLE_OR_WIFI_IP",
         serverIpToConfigureInZkteco: serverIp,
         serverPortToConfigureInZkteco: serverPort,
         steps: [
@@ -3338,16 +3891,10 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           `4. Configurar [Puerto del Servidor]: ${serverPort}`,
           "5. Habilitar Servidor de Nube: SÍ / ON.",
           "6. Desactivar Servidor Proxy y Nombre de Dominio (debe apuntar directo por IP).",
-          "7. Guardar y regresar a la pantalla principal. El icono de servidor/nube se pondrá en VERDE.",
+          "7. Al enrolar huellas o rostro en el reloj, el [ID de Usuario] coincide exactamente con el DNI numérico del colaborador.",
         ],
       },
-      employeesMapping: emps.map((e) => ({
-        id: e.id,
-        name: e.name,
-        position: e.position,
-        zkUserId: e.biometricPin || String(e.id),
-        dni: e.dni,
-      })),
+      employeesMapping: unifiedDirectory,
     });
   });
 
@@ -3389,9 +3936,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const reachable = pingOk || socketOk;
     let message = "";
     if (reachable) {
-      message = `¡Conexión física y de red confirmada con el terminal ZKTeco en ${targetIp}! (Cable Ethernet verificado y respondiendo en tiempo real).`;
+      message = `¡Conexión física y de red confirmada con el terminal ZKTeco en ${targetIp}!`;
     } else {
-      message = `No se detectó respuesta en ${targetIp}. Verifica que el cable de red RJ45 esté conectado correctamente al puerto Ethernet.`;
+      message = `No se detectó respuesta en ${targetIp}. Verifica que el reloj ZKTeco esté encendido en la misma red local y apuntando a la IP actual del servidor.`;
     }
 
     return reply.send({
@@ -3406,132 +3953,143 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   fastify.post("/rrhh/zkteco/sync-clock", async (_request, reply) => {
-    const activeDevices = Object.keys(zktecoAdmsDevices);
+    const targets = getZktecoQueueTargets();
     const { peruDate, peruTime } = getPeruDateTime();
     const curDateTime = `${peruDate} ${peruTime}`;
-
-    // Target devices: connected ones or pending broadcast queue
-    const targets = activeDevices.length > 0 ? activeDevices : ["PENDING_BROADCAST", "ZKTECO-OFICINA"];
 
     let enqueued = 0;
     for (const sn of targets) {
       if (!zktecoDeviceCommands[sn]) {
         zktecoDeviceCommands[sn] = [];
       }
+      zktecoDeviceCommands[sn] = zktecoDeviceCommands[sn].filter((c) => !c.includes("SET OPTIONS DateTime="));
       const cmdId = ++zktecoCommandIdSeq;
       zktecoDeviceCommands[sn].push(`C:${cmdId}:SET OPTIONS DateTime=${curDateTime}`);
       enqueued++;
     }
+    saveZktecoStateToDisk();
 
     return reply.send({
       success: true,
       dateTime: curDateTime,
       devices: targets,
       enqueued,
-      message: `¡Comando de sincronización de hora generado (${curDateTime})! El reloj ZKTeco sincronizará su hora automáticamente con el sistema.`,
+      message: `¡Comando de sincronización de hora guardado en cola persistente (${curDateTime})!`,
     });
   });
 
-  fastify.post("/rrhh/zkteco/sync-time", async (request, reply) => {
+  fastify.post("/rrhh/zkteco/sync-time", async (_request, reply) => {
     return (fastify as any).inject ? reply.redirect("/api/rrhh/zkteco/sync-clock") : reply.send({ success: true });
   });
 
   fastify.post("/rrhh/zkteco/sync-operator", async (request, reply) => {
     const body = (request.body as any) || {};
-    const id = body.id || body.userId;
-    const pin = String(body.pin || body.biometricPin || id || "").trim();
-    const name = String(body.name || `Operador ${pin}`).trim();
-    const role = String(body.roleName || body.role || body.position || "Operador").trim();
-    const isSuperAdmin = body.isSuperAdmin === true || role.toLowerCase().includes("admin") || role.toLowerCase().includes("director");
-
-    if (!pin) {
-      return reply.status(400).send({ success: false, message: "El PIN del operador es requerido para el ZKTeco" });
+    const rawId = body.zkUserId || body.biometricPin || body.dni || body.id || body.userId;
+    const numericId = extractCanonicalNumericId(rawId);
+    if (!numericId) {
+      return reply.status(400).send({
+        success: false,
+        message: "Se requiere un ID de usuario numérico válido (1 a 9 dígitos) para sincronizar con ZKTeco.",
+      });
     }
 
-    const result = enqueueZktecoUserInfo(pin, name, isSuperAdmin);
+    const name = String(body.name || `Usuario ${numericId}`).trim();
+    const role = String(body.roleName || body.role || body.position || "Operador").trim();
+    const isSuperAdmin = body.isSuperAdmin === true || role.toLowerCase().includes("superadmin") || role.toLowerCase().includes("director");
+
+    const result = enqueueZktecoUserInfo(numericId, name, isSuperAdmin);
 
     return reply.send({
       success: true,
-      message: `¡Operador "${result.cleanName}" sincronizado con el ZKTeco (PIN: ${result.pin})!`,
+      message: `¡Usuario "${result.cleanName}" sincronizado con ZKTeco (ID único: ${result.pin})!`,
       data: result,
     });
   });
 
-  fastify.post("/rrhh/zkteco/sync-users", async (request, reply) => {
+  fastify.post("/rrhh/zkteco/sync-users", async (_request, reply) => {
     const emps = loadEmployeesFromDisk();
-    const activeDevices = Object.keys(zktecoAdmsDevices);
-    const targets = activeDevices.length > 0 ? activeDevices : ["PENDING_BROADCAST", "ZKTECO-OFICINA"];
+    const usersList = loadSystemUsersFromDisk();
+    const targets = getZktecoQueueTargets();
 
     let enqueued = 0;
     const syncedEmployees: Array<{ id: number; name: string; pin: string; type?: string }> = [];
+
+    // Construir lista única de identidades canónicas (cero duplicados ni cruces)
+    const canonicalEntries: Array<{ id: number; pin: string; cleanName: string; pri: number; type: string }> = [];
+
+    for (const emp of emps) {
+      if (emp.status && emp.status !== "active") continue;
+      const numericId = extractCanonicalNumericId(emp.dni) || extractCanonicalNumericId(emp.id);
+      if (!numericId) continue;
+      const pin = toZktecoPin(numericId);
+      if (canonicalEntries.some((x) => x.pin === pin)) continue;
+
+      const cleanName = (emp.name || `Colaborador ${pin}`)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9\s.-]/g, "")
+        .trim()
+        .slice(0, 24);
+
+      canonicalEntries.push({
+        id: numericId,
+        pin,
+        cleanName,
+        pri: 0, // Siempre Pri=0 al sincronizar desde web para nunca bloquear el menú físico del reloj
+        type: emp.operatorId ? "colaborador+operador" : "colaborador",
+      });
+    }
+
+    for (const u of usersList) {
+      if (u.isActive === false) continue;
+      const numericId = extractCanonicalNumericId(u.dni) || extractCanonicalNumericId(u.id);
+      if (!numericId) continue;
+      const pin = toZktecoPin(numericId);
+      if (canonicalEntries.some((x) => x.pin === pin)) continue;
+
+      const cleanName = (u.name || `Operador ${pin}`)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9\s.-]/g, "")
+        .trim()
+        .slice(0, 24);
+
+      canonicalEntries.push({
+        id: numericId,
+        pin,
+        cleanName,
+        pri: 0, // Siempre Pri=0 al sincronizar desde web para nunca bloquear el menú físico del reloj
+        type: "operador",
+      });
+    }
 
     for (const sn of targets) {
       if (!zktecoDeviceCommands[sn]) {
         zktecoDeviceCommands[sn] = [];
       }
+      // Conservar comandos que no sean DATA UPDATE USERINFO para reemplazar con la nómina unificada limpia
+      zktecoDeviceCommands[sn] = zktecoDeviceCommands[sn].filter((c) => !c.includes("DATA UPDATE USERINFO "));
 
-      // 1. Sincronizar Colaboradores de RRHH
-      for (const emp of emps) {
-        if (emp.status && emp.status !== "active") continue;
+      for (const item of canonicalEntries) {
         const cmdId = ++zktecoCommandIdSeq;
-        const pin = emp.biometricPin || emp.dni || String(emp.id);
-        const cleanName = (emp.name || `Empleado ${emp.id}`)
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-zA-Z0-9\s.-]/g, "")
-          .trim()
-          .slice(0, 24);
-
-        const isSuperAdmin =
-          (emp.position || "").toLowerCase().includes("director") ||
-          (emp.position || "").toLowerCase().includes("admin") ||
-          (emp.name || "").toLowerCase().includes("admin");
-        const pri = isSuperAdmin ? 14 : 0;
-
-        const cmd = `C:${cmdId}:DATA UPDATE USERINFO PIN=${pin}\tName=${cleanName}\tPri=${pri}\tPasswd=\tCard=\tGrp=1\tTZ=1`;
+        const cmd = `C:${cmdId}:DATA UPDATE USERINFO PIN=${item.pin}\tName=${item.cleanName}\tPri=${item.pri}\tPasswd=\tCard=\tGrp=1\tTZ=1`;
         zktecoDeviceCommands[sn].push(cmd);
         enqueued++;
-        if (!syncedEmployees.some((e) => e.pin === pin)) {
-          syncedEmployees.push({ id: emp.id, name: cleanName, pin, type: "colaborador" });
-        }
       }
-
-      // 2. Sincronizar Operadores de Sistema (users.json)
-      try {
-        const uFile = path.join(DATA_DIR, "users.json");
-        if (fs.existsSync(uFile)) {
-          const usersList = JSON.parse(fs.readFileSync(uFile, "utf-8"));
-          for (const u of usersList) {
-            if (u.isActive === false) continue;
-            const pin = (!SecurityService.isHashedPin(u.pin) && u.pin) ? String(u.pin) : String(u.biometricPin || u.id);
-            if (syncedEmployees.some((e) => e.pin === pin)) continue; // evitar duplicado si ya fue agregado por DNI/PIN
-
-            const cmdId = ++zktecoCommandIdSeq;
-            const cleanName = (u.name || `Operador ${u.id}`)
-              .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "")
-              .replace(/[^a-zA-Z0-9\s.-]/g, "")
-              .trim()
-              .slice(0, 24);
-
-            const isSuperAdmin = u.isSuperAdmin || (u.roleName || "").toLowerCase().includes("admin");
-            const pri = isSuperAdmin ? 14 : 0;
-
-            const cmd = `C:${cmdId}:DATA UPDATE USERINFO PIN=${pin}\tName=${cleanName}\tPri=${pri}\tPasswd=\tCard=\tGrp=1\tTZ=1`;
-            zktecoDeviceCommands[sn].push(cmd);
-            enqueued++;
-            syncedEmployees.push({ id: u.id, name: cleanName, pin, type: "operador" });
-          }
-        }
-      } catch (_e) {}
     }
+
+    for (const item of canonicalEntries) {
+      syncedEmployees.push({ id: item.id, name: item.cleanName, pin: item.pin, type: item.type });
+    }
+
+    saveZktecoStateToDisk();
 
     return reply.send({
       success: true,
       devices: targets,
       totalEnqueued: enqueued,
       employees: syncedEmployees,
-      message: `¡Comandos generados! Se prepararon ${syncedEmployees.length} colaboradores y operadores para el terminal ZKTeco. En los próximos segundos se agregarán automáticamente a la memoria del reloj.`,
+      message: `¡Sincronización unificada lista! Se guardaron ${syncedEmployees.length} usuarios con ID numérico único en la cola persistente del ZKTeco.`,
     });
   });
 
@@ -3909,23 +4467,30 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
 
   // 1. Handshake inicial del ZKTeco (convierte el icono de servidor en pantalla de ROJO a VERDE)
   fastify.get("/iclock/cdata", async (request, reply) => {
+    loadZktecoStateFromDisk();
     const query = (request.query as Record<string, string>) || {};
-    const sn = query.SN || query.sn || "ZKTECO-OFICINA";
+    const sn = (query.SN || query.sn || "ZKTECO-OFICINA").trim();
     const clientIp = request.ip || "LAN";
+
+    const { peruDate, peruTime } = getPeruDateTime();
+    const curDateTime = `${peruDate} ${peruTime}`;
+
+    if (isDiagnosticSn(sn)) {
+      return reply.type("text/plain; charset=utf-8").send(`GET OPTION FROM: ${sn}\nServerTime=${curDateTime}`);
+    }
 
     console.log(`[ZKTeco ADMS] Handshake / Conexión recibida desde SN: ${sn} (IP: ${clientIp})`);
 
+    const prevDevice = zktecoAdmsDevices[sn];
     zktecoAdmsDevices[sn] = {
       sn,
       ip: clientIp,
       lastSeen: new Date().toISOString(),
-      pushVersion: query.pushver || query.PushVer || "2.4.1",
-      totalSynced: zktecoAdmsDevices[sn]?.totalSynced || 0,
+      pushVersion: query.pushver || query.PushVer || prevDevice?.pushVersion || "2.4.1",
+      totalSynced: prevDevice?.totalSynced || 0,
+      lastAttlogStamp: prevDevice?.lastAttlogStamp,
     };
 
-    // Sincronizar automáticamente la hora oficial (Perú UTC-5) cada vez que el reloj se conecta
-    const { peruDate, peruTime } = getPeruDateTime();
-    const curDateTime = `${peruDate} ${peruTime}`;
     if (!zktecoDeviceCommands[sn]) {
       zktecoDeviceCommands[sn] = [];
     }
@@ -3934,17 +4499,20 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       zktecoDeviceCommands[sn].push(`C:${++zktecoCommandIdSeq}:SET OPTIONS DateTime=${curDateTime}`);
     }
 
-    // Si había comandos en la cola de broadcast, transferirlos a este número de serie
+    // Transferir comandos pendientes de broadcast hacia este número de serie real
     if (zktecoDeviceCommands["PENDING_BROADCAST"] && zktecoDeviceCommands["PENDING_BROADCAST"].length > 0) {
       const broadcastCmds = zktecoDeviceCommands["PENDING_BROADCAST"].splice(0, zktecoDeviceCommands["PENDING_BROADCAST"].length);
       zktecoDeviceCommands[sn].push(...broadcastCmds);
     }
 
+    saveZktecoStateToDisk();
+
+    const attlogStamp = zktecoAdmsDevices[sn].lastAttlogStamp || "0";
     const configResponse = [
       `GET OPTION FROM: ${sn}`,
       `Stamp=9999`,
       `OpStamp=9999`,
-      `ATTLOGStamp=None`,
+      `ATTLOGStamp=${attlogStamp}`,
       `OPERLOGStamp=9999`,
       `ATTPHOTOStamp=None`,
       `ErrorDelay=30`,
@@ -3965,13 +4533,18 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
 
   // 2. Recepción en tiempo real de marcaciones de Huella (VERIFY=1) y Rostro (VERIFY=15)
   fastify.post("/iclock/cdata", async (request, reply) => {
+    loadZktecoStateFromDisk();
     const query = (request.query as Record<string, string>) || {};
-    const sn = query.SN || query.sn || "ZKTeco-MB360-Oficina";
+    const sn = (query.SN || query.sn || "ZKTeco-MB360-Oficina").trim();
     const rawTable = query.table || query.Table || "ATTLOG";
     const table = rawTable.toUpperCase();
+    const incomingStamp = query.Stamp || query.stamp;
     let rawBody = typeof request.body === "string" ? request.body : JSON.stringify(request.body || "");
 
-    // Si el cuerpo viene codificado en URL (%09, %0A, %20), decodificarlo
+    if (isDiagnosticSn(sn)) {
+      return reply.type("text/plain; charset=utf-8").send("OK\n");
+    }
+
     if (rawBody.includes("%09") || rawBody.includes("%0A") || rawBody.includes("%20")) {
       try {
         rawBody = decodeURIComponent(rawBody);
@@ -3980,6 +4553,7 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
 
     if (zktecoAdmsDevices[sn]) {
       zktecoAdmsDevices[sn].lastSeen = new Date().toISOString();
+      if (request.ip) zktecoAdmsDevices[sn].ip = request.ip;
     } else {
       zktecoAdmsDevices[sn] = {
         sn,
@@ -3990,6 +4564,7 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     if (table !== "ATTLOG") {
+      saveZktecoStateToDisk();
       console.log(`[ZKTeco ADMS] Recibida tabla ${table} desde ${sn} (se responde OK)`);
       return reply.type("text/plain; charset=utf-8").send("OK\n");
     }
@@ -4005,10 +4580,8 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
     const attendanceList = loadAttendanceFromDisk();
 
     for (const line of lines) {
-      // Formato estándar ZKTeco ADMS: PIN \t YYYY-MM-DD HH:MM:SS \t STATUS \t VERIFY \t WORKCODE...
       let parts = line.split(/\t+/);
       if (parts.length < 2) {
-        // Fallback: separar por espacios múltiples o formato libre preservando fecha/hora
         const match = line.match(/^(\S+)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s*(\d*)\s*(\d*)/);
         if (match) {
           parts = [match[1], match[2], match[3] || "0", match[4] || "1"];
@@ -4018,14 +4591,17 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const pin = parts[0].trim();
-      const dateTimeStr = parts[1].trim(); // Ej: "2026-10-20 09:15:30"
-      const statusFlag = parseInt(parts[2] || "0", 10); // 0=Entrada, 1=Salida, 2=Refrigerio Inicio, 3=Refrigerio Fin, 4=HE Entrada, 5=HE Salida
-      const verifyMode = parseInt(parts[3] || "1", 10); // 1=Huella, 15=Rostro/Facial, 4=Tarjeta RFID, 3=PIN
+      const dateTimeStr = parts[1].trim();
+      const statusFlag = parseInt(parts[2] || "0", 10);
+      const verifyMode = parseInt(parts[3] || "1", 10);
 
       const [dateStr, timeStr] = dateTimeStr.split(" ");
       if (!dateStr || !timeStr) continue;
 
       const emp = resolveEmployeeOrUser(pin, `Colaborador #${pin}`);
+      const resolvedEmpId = emp.id || extractCanonicalNumericId(pin) || 0;
+      if (!resolvedEmpId) continue;
+
       const verifyLabel =
         verifyMode === 15
           ? "Reconocimiento Facial ZKTeco"
@@ -4034,31 +4610,71 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
           : "Huella Dactilar ZKTeco";
       const devLabel = `${sn} (${verifyLabel})`;
 
-      const existing = attendanceList.find((a) => a.employeeId === emp.id && a.date === dateStr);
+      const existing = attendanceList.find((a) => a.employeeId === resolvedEmpId && a.date === dateStr);
       const [curH, curM] = timeStr.split(":").map(Number);
       const curMinutes = curH * 60 + curM;
 
-      // Determinar hora oficial de salida configurada en el expediente
       const [expOutH, expOutM] = (emp.expectedCheckOutTime || "17:00").split(":").map(Number);
       const expOutMinutes = expOutH * 60 + expOutM;
 
-      // Es salida si el reloj envió statusFlag 1 o 5, o si ya existe entrada previa y es posterior a las 13:00 o dentro de 90 min de la salida esperada
-      const isCheckout = statusFlag === 1 || statusFlag === 5 || (existing && (curH >= 13 || curMinutes >= (expOutMinutes - 90)));
-
       if (existing) {
+        // Asegurar backfill del registro previo antes de fusionar la marcación del reloj ZKTeco
+        if (!existing.webCheckInTime && !existing.biometricCheckInTime && existing.checkInTime) {
+          if (existing.modality === "fingerprint" || existing.biometricVerified) {
+            existing.biometricCheckInTime = existing.checkInTime;
+          } else if (existing.modality !== "manual_auth") {
+            existing.webCheckInTime = existing.checkInTime;
+          }
+        }
+
+        // Ignorar reenvíos idénticos del mismo evento histórico ADMS
+        if (
+          existing.biometricCheckInTime === timeStr ||
+          existing.biometricCheckOutTime === timeStr ||
+          (existing.checkInTime === timeStr && !existing.webCheckInTime && statusFlag !== 1 && statusFlag !== 2 && statusFlag !== 3 && statusFlag !== 5) ||
+          (existing.checkOut === timeStr && (statusFlag === 1 || statusFlag === 5)) ||
+          (existing.lunchStart === timeStr && statusFlag === 2) ||
+          (existing.lunchEndTime === timeStr && statusFlag === 3)
+        ) {
+          continue;
+        }
+
         if (statusFlag === 2) {
           existing.lunchStart = timeStr;
         } else if (statusFlag === 3) {
           existing.lunchEndTime = timeStr;
-        } else if (isCheckout) {
-          existing.checkOut = timeStr;
+        } else if (!existing.biometricCheckInTime && statusFlag !== 1 && statusFlag !== 5) {
+          // Primera huella del día en el reloj ZKTeco (convive con webCheckInTime, GPS y selfie previos sin pisarlos)
+          existing.biometricCheckInTime = timeStr;
+          existing.biometricVerified = true;
+          existing.biometricDeviceId = devLabel;
+          applyUnifiedCheckInRules(existing, emp);
+          existing.notes = existing.webCheckInTime
+            ? `Doble registro verificado — Web: ${existing.webCheckInTime} | ZKTeco (${sn}): ${timeStr}`
+            : `Marcación automática en tiempo real vía ${devLabel} (${timeStr})`;
         } else {
-          // Si el usuario vuelve a pasar su huella como verificación
-          existing.notes = `Marcación automática en tiempo real vía ${devLabel} (${timeStr})`;
+          // Ya tenía huella de entrada hoy (o marcó explícitamente Salida en el teclado del ZKTeco)
+          const prevBioSec = existing.biometricCheckInTime ? timeStrToSeconds(existing.biometricCheckInTime) : 0;
+          const curSec = timeStrToSeconds(timeStr);
+          const isExplicitOut = statusFlag === 1 || statusFlag === 5;
+          const isAfternoonOrEnd = curH >= 13 || curMinutes >= expOutMinutes - 90;
+
+          // Evitar que un doble toque accidental del dedo en menos de 5 minutos marque Salida por error
+          if (!isExplicitOut && existing.biometricCheckInTime && Math.abs(curSec - prevBioSec) < 300) {
+            continue;
+          }
+
+          if (isExplicitOut || isAfternoonOrEnd || existing.biometricCheckInTime) {
+            existing.checkOut = timeStr;
+            existing.biometricCheckOutTime = timeStr;
+          }
         }
-        existing.modality = "fingerprint";
+
         existing.biometricVerified = true;
         existing.biometricDeviceId = devLabel;
+        if (!existing.webCheckInTime && !existing.gpsVerified) {
+          existing.modality = "fingerprint";
+        }
         processedCount++;
         continue;
       }
@@ -4069,7 +4685,7 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
 
       const newRec: AttendanceRecord = {
         id: nextId,
-        employeeId: emp.id,
+        employeeId: resolvedEmpId,
         employeeName: emp.name,
         tenantId: "turbonetwork",
         tenantName: "Oficina Central",
@@ -4077,18 +4693,18 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
         date: dateStr,
         checkIn: new Date().toISOString(),
         checkInTime: timeStr,
+        webCheckInTime: null,
+        biometricCheckInTime: statusFlag === 1 || statusFlag === 5 ? null : timeStr,
+        biometricCheckOutTime: statusFlag === 1 || statusFlag === 5 ? timeStr : null,
+        workModality: emp.workModality || "office",
+        remoteHomeAlert: false,
         lunchStart: null,
         lunchEndTime: null,
-        checkOut: statusFlag === 1 ? timeStr : null,
+        checkOut: statusFlag === 1 || statusFlag === 5 ? timeStr : null,
         overtimeUnlocked: false,
         overtimeMinutes: 0,
         photo: emp.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(emp.name)}`,
-        location: {
-          latitude: -12.046374,
-          longitude: -77.042793,
-          accuracy: 5,
-          address: `Terminal Biométrico ${devLabel}`,
-        },
+        location: null,
         modality: "fingerprint",
         biometricVerified: true,
         biometricDeviceId: devLabel,
@@ -4098,9 +4714,14 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
         unlockedByTotp: false,
         notes: `Marcación automática en tiempo real vía ${devLabel}`,
       };
+      applyUnifiedCheckInRules(newRec, emp);
 
       attendanceList.unshift(newRec);
       processedCount++;
+    }
+
+    if (incomingStamp) {
+      zktecoAdmsDevices[sn].lastAttlogStamp = String(incomingStamp);
     }
 
     if (processedCount > 0) {
@@ -4109,15 +4730,23 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       console.log(`[ZKTeco ADMS] ✅ Sincronizadas ${processedCount} marcaciones de asistencia en el sistema.`);
     }
 
+    saveZktecoStateToDisk();
     return reply.type("text/plain; charset=utf-8").send("OK\n");
   });
 
   // 3. Heartbeat periódico del ZKTeco (mantiene el icono de servidor en VERDE y despacha comandos en lote)
   fastify.get("/iclock/getrequest", async (request, reply) => {
+    loadZktecoStateFromDisk();
     const query = (request.query as Record<string, string>) || {};
-    const sn = query.SN || query.sn || "ZKTECO-OFICINA";
+    const sn = (query.SN || query.sn || "ZKTECO-OFICINA").trim();
+
+    if (isDiagnosticSn(sn)) {
+      return reply.type("text/plain; charset=utf-8").send("OK\n");
+    }
+
     if (zktecoAdmsDevices[sn]) {
       zktecoAdmsDevices[sn].lastSeen = new Date().toISOString();
+      if (request.ip) zktecoAdmsDevices[sn].ip = request.ip;
     } else {
       zktecoAdmsDevices[sn] = {
         sn,
@@ -4127,26 +4756,34 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       };
     }
 
-    // Despachar comandos encolados para este dispositivo (ej: sincronizar hora, personal)
     if (zktecoDeviceCommands[sn] && zktecoDeviceCommands[sn].length > 0) {
-      const batch = zktecoDeviceCommands[sn].splice(0, 10);
+      const batch = zktecoDeviceCommands[sn].splice(0, 20);
+      saveZktecoStateToDisk();
       return reply.type("text/plain; charset=utf-8").send(batch.join("\n"));
     }
 
-    // Verificar si hay comandos en cola pendientes de entrega
     if (zktecoDeviceCommands["PENDING_BROADCAST"] && zktecoDeviceCommands["PENDING_BROADCAST"].length > 0) {
-      const batch = zktecoDeviceCommands["PENDING_BROADCAST"].splice(0, 10);
+      const batch = zktecoDeviceCommands["PENDING_BROADCAST"].splice(0, 20);
+      saveZktecoStateToDisk();
       return reply.type("text/plain; charset=utf-8").send(batch.join("\n"));
     }
 
+    saveZktecoStateToDisk();
     return reply.type("text/plain; charset=utf-8").send("OK\n");
   });
 
   fastify.post("/iclock/devicecmd", async (request, reply) => {
+    loadZktecoStateFromDisk();
     const query = (request.query as Record<string, string>) || {};
-    const sn = query.SN || query.sn || "ZKTECO-OFICINA";
-    if (zktecoAdmsDevices[sn]) {
+    const sn = (query.SN || query.sn || "ZKTECO-OFICINA").trim();
+    const rawBody = typeof request.body === "string" ? request.body : JSON.stringify(request.body || "");
+    try {
+      const ackLogPath = path.join(DATA_DIR, "zkteco_cmd_ack.log");
+      fs.appendFileSync(ackLogPath, `[${new Date().toISOString()}] SN=${sn} | ${rawBody.replace(/\r?\n/g, " ;; ")}\n`, "utf-8");
+    } catch {}
+    if (!isDiagnosticSn(sn) && zktecoAdmsDevices[sn]) {
       zktecoAdmsDevices[sn].lastSeen = new Date().toISOString();
+      saveZktecoStateToDisk();
     }
     return reply.type("text/plain; charset=utf-8").send("OK\n");
   });
