@@ -30366,14 +30366,43 @@ Estamos atentos para brindarle asistencia inmediata.
       }
     }
 
+    async function fetchJsonResilient(url, options = {}, maxRetries = 4) {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const res = await fetch(url, { cache: 'no-store', ...options });
+          if (res.status === 502 || res.status === 503 || res.status === 504) {
+            if (attempt < maxRetries) {
+              await new Promise(r => setTimeout(r, 2200));
+              continue;
+            }
+            return { success: false, message: `Servidor reiniciando (${res.status}). Intenta de nuevo en unos segundos.` };
+          }
+          const ct = res.headers.get('content-type') || '';
+          if (!ct.includes('application/json')) {
+            if (attempt < maxRetries) {
+              await new Promise(r => setTimeout(r, 2000));
+              continue;
+            }
+            return { success: false, message: 'Respuesta temporal durante reinicio del servidor.' };
+          }
+          return await res.json();
+        } catch (err) {
+          if (attempt < maxRetries) {
+            await new Promise(r => setTimeout(r, 2000));
+            continue;
+          }
+          throw err;
+        }
+      }
+      return { success: false };
+    }
+
     async function loadSystemUpdateInfo() {
       try {
-        const [verRes, histRes] = await Promise.all([
-          fetch('/api/settings/system/version'),
-          fetch('/api/settings/system/updates-history')
+        const [verData, histData] = await Promise.all([
+          fetchJsonResilient('/api/settings/system/version'),
+          fetchJsonResilient('/api/settings/system/updates-history')
         ]);
-        const verData = await verRes.json();
-        const histData = await histRes.json();
 
         if (verData.success && verData.data) {
           const v = verData.data;
@@ -30629,8 +30658,7 @@ Estamos atentos para brindarle asistencia inmediata.
       if (icon) icon.classList.add('animate-spin');
 
       try {
-        const res = await fetch('/api/settings/system/check-updates');
-        const data = await res.json();
+        const data = await fetchJsonResilient('/api/settings/system/check-updates', {}, 2);
         const nowStr = new Date().toLocaleTimeString();
         const lastCheck = document.getElementById('sys-last-check-time');
         if (lastCheck) lastCheck.textContent = `Verificado: ${nowStr}`;
@@ -30780,8 +30808,9 @@ Estamos atentos para brindarle asistencia inmediata.
 
           if (data.success) {
             showToast("¡Sistema actualizado y compilado con éxito!", "success");
-            appendUpdateLog(`[${new Date().toLocaleTimeString()}] ¡DESPLIEGUE FINALIZADO EXITOSAMENTE!`, '#4ade80');
+            appendUpdateLog(`[${new Date().toLocaleTimeString()}] ¡DESPLIEGUE FINALIZADO EXITOSAMENTE! Esperando recarga de Passenger/PM2...`, '#4ade80');
             appendUpdateLog(`======================================================\n`, '#94a3b8');
+            await new Promise(r => setTimeout(r, 3200));
             await loadSystemUpdateInfo();
             await loadBackupList();
           } else {
@@ -30874,8 +30903,7 @@ Estamos atentos para brindarle asistencia inmediata.
     // ========================================================
     async function loadBackupList() {
       try {
-        const res = await fetch('/api/settings/backups');
-        const data = await res.json();
+        const data = await fetchJsonResilient('/api/settings/backups');
         const tbody = document.getElementById('backups-table-body');
         const totalEl = document.getElementById('sys-backups-total');
         const badgeEl = document.getElementById('sys-backups-count-badge');
@@ -62472,6 +62500,18 @@ async function sendCurrentLocation(isLive) {
 let lastProdSyncTimestamp = 0;
 async function syncMessagesInProduction() {
   try {
+    // No hacer polling sin sesión autenticada (evita 401 en pantalla de PIN)
+    if (typeof currentUser === 'undefined' || !currentUser || (!currentUser.id && !currentUser.username)) {
+      return;
+    }
+    if (typeof window.TurboSessionGuard !== 'undefined' && !window.TurboSessionGuard.getToken()) {
+      return;
+    }
+    const loginScreen = document.getElementById('pin-login-screen');
+    if (loginScreen && !loginScreen.classList.contains('hidden')) {
+      return;
+    }
+
     // Si la conexión SSE en tiempo real está abierta y activa, no consultar por polling HTTP
     if (typeof messagesEventSource !== 'undefined' && messagesEventSource && messagesEventSource.readyState === 1) {
       return;

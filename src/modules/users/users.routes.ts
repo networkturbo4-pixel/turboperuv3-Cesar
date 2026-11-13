@@ -828,12 +828,16 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
-  // Servir avatares extraídos de Base64 de forma segura y cacheable
+  // Servir avatares extraídos de Base64 de forma segura y cacheable (con fallback SVG limpio si falta en disco local)
   fastify.get("/media/avatars/:fileName", async (request, reply) => {
     const { fileName } = request.params as { fileName: string };
     const resolved = MediaService.resolveAvatarFile(fileName);
     if (!resolved) {
-      return reply.status(404).send({ success: false, message: "Avatar no encontrado" });
+      const fallbackSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="18" fill="#1e293b"/><circle cx="40" cy="30" r="14" fill="#64748b"/><path d="M16 68c0-13.255 10.745-24 24-24s24 10.745 24 24" fill="#64748b"/></svg>`;
+      return reply
+        .type("image/svg+xml")
+        .header("Cache-Control", "public, max-age=300")
+        .send(fallbackSvg);
     }
     const stream = fs.createReadStream(resolved.filePath);
     return reply

@@ -235,20 +235,29 @@ export async function checkForSystemUpdates(): Promise<CheckUpdatesResult> {
   const checkedAt = new Date().toISOString();
 
   try {
-    // 0. Asegurar compatibilidad de permisos Git en servidores Linux/VPS
-    try {
-      await execAsync('git config --global --add safe.directory "*"', { cwd: ROOT_DIR });
-    } catch (e) {}
+    const gitEnv = { ...process.env, GIT_TERMINAL_PROMPT: "0", GCM_INTERACTIVE: "never" };
 
-    // 1. Fetch sin merge para obtener el estado remoto
-    await execAsync(`git fetch origin ${branch} --quiet`, { cwd: ROOT_DIR, timeout: 30000 });
+    // 1. Fetch rápido sin bloqueo interactivo para evitar 504 Gateway Time-out en cPanel/Passenger
+    await execFileAsync("git", ["-c", "safe.directory=*", "fetch", "origin", branch, "--quiet"], {
+      cwd: ROOT_DIR,
+      timeout: 12000,
+      env: gitEnv,
+    });
 
     // 2. Obtener hash del commit remoto más reciente
-    const { stdout: rHashOut } = await execAsync(`git rev-parse --short origin/${branch}`, { cwd: ROOT_DIR });
+    const { stdout: rHashOut } = await execFileAsync("git", ["-c", "safe.directory=*", "rev-parse", "--short", `origin/${branch}`], {
+      cwd: ROOT_DIR,
+      timeout: 5000,
+      env: gitEnv,
+    });
     const remoteCommit = rHashOut.trim();
 
     // 3. Contar commits pendientes
-    const { stdout: countOut } = await execAsync(`git rev-list HEAD..origin/${branch} --count`, { cwd: ROOT_DIR });
+    const { stdout: countOut } = await execFileAsync("git", ["-c", "safe.directory=*", "rev-list", `HEAD..origin/${branch}`, "--count"], {
+      cwd: ROOT_DIR,
+      timeout: 5000,
+      env: gitEnv,
+    });
     const behindCount = parseInt(countOut.trim(), 10) || 0;
 
     const commits: PendingCommit[] = [];
