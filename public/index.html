@@ -5662,13 +5662,6 @@
                 </svg>
                 <span>Personalización & Marca</span>
               </button>
-              <button onclick="switchConfigSubTab('users')" id="subnav-users" class="subnav-btn px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition flex items-center space-x-2 whitespace-nowrap">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                </svg>
-                <span>Operadores & PIN</span>
-              </button>
               <button onclick="switchConfigSubTab('roles')" id="subnav-roles" class="subnav-btn px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition flex items-center space-x-2 whitespace-nowrap">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -6313,136 +6306,7 @@
 
           </div>
 
-          <!-- SUBTAB 2: OPERADORES CON PIN -->
-          <div id="config-subtab-users" class="space-y-6 hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              <div class="pro-card p-5 rounded-xl flex flex-col justify-between">
-                <div>
-                  <h3 class="text-sm font-semibold tracking-tight">Alta de Operador</h3>
-                  <p class="text-xs text-slate-400 mt-0.5">Asigna datos de acceso, horario laboral y fechas</p>
-
-                  <form id="new-user-form" onsubmit="handleCreateUser(event)" class="space-y-3 mt-4">
-                    <div>
-                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre y Apellido *</label>
-                      <input type="text" id="nu-name" required placeholder="Ej. Juan Pérez" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
-                    </div>
-
-                    <div>
-                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Correo Corporativo *</label>
-                      <input type="email" id="nu-email" required placeholder="juan@turbonetwork.com" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
-                    </div>
-
-                    <div>
-                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Rol Operativo *</label>
-                      <select id="nu-role" class="w-full border border-white/10 rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:border-blue-500"></select>
-                    </div>
-
-                    <!-- HORARIO LABORAL / RELOJ DE JORNADA (PARTE DE SU ASISTENCIA) -->
-                    <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-2">
-                      <div class="flex items-center justify-between">
-                        <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                          <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                          <span>Horario Laboral / Turno (Reloj)</span>
-                        </label>
-                        <span class="text-[9px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-500/10 px-1.5 py-0.5 rounded">Asistencia & Puntualidad</span>
-                      </div>
-
-                      <div class="grid grid-cols-2 gap-2">
-                        <div>
-                          <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            <span>Desde (Entrada)</span>
-                          </label>
-                          <input type="time" id="nu-time-start" value="08:00" onchange="syncScheduleInputs('nu')" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
-                        </div>
-                        <div>
-                          <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                            <span>Hasta (Salida)</span>
-                          </label>
-                          <input type="time" id="nu-time-end" value="17:00" onchange="syncScheduleInputs('nu')" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
-                        </div>
-                      </div>
-
-                      <div>
-                        <input type="text" id="nu-schedule" value="08:00 - 17:00" placeholder="Ej: Lun - Vie 08:00 a 17:00 / Sáb 08:00 a 13:00" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500 text-slate-700 dark:text-slate-200">
-                      </div>
-
-                      <div class="flex items-center gap-1 pt-0.5 flex-wrap">
-                        <span class="text-[9px] text-slate-400">Preajustes:</span>
-                        <button type="button" onclick="setQuickShift('nu', '08:00', '17:00')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">08:00 - 17:00</button>
-                        <button type="button" onclick="setQuickShift('nu', '08:30', '17:30')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">08:30 - 17:30</button>
-                        <button type="button" onclick="setQuickShift('nu', '09:00', '18:00')" class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition">09:00 - 18:00</button>
-                      </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                      <div>
-                        <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Fecha Ingreso</label>
-                        <input type="date" id="nu-hire-date" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500 text-slate-200">
-                      </div>
-                      <div>
-                        <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Cumpleaños</label>
-                        <input type="date" id="nu-birth-date" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500 text-slate-200">
-                      </div>
-                    </div>
-
-                    <div>
-                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Sede / Negocio Asignado *</label>
-                      <select id="nu-assigned-tenant" required onchange="onUserFormTenantChange('nu', this.value)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100 cursor-pointer shadow-xs">
-                        <option value="" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Cargando sedes...</option>
-                      </select>
-                      <p class="text-[10px] text-slate-500 mt-1">El operador pertenecerá a esta sede y solo aparecerá en ella.</p>
-                    </div>
-
-                    <div>
-                      <div class="flex justify-between items-center mb-1">
-                        <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">PIN de 8 Dígitos *</label>
-                        <button type="button" onclick="generateRandomPin()" class="text-[10px] dynamic-primary-text hover:underline font-mono">Generar Aleatorio</button>
-                      </div>
-                      <input type="text" id="nu-pin" required maxlength="8" pattern="\d{8}" placeholder="Ej. 49201948" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs font-mono tracking-widest focus:outline-none focus:border-blue-500">
-                    </div>
-
-                    <input type="hidden" id="nu-require-totp" value="false">
-
-                    <div id="create-user-status" class="text-xs min-h-[16px]"></div>
-
-                    <button type="submit" class="w-full py-2 rounded-lg btn-brand-primary font-semibold text-xs transition">
-                      Registrar Operador
-                    </button>
-                  </form>
-                </div>
-              </div>
-
-              <div class="pro-card lg:col-span-2 p-5 rounded-xl flex flex-col justify-between">
-                <div>
-                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <div>
-                      <div class="flex items-center space-x-2">
-                        <h3 class="text-sm font-semibold tracking-tight">Operadores Autorizados</h3>
-                        <span id="users-company-scope-badge" class="hidden px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20"></span>
-                      </div>
-                      <p class="text-xs text-slate-400 mt-0.5">Usuarios del sistema con acceso por PIN numérico para esta empresa</p>
-                    </div>
-                    <div class="flex items-center space-x-2 flex-wrap sm:flex-nowrap">
-                      <select id="users-list-filter-tenant" onchange="handleUsersFilterTenantChange(this.value)" style="min-width: 220px;" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer shadow-xs">
-                        <option value="all">🌐 Todas las Empresas (Global)</option>
-                        <option value="turbonetwork">🏢 TurboNetwork Perú S.A.C.</option>
-                        <option value="loanetwork">🏢 LoaNetwork S.A.C.</option>
-                      </select>
-                      <button type="button" onclick="openCreateUserModal()" class="px-3.5 py-1.5 rounded-lg btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                        <span>Nuevo Operador</span>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="mt-4 space-y-2.5" id="users-list-container"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Operadores & Acceso unificado exclusivamente dentro de RRHH & Asistencia (Subtab 6) -->
 
           <!-- SUBTAB 3: MATRIZ DE ROLES -->
           <div id="config-subtab-roles" class="space-y-5 hidden">
@@ -8576,7 +8440,11 @@
               <div class="w-full sm:w-80">
                 <input type="text" id="personnel-search-input" oninput="handlePersonnelSearch(this.value)" placeholder="Buscar por nombre, cargo o DNI..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 shadow-sm">
               </div>
-              <div class="flex items-center space-x-2.5 w-full sm:w-auto">
+              <div class="flex items-center flex-wrap sm:flex-nowrap gap-2.5 w-full sm:w-auto">
+                <select id="personnel-filter-tenant" onchange="handlePersonnelFilterTenantChange(this.value)" style="min-width: 220px;" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer shadow-sm">
+                  <option value="">🏢 Solo Sede Activa</option>
+                  <option value="all">🌐 Todas las Empresas (Global)</option>
+                </select>
                 <button type="button" onclick="openCreateEmployeeModal()" class="px-4 py-2 rounded-xl btn-brand-primary text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition whitespace-nowrap">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
                   <span>+ Nuevo Colaborador</span>
@@ -8629,9 +8497,15 @@
                   <p class="text-xs text-slate-400 mt-0.5">Asigna datos de acceso, horario laboral y fechas</p>
 
                   <form id="rrhh-new-user-form" onsubmit="handleCreateUserFromRRHH(event)" class="space-y-3 mt-4">
-                    <div>
-                      <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre y Apellido *</label>
-                      <input type="text" id="rnu-name" required placeholder="Ej. Juan Pérez" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre y Apellido *</label>
+                        <input type="text" id="rnu-name" required placeholder="Ej. Juan Pérez" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                      </div>
+                      <div>
+                        <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">DNI / Documento (ID) *</label>
+                        <input type="text" id="rnu-dni" required maxlength="9" pattern="\d{6,9}" placeholder="Ej. 75441919" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                      </div>
                     </div>
 
                     <div>
@@ -10924,8 +10798,8 @@
           <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
 
-        <!-- Operadores & PINs -->
-        <button type="button" onclick="switchTab('config'); switchConfigSubTab('users'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+        <!-- Operadores & PINs (Unificado dentro de RRHH) -->
+        <button type="button" onclick="switchTab('rrhh'); switchRRHHSubTab('operators'); closeMobileConfigDrawer();" class="w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
           <div class="flex items-center space-x-3 min-w-0">
             <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -12731,10 +12605,14 @@
       <!-- Modal Body (Desplazable con alto dinámico 85vh) -->
       <form id="user-create-modal-form" onsubmit="handleCreateUserModal(event)" class="flex-1 overflow-y-auto pr-1.5 py-2 space-y-4 my-1">
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <div>
             <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre y Apellido *</label>
             <input type="text" id="nmodal-name" required placeholder="Ej: Juan Pérez" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">DNI (ID Único) *</label>
+            <input type="text" id="nmodal-dni" required maxlength="9" pattern="\d{6,9}" placeholder="Ej: 75441919" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-blue-500">
           </div>
           <div>
             <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Correo Corporativo *</label>
@@ -12874,10 +12752,14 @@
       <form id="user-edit-form" onsubmit="handleSaveEditedUser(event)" class="flex-1 overflow-y-auto pr-1.5 py-2 space-y-4 my-1">
         <input type="hidden" id="ue-id" value="">
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <div>
             <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Nombre y Apellido *</label>
             <input type="text" id="ue-name" required placeholder="Ej: César Administrador" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">DNI (ID Único Reloj/Web) *</label>
+            <input type="text" id="ue-dni" required maxlength="9" pattern="\d{6,9}" placeholder="Ej: 75441919" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-blue-500">
           </div>
           <div>
             <label class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Correo Corporativo *</label>
@@ -14293,7 +14175,7 @@
             <span class="text-[10px] text-slate-400 font-medium">Identificación y medios de comunicación</span>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Nombre Completo *</label>
               <input type="text" id="emp-name" required placeholder="Ej: César Administrador" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
@@ -14301,6 +14183,12 @@
             <div>
               <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">DNI / Cédula de Identidad *</label>
               <input type="text" id="emp-dni" required maxlength="12" placeholder="Ej: 70891234" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Empresa / Sede Asignada *</label>
+              <select id="emp-tenant" required class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
+                <option value="">Cargando empresas...</option>
+              </select>
             </div>
           </div>
 
@@ -22077,6 +21965,8 @@
       // Recargar datos aislados del tenant activo
       try {
         loadSavedSettings();
+        currentUsersFilterTenant = tenantId;
+        currentPersonnelFilterTenant = tenantId;
         await Promise.all([
           loadCustomers(),
           loadInvoices(),
@@ -22086,14 +21976,17 @@
           loadSystemMetrics(),
           refreshTodayAttendanceForActiveTenant(),
           loadInventoryModule(),
-          loadConfigModule()
+          loadConfigModule(),
+          loadEmployees()
         ]);
         updateRbacCompanyHeader();
         populateAttendanceTenantFilter();
         if (typeof activeTabId !== 'undefined' && activeTabId === 'rrhh') {
           loadAttendance();
+          if (typeof loadPayrollModule === 'function') loadPayrollModule();
+          if (typeof loadLeavesModule === 'function') loadLeavesModule();
+          if (typeof loadCommissionsModule === 'function') loadCommissionsModule();
         }
-        currentUsersFilterTenant = tenantId;
         if (typeof populateAssignedTenantSelects === 'function') {
           populateAssignedTenantSelects(true);
         }
@@ -24842,8 +24735,13 @@
     }
 
     function switchConfigSubTab(subTabId) {
+      if (subTabId === 'users') {
+        switchTab('rrhh');
+        if (typeof switchRRHHSubTab === 'function') switchRRHHSubTab('operators');
+        return;
+      }
       activeConfigSubTab = subTabId;
-      ['branding', 'company', 'users', 'roles', 'updates', 'connections'].forEach(id => {
+      ['branding', 'company', 'roles', 'updates', 'connections'].forEach(id => {
         const el = document.getElementById('config-subtab-' + id);
         if (el) el.classList.add('hidden');
         const btn = document.getElementById('subnav-' + id);
@@ -29139,6 +29037,7 @@ Estamos atentos para brindarle asistencia inmediata.
             <div class="min-w-0 truncate">
               <div class="flex items-center space-x-2">
                 <span class="font-semibold text-xs text-slate-200 truncate">${escapeHtml(u.name)}</span>
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" title="ID único en Sistema Web y Reloj ZKTeco">ID/DNI: ${escapeHtml(u.dni || String(u.id))}</span>
                 ${isSelf ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-mono dynamic-primary-subtle border">Tú</span>' : ''}
               </div>
               <div class="text-[10px] text-slate-400 font-mono truncate">${escapeHtml(u.email)}</div>
@@ -29800,6 +29699,7 @@ Estamos atentos para brindarle asistencia inmediata.
 
       const rrhhSelect = document.getElementById('rnu-assigned-tenant');
       const empOpSelect = document.getElementById('emp-op-tenant');
+      const empTenantSelect = document.getElementById('emp-tenant');
       [createSelect, editSelect, inlineSelect, rrhhSelect, empOpSelect].forEach(sel => {
         if (sel) {
           const prevVal = forceActive ? null : sel.value;
@@ -29814,9 +29714,22 @@ Estamos atentos para brindarle asistencia inmediata.
         }
       });
 
-      // Sincronizar el selector de filtro en la cabecera de Operadores Autorizados (ambas pestañas)
+      if (empTenantSelect) {
+        const prevEmpTenant = forceActive ? null : empTenantSelect.value;
+        empTenantSelect.innerHTML = optionsHtml + `<option value="shared" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">🌐 Compartido (Ambas Empresas)</option>`;
+        if (prevEmpTenant && (prevEmpTenant === 'shared' || tenants.some(t => t.id === prevEmpTenant))) {
+          empTenantSelect.value = prevEmpTenant;
+        } else if (typeof activeTenantId !== 'undefined' && activeTenantId && tenants.some(t => t.id === activeTenantId)) {
+          empTenantSelect.value = activeTenantId;
+        } else if (tenants.length > 0) {
+          empTenantSelect.value = tenants[0].id;
+        }
+      }
+
+      // Sincronizar el selector de filtro en Operadores Autorizados y en 4. Expediente (RRHH)
       const filterSelect = document.getElementById('users-list-filter-tenant');
       const rrhhFilterSelect = document.getElementById('rrhh-users-list-filter-tenant');
+      const personnelFilterSelect = document.getElementById('personnel-filter-tenant');
       const activeTenantObj = tenants.find(t => t.id === activeTenantId);
       const activeName = activeTenantObj ? activeTenantObj.name : (activeTenantId || 'Sede Activa');
       let filterHtml = `<option value="${escapeHtml(activeTenantId || '')}">🏢 Solo Sede Activa (${escapeHtml(activeName)})</option>`;
@@ -29834,6 +29747,16 @@ Estamos atentos para brindarle asistencia inmediata.
           }
         }
       });
+
+      if (personnelFilterSelect) {
+        const curPersFilter = forceActive ? (activeTenantId || '') : (personnelFilterSelect.value || currentPersonnelFilterTenant || activeTenantId || '');
+        personnelFilterSelect.innerHTML = filterHtml + `<option value="shared">🔄 Solo Compartidos</option>`;
+        if (curPersFilter && (curPersFilter === 'all' || curPersFilter === 'shared' || tenants.some(t => t.id === curPersFilter))) {
+          personnelFilterSelect.value = curPersFilter;
+        } else {
+          personnelFilterSelect.value = activeTenantId || '';
+        }
+      }
     }
 
     function openCreateUserModal() {
@@ -29844,6 +29767,8 @@ Estamos atentos para brindarle asistencia inmediata.
       const modal = document.getElementById('user-create-modal');
       if (!modal) return;
       document.getElementById('nmodal-name').value = "";
+      const nDni = document.getElementById('nmodal-dni');
+      if (nDni) nDni.value = "";
       document.getElementById('nmodal-email').value = "";
       const tStart = document.getElementById('nmodal-time-start');
       if (tStart) tStart.value = "08:00";
@@ -29888,6 +29813,7 @@ Estamos atentos para brindarle asistencia inmediata.
       errorDiv.textContent = "";
 
       const name = document.getElementById('nmodal-name').value.trim();
+      const dni = (document.getElementById('nmodal-dni')?.value || '').trim();
       const email = document.getElementById('nmodal-email').value.trim();
       const roleId = parseInt(document.getElementById('nmodal-role').value, 10);
       const timeStart = document.getElementById('nmodal-time-start')?.value || '08:00';
@@ -29901,6 +29827,10 @@ Estamos atentos para brindarle asistencia inmediata.
 
       if (!name) {
         errorDiv.textContent = "El nombre no puede estar vacío";
+        return;
+      }
+      if (!/^\d{6,9}$/.test(dni)) {
+        errorDiv.textContent = "Ingresa un DNI numérico válido (ej. 8 dígitos)";
         return;
       }
       if (!email) {
@@ -29926,6 +29856,7 @@ Estamos atentos para brindarle asistencia inmediata.
           },
           body: JSON.stringify({
             name,
+            dni,
             email,
             roleId,
             pin,
@@ -30048,6 +29979,10 @@ Estamos atentos para brindarle asistencia inmediata.
 
       document.getElementById('ue-id').value = user.id;
       document.getElementById('ue-name').value = user.name;
+      const ueDni = document.getElementById('ue-dni');
+      if (ueDni) {
+        ueDni.value = user.dni || (user.id > 1 && user.id < 900001 ? String(user.id) : '');
+      }
       document.getElementById('ue-email').value = user.email;
       document.getElementById('ue-status').value = (user.isActive !== false) ? "true" : "false";
 
@@ -30147,6 +30082,7 @@ Estamos atentos para brindarle asistencia inmediata.
 
       const id = parseInt(document.getElementById('ue-id').value, 10);
       const name = document.getElementById('ue-name').value.trim();
+      const dni = (document.getElementById('ue-dni')?.value || '').trim();
       const email = document.getElementById('ue-email').value.trim();
       const roleId = parseInt(document.getElementById('ue-role').value, 10);
       const isActive = document.getElementById('ue-status').value === "true";
@@ -30161,6 +30097,10 @@ Estamos atentos para brindarle asistencia inmediata.
 
       if (!name) {
         errorDiv.textContent = "El nombre no puede estar vacío";
+        return;
+      }
+      if (!/^\d{6,9}$/.test(dni)) {
+        errorDiv.textContent = "Ingresa un DNI numérico válido (ej. 8 dígitos)";
         return;
       }
       if (!email) {
@@ -30178,6 +30118,7 @@ Estamos atentos para brindarle asistencia inmediata.
       const assignedTenantId = document.getElementById('emodal-assigned-tenant')?.value || activeTenantId;
       const payload = {
         name,
+        dni,
         email,
         roleId,
         isActive,
@@ -30208,8 +30149,10 @@ Estamos atentos para brindarle asistencia inmediata.
           showToast(`Operador ${name} actualizado correctamente`);
           closeEditUserModal();
           
-          // Si el operador editado es el usuario de la sesión actual, actualizar sesión
-          if (currentUser && currentUser.id === id) {
+          // Si el operador editado es el usuario de la sesión actual, actualizar sesión (incluyendo nuevo ID canónico si migró a DNI)
+          if (currentUser && (currentUser.id === id || (currentUser.email && currentUser.email.toLowerCase() === email.toLowerCase()))) {
+            if (data.data?.id) currentUser.id = data.data.id;
+            currentUser.dni = data.data?.dni || dni;
             currentUser.name = name;
             currentUser.email = email;
             currentUser.roleId = roleId;
@@ -30227,6 +30170,8 @@ Estamos atentos para brindarle asistencia inmediata.
           }
 
           await loadConfigModule();
+          await loadEmployees();
+          if (typeof loadAttendance === 'function') loadAttendance();
         } else {
           errorDiv.textContent = data.message || "Error al actualizar operador";
         }
@@ -33648,10 +33593,24 @@ function copyRemoteScannerLink() {
       if (modal) modal.classList.add('hidden');
     }
 
-    // 4. Expediente del Trabajador & Alertas Automáticas (15 días)
+    // 4. Expediente del Trabajador & Alertas Automáticas (15 días) — Aislado por Empresa
+    let currentPersonnelFilterTenant = '';
+
+    function handlePersonnelFilterTenantChange(val) {
+      currentPersonnelFilterTenant = val || '';
+      loadEmployees();
+    }
+
     async function loadEmployees() {
       try {
-        const res = await fetch('/api/rrhh/employees');
+        if (typeof populateAssignedTenantSelects === 'function') {
+          await populateAssignedTenantSelects();
+        }
+        const filterEl = document.getElementById('personnel-filter-tenant');
+        const targetTenant = (filterEl && filterEl.value) ? filterEl.value : (currentPersonnelFilterTenant || activeTenantId || '');
+        const res = await fetch(`/api/rrhh/employees?tenantId=${encodeURIComponent(targetTenant)}`, {
+          headers: { 'x-tenant-id': activeTenantId || '' }
+        });
         const data = await res.json();
         currentEmployees = data.data || [];
         renderHRAlertsBanner(data.alerts || []);
@@ -33755,7 +33714,16 @@ function copyRemoteScannerLink() {
                     ${isSelf ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-mono dynamic-primary-subtle border">Tú</span>' : ''}
                   </div>
                   <p class="text-xs text-blue-600 dark:text-blue-400 font-medium truncate">${escapeHtml(emp.position)}</p>
-                  <span class="text-[10px] font-mono text-slate-400">DNI: ${escapeHtml(emp.dni)} • ${modLabels[emp.workModality || 'office'] || 'Oficina'}</span>
+                  <span class="text-[10px] font-mono text-slate-400 block">DNI: ${escapeHtml(emp.dni)} • ${modLabels[emp.workModality || 'office'] || 'Oficina'}</span>
+                  ${(() => {
+                    const empTen = (emp.tenantId || '').toLowerCase();
+                    if (empTen === 'shared' || empTen === '*') {
+                      return `<span class="inline-flex items-center mt-1 text-[10px] text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20 font-medium">🌐 Compartido (Ambas Empresas)</span>`;
+                    }
+                    const tObj = (typeof tenantsList !== 'undefined' ? tenantsList : []).find(t => t.id.toLowerCase() === empTen);
+                    const tLabel = tObj ? tObj.name : (empTen || 'Sede Principal');
+                    return `<span class="inline-flex items-center mt-1 text-[10px] text-cyan-600 dark:text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20 font-medium">🏢 ${escapeHtml(tLabel)}</span>`;
+                  })()}
                 </div>
               </div>
 
@@ -34275,6 +34243,10 @@ function copyRemoteScannerLink() {
       }
       generateEmployeeOpRandomPin();
       initEmployeeOpTenantAndRoles();
+      populateAssignedTenantSelects(true).then(() => {
+        const empTenSel = document.getElementById('emp-tenant');
+        if (empTenSel && activeTenantId) empTenSel.value = activeTenantId;
+      });
 
       modal.classList.remove('hidden');
     }
@@ -34292,6 +34264,10 @@ function copyRemoteScannerLink() {
       document.getElementById('emp-modal-error').textContent = '';
 
       document.getElementById('emp-name').value = emp.name || '';
+      populateAssignedTenantSelects().then(() => {
+        const empTenSel = document.getElementById('emp-tenant');
+        if (empTenSel) empTenSel.value = emp.tenantId || activeTenantId || empTenSel.value;
+      });
       document.getElementById('emp-position').value = emp.position || '';
       document.getElementById('emp-dni').value = emp.dni || '';
       document.getElementById('emp-phone').value = emp.phone || '';
@@ -34562,6 +34538,7 @@ function copyRemoteScannerLink() {
       statusDiv.className = "text-xs dynamic-primary-text font-mono";
 
       const name = document.getElementById('rnu-name').value.trim();
+      const dni = (document.getElementById('rnu-dni')?.value || '').trim();
       const email = document.getElementById('rnu-email').value.trim();
       const roleId = parseInt(document.getElementById('rnu-role').value, 10);
       const timeStart = document.getElementById('rnu-time-start')?.value || '08:00';
@@ -34573,6 +34550,12 @@ function copyRemoteScannerLink() {
       const pin = document.getElementById('rnu-pin').value.trim();
       const assignedTenantId = document.getElementById('rnu-assigned-tenant')?.value || activeTenantId;
 
+      if (!/^\d{6,9}$/.test(dni)) {
+        statusDiv.textContent = "Ingresa un DNI numérico válido (ej. 8 dígitos)";
+        statusDiv.className = "text-xs text-rose-400 font-mono";
+        return;
+      }
+
       try {
         const res = await fetch('/api/users', {
           method: 'POST',
@@ -34582,6 +34565,7 @@ function copyRemoteScannerLink() {
           },
           body: JSON.stringify({
             name,
+            dni,
             email,
             roleId,
             pin,
@@ -34630,6 +34614,7 @@ function copyRemoteScannerLink() {
       const vacVal = document.getElementById('emp-vacation-acc')?.value;
       const currencySymbol = (typeof getSystemCurrency === 'function' && getSystemCurrency() === 'PEN') ? 'S/' : (typeof getSystemCurrencySymbol === 'function' ? getSystemCurrencySymbol() : 'S/');
       const payload = {
+        tenantId: document.getElementById('emp-tenant')?.value || activeTenantId,
         name: document.getElementById('emp-name').value.trim(),
         position: document.getElementById('emp-position').value.trim(),
         dni: document.getElementById('emp-dni').value.trim(),

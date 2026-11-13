@@ -20,7 +20,7 @@ import { usersRoutes } from "./modules/users/users.routes";
 import { settingsRoutes } from "./modules/settings/settings.routes";
 import { maintenanceRoutes } from "./modules/settings/maintenance.routes";
 import { connectionsRoutes } from "./modules/settings/connections.routes";
-import { rrhhRoutes, zktecoIclockRoutes, getCredentialHtmlByToken } from "./modules/rrhh/rrhh.routes";
+import { rrhhRoutes, zktecoIclockRoutes, getCredentialHtmlByToken, autoMigrateUnifiedIdentitiesOnStartup } from "./modules/rrhh/rrhh.routes";
 import { tenantsRoutes } from "./modules/tenants/tenants.routes";
 import { inventoryRoutes } from "./modules/inventory/inventory.routes";
 import { messagesRoutes } from "./modules/messages/messages.routes";
@@ -34,8 +34,9 @@ import { resolveTenantFromRequest, injectOpenGraphHtml } from "./modules/og/og.s
 import { initializeTenantsSystem } from "./modules/tenants/tenants.service";
 
 export async function buildApp() {
-  // Inicializar y asegurar sistema de múltiples empresas (Multi-Tenant)
+  // Inicializar y asegurar sistema de múltiples empresas (Multi-Tenant) e identidades canónicas por DNI
   initializeTenantsSystem();
+  autoMigrateUnifiedIdentitiesOnStartup();
 
   const fastify = Fastify({
     bodyLimit: 35 * 1024 * 1024, // 35 MB para subida de fotos, audios, videos y comprobantes

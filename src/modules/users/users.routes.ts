@@ -5,7 +5,7 @@ import path from "path";
 import { env } from "../../config/env";
 import { resolveTenantId, getTenantFilePath, loadTenantsFromDisk } from "../tenants/tenants.service";
 import { is2faRequiredForTenant, getMasterTotpSecret } from "../settings/connections.service";
-import { verifyTOTP, enqueueZktecoUserInfo, enqueueZktecoDeleteUser } from "../rrhh/rrhh.routes";
+import { verifyTOTP, enqueueZktecoUserInfo, enqueueZktecoDeleteUser, remapUserIdentityReferences } from "../rrhh/rrhh.routes";
 import { SecurityService } from "../security/security.service";
 import { AuditService } from "../security/audit.service";
 import { MediaService } from "../storage/media.service";
@@ -1182,9 +1182,9 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       avatar: matchedEmp?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(parse.data.name)}`,
       isActive: true,
       createdAt: new Date().toISOString(),
-      isSuperAdmin: false,
+      isSuperAdmin: role.id === 1 || role.name.toLowerCase().includes("superadmin"),
       assignedTenantId: targetTenant,
-      allowedTenants: [targetTenant],
+      allowedTenants: role.id === 1 || role.name.toLowerCase().includes("superadmin") ? ["*"] : [targetTenant],
       workSchedule: parse.data.workSchedule || matchedEmp?.workSchedule || "08:00 - 17:00",
       expectedCheckInTime:
         parse.data.expectedCheckInTime || parse.data.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1] || matchedEmp?.expectedCheckInTime || "08:00",
@@ -1301,6 +1301,36 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     const data = parse.data;
     let shouldRevokeSessions = false;
+    const prevUserId = user.id;
+
+    if (data.dni !== undefined) {
+      const cleanDni = data.dni ? String(data.dni).trim() : "";
+      if (cleanDni) {
+        const dniNum = extractCanonicalNumericId(cleanDni);
+        if (!dniNum) {
+          return reply.status(400).send({
+            success: false,
+            message: "El DNI debe ser un número válido (ej. 8 dígitos).",
+          });
+        }
+        const conflict = usersStore.find(
+          (u) => u.id !== userId && (u.id === dniNum || extractCanonicalNumericId(u.dni) === dniNum)
+        );
+        if (conflict) {
+          return reply.status(400).send({
+            success: false,
+            message: `El DNI ${cleanDni} ya está asignado al operador ${conflict.name}.`,
+          });
+        }
+        user.dni = cleanDni;
+        if (user.id === 1) {
+          user.biometricPin = toZktecoPin(dniNum);
+        } else if (user.id !== dniNum) {
+          user.id = dniNum;
+          user.biometricPin = toZktecoPin(dniNum);
+        }
+      }
+    }
 
     if (data.name) user.name = data.name;
     if (data.email) user.email = data.email;
@@ -1373,8 +1403,58 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     saveUsersToDisk();
 
-    if (shouldRevokeSessions && userId !== request.authUser?.sub) {
-      SecurityService.revokeAllUserSessions(userId);
+    if (prevUserId !== user.id) {
+      remapUserIdentityReferences(prevUserId, user.id, user.name, user.assignedTenantId);
+      try {
+        if (prevUserId > 1 && prevUserId <= 999_999_999) {
+          enqueueZktecoDeleteUser(toZktecoPin(prevUserId));
+        }
+      } catch {}
+    }
+
+    // Sincronizar también en employees.json si existe expediente vinculado
+    try {
+      if (fs.existsSync(EMPLOYEES_FILE)) {
+        const empsList = JSON.parse(fs.readFileSync(EMPLOYEES_FILE, "utf-8"));
+        if (Array.isArray(empsList)) {
+          const empIdx = empsList.findIndex(
+            (e: any) =>
+              e.id === user.id ||
+              e.id === prevUserId ||
+              (user.dni && extractCanonicalNumericId(e.dni) === extractCanonicalNumericId(user.dni)) ||
+              (user.email && e.email && String(e.email).toLowerCase() === user.email.toLowerCase())
+          );
+          if (empIdx >= 0) {
+            const targetEmp = empsList[empIdx];
+            if (user.id !== 1 && user.dni && extractCanonicalNumericId(user.dni) && targetEmp.id !== user.id) {
+              targetEmp.id = user.id;
+              targetEmp.dni = user.dni;
+            }
+            targetEmp.operatorId = user.id;
+            targetEmp.operatorTenantId = user.assignedTenantId || targetEmp.operatorTenantId;
+            targetEmp.operatorRoleId = user.roleId;
+            targetEmp.operatorRoleName = user.roleName;
+            targetEmp.biometricPin = toZktecoPin(targetEmp.id);
+            targetEmp.biometricId = toZktecoPin(targetEmp.id);
+            fs.writeFileSync(EMPLOYEES_FILE, JSON.stringify(empsList, null, 2), "utf-8");
+          }
+        }
+      }
+    } catch {}
+
+    if (data.syncWithZkteco !== false) {
+      try {
+        const zkPin = user.biometricPin || toZktecoPin(extractCanonicalNumericId(user.dni) || extractCanonicalNumericId(user.id) || 1);
+        if (user.isActive === false) {
+          enqueueZktecoDeleteUser(zkPin);
+        } else {
+          enqueueZktecoUserInfo(zkPin, user.name, user.isSuperAdmin);
+        }
+      } catch {}
+    }
+
+    if (shouldRevokeSessions && userId !== request.authUser?.sub && user.id !== request.authUser?.sub) {
+      SecurityService.revokeAllUserSessions(user.id);
     }
 
     AuditService.log({

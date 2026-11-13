@@ -1,4 +1,6 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import fs from "fs";
+import path from "path";
 import { SecurityService, SessionRecord } from "../modules/security/security.service";
 import { resolveTenantId } from "../modules/tenants/tenants.service";
 import { getScannerSession } from "../modules/scanner/scanner.service";
@@ -176,6 +178,28 @@ export function registerGlobalAuthGuard(fastify: FastifyInstance): void {
         const sessionCheck = SecurityService.validateSession(decoded.jti, !isPassiveCheck);
 
         if (sessionCheck.valid && sessionCheck.session) {
+          if (sessionCheck.session.userId && sessionCheck.session.userId !== decoded.sub) {
+            decoded.sub = sessionCheck.session.userId;
+          }
+          // Si el token proviene de una sesión previa a la migración de DNI (ej. ID 13 dígitos o temporal 900xxx), reconciliar por email
+          if ((decoded.sub > 999_999_999 || decoded.sub >= 900_001) && decoded.email) {
+            try {
+              const uFile = path.resolve(process.cwd(), "data", "users.json");
+              if (fs.existsSync(uFile)) {
+                const uList = JSON.parse(fs.readFileSync(uFile, "utf-8"));
+                if (Array.isArray(uList)) {
+                  const byEmail = uList.find(
+                    (u: any) => u.email && String(u.email).trim().toLowerCase() === String(decoded.email).trim().toLowerCase()
+                  );
+                  if (byEmail && Number.isInteger(byEmail.id) && byEmail.id !== decoded.sub) {
+                    SecurityService.migrateUserIdInSessions(decoded.sub, byEmail.id);
+                    sessionCheck.session.userId = byEmail.id;
+                    decoded.sub = byEmail.id;
+                  }
+                }
+              }
+            } catch {}
+          }
           verifiedUser = decoded;
           request.authUser = decoded;
           request.sessionRecord = sessionCheck.session;

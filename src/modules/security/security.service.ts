@@ -291,6 +291,34 @@ export class SecurityService {
     return count;
   }
 
+  public static migrateUserIdInSessions(oldUserId: number, newUserId: number): number {
+    if (!oldUserId || !newUserId || oldUserId === newUserId) return 0;
+    let count = 0;
+    for (const [, s] of sessionsMap.entries()) {
+      if (s.userId === oldUserId) {
+        s.userId = newUserId;
+        count++;
+      }
+    }
+    if (count > 0) {
+      try {
+        if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+        const now = Date.now();
+        const active: SessionRecord[] = [];
+        for (const [jti, s] of sessionsMap.entries()) {
+          if (s.revoked || now >= s.maxExpiresAt || now - s.lastActivityAt > s.idleTimeoutMs) {
+            sessionsMap.delete(jti);
+          } else {
+            active.push(s);
+          }
+        }
+        fs.writeFileSync(SESSIONS_FILE, JSON.stringify(active, null, 2), { encoding: "utf-8", mode: 0o600 });
+      } catch {}
+      scheduleSessionsFlush();
+    }
+    return count;
+  }
+
   public static buildSessionCookie(token: string, isSecureRequest = false): string {
     const maxAgeSec = Math.floor(this.getMaxSessionMs() / 1000);
     const parts = [

@@ -195,6 +195,7 @@ export function enqueueZktecoDeleteUser(rawPinOrId: string | number) {
 
 export interface Employee {
   id: number;
+  tenantId?: string;
   name: string;
   position: string;
   dni: string;
@@ -458,6 +459,7 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
       publicToken: emp.publicToken,
       totpSecret: emp.totpSecret || "JBSWY3DPEHPK3PXP",
       workModality: emp.workModality || "office",
+      tenantId: emp.tenantId || emp.operatorTenantId || "",
       isRegisteredEmployee: true,
     };
   }
@@ -488,6 +490,7 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
           publicToken: `usr-${user.id}`,
           totpSecret: "JBSWY3DPEHPK3PXP",
           workModality: "hybrid",
+          tenantId: user.assignedTenantId || (Array.isArray(user.allowedTenants) && user.allowedTenants[0] !== "*" ? user.allowedTenants[0] : "turbonetwork"),
           isRegisteredEmployee: false,
         };
       }
@@ -512,6 +515,7 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
     publicToken: `colab-${numId}`,
     totpSecret: "JBSWY3DPEHPK3PXP",
     workModality: "office",
+    tenantId: "",
     isRegisteredEmployee: false,
   };
 }
@@ -703,8 +707,110 @@ export function saveSystemUsersToDisk(users: any[]): void {
   }
 }
 
+export function detectPrimaryLoaTenantId(tenantsList?: any[]): string {
+  const list = Array.isArray(tenantsList) && tenantsList.length > 0 ? tenantsList : loadTenantsFromDisk();
+  const direct = list.find(
+    (t: any) =>
+      (t.id === "loanetwork" || t.id === "loa" || /\bloa\b/i.test(t.name || "")) &&
+      !/san[\s-]*miguel/i.test(t.name || "") &&
+      !/san[\s-]*miguel/i.test(t.id || "")
+  );
+  if (direct) return String(direct.id).trim().toLowerCase();
+  const fallback = list.find((t: any) => /\bloa\b/i.test(t.name || "") || /\bloa/i.test(t.id || ""));
+  return fallback ? String(fallback.id).trim().toLowerCase() : "loanetwork";
+}
+
+export function detectPrimaryTurboTenantId(tenantsList?: any[]): string {
+  const list = Array.isArray(tenantsList) && tenantsList.length > 0 ? tenantsList : loadTenantsFromDisk();
+  const direct = list.find(
+    (t: any) => t.id === "turbonetwork" || t.id === "turbo" || /\bturbo/i.test(t.name || "")
+  );
+  return direct ? String(direct.id).trim().toLowerCase() : "turbonetwork";
+}
+
+export function employeeBelongsToTenant(emp: Partial<Employee>, targetTenant?: string): boolean {
+  const target = String(targetTenant || "").trim().toLowerCase();
+  if (!target || target === "all") return true;
+  const empTenant = String(emp.tenantId || "").trim().toLowerCase();
+  if (target === "shared") return empTenant === "shared" || empTenant === "*";
+  if (empTenant === "shared" || empTenant === "*") return true;
+  if (empTenant) return empTenant === target;
+  return detectPrimaryLoaTenantId() === target;
+}
+
+function normalizePersonTokens(rawName?: string): string[] {
+  if (!rawName) return [];
+  return String(rawName)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 3 && !["DEL", "LOS", "LAS", "POR", "CON"].includes(w));
+}
+
+function isEmmanuelleProfile(item: { dni?: any; email?: any; name?: any }): boolean {
+  if (extractCanonicalNumericId(item?.dni) === 75441919) return true;
+  const mail = String(item?.email || "").trim().toLowerCase();
+  if (mail === "manueldt299@gmail.com") return true;
+  const norm = String(item?.name || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+  return /\bEMMANUELLE\b/.test(norm) && /(RIOS|TALLEDO|THIERRY|THERRY)/.test(norm);
+}
+
+export function remapUserIdentityReferences(oldId: number, newId: number, canonicalName?: string, assignedTenantId?: string): void {
+  if (!oldId || !newId || oldId === newId) return;
+
+  // 1. Actualizar sesiones activas (.sessions.json + RAM)
+  SecurityService.migrateUserIdInSessions(oldId, newId);
+
+  // 2. Actualizar assignedUserIds en tenants.json si existe
+  try {
+    const tFile = path.join(DATA_DIR, "tenants.json");
+    if (fs.existsSync(tFile)) {
+      const tList = JSON.parse(fs.readFileSync(tFile, "utf-8"));
+      if (Array.isArray(tList)) {
+        let tChanged = false;
+        for (const t of tList) {
+          if (Array.isArray(t.assignedUserIds) && t.assignedUserIds.includes(oldId)) {
+            t.assignedUserIds = Array.from(new Set(t.assignedUserIds.map((id: number) => (id === oldId ? newId : id))));
+            tChanged = true;
+          }
+        }
+        if (tChanged) {
+          fs.writeFileSync(tFile, JSON.stringify(tList, null, 2), "utf-8");
+        }
+      }
+    }
+  } catch {}
+
+  // 3. Actualizar registros de asistencia históricos y del día
+  try {
+    const att = loadAttendanceFromDisk();
+    let attChanged = false;
+    for (const rec of att) {
+      if (rec.employeeId === oldId) {
+        rec.employeeId = newId;
+        if (canonicalName) rec.employeeName = canonicalName;
+        if (assignedTenantId && assignedTenantId !== "*") rec.tenantId = assignedTenantId;
+        attChanged = true;
+      }
+    }
+    if (attChanged) {
+      saveAttendanceToDisk(att);
+      attendanceStore = att;
+    }
+  } catch {}
+}
+
 export function autoMigrateUnifiedIdentitiesOnStartup(): void {
   try {
+    const tenants = loadTenantsFromDisk();
+    const loaTenantId = detectPrimaryLoaTenantId(tenants);
+    const turboTenantId = detectPrimaryTurboTenantId(tenants);
+
     const emps = loadEmployeesFromDisk();
     const users = loadSystemUsersFromDisk();
     const att = loadAttendanceFromDisk();
@@ -713,14 +819,18 @@ export function autoMigrateUnifiedIdentitiesOnStartup(): void {
     let usersChanged = false;
     let attChanged = false;
 
-    const oldEmpIdToNew = new Map<number, { newId: number; name: string }>();
+    const oldIdToNew = new Map<number, { newId: number; name: string; tenantId?: string }>();
 
-    // 1. Migrar colaboradores de IDs secuenciales antiguos (1..N) o BIO-xxx a su DNI numérico canónico
+    // 1. Migrar colaboradores de IDs antiguos a su DNI numérico único y asignar empresa (LOA por defecto, excepto Emmanuelle -> Turbo)
     for (const emp of emps) {
+      if (isEmmanuelleProfile(emp) && !extractCanonicalNumericId(emp.dni)) {
+        emp.dni = "75441919";
+        empChanged = true;
+      }
       const canonicalDni = extractCanonicalNumericId(emp.dni);
       if (canonicalDni && canonicalDni > 1) {
         if (emp.id !== canonicalDni) {
-          oldEmpIdToNew.set(emp.id, { newId: canonicalDni, name: emp.name });
+          oldIdToNew.set(emp.id, { newId: canonicalDni, name: emp.name, tenantId: emp.tenantId });
           emp.id = canonicalDni;
           empChanged = true;
         }
@@ -731,63 +841,212 @@ export function autoMigrateUnifiedIdentitiesOnStartup(): void {
           empChanged = true;
         }
       }
+      if (isEmmanuelleProfile(emp)) {
+        if (emp.tenantId !== turboTenantId) {
+          emp.tenantId = turboTenantId;
+          empChanged = true;
+        }
+      } else if (!emp.tenantId) {
+        emp.tenantId = loaTenantId;
+        empChanged = true;
+      }
       if ("operatorPin" in emp && emp.operatorPin) {
         delete emp.operatorPin;
         empChanged = true;
       }
     }
 
-    // 2. Normalizar usuarios del sistema (asegurar ID 1..9 dígitos y enlace 1-a-1 con RRHH sin alterar sesiones)
+    // 2. Normalizar usuarios del sistema (asignar DNI 75441919 a Emmanuelle, enlazar 1-a-1 con RRHH por DNI/email/nombre y eliminar IDs de 13 dígitos)
     const rootAdmin = users.find((u) => u.id === 1);
-    if (rootAdmin && !rootAdmin.biometricPin) {
-      rootAdmin.biometricPin = toZktecoPin(extractCanonicalNumericId(rootAdmin.dni) || 1);
-      usersChanged = true;
+    if (rootAdmin) {
+      const rootZk = toZktecoPin(extractCanonicalNumericId(rootAdmin.dni) || 1);
+      if (rootAdmin.biometricPin !== rootZk) {
+        rootAdmin.biometricPin = rootZk;
+        usersChanged = true;
+      }
     }
 
     for (const u of users) {
       if (u.id === 1) continue;
-      const linkedEmp = emps.find(
-        (e) =>
-          (u.dni && extractCanonicalNumericId(e.dni) === extractCanonicalNumericId(u.dni)) ||
-          (u.email && e.email && String(e.email).trim().toLowerCase() === String(u.email).trim().toLowerCase())
-      );
+      const prevUserId = Number(u.id);
+
+      if (isEmmanuelleProfile(u)) {
+        if (u.dni !== "75441919") {
+          u.dni = "75441919";
+          usersChanged = true;
+        }
+        if (!u.assignedTenantId || u.assignedTenantId === "*") {
+          u.assignedTenantId = turboTenantId;
+          usersChanged = true;
+        }
+      }
+
+      const uTokens = normalizePersonTokens(u.name);
+      const tokenMatches =
+        uTokens.length >= 2
+          ? emps.filter((e) => {
+              const eTokens = normalizePersonTokens(e.name);
+              return uTokens.every((tok) => eTokens.includes(tok));
+            })
+          : [];
+
+      const linkedEmp =
+        emps.find(
+          (e) =>
+            (u.dni && extractCanonicalNumericId(e.dni) === extractCanonicalNumericId(u.dni)) ||
+            (u.email && e.email && String(e.email).trim().toLowerCase() === String(u.email).trim().toLowerCase())
+        ) || (tokenMatches.length === 1 ? tokenMatches[0] : undefined);
+
       if (linkedEmp) {
-        if (u.id !== linkedEmp.id || u.biometricPin !== toZktecoPin(linkedEmp.id)) {
+        if (u.id !== linkedEmp.id || u.biometricPin !== toZktecoPin(linkedEmp.id) || !u.dni) {
           u.id = linkedEmp.id;
           u.dni = u.dni || linkedEmp.dni;
           u.biometricPin = toZktecoPin(linkedEmp.id);
           usersChanged = true;
         }
-        if (linkedEmp.operatorId !== u.id) {
+        if (linkedEmp.operatorId !== u.id || !linkedEmp.operatorTenantId) {
           linkedEmp.operatorId = u.id;
+          linkedEmp.operatorTenantId = u.assignedTenantId || linkedEmp.tenantId || loaTenantId;
           empChanged = true;
         }
-      } else if (!extractCanonicalNumericId(u.id)) {
-        const usedIds = [
-          ...emps.map((e) => e.id).filter((id) => Number.isInteger(id)),
-          ...users.filter((x) => x !== u).map((x) => x.id).filter((id) => Number.isInteger(id)),
-        ];
-        const newStandaloneId = allocateCanonicalUserId({ dni: u.dni, usedIds });
-        u.id = newStandaloneId;
-        u.biometricPin = toZktecoPin(newStandaloneId);
-        usersChanged = true;
+      } else {
+        const canonicalFromDni = extractCanonicalNumericId(u.dni);
+        if (canonicalFromDni && canonicalFromDni > 1 && !users.some((x) => x !== u && x.id === canonicalFromDni)) {
+          if (u.id !== canonicalFromDni || u.biometricPin !== toZktecoPin(canonicalFromDni)) {
+            u.id = canonicalFromDni;
+            u.biometricPin = toZktecoPin(canonicalFromDni);
+            usersChanged = true;
+          }
+        } else if (!extractCanonicalNumericId(u.id)) {
+          const usedIds = [
+            1,
+            ...emps.map((e) => e.id).filter((id) => Number.isInteger(id)),
+            ...users.filter((x) => x !== u).map((x) => x.id).filter((id) => Number.isInteger(id)),
+          ];
+          const newStandaloneId = allocateCanonicalUserId({ dni: u.dni, usedIds });
+          u.id = newStandaloneId;
+          u.biometricPin = toZktecoPin(newStandaloneId);
+          usersChanged = true;
+        }
+      }
+
+      if (prevUserId && prevUserId !== u.id) {
+        oldIdToNew.set(prevUserId, {
+          newId: u.id,
+          name: u.name,
+          tenantId: u.assignedTenantId || turboTenantId,
+        });
+        SecurityService.migrateUserIdInSessions(prevUserId, u.id);
+      }
+
+      // Si Emmanuelle existe como Operador en producción (75441919) pero aún no tenía ficha en 4. Expediente, crearla bajo Turbo Perú
+      if (isEmmanuelleProfile(u) && u.id === 75441919 && !emps.some((e) => e.id === 75441919)) {
+        emps.unshift({
+          id: 75441919,
+          tenantId: turboTenantId,
+          name: u.name || "EMMANUELLE THIERRY DE LOS RIOS TALLEDO",
+          position: u.roleName || "Superadministrador",
+          dni: "75441919",
+          phone: u.phone || "+51 900 000 000",
+          email: u.email || "manueldt299@gmail.com",
+          workSchedule: u.workSchedule || "08:00 - 17:00",
+          workDays: ["lun", "mar", "mie", "jue", "vie"],
+          expectedCheckInTime: u.expectedCheckInTime || "08:00",
+          expectedCheckOutTime: u.expectedCheckOutTime || "17:00",
+          salary: "0.00",
+          bonus: "0.00",
+          currency: "S/",
+          hireDate: u.hireDate || "2026-08-19",
+          birthDate: u.birthDate || "2002-05-24",
+          contractType: "indeterminado",
+          workModality: "hybrid",
+          biometricPin: "75441919",
+          biometricId: "75441919",
+          operatorId: 75441919,
+          operatorTenantId: turboTenantId,
+          operatorRoleId: u.roleId || 1,
+          operatorRoleName: u.roleName || "Superadministrador",
+          status: "active",
+          avatar: u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.name || "Emmanuelle")}`,
+          publicToken: `emp-emmanuelle-${crypto.randomBytes(4).toString("hex")}`,
+          totpSecret: "JBSWY3DPEHPK3PXP",
+          createdAt: u.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        empChanged = true;
       }
     }
 
-    // 3. Curar registros históricos de asistencia si existía colisión previa en ID=1 o IDs secuenciales antiguos
+    // Actualizar assignedUserIds en tenants.json si algún operador migró de ID
+    if (oldIdToNew.size > 0) {
+      try {
+        const tFile = path.join(DATA_DIR, "tenants.json");
+        if (fs.existsSync(tFile)) {
+          const tList = JSON.parse(fs.readFileSync(tFile, "utf-8"));
+          if (Array.isArray(tList)) {
+            let tChanged = false;
+            for (const t of tList) {
+              if (Array.isArray(t.assignedUserIds)) {
+                const updatedIds = t.assignedUserIds.map((id: number) => oldIdToNew.get(id)?.newId ?? id);
+                const dedup = Array.from(new Set(updatedIds));
+                if (JSON.stringify(dedup) !== JSON.stringify(t.assignedUserIds)) {
+                  t.assignedUserIds = dedup;
+                  tChanged = true;
+                }
+              }
+            }
+            if (tChanged) fs.writeFileSync(tFile, JSON.stringify(tList, null, 2), "utf-8");
+          }
+        }
+      } catch {}
+    }
+
+    // 3. Curar registros históricos y del día en attendance.json (incluyendo IDs antiguos de 13 dígitos como 1793079434162)
     for (const rec of att) {
       if (rec.employeeId === 1 && rootAdmin && rec.modality !== "fingerprint") {
-        const migratedEmp1 = oldEmpIdToNew.get(1);
+        const migratedEmp1 = oldIdToNew.get(1);
         if (migratedEmp1 && rec.employeeName === migratedEmp1.name) {
           rec.employeeName = rootAdmin.name;
           attChanged = true;
         }
-      } else if (oldEmpIdToNew.has(rec.employeeId)) {
-        const mig = oldEmpIdToNew.get(rec.employeeId)!;
-        if (!rec.employeeName || rec.employeeName === mig.name) {
-          rec.employeeId = mig.newId;
-          rec.employeeName = mig.name;
-          attChanged = true;
+      } else if (oldIdToNew.has(rec.employeeId)) {
+        const mig = oldIdToNew.get(rec.employeeId)!;
+        rec.employeeId = mig.newId;
+        if (mig.name) rec.employeeName = mig.name;
+        attChanged = true;
+      } else if (!extractCanonicalNumericId(rec.employeeId) || rec.employeeId >= 900001) {
+        // Curación por nombre para asistencias grabadas antes de asignar DNI (ej. ID #1793079434162 de Emmanuelle)
+        if (isEmmanuelleProfile({ name: rec.employeeName })) {
+          const emmUser = users.find((u) => isEmmanuelleProfile(u));
+          const targetId = emmUser ? emmUser.id : 75441919;
+          if (rec.employeeId !== targetId || rec.tenantId !== turboTenantId) {
+            if (rec.employeeId !== targetId) {
+              SecurityService.migrateUserIdInSessions(rec.employeeId, targetId);
+              rec.employeeId = targetId;
+            }
+            rec.tenantId = turboTenantId;
+            attChanged = true;
+          }
+        } else {
+          const recTokens = normalizePersonTokens(rec.employeeName);
+          if (recTokens.length >= 2) {
+            const matchedEmp = emps.find((e) => {
+              const eTokens = normalizePersonTokens(e.name);
+              return recTokens.every((t) => eTokens.includes(t));
+            });
+            const matchedUser = !matchedEmp
+              ? users.find((u) => {
+                  const uTokens = normalizePersonTokens(u.name);
+                  return uTokens.length >= 2 && recTokens.every((t) => uTokens.includes(t));
+                })
+              : null;
+            const resolvedTarget = matchedEmp || matchedUser;
+            if (resolvedTarget && resolvedTarget.id && rec.employeeId !== resolvedTarget.id) {
+              SecurityService.migrateUserIdInSessions(rec.employeeId, resolvedTarget.id);
+              rec.employeeId = resolvedTarget.id;
+              attChanged = true;
+            }
+          }
         }
       }
     }
@@ -799,16 +1058,16 @@ export function autoMigrateUnifiedIdentitiesOnStartup(): void {
     if (empChanged) {
       saveEmployeesToDisk(emps);
       employeesStore = emps;
-      console.log("[RRHH] ✅ Identidades de colaboradores migradas automáticamente a DNI numérico único.");
+      console.log("[RRHH] ✅ Identidades y empresas de colaboradores normalizadas automáticamente.");
     }
     if (usersChanged) {
       saveSystemUsersToDisk(users);
-      console.log("[RRHH] ✅ Identidades de operadores web normalizadas al estándar canónico.");
+      console.log("[RRHH] ✅ Identidades de operadores web unificadas con DNI canónico.");
     }
     if (attChanged) {
       saveAttendanceToDisk(att);
       attendanceStore = att;
-      console.log("[RRHH] ✅ Historial de asistencias normalizado sin colisiones.");
+      console.log("[RRHH] ✅ Historial de asistencias reparado sin IDs de 13 dígitos.");
     }
   } catch (err) {
     console.warn("[RRHH] Aviso en auto-migración de identidades al iniciar:", err);
@@ -839,6 +1098,7 @@ export function getTenantRolesList(tenantId: string): any[] {
 
 const createEmployeeSchema = z
   .object({
+    tenantId: z.string().optional(),
     name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").optional(),
     fullName: z.string().min(2).optional(),
     position: z.string().min(2, "El cargo es requerido"),
@@ -1264,17 +1524,21 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   // A. GESTIÓN DE PERSONAL, EXPEDIENTE Y ALERTAS (15 DÍAS)
   // -------------------------------------------------------------
 
-  // Listar todo el personal enriquecido con expediente, vacaciones y alertas
-  fastify.get("/rrhh/employees", async (_request, reply) => {
+  // Listar todo el personal enriquecido con expediente, vacaciones y alertas (aislado por empresa activa o global si tenantId=all)
+  fastify.get("/rrhh/employees", async (request, reply) => {
+    const { tenantId } = (request.query as { tenantId?: string }) || {};
+    const activeTenant = (tenantId || resolveTenantId(request)).toLowerCase();
     employeesStore = loadEmployeesFromDisk();
+    const scopedEmployees = employeesStore.filter((emp) => employeeBelongsToTenant(emp, activeTenant));
     const leaves = loadLeavesFromDisk();
     const { peruDate } = getPeruDateTime();
-    const enriched = employeesStore.map((emp) => enrichEmployeeExpediente(emp, leaves, peruDate));
+    const enriched = scopedEmployees.map((emp) => enrichEmployeeExpediente(emp, leaves, peruDate));
     const alerts = computeHRAlerts(enriched, peruDate, 15);
 
     return reply.send({
       success: true,
       count: enriched.length,
+      tenantId: activeTenant,
       data: enriched,
       alerts,
     });
@@ -1282,12 +1546,14 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
   // Obtener alertas automáticas de contratos y documentos (<= 15 días)
   fastify.get("/rrhh/alerts", async (request, reply) => {
-    const { days } = request.query as { days?: string };
+    const { days, tenantId } = request.query as { days?: string; tenantId?: string };
     const windowDays = days ? parseInt(days, 10) || 15 : 15;
+    const activeTenant = (tenantId || resolveTenantId(request)).toLowerCase();
     employeesStore = loadEmployeesFromDisk();
+    const scopedEmployees = employeesStore.filter((emp) => employeeBelongsToTenant(emp, activeTenant));
     const leaves = loadLeavesFromDisk();
     const { peruDate } = getPeruDateTime();
-    const enriched = employeesStore.map((emp) => enrichEmployeeExpediente(emp, leaves, peruDate));
+    const enriched = scopedEmployees.map((emp) => enrichEmployeeExpediente(emp, leaves, peruDate));
     const alerts = computeHRAlerts(enriched, peruDate, windowDays);
 
     return reply.send({
@@ -1864,8 +2130,15 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       operatorCreated = true;
     }
 
+    const assignedEmpTenant = String(
+      body.tenantId || body.operatorTenantId || resolveTenantId(request) || detectPrimaryLoaTenantId()
+    )
+      .trim()
+      .toLowerCase();
+
     const newEmp: Employee = {
       id: canonicalId,
+      tenantId: assignedEmpTenant,
       name: body.name,
       position: body.position,
       dni: cleanDni,
@@ -2087,6 +2360,10 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       ...current,
       ...body,
       id: current.id,
+      tenantId:
+        body.tenantId !== undefined && String(body.tenantId).trim() !== ""
+          ? String(body.tenantId).trim().toLowerCase()
+          : current.tenantId || detectPrimaryLoaTenantId(),
       dni: cleanDni,
       expectedCheckInTime: expectedTime,
       expectedCheckOutTime: expectedOutTime || "17:00",
@@ -3660,7 +3937,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const commissions = loadCommissionsFromDisk();
     const incidents = loadIncidentsFromDisk();
 
-    const enrichedEmployees = employeesStore.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
+    const scopedPayrollEmps = employeesStore.filter((e) => employeeBelongsToTenant(e, activeTenant));
+    const enrichedEmployees = scopedPayrollEmps.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
 
     const savedPeriodData = getMonthlyPayrollForTenant(activeTenant, targetPeriod);
     let items: any[] = [];
@@ -4201,7 +4479,8 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const commissions = loadCommissionsFromDisk();
     const incidents = loadIncidentsFromDisk();
 
-    const enrichedEmployees = employeesStore.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
+    const scopedPayrollEmps = employeesStore.filter((e) => employeeBelongsToTenant(e, activeTenant));
+    const enrichedEmployees = scopedPayrollEmps.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
 
     const items = calculateMonthlyPayroll({
       period: targetPeriod,
@@ -4267,6 +4546,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ success: false, message: "Periodo y filas para importar son requeridos." });
     }
 
+    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
     employeesStore = loadEmployeesFromDisk();
     attendanceStore = loadAttendanceFromDisk();
     const leaves = loadLeavesFromDisk();
@@ -4274,16 +4554,16 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const incidents = loadIncidentsFromDisk();
 
     // Cargar planilla existente o calcularla base
-    const monthlyPayrolls = loadMonthlyPayrollsFromDisk();
-    let currentPeriodData = monthlyPayrolls[period];
-    let currentItems: any[] = currentPeriodData?.items;
+    const currentPeriodData = getMonthlyPayrollForTenant(activeTenant, period);
+    let currentItems: any[] = currentPeriodData?.items || [];
 
     if (!currentItems || currentItems.length === 0) {
       const { peruDate } = getPeruDateTime();
-      const enrichedEmployees = employeesStore.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
+      const scopedPayrollEmps = employeesStore.filter((e) => employeeBelongsToTenant(e, activeTenant));
+      const enrichedEmployees = scopedPayrollEmps.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
       currentItems = calculateMonthlyPayroll({
         period,
-        tenantId: "turbonetwork",
+        tenantId: activeTenant,
         employees: enrichedEmployees,
         attendances: attendanceStore,
         leaves,
@@ -4377,7 +4657,6 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
 
-    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
     const allTenants = loadTenantsFromDisk();
     const tenantObj = allTenants.find((t) => t.id === activeTenant);
     const companyName = tenantObj?.name || (activeTenant === "loanetwork" ? "LOA NETWORK JL SAC" : "TurboNetwork Perú S.A.C.");
@@ -4400,12 +4679,13 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
   // Exportar Archivos Planos Oficiales para SUNAT PLAME (.jor, .snl, .rem)
   fastify.get("/rrhh/payroll/plame-export", async (request, reply) => {
-    const { period, type } = request.query as { period?: string; type?: "jor" | "snl" | "rem" };
+    const { period, type, tenantId } = request.query as { period?: string; type?: "jor" | "snl" | "rem"; tenantId?: string };
     const { peruDate } = getPeruDateTime();
     const targetPeriod = period || peruDate.slice(0, 7);
+    const activeTenant = (tenantId || resolveTenantId(request)).toLowerCase();
 
-    const monthlyPayrolls = loadMonthlyPayrollsFromDisk();
-    let items = monthlyPayrolls[targetPeriod]?.items;
+    const savedTenantPayroll = getMonthlyPayrollForTenant(activeTenant, targetPeriod);
+    let items = savedTenantPayroll?.items;
 
     if (!items || items.length === 0) {
       employeesStore = loadEmployeesFromDisk();
@@ -4413,10 +4693,11 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       const leaves = loadLeavesFromDisk();
       const commissions = loadCommissionsFromDisk();
       const incidents = loadIncidentsFromDisk();
-      const enrichedEmployees = employeesStore.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
+      const scopedPayrollEmps = employeesStore.filter((e) => employeeBelongsToTenant(e, activeTenant));
+      const enrichedEmployees = scopedPayrollEmps.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
       items = calculateMonthlyPayroll({
         period: targetPeriod,
-        tenantId: "turbonetwork",
+        tenantId: activeTenant,
         employees: enrichedEmployees,
         attendances: attendanceStore,
         leaves,
@@ -4426,7 +4707,6 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const tramas = generatePlameTramas(targetPeriod, items);
-    const activeTenant = ((request.query as any).tenantId || resolveTenantId(request)).toLowerCase();
     const allTenants = loadTenantsFromDisk();
     const tenantObj = allTenants.find((t) => t.id === activeTenant);
     const ruc = tenantObj?.ruc || (activeTenant === "loanetwork" ? "20607511579" : "20608543121");
@@ -4683,13 +4963,22 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       const diff = curH * 60 + curM - (expH * 60 + expM);
       const nextId = attendanceList.length > 0 ? Math.max(...attendanceList.map((a) => a.id)) + 1 : 1;
 
+      const empTenantRaw = String((emp as any).tenantId || "").trim().toLowerCase();
+      const resolvedTenantId =
+        empTenantRaw && empTenantRaw !== "shared" && empTenantRaw !== "*"
+          ? empTenantRaw
+          : detectPrimaryLoaTenantId();
+      const tenantsAll = loadTenantsFromDisk();
+      const matchedTenantObj = tenantsAll.find((t) => t.id.toLowerCase() === resolvedTenantId);
+      const resolvedTenantName = matchedTenantObj?.name || "Oficina Central";
+
       const newRec: AttendanceRecord = {
         id: nextId,
         employeeId: resolvedEmpId,
         employeeName: emp.name,
-        tenantId: "turbonetwork",
-        tenantName: "Oficina Central",
-        isShared: true,
+        tenantId: resolvedTenantId,
+        tenantName: resolvedTenantName,
+        isShared: empTenantRaw === "shared" || empTenantRaw === "*",
         date: dateStr,
         checkIn: new Date().toISOString(),
         checkInTime: timeStr,
