@@ -43,3 +43,9 @@ tmp/
 scratch/
 
 cloudflared.exe
+
+# Datos privados de la Bandeja Omnicanal (chats, multimedia y sesion de WhatsApp)
+data/media/
+data/omnichannel-db/
+data/omnichannel-db.corrupt-*/
+data/whatsapp-qr-session/

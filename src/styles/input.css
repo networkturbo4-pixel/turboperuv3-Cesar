@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  :where(a:any-link, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  @media (forced-colors: active) {
+    :where(a:any-link, button, input, select, textarea, summary, [tabindex]):focus-visible {
+      outline: 2px solid Highlight;
+      outline-offset: 2px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
 /* ========================================================
    ESTILOS DEDICADOS: MENSAJES, COMUNIDADES & GRUPOS
    ======================================================== */
@@ -15,7 +46,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+              color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 150ms cubic-bezier(0.22, 1, 0.36, 1);
   cursor: pointer;
   user-select: none;
 }
@@ -63,7 +96,8 @@
   background-color: #ffffff;
   overflow: hidden;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease-in-out;
+  transition: border-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .dark .community-card {
   border-color: rgba(255, 255, 255, 0.08);
@@ -114,7 +148,9 @@
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
+  transition: background-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+              color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
   color: #334155;
   background-color: transparent;
   border-left: 3px solid transparent;
@@ -178,9 +214,8 @@
 .msg-bubble-in p,
 .chat-message-row span,
 .chat-message-row h4 {
-  overflow-wrap: anywhere !important;
-  word-break: break-all !important;
-  word-wrap: break-word !important;
+  overflow-wrap: anywhere;
+  word-wrap: break-word;
   hyphens: auto;
 }
 
@@ -190,8 +225,7 @@
   min-width: 0 !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
-  word-break: break-all !important;
-  overflow-wrap: anywhere !important;
+  overflow-wrap: anywhere;
 }
 
 /* ========================================================

@@ -24,11 +24,15 @@ import { rrhhRoutes, zktecoIclockRoutes, getCredentialHtmlByToken, autoMigrateUn
 import { tenantsRoutes } from "./modules/tenants/tenants.routes";
 import { inventoryRoutes } from "./modules/inventory/inventory.routes";
 import { messagesRoutes } from "./modules/messages/messages.routes";
+import { omnichannelRoutes } from "./modules/messages/omnichannel.routes";
 import { whatsappRoutes } from "./modules/messages/whatsapp.routes";
 import { mapsRoutes } from "./modules/maps/maps.routes";
 import { databaseRoutes } from "./modules/database/database.routes";
 import { apartadosRoutes } from "./modules/apartados/apartados.routes";
 import { scannerRoutes } from "./modules/scanner/scanner.routes";
+import { initWhatsAppQrEngineOnBoot } from "./modules/messages/whatsapp-qr-service";
+import { SecurityService } from "./modules/security/security.service";
+import { startWhatsAppSendQueueWorker } from "./modules/messages/send-queue";
 import { ogRoutes } from "./modules/og/og.routes";
 import { resolveTenantFromRequest, injectOpenGraphHtml } from "./modules/og/og.service";
 import { initializeTenantsSystem } from "./modules/tenants/tenants.service";
@@ -87,6 +91,11 @@ export async function buildApp() {
 
   // Activar Guard Global de Autenticación, Expiración por Inactividad, Aislamiento Multi-Tenant y RBAC
   registerGlobalAuthGuard(fastify);
+
+  // Evitar 404 en /favicon.ico redirigiendo al icono oficial PWA
+  fastify.get("/favicon.ico", async (_req, reply) => {
+    return reply.redirect("/icons/icon-192.png");
+  });
 
   // Rutas directas de credencial digital pública (sin requerir autenticación)
   fastify.get("/credencial/:token", async (req, reply) => {
@@ -364,12 +373,43 @@ export async function buildApp() {
   await fastify.register(connectionsRoutes, { prefix: "/api" });
   await fastify.register(inventoryRoutes, { prefix: "/api" });
   await fastify.register(messagesRoutes, { prefix: "/api" });
+  await fastify.register(omnichannelRoutes, { prefix: "/api" });
   await fastify.register(whatsappRoutes, { prefix: "/api" });
   await fastify.register(whatsappRoutes); // Permite /webhooks/whatsapp directo sin /api
   await fastify.register(mapsRoutes, { prefix: "/api" });
   await fastify.register(databaseRoutes, { prefix: "/api" });
   await fastify.register(apartadosRoutes, { prefix: "/api" });
   await fastify.register(scannerRoutes, { prefix: "/api" });
+
+  // Multimedia de la Bandeja Omnicanal (stickers, fotos, audios, videos, documentos) guardada en data/media.
+  // Solo accesible con sesión válida (cookie tn_session / Bearer). Soporta Range para audio y video.
+  const omnichannelMediaDir = path.resolve(process.cwd(), "data", "media");
+  if (!fs.existsSync(omnichannelMediaDir)) fs.mkdirSync(omnichannelMediaDir, { recursive: true });
+  await fastify.register(async (mediaScope) => {
+    mediaScope.addHook("onRequest", async (req, reply) => {
+      const bearer = req.headers.authorization;
+      const rawToken =
+        (bearer && bearer.startsWith("Bearer ") ? bearer.slice(7).trim() : "") ||
+        SecurityService.parseCookie(req.headers.cookie, "tn_session") ||
+        "";
+      try {
+        const decoded = fastify.jwt.verify<{ jti: string }>(rawToken);
+        const check = SecurityService.validateSession(decoded.jti, false);
+        if (!check.valid) throw new Error("session");
+      } catch {
+        return reply.status(401).send({ success: false, code: "AUTH_REQUIRED" });
+      }
+    });
+    await mediaScope.register(fastifyStatic, {
+      root: omnichannelMediaDir,
+      prefix: "/media/",
+      decorateReply: false,
+      index: false,
+      setHeaders: (res) => {
+        res.setHeader("Cache-Control", "private, max-age=86400");
+      },
+    });
+  });
 
   // Manejo blindado de Avatares por Defecto (previene errores 404 y bucles infinitos)
   const DEFAULT_AVATAR_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="16" fill="#1e293b"/><circle cx="32" cy="25" r="12" fill="#3b82f6" fill-opacity="0.85"/><path d="M16 54c0-8.837 7.163-16 16-16s16 7.163 16 16" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/></svg>';
@@ -448,6 +488,12 @@ async function start() {
     const host = env.HOST;
 
     await app.listen({ port, host });
+
+    // Iniciar motor de WhatsApp QR automáticamente en segundo plano al arrancar el servidor real
+    initWhatsAppQrEngineOnBoot().catch((waErr) => {
+      console.error("⚠️ [WA-QR] Error en auto-arranque de sesión WhatsApp:", waErr);
+    });
+    startWhatsAppSendQueueWorker();
 
     const gracefulShutdown = async (signal: string) => {
       console.log(`🛑 [TurboServer] Señal ${signal} recibida. Cerrando conexiones ordenadamente...`);
