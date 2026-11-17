@@ -95,10 +95,10 @@ export interface OmnichannelConversation {
 export interface OmnichannelMessage {
   id: number;
   conversation_id: number;
-  sender_type: 'contact' | 'agent' | 'chatbot' | 'broadcast';
+  sender_type: 'contact' | 'agent' | 'chatbot' | 'bot' | 'broadcast';
   sender_name: string;
   body: string;
-  delivery_via: 'wa-qr' | 'wa-api' | 'wa-chatbot' | 'wa-broadcast' | 'meta' | 'tiktok';
+  delivery_via: 'wa-qr' | 'wa-api' | 'wa-chatbot' | 'wa-broadcast' | 'meta' | 'tiktok' | 'bot';
   time_label: string;
   media_type?: 'none' | 'image' | 'video' | 'audio' | 'document' | 'sticker';
   media_url?: string;

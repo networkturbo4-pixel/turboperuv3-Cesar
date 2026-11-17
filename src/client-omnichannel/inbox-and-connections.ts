@@ -14,6 +14,7 @@ import {
 } from './theme-engine';
 import { svgIcon, IconName, filledBrandIcon, BrandChannelName } from './icons';
 import { openWhatsAppPhotoEditor } from './photo-editor';
+import { openBotStudioModal } from './bot-panel';
 import { computeCleanInitials } from '../modules/messages/handle-utils';
 import { formatDateSeparatorLabel, dayKey } from '../modules/messages/message-utils';
 
@@ -22,6 +23,37 @@ export interface PendingMediaAttachment {
   media_url: string;
   media_filename: string;
   media_mimetype: string;
+}
+
+const convBotModeCache = new Map<number, 'bot' | 'human' | 'paused'>();
+
+function applyBotComposerLock(mode: 'bot' | 'human' | 'paused'): void {
+  const locked = mode === 'bot';
+  const btn = document.getElementById('btn-toggle-conv-bot-mode') as HTMLButtonElement | null;
+  const label = document.getElementById('conv-bot-mode-label');
+  const canCreate = btn ? btn.dataset.canCreate !== '0' : true;
+  if (btn && label) {
+    btn.dataset.mode = mode;
+    btn.classList.toggle('active', locked);
+    label.textContent = mode === 'human' ? 'Humano' : mode === 'paused' ? 'Pausado' : 'Bot';
+  }
+  const form = document.getElementById('chat-composer-form');
+  const input = document.getElementById('chat-composer-input') as HTMLTextAreaElement | null;
+  const emojiBtn = document.getElementById('btn-toggle-emoji-picker') as HTMLButtonElement | null;
+  const attachBtn = document.getElementById('btn-attach-media-file') as HTMLButtonElement | null;
+  const actionBtn = document.getElementById('btn-chat-action') as HTMLButtonElement | null;
+
+  if (form) form.classList.toggle('is-bot-locked', locked);
+  const disableAll = locked || !canCreate;
+  if (input) {
+    input.disabled = disableAll;
+    input.placeholder = locked
+      ? 'Bot activo en este chat — cambie a Humano para escribir...'
+      : 'Mensaje...';
+  }
+  if (emojiBtn) emojiBtn.disabled = disableAll;
+  if (attachBtn) attachBtn.disabled = disableAll;
+  if (actionBtn) actionBtn.disabled = disableAll;
 }
 
 export interface WaSyncStatus {
@@ -614,7 +646,7 @@ export function renderOmnichannelInboxModuleHtml(
 
   const renderMessageRow = (m: OmnichannelMessage, idx: number): string => {
       const isIncoming = m.sender_type === 'contact';
-      const isChatbot = m.sender_type === 'chatbot';
+      const isChatbot = m.sender_type === 'chatbot' || m.sender_type === 'bot';
       const isLatest = idx === activeMessages.length - 1;
       const isAudio = m.media_type === 'audio';
       const isSticker = m.media_type === 'sticker' || Boolean(m.media_url?.includes('sticker'));
@@ -1194,6 +1226,35 @@ export function renderOmnichannelInboxModuleHtml(
               <div class="chat-contact-actions">
                 <button
                   type="button"
+                  class="chat-header-action-btn ${
+                    (convBotModeCache.get(activeConv.id) || 'bot') === 'bot' ? 'active' : ''
+                  }"
+                  id="btn-toggle-conv-bot-mode"
+                  data-conv-id="${activeConv.id}"
+                  data-can-create="${canCreate ? '1' : '0'}"
+                  data-mode="${convBotModeCache.get(activeConv.id) || 'bot'}"
+                  title="Cambiar modo Bot / Humano en esta conversación"
+                >
+                  ${svgIcon('bot', 15)}
+                  <span class="chat-btn-label-desktop" id="conv-bot-mode-label">${
+                    convBotModeCache.get(activeConv.id) === 'human'
+                      ? 'Humano'
+                      : convBotModeCache.get(activeConv.id) === 'paused'
+                      ? 'Pausado'
+                      : 'Bot'
+                  }</span>
+                </button>
+                <button
+                  type="button"
+                  class="chat-header-action-btn"
+                  id="btn-open-bot-studio"
+                  title="Configurar Bot y Base de Conocimientos"
+                >
+                  ${svgIcon('sparkles', 15)}
+                  <span class="chat-btn-label-desktop">Bot & KB</span>
+                </button>
+                <button
+                  type="button"
                   class="chat-header-action-btn ${sub.messageSearch?.open ? 'active' : ''}"
                   id="btn-toggle-chat-search"
                   title="Buscar en la conversación"
@@ -1355,7 +1416,15 @@ export function renderOmnichannelInboxModuleHtml(
                     <div class="chat-sticker-panel" id="chat-sticker-panel" style="display:none;"></div>
                   </div>
 
-                  <form id="chat-composer-form" class="chat-composer-form">
+                  ${(() => {
+                    const activeBotMode = activeConv ? (convBotModeCache.get(activeConv.id) || 'bot') : 'human';
+                    const isBotLocked = activeBotMode === 'bot';
+                    const composerDisabledAttr = !canCreate || isBotLocked ? 'disabled' : '';
+                    const composerPlaceholder = isBotLocked
+                      ? 'Bot activo en este chat — cambie a Humano para escribir...'
+                      : 'Mensaje...';
+                    return `
+                  <form id="chat-composer-form" class="chat-composer-form ${isBotLocked ? 'is-bot-locked' : ''}">
                     <input
                       type="file"
                       id="chat-direct-file-input"
@@ -1371,7 +1440,7 @@ export function renderOmnichannelInboxModuleHtml(
                       aria-expanded="false"
                       aria-controls="chat-emoji-picker-popover"
                       style="height:42px;width:42px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;"
-                      ${canCreate ? '' : 'disabled'}
+                      ${composerDisabledAttr}
                     >
                       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="12" cy="12" r="10"></circle>
@@ -1386,7 +1455,7 @@ export function renderOmnichannelInboxModuleHtml(
                       id="btn-attach-media-file"
                       title="Adjuntar Foto, Video, Audio o Documento para enviar a WhatsApp"
                       style="height:42px;width:42px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;"
-                      ${canCreate ? '' : 'disabled'}
+                      ${composerDisabledAttr}
                     >
                       ${svgIcon('paperclip', 18)}
                     </button>
@@ -1398,8 +1467,8 @@ export function renderOmnichannelInboxModuleHtml(
                       id="chat-composer-input"
                       class="chat-composer-textarea"
                       rows="1"
-                      placeholder="Mensaje..."
-                      ${canCreate ? '' : 'disabled'}
+                      placeholder="${composerPlaceholder}"
+                      ${composerDisabledAttr}
                     ></textarea>
 
                     <!-- Botón de Acción estilo WhatsApp: Micrófono cuando está vacío / Enviar con ícono cuando tiene texto -->
@@ -1408,7 +1477,7 @@ export function renderOmnichannelInboxModuleHtml(
                       class="chat-action-btn ${sub.pendingAttachment ? 'is-send' : 'is-mic'}"
                       id="btn-chat-action"
                       title="${sub.pendingAttachment ? 'Enviar mensaje' : 'Grabar nota de voz'}"
-                      ${canCreate ? '' : 'disabled'}
+                      ${composerDisabledAttr}
                     >
                       <span class="chat-action-icon-send" style="display:${sub.pendingAttachment ? 'inline-flex' : 'none'};">
                         ${svgIcon('send', 17)}
@@ -1417,7 +1486,8 @@ export function renderOmnichannelInboxModuleHtml(
                         ${svgIcon('mic', 18)}
                       </span>
                     </button>
-                  </form>
+                  </form>`;
+                  })()}
                 </div>
               </div>
 
@@ -4077,6 +4147,48 @@ export function bindOmnichannelInboxEvents(callbacks: {
     searchIndex = (searchIndex + dir + searchHits.length) % searchHits.length;
     focusSearchHit(true);
   };
+  const botModeBtn = document.getElementById('btn-toggle-conv-bot-mode') as HTMLButtonElement | null;
+  if (botModeBtn) {
+    const convId = Number(botModeBtn.dataset.convId || 0);
+    const cachedMode = convId > 0 ? convBotModeCache.get(convId) : undefined;
+    applyBotComposerLock(cachedMode || 'bot');
+    if (convId > 0) {
+      void apiFetch<any>(`/api/bot/conversations/${convId}/state`)
+        .then((res) => {
+          const mode = (res?.state?.mode || 'bot') as 'bot' | 'human' | 'paused';
+          convBotModeCache.set(convId, mode);
+          applyBotComposerLock(mode);
+        })
+        .catch(() => {});
+    }
+    botModeBtn.addEventListener('click', async () => {
+      if (!convId) return;
+      const cur = botModeBtn.dataset.mode || 'bot';
+      const next = (cur === 'bot' ? 'human' : 'bot') as 'bot' | 'human';
+      try {
+        const res = await apiFetch<any>(`/api/bot/conversations/${convId}/mode`, {
+          method: 'PUT',
+          body: JSON.stringify({ mode: next }),
+        });
+        const mode = (res?.state?.mode || next) as 'bot' | 'human' | 'paused';
+        convBotModeCache.set(convId, mode);
+        applyBotComposerLock(mode);
+        showSystemToast(
+          mode === 'human' ? 'Atención Humana' : 'Bot Activo',
+          mode === 'human'
+            ? 'Bot desactivado en este chat. Ya puede escribir manualmente.'
+            : 'Bot activado en este chat. La casilla de mensajes quedó bloqueada.',
+          'success'
+        );
+      } catch (err) {
+        showSystemToast('Error', (err as Error).message, 'danger');
+      }
+    });
+  }
+  document.getElementById('btn-open-bot-studio')?.addEventListener('click', () => {
+    void openBotStudioModal(apiFetch);
+  });
+
   document.getElementById('btn-toggle-chat-search')?.addEventListener('click', () => {
     const open = !sub.messageSearch?.open;
     sub.messageSearch = { open, query: open ? sub.messageSearch?.query || '' : '' };

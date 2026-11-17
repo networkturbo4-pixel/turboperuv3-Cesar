@@ -10,8 +10,11 @@ import { normalizeChannelHandle } from './handle-utils';
 import { deliveryStatusFromBaileys, applyReaction } from './message-utils';
 
 export interface InboxRealtimeEvent {
-  type: 'new_message' | 'message_status' | 'sync_update' | 'connection_status';
+  type: 'new_message' | 'inbound_message' | 'message_status' | 'sync_update' | 'connection_status';
+  tenantId?: string;
   conversationId?: number;
+  messageId?: number;
+  channel?: string;
   waMessageId?: string;
   status?: string;
 }
@@ -594,6 +597,7 @@ async function upsertConversationInDbUnlocked(params: {
   updatedAt?: Date;
   unreadIncrement?: number;
   tag?: string;
+  tenantId?: string;
 }): Promise<number> {
   const {
     handle,
@@ -603,6 +607,7 @@ async function upsertConversationInDbUnlocked(params: {
     updatedAt = new Date(),
     unreadIncrement = 0,
     tag = 'WhatsApp Directo',
+    tenantId = 'turbonetwork',
   } = params;
 
   const existing = await db.query<{
@@ -612,9 +617,9 @@ async function upsertConversationInDbUnlocked(params: {
   }>(
     `SELECT id, contact_name, last_message_text
      FROM omnichannel_conversations
-     WHERE channel = 'whatsapp' AND contact_handle = $1
+     WHERE tenant_id = $1 AND channel = 'whatsapp' AND contact_handle = $2
      LIMIT 1`,
-    [handle]
+    [tenantId, handle]
   );
 
   if ((existing.rowCount ?? 0) > 0) {
@@ -657,10 +662,11 @@ async function upsertConversationInDbUnlocked(params: {
   const color = pickAvatarColor(handle + displayName);
   const inserted = await db.query<{ id: number }>(
     `INSERT INTO omnichannel_conversations
-     (channel, contact_name, contact_handle, avatar_color, unread_count, estimated_value, tag, last_message_text, last_message_time, updated_at)
-     VALUES ('whatsapp', $1, $2, $3, $4, 0, $5, $6, $7, $8)
+     (tenant_id, channel, contact_name, contact_handle, avatar_color, unread_count, estimated_value, tag, last_message_text, last_message_time, updated_at)
+     VALUES ($1, 'whatsapp', $2, $3, $4, $5, 0, $6, $7, $8, $9)
      RETURNING id`,
     [
+      tenantId,
       displayName || handle,
       handle,
       color,
@@ -675,8 +681,8 @@ async function upsertConversationInDbUnlocked(params: {
   const insertedId = inserted.rows?.[0]?.id;
   if (!insertedId) {
     const fallback = await db.query<{ id: number }>(
-      `SELECT id FROM omnichannel_conversations WHERE channel = 'whatsapp' AND contact_handle = $1 LIMIT 1`,
-      [handle]
+      `SELECT id FROM omnichannel_conversations WHERE tenant_id = $1 AND channel = 'whatsapp' AND contact_handle = $2 LIMIT 1`,
+      [tenantId, handle]
     );
     return fallback.rows?.[0]?.id || 0;
   }
@@ -940,7 +946,16 @@ async function processIncomingOrHistoryMessages(messages: any[], isHistorySync =
         }).catch(() => {});
       }
       if (!isHistorySync) {
-        emitInboxEvent({ type: 'new_message', conversationId: convId, waMessageId: waMsgId });
+        emitInboxEvent({ type: 'new_message', tenantId: 'turbonetwork', conversationId: convId, waMessageId: waMsgId });
+        if (!isFromMe && !identity.isGroup && insertedMsg.rows?.[0]?.id) {
+          emitInboxEvent({
+            type: 'inbound_message',
+            tenantId: 'turbonetwork',
+            conversationId: convId,
+            messageId: insertedMsg.rows[0].id,
+            channel: 'whatsapp',
+          });
+        }
       }
     } catch (err) {
       console.error('[WA-QR] Error guardando mensaje de WhatsApp:', err);
@@ -952,9 +967,11 @@ async function syncStateToDb(
   status: 'connected' | 'awaiting_scan' | 'disconnected',
   sessionCode: string,
   phone?: string | null,
-  device?: string | null
+  device?: string | null,
+  tenantId = 'turbonetwork'
 ) {
   try {
+    await db.getOrCreateChannelConnection(tenantId);
     await db.query(
       `UPDATE channel_connections SET
         wa_qr_status = $1,
@@ -962,8 +979,8 @@ async function syncStateToDb(
         wa_qr_phone = COALESCE($3, wa_qr_phone),
         wa_qr_device = COALESCE($4, wa_qr_device),
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = 1`,
-      [status, sessionCode, phone || null, device || null]
+      WHERE tenant_id = $5`,
+      [status, sessionCode, phone || null, device || null, tenantId]
     );
   } catch (err) {
     console.error('[WA-QR] Error sincronizando estado en DB:', err);

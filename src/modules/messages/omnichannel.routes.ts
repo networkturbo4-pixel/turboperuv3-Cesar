@@ -2,6 +2,9 @@ import { FastifyPluginAsync } from "fastify";
 import fs from "fs";
 import path from "path";
 import { omnichannelDb as db } from "./omnichannel-db";
+import { resolveTenantId } from "../tenants/tenants.service";
+import { botRepo } from "../bot/bot.repository";
+import { processInboundConversation } from "../bot/bot.engine";
 import {
   getWhatsAppQrRuntimeState,
   startWhatsAppQrSocket,
@@ -122,10 +125,10 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
   // ==========================================================================
   // CONEXIONES OMNICANAL (WhatsApp QR/API, Facebook, Instagram, TikTok)
   // ==========================================================================
-  fastify.get("/connections", async (_request, reply) => {
+  fastify.get("/connections", async (request, reply) => {
     try {
-      const connRes = await db.query("SELECT * FROM channel_connections WHERE id = 1");
-      const row = connRes.rows[0] || {};
+      const tenantId = resolveTenantId(request);
+      const row = (await db.getOrCreateChannelConnection(tenantId)) || {};
       const runtime = getWhatsAppQrRuntimeState();
 
       if (runtime.status === "awaiting_scan" && !runtime.qrDataUrl) {
@@ -186,6 +189,8 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
         b.tt_connected = false;
       }
 
+      const tenantId = resolveTenantId(request);
+      await db.getOrCreateChannelConnection(tenantId);
       const updated = await db.query(
         `UPDATE channel_connections SET
           wa_active_mode = COALESCE($1, wa_active_mode),
@@ -217,7 +222,7 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
           tt_access_token = COALESCE($27, tt_access_token),
           tt_sync_leads = COALESCE($28, tt_sync_leads),
           updated_at = CURRENT_TIMESTAMP
-        WHERE id = 1
+        WHERE tenant_id = $29
         RETURNING *`,
         [
           b.wa_active_mode ?? null,
@@ -248,6 +253,7 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
           b.tt_client_key ?? null,
           b.tt_access_token ?? null,
           typeof b.tt_sync_leads === "boolean" ? b.tt_sync_leads : null,
+          tenantId,
         ]
       );
       return reply.send({ connections: updated.rows[0] });
@@ -671,16 +677,15 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
 
-      const [convRes, msgRes, connRes, qrRes, tagsRes, notesRes] = await Promise.all([
-        db.query("SELECT * FROM omnichannel_conversations ORDER BY updated_at DESC, id ASC"),
+      const tenantId = resolveTenantId(request);
+      const [convRes, msgRes, row, qrRes, tagsRes, notesRes] = await Promise.all([
+        db.query("SELECT * FROM omnichannel_conversations WHERE tenant_id = $1 ORDER BY updated_at DESC, id ASC", [tenantId]),
         db.query(messagesQuery, messagesParams),
-        db.query("SELECT * FROM channel_connections WHERE id = 1"),
-        db.query("SELECT * FROM quick_replies ORDER BY shortcut ASC"),
-        db.query("SELECT * FROM crm_tags ORDER BY id ASC"),
+        db.getOrCreateChannelConnection(tenantId),
+        db.query("SELECT * FROM quick_replies WHERE tenant_id = $1 ORDER BY shortcut ASC", [tenantId]),
+        db.query("SELECT * FROM crm_tags WHERE tenant_id = $1 ORDER BY id ASC", [tenantId]),
         db.query("SELECT * FROM conversation_notes ORDER BY created_at DESC"),
       ]);
-
-      const row = connRes.rows[0] || {};
       const runtime = getWhatsAppQrRuntimeState();
       const users = loadActiveSystemUsers();
 
@@ -720,12 +725,10 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  fastify.post("/inbox/sync-facebook", async (_request, reply) => {
+  fastify.post("/inbox/sync-facebook", async (request, reply) => {
     try {
-      const connRes = await db.query(
-        "SELECT fb_connected, fb_page_id, fb_access_token FROM channel_connections WHERE id = 1"
-      );
-      const conn = connRes.rows[0];
+      const tenantId = resolveTenantId(request);
+      const conn = await db.getOrCreateChannelConnection(tenantId);
       if (!conn || !conn.fb_connected || !conn.fb_access_token) {
         return reply.status(400).send({
           error:
@@ -741,13 +744,14 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
       );
 
       try {
-        const syncRes = await syncFacebookConversations(conn.fb_page_id, conn.fb_access_token);
+        const syncRes = await syncFacebookConversations(conn.fb_page_id, conn.fb_access_token, tenantId);
         if (!syncRes.success) {
           return reply.status(400).send({ error: syncRes.error || "Error al sincronizar Facebook." });
         }
 
         const countRes = await db.query(
-          "SELECT COUNT(*) as count FROM omnichannel_conversations WHERE channel = 'facebook'"
+          "SELECT COUNT(*) as count FROM omnichannel_conversations WHERE tenant_id = $1 AND channel = 'facebook'",
+          [tenantId]
         );
         return reply.send({
           synced: true,
@@ -764,12 +768,10 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  fastify.post("/inbox/sync-instagram", async (_request, reply) => {
+  fastify.post("/inbox/sync-instagram", async (request, reply) => {
     try {
-      const connRes = await db.query(
-        "SELECT ig_connected, ig_account_id, ig_username, ig_access_token, fb_page_id, fb_access_token FROM channel_connections WHERE id = 1"
-      );
-      const conn = connRes.rows[0];
+      const tenantId = resolveTenantId(request);
+      const conn = await db.getOrCreateChannelConnection(tenantId);
       if (!conn || !conn.ig_connected || !conn.ig_access_token) {
         return reply.status(400).send({
           error: "Instagram no está conectado. Conéctelo en Configuración -> Conexiones.",
@@ -788,7 +790,8 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
           conn.ig_account_id,
           conn.ig_access_token,
           conn.fb_page_id,
-          conn.fb_access_token
+          conn.fb_access_token,
+          tenantId
         );
 
         const countRes = await db.query(
@@ -889,9 +892,10 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
       const cleanName = String(contact_name).trim();
       const cleanHandle = normalizeChannelHandle(channel, String(contact_handle));
 
+      const tenantId = resolveTenantId(request);
       const existing = await db.query(
-        "SELECT id FROM omnichannel_conversations WHERE channel = $1 AND contact_handle = $2 LIMIT 1",
-        [channel, cleanHandle]
+        "SELECT id FROM omnichannel_conversations WHERE tenant_id = $1 AND channel = $2 AND contact_handle = $3 LIMIT 1",
+        [tenantId, channel, cleanHandle]
       );
       if (existing.rowCount && existing.rowCount > 0) {
         await db.query(
@@ -910,10 +914,10 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
       const ins = await db.query(
         `INSERT INTO omnichannel_conversations
-         (channel, contact_name, contact_handle, avatar_color, unread_count, estimated_value, tag, tags_json, last_message_text, last_message_time)
-         VALUES ($1, $2, $3, $4, 0, 0, 'Nuevo', '[]', 'Conversación iniciada', 'Ahora')
+         (tenant_id, channel, contact_name, contact_handle, avatar_color, unread_count, estimated_value, tag, tags_json, last_message_text, last_message_time)
+         VALUES ($1, $2, $3, $4, $5, 0, 0, 'Nuevo', '[]', 'Conversación iniciada', 'Ahora')
          RETURNING id`,
-        [channel, cleanName, cleanHandle, randomColor]
+        [tenantId, channel, cleanName, cleanHandle, randomColor]
       );
 
       return reply.send({ id: ins.rows[0].id, success: true });
@@ -1149,7 +1153,13 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
         [finalBody, timeLabel, convId]
       );
 
-      emitInboxEvent({ type: "new_message", conversationId: convId });
+      const convTenant = conv.tenant_id || resolveTenantId(request);
+      const botCfg = await botRepo.getSettings(convTenant).catch(() => null);
+      if (botCfg?.enabled) {
+        await botRepo.setConversationMode(convId, convTenant, "paused", botCfg.humanPauseMinutes).catch(() => {});
+      }
+
+      emitInboxEvent({ type: "new_message", tenantId: convTenant, conversationId: convId });
       return reply.status(201).send({ message: insertedMsg.rows[0] });
     } catch (err) {
       return reply.status(500).send({ error: (err as Error).message });
@@ -1764,23 +1774,16 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
 
       let lastText = incomingBody;
       let chatbotReplied = false;
-
-      if (targetChannel === "whatsapp" && conn.wa_active_mode === "api" && conn.wa_chatbot_enabled) {
-        const botReply =
-          conn.wa_chatbot_prompt ||
-          "Respuesta automática de Chatbot WhatsApp API: Hemos recibido su mensaje.";
-        await db.query(
-          `INSERT INTO omnichannel_messages (conversation_id, sender_type, sender_name, body, delivery_via, time_label)
-           VALUES ($1, 'chatbot', 'Chatbot IA (WhatsApp API)', $2, 'wa-chatbot', $3)`,
-          [conv.id, botReply, timeLabel]
-        );
-        lastText = `[Chatbot] ${botReply}`;
+      const tenantId = conv.tenant_id || resolveTenantId(request);
+      const botSettings = await botRepo.getSettings(tenantId).catch(() => null);
+      if (botSettings?.enabled) {
+        await processInboundConversation(conv.id);
         chatbotReplied = true;
       }
 
       await db.query(
         `UPDATE omnichannel_conversations
-         SET last_message_text = $1,
+         SET last_message_text = COALESCE(NULLIF(last_message_text, ''), $1),
              last_message_time = $2,
              unread_count = unread_count + 1,
              updated_at = CURRENT_TIMESTAMP

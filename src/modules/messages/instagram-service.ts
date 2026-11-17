@@ -1,4 +1,5 @@
 import { omnichannelDb as db } from './omnichannel-db';
+import { emitInboxEvent } from './whatsapp-qr-service';
 
 interface InstagramParticipant {
   id: string;
@@ -42,7 +43,8 @@ export async function syncInstagramConversations(
   igAccountId: string,
   igToken: string,
   pageId?: string,
-  pageToken?: string
+  pageToken?: string,
+  tenantId = 'turbonetwork'
 ): Promise<{ success: boolean; conversationsCount: number; messagesCount: number; error?: string }> {
   try {
     const cleanIgId = String(igAccountId || '').trim();
@@ -136,12 +138,13 @@ export async function syncInstagramConversations(
 
       // 1. Upsert conversación
       const existingConv = await db.query(
-        `SELECT id FROM omnichannel_conversations WHERE channel = 'instagram' AND contact_handle = $1 LIMIT 1`,
-        [contactHandle]
+        `SELECT id FROM omnichannel_conversations WHERE tenant_id = $1 AND channel = 'instagram' AND contact_handle = $2 LIMIT 1`,
+        [tenantId, contactHandle]
       );
 
       let convId: number;
-      if (existingConv.rowCount && existingConv.rowCount > 0) {
+      const isNewConv = !(existingConv.rowCount && existingConv.rowCount > 0);
+      if (!isNewConv) {
         convId = existingConv.rows[0].id;
         await db.query(
           `UPDATE omnichannel_conversations
@@ -164,10 +167,11 @@ export async function syncInstagramConversations(
         const color = pickAvatarColor(contactHandle + contactName);
         const ins = await db.query(
           `INSERT INTO omnichannel_conversations
-           (channel, contact_name, contact_handle, avatar_color, unread_count, estimated_value, tag, last_message_text, last_message_time, updated_at)
-           VALUES ('instagram', $1, $2, $3, $4, 0, 'Instagram Direct', $5, $6, $7)
+           (tenant_id, channel, contact_name, contact_handle, avatar_color, unread_count, estimated_value, tag, last_message_text, last_message_time, updated_at)
+           VALUES ($1, 'instagram', $2, $3, $4, $5, 0, 'Instagram Direct', $6, $7, $8)
            RETURNING id`,
           [
+            tenantId,
             contactName,
             contactHandle,
             color,
@@ -200,13 +204,26 @@ export async function syncInstagramConversations(
         );
 
         if ((dupCheck.rowCount ?? 0) === 0) {
-          await db.query(
+          const insMsg = await db.query<{ id: number }>(
             `INSERT INTO omnichannel_messages
              (conversation_id, sender_type, sender_name, body, delivery_via, time_label, created_at)
-             VALUES ($1, $2, $3, $4, 'meta', $5, $6)`,
+             VALUES ($1, $2, $3, $4, 'meta', $5, $6)
+             RETURNING id`,
             [convId, senderType, senderName, text, msgTimeLabel, msgDate.toISOString()]
           );
           msgSaved++;
+          if (!isNewConv && senderType === 'contact' && insMsg.rows?.[0]?.id) {
+            const ageMs = Date.now() - msgDate.getTime();
+            if (ageMs < 5 * 60 * 1000) {
+              emitInboxEvent({
+                type: 'inbound_message',
+                tenantId,
+                conversationId: convId,
+                messageId: insMsg.rows[0].id,
+                channel: 'instagram',
+              });
+            }
+          }
         }
       }
     }
