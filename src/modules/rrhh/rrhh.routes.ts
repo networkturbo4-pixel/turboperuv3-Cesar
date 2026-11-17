@@ -8,6 +8,7 @@ import os from "os";
 import child_process from "child_process";
 import { resolveTenantId, loadTenantsFromDisk } from "../tenants/tenants.service";
 import { SecurityService } from "../security/security.service";
+import { createMailAccount } from "../mail/mail.service";
 import {
   extractCanonicalNumericId,
   allocateCanonicalUserId,
@@ -2182,6 +2183,45 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     employeesStore.unshift(newEmp);
     saveEmployeesToDisk(employeesStore);
 
+    let mailWarning = "";
+    const mc = (body as any).mailConfig;
+    if (mc && mc.enabled && mc.password) {
+      const targetMailTenant = (operatorUser?.assignedTenantId || assignedEmpTenant || "turbonetwork").toLowerCase();
+      const mailEmail = String(mc.email || operatorUser?.email || newEmp.email || "").trim().toLowerCase();
+      try {
+        await createMailAccount(
+          targetMailTenant,
+          {
+            jti: "rrhh-create",
+            sub: canonicalId,
+            name: newEmp.name,
+            email: newEmp.email,
+            roleId: operatorUser?.roleId || 1,
+            roleName: operatorUser?.roleName || "Operador",
+            isSuperAdmin: false,
+            assignedTenantId: targetMailTenant,
+            allowedTenants: [targetMailTenant],
+            permissions: [],
+          },
+          {
+            email: mailEmail,
+            displayName: mc.displayName || newEmp.name,
+            username: mc.username || mailEmail,
+            password: String(mc.password),
+            imapHost: mc.imapHost,
+            imapPort: mc.imapPort,
+            imapSecure: mc.imapSecure,
+            smtpHost: mc.smtpHost,
+            smtpPort: mc.smtpPort,
+            smtpSecure: mc.smtpSecure,
+            signatureHtml: mc.signatureHtml || "",
+          }
+        );
+      } catch (mailErr: any) {
+        mailWarning = mailErr?.message || "No se pudo conectar la bandeja de correo del colaborador.";
+      }
+    }
+
     // Sincronizar automáticamente con ZKTeco usando SIEMPRE el ID numérico único (nunca el PIN de login)
     if (body.syncWithZkteco !== false && body.status === "active") {
       try {
@@ -2203,6 +2243,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       message: operatorCreated
         ? `Colaborador y Operador creados y sincronizados con ZKTeco (ID único: ${zkUserIdStr}).`
         : `Acta de personal creada y preparada para ZKTeco (ID único: ${zkUserIdStr}).`,
+      mailWarning,
       data: enrichEmployeeExpediente(newEmp, leaves, peruDate),
     });
   });

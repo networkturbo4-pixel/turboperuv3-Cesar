@@ -14083,6 +14083,58 @@
                 <span>Este PIN es privado para ingresar a la web. En el reloj ZKTeco el usuario se guarda siempre con su <b>ID único numérico (DNI)</b> sin mezclar claves.</span>
               </div>
             </div>
+
+            <!-- BANDEJA DE CORREO PERSONAL DEL COLABORADOR -->
+            <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-2.5">
+              <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                  <span>📧 Configurar Bandeja de Correo Personal</span>
+                </span>
+                <input type="checkbox" id="emp-op-mail-enabled" onchange="toggleEmployeeOpMailSection(this.checked)" class="w-4 h-4 rounded accent-blue-600">
+              </label>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400">Si se activa, el colaborador verá únicamente su propia bandeja de correos dentro de su sede asignada.</p>
+
+              <div id="emp-op-mail-fields" class="hidden space-y-2.5 pt-2 border-t border-slate-200 dark:border-white/10">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Correo del buzón (IMAP/SMTP)</label>
+                    <input type="email" id="emp-op-mail-email" onblur="autodetectEmployeeOpMail()" placeholder="colaborador@tuempresa.com" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Contraseña / App Password</label>
+                    <input type="password" id="emp-op-mail-pass" placeholder="••••••••••••" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div>
+                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Servidor IMAP</label>
+                    <input type="text" id="emp-op-mail-imap-host" placeholder="mail.tuempresa.com" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Puerto IMAP</label>
+                    <input type="number" id="emp-op-mail-imap-port" value="993" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Servidor SMTP</label>
+                    <input type="text" id="emp-op-mail-smtp-host" placeholder="mail.tuempresa.com" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Puerto SMTP</label>
+                    <input type="number" id="emp-op-mail-smtp-port" value="465" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                  </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-[11px] text-slate-700 dark:text-slate-300">
+                  <label class="flex items-center gap-1.5"><input type="checkbox" id="emp-op-mail-imap-ssl" checked> IMAP SSL/TLS</label>
+                  <label class="flex items-center gap-1.5"><input type="checkbox" id="emp-op-mail-smtp-ssl" checked> SMTP SSL/TLS</label>
+                  <button type="button" onclick="testEmployeeOpMailConnection()" class="ml-auto px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white text-[11px] font-semibold transition">Probar conexión</button>
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Firma de correo (HTML opcional)</label>
+                  <textarea id="emp-op-mail-sig" rows="2" placeholder="<p><strong>Nombre</strong><br>Área / Cargo</p>" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"></textarea>
+                </div>
+                <div id="emp-op-mail-status" class="text-[11px] font-mono"></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -29430,6 +29482,88 @@ Estamos atentos para brindarle asistencia inmediata.
       }
     }
 
+    function toggleEmployeeOpMailSection(enabled) {
+      const box = document.getElementById('emp-op-mail-fields');
+      if (!box) return;
+      if (enabled) {
+        box.classList.remove('hidden');
+        const mailEmailEl = document.getElementById('emp-op-mail-email');
+        const opEmailEl = document.getElementById('emp-op-email');
+        const hrEmailEl = document.getElementById('emp-email');
+        const fallbackEmail = (opEmailEl?.value || hrEmailEl?.value || '').trim();
+        if (mailEmailEl && !mailEmailEl.value && fallbackEmail) {
+          mailEmailEl.value = fallbackEmail;
+          autodetectEmployeeOpMail();
+        }
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+
+    async function autodetectEmployeeOpMail() {
+      const email = (document.getElementById('emp-op-mail-email')?.value || '').trim();
+      if (!email.includes('@')) return;
+      try {
+        const res = await fetch('/api/mail/accounts/autodetect?email=' + encodeURIComponent(email));
+        const p = await res.json();
+        if (p && p.imapHost) {
+          const ih = document.getElementById('emp-op-mail-imap-host');
+          const ip = document.getElementById('emp-op-mail-imap-port');
+          const is = document.getElementById('emp-op-mail-imap-ssl');
+          const sh = document.getElementById('emp-op-mail-smtp-host');
+          const sp = document.getElementById('emp-op-mail-smtp-port');
+          const ss = document.getElementById('emp-op-mail-smtp-ssl');
+          if (ih && !ih.value) ih.value = p.imapHost;
+          if (ip) ip.value = p.imapPort || 993;
+          if (is) is.checked = p.imapSecure !== false;
+          if (sh && !sh.value) sh.value = p.smtpHost || p.imapHost;
+          if (sp) sp.value = p.smtpPort || 465;
+          if (ss) ss.checked = p.smtpSecure !== false;
+        }
+      } catch {}
+    }
+
+    async function testEmployeeOpMailConnection() {
+      const statusEl = document.getElementById('emp-op-mail-status');
+      if (statusEl) {
+        statusEl.textContent = 'Probando conexión IMAP/SMTP...';
+        statusEl.className = 'text-[11px] font-mono text-blue-500';
+      }
+      const email = (document.getElementById('emp-op-mail-email')?.value || '').trim();
+      try {
+        const res = await fetch('/api/mail/accounts/test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            username: email,
+            password: document.getElementById('emp-op-mail-pass')?.value || '',
+            imapHost: document.getElementById('emp-op-mail-imap-host')?.value.trim() || '',
+            imapPort: Number(document.getElementById('emp-op-mail-imap-port')?.value || 993),
+            imapSecure: document.getElementById('emp-op-mail-imap-ssl')?.checked !== false,
+            smtpHost: document.getElementById('emp-op-mail-smtp-host')?.value.trim() || '',
+            smtpPort: Number(document.getElementById('emp-op-mail-smtp-port')?.value || 465),
+            smtpSecure: document.getElementById('emp-op-mail-smtp-ssl')?.checked !== false,
+          })
+        });
+        const r = await res.json();
+        if (r.imapOk && r.smtpOk) {
+          if (statusEl) {
+            statusEl.textContent = `Conexión exitosa (${r.foldersCount} carpetas encontradas)`;
+            statusEl.className = 'text-[11px] font-mono text-emerald-500';
+          }
+        } else if (statusEl) {
+          statusEl.textContent = r.error || 'No se pudo validar la conexión';
+          statusEl.className = 'text-[11px] font-mono text-rose-500';
+        }
+      } catch {
+        if (statusEl) {
+          statusEl.textContent = 'Error de red probando conexión';
+          statusEl.className = 'text-[11px] font-mono text-rose-500';
+        }
+      }
+    }
+
     function closeCreateUserModal() {
       const modal = document.getElementById('user-create-modal');
       if (modal) modal.classList.add('hidden');
@@ -33927,6 +34061,15 @@ function copyRemoteScannerLink() {
         toggleEmployeeOpFields(true);
       }
       generateEmployeeOpRandomPin();
+      const empMailChk = document.getElementById('emp-op-mail-enabled');
+      if (empMailChk) empMailChk.checked = false;
+      toggleEmployeeOpMailSection(false);
+      ['emp-op-mail-email', 'emp-op-mail-pass', 'emp-op-mail-imap-host', 'emp-op-mail-smtp-host', 'emp-op-mail-sig'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const empMailStatus = document.getElementById('emp-op-mail-status');
+      if (empMailStatus) empMailStatus.textContent = '';
       initEmployeeOpTenantAndRoles();
       populateAssignedTenantSelects(true).then(() => {
         const empTenSel = document.getElementById('emp-tenant');
@@ -34349,6 +34492,21 @@ function copyRemoteScannerLink() {
         payload.operatorHireDate = document.getElementById('emp-op-hire-date')?.value || payload.hireDate;
         payload.operatorBirthDate = document.getElementById('emp-op-birth-date')?.value || '';
         payload.syncWithZkteco = true;
+        if (document.getElementById('emp-op-mail-enabled')?.checked) {
+          payload.mailConfig = {
+            enabled: true,
+            email: (document.getElementById('emp-op-mail-email')?.value || payload.operatorEmail || payload.email).trim(),
+            displayName: payload.operatorName || payload.name,
+            password: document.getElementById('emp-op-mail-pass')?.value || '',
+            imapHost: (document.getElementById('emp-op-mail-imap-host')?.value || '').trim(),
+            imapPort: Number(document.getElementById('emp-op-mail-imap-port')?.value || 993),
+            imapSecure: document.getElementById('emp-op-mail-imap-ssl')?.checked !== false,
+            smtpHost: (document.getElementById('emp-op-mail-smtp-host')?.value || '').trim(),
+            smtpPort: Number(document.getElementById('emp-op-mail-smtp-port')?.value || 465),
+            smtpSecure: document.getElementById('emp-op-mail-smtp-ssl')?.checked !== false,
+            signatureHtml: document.getElementById('emp-op-mail-sig')?.value || '',
+          };
+        }
       }
 
       const url = id ? `/api/rrhh/employees/${id}` : '/api/rrhh/employees';
@@ -34366,6 +34524,9 @@ function copyRemoteScannerLink() {
             ? (id ? 'Colaborador y Operador actualizados y sincronizados con ZKTeco' : 'Colaborador y Operador creados y sincronizados con ZKTeco')
             : (id ? 'Colaborador y expediente actualizados' : 'Colaborador registrado exitosamente');
           showToast(successMsg);
+          if (data.mailWarning) {
+            showToast(`Aviso correo: ${data.mailWarning}`, 'error');
+          }
           if (typeof loadConfigModule === 'function') loadConfigModule();
           closeEmployeeModal();
           await loadEmployees();
