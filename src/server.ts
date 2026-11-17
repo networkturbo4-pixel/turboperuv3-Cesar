@@ -25,10 +25,16 @@ import { tenantsRoutes } from "./modules/tenants/tenants.routes";
 import { inventoryRoutes } from "./modules/inventory/inventory.routes";
 import { messagesRoutes } from "./modules/messages/messages.routes";
 import { omnichannelRoutes } from "./modules/messages/omnichannel.routes";
+import { mailRoutes } from "./modules/mail/mail.routes";
+import { startMailBackgroundWorkers } from "./modules/mail/mail.service";
+import { botRoutes } from "./modules/bot/bot.routes";
+import { startBotEngine } from "./modules/bot/bot.engine";
 import { whatsappRoutes } from "./modules/messages/whatsapp.routes";
 import { mapsRoutes } from "./modules/maps/maps.routes";
 import { databaseRoutes } from "./modules/database/database.routes";
 import { apartadosRoutes } from "./modules/apartados/apartados.routes";
+import { actasRoutes } from "./modules/actas/actas.routes";
+import { findActaByPublicToken, renderPublicActaHtml } from "./modules/actas/actas.service";
 import { scannerRoutes } from "./modules/scanner/scanner.routes";
 import { initWhatsAppQrEngineOnBoot } from "./modules/messages/whatsapp-qr-service";
 import { SecurityService } from "./modules/security/security.service";
@@ -131,6 +137,27 @@ export async function buildApp() {
         </div>
       `);
     }
+    return reply.type("text/html; charset=utf-8").send(html);
+  });
+
+  // Ruta directa de Vista Pública / PDF de Acta de Instalación (sin requerir autenticación)
+  fastify.get("/acta/:token", async (req, reply) => {
+    const { token } = req.params as { token: string };
+    const q = (req.query || {}) as { print?: string };
+    const found = findActaByPublicToken(token);
+    if (!found) {
+      return reply.status(404).type("text/html; charset=utf-8").send(`
+        <div style="font-family:sans-serif; text-align:center; padding:50px; background:#0b0f19; color:#fff; min-height:100vh;">
+          <h1 style="color:#f43f5e;">Acta No Encontrada</h1>
+          <p style="color:#94a3b8;">El enlace del acta de instalación no existe o ha sido eliminado.</p>
+          <a href="/" style="display:inline-block; margin-top:20px; padding:10px 20px; background:#2563eb; color:#fff; text-decoration:none; border-radius:8px;">Ir al Portal</a>
+        </div>
+      `);
+    }
+    const host = req.headers.host || "localhost:3000";
+    const protocol = req.protocol || "http";
+    const baseUrl = `${protocol}://${host}`;
+    const html = await renderPublicActaHtml(found.tenantId, found.acta, baseUrl, q.print === "1");
     return reply.type("text/html; charset=utf-8").send(html);
   });
 
@@ -374,11 +401,14 @@ export async function buildApp() {
   await fastify.register(inventoryRoutes, { prefix: "/api" });
   await fastify.register(messagesRoutes, { prefix: "/api" });
   await fastify.register(omnichannelRoutes, { prefix: "/api" });
+  await fastify.register(mailRoutes, { prefix: "/api" });
+  await fastify.register(botRoutes, { prefix: "/api" });
   await fastify.register(whatsappRoutes, { prefix: "/api" });
   await fastify.register(whatsappRoutes); // Permite /webhooks/whatsapp directo sin /api
   await fastify.register(mapsRoutes, { prefix: "/api" });
   await fastify.register(databaseRoutes, { prefix: "/api" });
   await fastify.register(apartadosRoutes, { prefix: "/api" });
+  await fastify.register(actasRoutes, { prefix: "/api" });
   await fastify.register(scannerRoutes, { prefix: "/api" });
 
   // Multimedia de la Bandeja Omnicanal (stickers, fotos, audios, videos, documentos) guardada en data/media.
@@ -494,6 +524,8 @@ async function start() {
       console.error("⚠️ [WA-QR] Error en auto-arranque de sesión WhatsApp:", waErr);
     });
     startWhatsAppSendQueueWorker();
+    startBotEngine();
+    startMailBackgroundWorkers();
 
     const gracefulShutdown = async (signal: string) => {
       console.log(`🛑 [TurboServer] Señal ${signal} recibida. Cerrando conexiones ordenadamente...`);

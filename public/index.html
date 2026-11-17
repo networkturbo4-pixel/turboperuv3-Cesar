@@ -40,7 +40,9 @@
   <link rel="stylesheet" href="/assets/tailwind.min.css?v=unslop_v5">
   <link rel="stylesheet" href="/assets/remixicon/remixicon.css">
   <link rel="stylesheet" href="/assets/omnichannel-inbox.css?v=12">
+  <link rel="stylesheet" href="/assets/mail-inbox.css?v=2">
   <script src="/js/omnichannel-inbox.js?v=12" defer></script>
+  <script src="/js/mail-inbox.js?v=2" defer></script>
   <script src="/js/jsQR.min.js"></script>
   <script src="/js/qrcode.min.js"></script>
   <script src="/js/session-guard.js"></script>
@@ -3065,6 +3067,19 @@
             <span class="sidebar-tooltip">Mensajes & Chat</span>
           </button>
 
+          <!-- Bandeja de Correos (IMAP/SMTP Multi-Tenant) -->
+          <button onclick="switchTab('mail')" id="nav-mail" title="Correos" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
+            <span class="nav-active-pill"></span>
+            <div class="nav-icon-box">
+              <svg fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <span class="nav-label truncate text-[13px] font-medium">Correos</span>
+            <span id="nav-mail-badge" class="sidebar-text ml-auto px-1.5 py-0.5 rounded-md text-[9.5px] font-mono font-semibold bg-slate-200/60 dark:bg-white/5 text-slate-500 dark:text-slate-400">0</span>
+            <span class="sidebar-tooltip">Bandeja de Correos</span>
+          </button>
+
           <!-- RRHH & Asistencias -->
           <button onclick="switchTab('rrhh')" id="nav-rrhh" title="RRHH & Asistencias" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
             <span class="nav-active-pill"></span>
@@ -3134,6 +3149,19 @@
             <span class="nav-label truncate text-[13px] font-medium">Apartados</span>
             <span id="nav-apartados-badge" class="sidebar-text ml-auto px-1.5 py-0.5 rounded-md text-[9.5px] font-mono font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">Apps</span>
             <span class="sidebar-tooltip">Apartados & Apps Móviles</span>
+          </button>
+
+          <!-- Actas de Instalación -->
+          <button onclick="switchTab('actas')" id="nav-actas" title="Actas de Instalación" class="nav-item group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition">
+            <span class="nav-active-pill"></span>
+            <div class="nav-icon-box">
+              <svg fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <span class="nav-label truncate text-[13px] font-medium">Actas de Instalación</span>
+            <span id="nav-actas-badge" class="sidebar-text ml-auto px-1.5 py-0.5 rounded-md text-[9.5px] font-mono font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">0</span>
+            <span class="sidebar-tooltip">Actas de Instalación</span>
           </button>
 
           <!-- Separador / Categoría 2: INFRAESTRUCTURA -->
@@ -9113,6 +9141,13 @@
         </section>
 
         <!-- ======================================================== -->
+        <!-- TAB: BANDEJA DE CORREOS (MULTI-CUENTA POR TENANT)        -->
+        <!-- ======================================================== -->
+        <section id="tab-mail" class="hidden flex-1 flex flex-col h-full min-h-0 overflow-hidden">
+          <div id="mail-inbox-root" class="flex-1 min-h-0"></div>
+        </section>
+
+        <!-- ======================================================== -->
         <!-- TAB APARTADOS: GESTIÓN DE APARTADOS Y MINI-APPS MÓVILES  -->
         <!-- ======================================================== -->
         <section id="tab-apartados" class="space-y-5 hidden">
@@ -9325,6 +9360,593 @@
               </div>
             </div>
 
+          </div>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- TAB ACTAS: ACTAS DE INSTALACIÓN                          -->
+        <!-- ======================================================== -->
+        <section id="tab-actas" class="space-y-5 hidden">
+
+          <!-- VISTA 1: LISTADO EN CARDS -->
+          <div id="actas-list-view" class="space-y-5">
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div class="flex items-center gap-3 flex-wrap">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center shrink-0">
+                  <i class="ri-file-text-line text-xl"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Actas de Instalación</h2>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200">
+                      Total: <span id="actas-kpi-total">0</span>
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-500/15 text-emerald-500">
+                      Finalizadas: <span id="actas-kpi-finalizadas">0</span>
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-blue-500/15 text-blue-400">
+                      En Proceso: <span id="actas-kpi-proceso">0</span>
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Registro digital de instalaciones FTTH, equipos de mochila, evidencias fotográficas y firma móvil.</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" onclick="exportActasToExcel()" title="Exportar a Excel" class="px-3 py-2 rounded-xl text-xs font-bold border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 inline-flex items-center gap-1.5 transition">
+                  <i class="ri-file-excel-2-line text-sm"></i> Excel
+                </button>
+                <button type="button" onclick="openActaFromOrderModal()" title="Iniciar desde Orden de Apartados" class="px-3 py-2 rounded-xl text-xs font-bold border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 inline-flex items-center gap-1.5 transition">
+                  <i class="ri-smartphone-line text-sm"></i> Desde Orden
+                </button>
+                <button type="button" onclick="loadActasList()" title="Actualizar" class="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition">
+                  <i class="ri-refresh-line"></i>
+                </button>
+                <button type="button" onclick="openNewActaForm()" class="btn-brand-primary px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-sm">
+                  <i class="ri-add-line text-sm"></i> Nueva Acta
+                </button>
+              </div>
+            </div>
+
+            <!-- Filtros en una sola fila compacta -->
+            <div class="glass-panel rounded-2xl p-3 border border-slate-200/70 dark:border-white/10 flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+              <div class="relative flex-1 min-w-0">
+                <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input id="actas-search-input" type="text" placeholder="Buscar por folio, cliente, DNI, distrito, NAP o técnico..."
+                  oninput="loadActasList()"
+                  class="w-full pl-9 pr-3 py-2 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+              </div>
+              <div class="w-full md:w-48 shrink-0">
+                <select id="actas-filter-estado" onchange="loadActasList()" class="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                  <option value="ALL">Todos los estados</option>
+                  <option value="Finalizada (Éxito)">Finalizada (Éxito)</option>
+                  <option value="En Proceso">En Proceso</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Observada">Observada</option>
+                  <option value="Anulada">Anulada</option>
+                </select>
+              </div>
+              <div class="w-full md:w-52 shrink-0">
+                <select id="actas-filter-tecnico" onchange="loadActasList()" class="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                  <option value="ALL">Todos los técnicos</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Grid de Cards (5 columnas en escritorio) -->
+            <div id="actas-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
+          </div>
+
+          <!-- VISTA 2: FORMULARIO CREAR / EDITAR ACTA -->
+          <div id="actas-form-view" class="hidden space-y-5 pb-20">
+            <!-- Header del Formulario -->
+            <div class="glass-panel rounded-2xl p-3.5 sm:p-4 border border-slate-200/70 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
+              <button type="button" onclick="showActasListView()" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-500 transition">
+                <i class="ri-arrow-left-line text-base"></i> Volver
+              </button>
+              <div class="flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-mono text-xs font-extrabold">
+                <span class="text-orange-500">PREFIJO: <span id="acta-prefijo-display">LIM-</span></span>
+                <span class="text-rose-500">FOLIO: <span id="acta-folio-display">000001</span></span>
+              </div>
+              <input type="hidden" id="acta-prefijo-input" value="LIM-" />
+              <input type="hidden" id="acta-folio-input" value="000001" />
+              <input type="hidden" id="acta-cliente-id" value="" />
+            </div>
+
+            <!-- Banner Borrador Offline -->
+            <div id="acta-draft-banner" class="hidden rounded-2xl p-3 bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-2">
+              <div class="text-xs font-semibold text-amber-300 flex items-center gap-2">
+                <i class="ri-save-3-line text-base"></i>
+                <span>Tienes un borrador offline sin guardar en este dispositivo.</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="restoreActaDraft()" class="px-3 py-1 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400">Restaurar</button>
+                <button type="button" onclick="discardActaDraft()" class="px-3 py-1 rounded-lg text-xs font-bold bg-white/10 text-slate-300 hover:bg-white/20">Descartar</button>
+              </div>
+            </div>
+
+            <!-- Historial de Ediciones (solo visible al editar) -->
+            <div id="acta-history-box" class="hidden glass-panel rounded-2xl p-3 border border-slate-200/70 dark:border-white/10 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2">
+              <div id="acta-history-summary" class="flex items-center gap-2"></div>
+            </div>
+
+            <!-- 1. DATOS DEL CLIENTE -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
+              <div class="flex items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/10 pb-3">
+                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">1. DATOS DEL CLIENTE</h3>
+                <button type="button" onclick="runActaOcrScan('dni')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200/70 dark:bg-white/5 hover:bg-blue-500/15 text-slate-700 dark:text-slate-200 border border-slate-300/70 dark:border-white/10 inline-flex items-center gap-1.5 transition">
+                  <i class="ri-camera-line"></i> Escanear DNI
+                </button>
+              </div>
+
+              <div class="relative">
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Buscador de Cliente (Autocompletar)</label>
+                <input id="acta-cliente-search" type="text" placeholder="Buscar cliente por nombre, DNI o CIZ..."
+                  oninput="searchCustomersForActa(this.value)"
+                  class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                <div id="acta-cliente-autocomplete" class="hidden absolute z-30 left-0 right-0 mt-1 max-h-60 overflow-y-auto rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-white/15 shadow-xl"></div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Nombre Completo / Razón Social <span class="text-rose-500">*</span></label>
+                <input id="acta-cliente-nombre" type="text" placeholder="Nombre completo o razón social del cliente"
+                  class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-300">DNI / RUC</label>
+                    <button type="button" onclick="lookupActaSunatReniec()" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 inline-flex items-center gap-1">
+                      <i class="ri-search-line"></i> Sunat/Reniec
+                    </button>
+                  </div>
+                  <input id="acta-cliente-dni" type="text" placeholder="8 u 11 dígitos"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Rotulado (QR)</label>
+                    <div class="flex items-center gap-1">
+                      <button type="button" onclick="openActaQrScanner((code) => { document.getElementById('acta-cliente-qr').value = code; })" title="Escanear QR con cámara" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25">
+                        <i class="ri-qr-scan-2-line"></i> Escanear
+                      </button>
+                      <button type="button" onclick="generateActaRotuladoQr()" title="Generar código QR" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200 hover:bg-blue-500/20">
+                        <i class="ri-qr-code-line"></i> Generar
+                      </button>
+                    </div>
+                  </div>
+                  <input id="acta-cliente-qr" type="text" placeholder="Código de rotulado / etiqueta"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Dirección de Instalación</label>
+                <input id="acta-cliente-direccion" type="text" placeholder="Av. / Jr. / Calle / Mz. / Lt."
+                  class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Distrito</label>
+                  <input id="acta-cliente-distrito" list="acta-distrito-list" type="text" placeholder="Distrito / Zona"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                  <datalist id="acta-distrito-list"></datalist>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Referencia</label>
+                  <input id="acta-cliente-referencia" type="text" placeholder="Referencia de ubicación"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">WhatsApp Principal</label>
+                  <input id="acta-cliente-whatsapp" type="text" placeholder="Ej: 987654321"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Celular Alternativo</label>
+                  <input id="acta-cliente-celular" type="text" placeholder="Teléfono secundario"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Geolocalización GPS</label>
+                  <div class="flex items-center gap-2">
+                    <button type="button" onclick="suggestNearestNapsFromMaps()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 inline-flex items-center gap-1">
+                      <i class="ri-node-tree"></i> Sugerir NAP cercana
+                    </button>
+                    <button type="button" onclick="captureActaGps()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 inline-flex items-center gap-1">
+                      <i class="ri-map-pin-user-line"></i> Capturar GPS
+                    </button>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <input id="acta-cliente-lat" type="text" placeholder="Latitud"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                  <input id="acta-cliente-lng" type="text" placeholder="Longitud"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+              </div>
+
+              <label id="acta-save-customer-wrap" class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer pt-1">
+                <input id="acta-save-customer-check" type="checkbox" class="rounded border-slate-400 text-blue-600" />
+                <span>Guardar también como cliente nuevo en el módulo de Clientes (si no existe)</span>
+              </label>
+            </div>
+
+            <!-- 2. PLANTA EXTERNA -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/10 pb-3">
+                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">2. PLANTA EXTERNA</h3>
+                <button type="button" onclick="suggestNearestNapsFromMaps()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 inline-flex items-center gap-1">
+                  <i class="ri-radar-line"></i> Buscar NAP en Mapas FTTH
+                </button>
+              </div>
+              <div id="acta-nap-suggestions" class="hidden rounded-xl bg-purple-500/5 border border-purple-500/20 p-3 space-y-2"></div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Nodo/Cluster</label>
+                  <input id="acta-pe-nodo" list="acta-nodo-list" type="text" placeholder="Ej: NODO-SUR-01"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                  <datalist id="acta-nodo-list"></datalist>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">NAP/Caja</label>
+                  <input id="acta-pe-nap" type="text" placeholder="Ej: NAP-04"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Puerto</label>
+                  <input id="acta-pe-puerto" type="text" placeholder="Ej: Puerto 3"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Potencia (dBm)</label>
+                    <span id="acta-potencia-badge" class="hidden"></span>
+                  </div>
+                  <input id="acta-pe-potencia" type="text" placeholder="ej. -21.5" oninput="updatePotenciaIndicator()"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Atenuación Empalme</label>
+                  <input id="acta-pe-atenuacion" type="text" placeholder="Ej: 0.05"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Metros Drop</label>
+                  <input id="acta-pe-drop" type="text" placeholder="Ej: 85 m"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Precinto / Etiqueta</label>
+                  <input id="acta-pe-precinto" type="text" placeholder="Código precinto"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. DETALLES DEL SERVICIO -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white border-b border-slate-200/60 dark:border-white/10 pb-3">3. DETALLES DEL SERVICIO</h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Fecha</label>
+                  <input id="acta-fecha" type="date"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Hora Inicio</label>
+                    <button type="button" onclick="setNowTimeForActa('acta-hora-inicio')" class="text-[10px] font-bold text-blue-400 hover:underline">Ahora</button>
+                  </div>
+                  <input id="acta-hora-inicio" type="time"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Hora Fin</label>
+                    <button type="button" onclick="setNowTimeForActa('acta-hora-fin')" class="text-[10px] font-bold text-blue-400 hover:underline">Ahora</button>
+                  </div>
+                  <input id="acta-hora-fin" type="time"
+                    class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Tipo</label>
+                  <select id="acta-tipo" class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                    <option value="Instalación">Instalación</option>
+                    <option value="Migración">Migración</option>
+                    <option value="Mantenimiento / Avería">Mantenimiento / Avería</option>
+                    <option value="Traslado">Traslado</option>
+                    <option value="Reconexión">Reconexión</option>
+                    <option value="Retiro">Retiro</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Estado Final</label>
+                  <select id="acta-estado" class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                    <option value="En Proceso">En Proceso</option>
+                    <option value="Finalizada (Éxito)">Finalizada (Éxito)</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Observada">Observada</option>
+                    <option value="Anulada">Anulada</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Servicio Contratado (Autocompleta Velocidades)</label>
+                  <select id="acta-plan-select" onchange="onActaPlanChange()" class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                    <option value="">Sin plan</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Técnico Responsable (Carga Mochila)</label>
+                  <select id="acta-tecnico-select" onchange="onActaTechnicianChange()" class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                    <option value="">Seleccionar técnico...</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="pt-2 border-t border-slate-200/60 dark:border-white/10">
+                <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Configuración Red / TV</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="text-xs font-bold text-slate-600 dark:text-slate-300">SSID (WiFi)</label>
+                      <button type="button" onclick="runActaOcrScan('ssid')" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-blue-500/15 text-blue-400 hover:bg-blue-500/25">A OCR</button>
+                    </div>
+                    <input id="acta-ssid" type="text" placeholder="Nombre de red WiFi"
+                      class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Password</label>
+                      <button type="button" onclick="runActaOcrScan('pass')" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-blue-500/15 text-blue-400 hover:bg-blue-500/25">A OCR</button>
+                    </div>
+                    <input id="acta-wifi-pass" type="text" placeholder="Contraseña WiFi"
+                      class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Speed DL (Mbps)</label>
+                    <input id="acta-speed-dl" type="text" placeholder="Ej: 200"
+                      class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Speed UL (Mbps)</label>
+                    <input id="acta-speed-ul" type="text" placeholder="Ej: 200"
+                      class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">N° TVs</label>
+                    <input id="acta-num-tvs" type="number" min="0" placeholder="0"
+                      class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Splitters</label>
+                      <div class="flex items-center gap-1">
+                        <button type="button" onclick="document.getElementById('acta-splitters').value='1x2'" class="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-mono text-slate-300 hover:bg-blue-500/20">1x2</button>
+                        <button type="button" onclick="document.getElementById('acta-splitters').value='1x4'" class="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-mono text-slate-300 hover:bg-blue-500/20">1x4</button>
+                        <button type="button" onclick="document.getElementById('acta-splitters').value='1x8'" class="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-mono text-slate-300 hover:bg-blue-500/20">1x8</button>
+                      </div>
+                    </div>
+                    <input id="acta-splitters" type="text" placeholder="Ej: 1x2"
+                      class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Señal Low</label>
+                    <input id="acta-senal-low" type="text" placeholder="Valor dB / Estado"
+                      class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">VLAN / PPPoE</label>
+                    <input id="acta-vlan" type="text" placeholder="Opcional"
+                      class="w-full px-3 py-2.5 rounded-xl text-xs font-mono bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. EQUIPOS INSTALADOS Y RETIRADOS (MOCHILA TÉCNICA) -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/10 pb-3">
+                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">4. EQUIPOS INSTALADOS Y RETIRADOS</h3>
+                <button type="button" onclick="addManualEquipoRow()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-white/10 hover:bg-blue-500/15 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 transition">
+                  + Agregar Equipo
+                </button>
+              </div>
+
+              <div class="rounded-xl bg-purple-500/5 border border-purple-500/20 p-3 space-y-2">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                  <i class="ri-briefcase-4-line"></i> Equipos en Mochila del Técnico (Clic para instalar)
+                </div>
+                <div id="acta-mochila-equipos-box" class="flex flex-wrap gap-2"></div>
+              </div>
+
+              <div id="acta-equipos-rows" class="space-y-2"></div>
+            </div>
+
+            <!-- 5. MATERIALES (MOCHILA TÉCNICA) -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/10 pb-3">
+                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">5. MATERIALES</h3>
+                <button type="button" onclick="addManualMaterialRow()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-white/10 hover:bg-blue-500/15 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 transition">
+                  + Agregar Material
+                </button>
+              </div>
+
+              <div class="rounded-xl bg-cyan-500/5 border border-cyan-500/20 p-3 space-y-2">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                  <i class="ri-tools-line"></i> Materiales en Mochila del Técnico (Clic para usar)
+                </div>
+                <div id="acta-mochila-materiales-box" class="flex flex-wrap gap-2"></div>
+              </div>
+
+              <div id="acta-materiales-rows" class="space-y-2"></div>
+            </div>
+
+            <!-- 6. EVIDENCIAS Y OBSERVACIONES -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white border-b border-slate-200/60 dark:border-white/10 pb-3">6. EVIDENCIAS Y OBSERVACIONES</h3>
+
+              <!-- Checklist rápido de 4 fotos recomendadas -->
+              <div id="acta-evidence-checklist" class="flex flex-wrap gap-2"></div>
+
+              <div class="flex flex-wrap items-center gap-3">
+                <select id="acta-evidencia-categoria" class="px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
+                  <option value="router_equipos">Foto Router / ONT (MAC)</option>
+                  <option value="potencia_optica">Foto Power Meter (Potencia)</option>
+                  <option value="instalacion_fachada">Foto Fachada / Instalación</option>
+                  <option value="test_velocidad">Foto Test de Velocidad</option>
+                  <option value="dni_documento">Foto DNI / Documento</option>
+                  <option value="general">Otra Evidencia</option>
+                </select>
+                <button type="button" onclick="triggerActaGalleryUpload()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/20 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 inline-flex items-center gap-1.5">
+                  <i class="ri-image-add-line"></i> Galería
+                </button>
+                <button type="button" onclick="openActaCameraModal()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white inline-flex items-center gap-1.5">
+                  <i class="ri-camera-line"></i> Cámara
+                </button>
+                <input id="acta-evidencia-file-input" type="file" accept="image/*" multiple class="hidden" onchange="handleActaEvidenceFiles(this.files); this.value='';" />
+                <input id="acta-evidencia-capture-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleActaEvidenceFiles(this.files); this.value='';" />
+              </div>
+
+              <div id="acta-evidencias-thumbnails" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3"></div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Observaciones Técnicas</label>
+                <textarea id="acta-observaciones" rows="3" placeholder="Detalles adicionales de la instalación, pruebas de velocidad o novedades..."
+                  class="w-full px-3 py-2.5 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white"></textarea>
+              </div>
+            </div>
+
+            <!-- 7. FIRMAS DIGITALES (CELULAR / TABLET / PC) -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
+              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white border-b border-slate-200/60 dark:border-white/10 pb-3">7. FIRMAS DIGITALES (CELULAR / TABLET / PC)</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Firma del Cliente</label>
+                    <div class="flex items-center gap-3">
+                      <button type="button" onclick="openFullscreenSignature('cliente')" class="text-[11px] font-bold text-blue-400 hover:underline inline-flex items-center gap-1"><i class="ri-fullscreen-line"></i> Ampliar</button>
+                      <button type="button" onclick="clearSignaturePad('cliente')" class="text-[11px] font-bold text-rose-400 hover:underline">Limpiar</button>
+                    </div>
+                  </div>
+                  <canvas id="acta-sig-canvas-cliente" class="w-full h-40 rounded-xl bg-white border border-slate-300 dark:border-white/20 cursor-crosshair" style="touch-action: none;"></canvas>
+                  <input id="acta-firma-cliente-nombre" type="text" placeholder="Nombre del firmante"
+                    class="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-[#0f131c] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white" />
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Firma del Técnico</label>
+                    <div class="flex items-center gap-3">
+                      <button type="button" onclick="openFullscreenSignature('tecnico')" class="text-[11px] font-bold text-blue-400 hover:underline inline-flex items-center gap-1"><i class="ri-fullscreen-line"></i> Ampliar</button>
+                      <button type="button" onclick="clearSignaturePad('tecnico')" class="text-[11px] font-bold text-rose-400 hover:underline">Limpiar</button>
+                    </div>
+                  </div>
+                  <canvas id="acta-sig-canvas-tecnico" class="w-full h-40 rounded-xl bg-white border border-slate-300 dark:border-white/20 cursor-crosshair" style="touch-action: none;"></canvas>
+                  <div class="text-[11px] text-slate-400">Dibuja con el dedo o mouse en el recuadro blanco.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Barra Inferior de Guardado -->
+            <div class="sticky bottom-3 z-20 glass-panel rounded-2xl p-3 border border-slate-200/70 dark:border-white/10 flex flex-wrap items-center justify-between gap-3 shadow-xl">
+              <label class="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 cursor-pointer">
+                <input id="acta-auto-whatsapp-check" type="checkbox" class="rounded border-emerald-500 text-emerald-600" />
+                <span><i class="ri-whatsapp-line"></i> Enviar enlace por WhatsApp al finalizar</span>
+              </label>
+              <div class="flex flex-wrap items-center gap-2.5 ml-auto">
+                <button type="button" onclick="saveActaForm('En Proceso')" class="px-4 py-2.5 rounded-xl text-xs font-bold border border-orange-500/60 text-orange-400 hover:bg-orange-500/10 inline-flex items-center gap-1.5 transition">
+                  <i class="ri-play-line"></i> Iniciar / En Proceso
+                </button>
+                <button type="button" onclick="saveActaForm('Finalizada (Éxito)')" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white inline-flex items-center gap-1.5 transition">
+                  <i class="ri-checkbox-circle-line"></i> Finalizar Acta
+                </button>
+                <button type="button" onclick="saveActaForm()" class="btn-brand-primary px-5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow">
+                  <i class="ri-save-line"></i> Guardar Cambios
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Cámara en Vivo para Evidencias -->
+          <div id="acta-camera-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+            <div class="bg-[#111622] border border-white/10 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl">
+              <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                <span class="text-sm font-bold text-white"><i class="ri-camera-line mr-1"></i> Tomar Foto de Evidencia</span>
+                <button type="button" onclick="stopCameraModal()" class="text-slate-400 hover:text-white"><i class="ri-close-line text-lg"></i></button>
+              </div>
+              <div class="p-4 space-y-3">
+                <video id="acta-camera-video" autoplay playsinline class="w-full rounded-xl bg-black max-h-[60vh] object-contain"></video>
+                <div class="flex justify-end gap-2">
+                  <button type="button" onclick="stopCameraModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-white/10 text-slate-200">Cancelar</button>
+                  <button type="button" onclick="capturePhotoFromActaCamera()" class="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white inline-flex items-center gap-1.5">
+                    <i class="ri-camera-3-line"></i> Capturar Foto
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Escáner QR / Código de Barras (jsQR + BarcodeDetector) -->
+          <div id="acta-qr-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+            <div class="bg-[#111622] border border-white/10 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+              <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                <span class="text-sm font-bold text-white"><i class="ri-qr-scan-2-line mr-1"></i> Escanear Código QR / Serie / MAC</span>
+                <button type="button" onclick="stopActaQrScanner()" class="text-slate-400 hover:text-white"><i class="ri-close-line text-lg"></i></button>
+              </div>
+              <div class="p-4 space-y-3">
+                <video id="acta-qr-video" autoplay playsinline class="w-full rounded-xl bg-black max-h-[50vh] object-cover"></video>
+                <p class="text-[11px] text-slate-400 text-center">Apunta la cámara al código QR o código de barras del equipo.</p>
+                <div class="flex justify-end">
+                  <button type="button" onclick="stopActaQrScanner()" class="px-4 py-2 rounded-xl text-xs font-bold bg-white/10 text-slate-200">Cerrar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Firma en Pantalla Completa -->
+          <div id="acta-sig-fullscreen-modal" class="hidden fixed inset-0 z-50 bg-black/90 flex flex-col p-3 sm:p-6">
+            <div class="flex items-center justify-between text-white mb-2">
+              <span id="acta-sig-fs-title" class="text-sm font-bold">Firma Digital</span>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="clearFullscreenSignature()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/10 text-rose-400">Limpiar</button>
+                <button type="button" onclick="applyFullscreenSignature()" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white">Aplicar Firma</button>
+                <button type="button" onclick="closeFullscreenSignature()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/10 text-slate-300">Cancelar</button>
+              </div>
+            </div>
+            <div class="flex-1 bg-white rounded-2xl overflow-hidden border-2 border-slate-300">
+              <canvas id="acta-sig-fs-canvas" class="w-full h-full cursor-crosshair" style="touch-action: none;"></canvas>
+            </div>
+          </div>
+
+          <!-- Modal Iniciar desde Orden de Instalación (Apartados) -->
+          <div id="acta-orders-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+            <div class="bg-[#111622] border border-white/10 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl">
+              <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                <span class="text-sm font-bold text-white"><i class="ri-smartphone-line mr-1"></i> Convertir Orden de Apartados en Acta</span>
+                <button type="button" onclick="document.getElementById('acta-orders-modal').classList.add('hidden')" class="text-slate-400 hover:text-white"><i class="ri-close-line text-lg"></i></button>
+              </div>
+              <div id="acta-orders-list" class="p-4 max-h-[65vh] overflow-y-auto space-y-2"></div>
+            </div>
           </div>
         </section>
 
@@ -20380,6 +21002,7 @@
 
       const isSuperAdminUser = (currentUser.id === 1 && currentUser.isSuperAdmin);
       if (tabId === 'apartados' && (isSuperAdminUser || currentUser.roleId === 1 || currentUser.isSuperAdmin)) return true;
+      if (tabId === 'actas' && (isSuperAdminUser || currentUser.roleId === 1 || currentUser.isSuperAdmin)) return true;
 
       // 1. Visibilidad estricta por módulo según rol del operador (allowedModules)
       const userRole = (typeof currentRoles !== 'undefined' ? currentRoles : []).find(r => r.id === currentUser.roleId);
@@ -20388,6 +21011,9 @@
         : (userRole && Array.isArray(userRole.allowedModules) && userRole.allowedModules.length > 0 ? userRole.allowedModules : null);
 
       if (allowedMods && Array.isArray(allowedMods)) {
+        if (tabId === 'mail' && (allowedMods.includes('mail') || allowedMods.includes('messages'))) {
+          return true;
+        }
         if (!allowedMods.includes(tabId)) {
           return false;
         }
@@ -20423,6 +21049,8 @@
           return userPerms.some(p => p.startsWith('inventory:'));
         case 'mochila':
           return userPerms.some(p => p.startsWith('backpack:') || p.startsWith('inventory:'));
+        case 'actas':
+          return userPerms.some(p => p.startsWith('actas:') || p.startsWith('customers:') || p.startsWith('backpack:') || p.startsWith('inventory:'));
         case 'config':
           return userPerms.includes('system:config') || userPerms.includes('roles:manage') || userPerms.includes('users:manage') || userPerms.includes('users:view');
         case 'system':
@@ -20455,6 +21083,7 @@
         { id: 'inventory', check: () => canAccessTab('inventory') },
         { id: 'mochila', check: () => canAccessTab('mochila') },
         { id: 'apartados', check: () => canAccessTab('apartados') },
+        { id: 'actas', check: () => canAccessTab('actas') },
         { id: 'network', check: () => canAccessTab('network') },
         { id: 'maps', check: () => canAccessTab('maps') },
         { id: 'plans', check: () => canAccessTab('plans') },
@@ -23545,6 +24174,7 @@
         dashboard: "Dashboard General",
         customers: "Clientes",
         messages: "Centro de Mensajería & WhatsApp",
+        mail: "Bandeja de Correos",
         billing: "Facturación & Cobranzas",
         maps: "Mapas & Cobertura FTTH",
         plans: "Servicios",
@@ -23552,6 +24182,7 @@
         inventory: "Inventario & Almacén",
         mochila: "Mochila Técnica",
         apartados: "Apartados & Apps Móviles",
+        actas: "Actas de Instalación",
         config: "Configuración & Marca",
         system: "Diagnóstico & RAM"
       };
@@ -23566,6 +24197,7 @@
       if (tabId === 'inventory') loadInventoryModule();
       if (tabId === 'mochila') loadMochilaModule();
       if (tabId === 'apartados') loadApartadosModule();
+      if (tabId === 'actas' && typeof loadActasModule === 'function') loadActasModule();
       if (tabId === 'maps' && window.mapsModule) window.mapsModule.loadMapsModule();
       if (tabId === 'dashboard') renderDashboardAttendanceWidget();
       const mainEl = document.querySelector('main');
@@ -23579,6 +24211,14 @@
           toggleSidebarCollapse();
         }
         loadMessagesModule();
+      } else if (tabId === 'mail') {
+        if (mainEl) mainEl.classList.add('tab-messages-active');
+        const contentContainer = document.getElementById('content-container');
+        if (contentContainer) contentContainer.classList.add('tab-messages-active-container');
+        if (footerEl) footerEl.classList.add('hidden');
+        if (window.TurboMail && typeof window.TurboMail.mount === 'function') {
+          window.TurboMail.mount();
+        }
       } else {
         if (typeof closeMobileChatView === 'function') closeMobileChatView();
         if (mainEl) mainEl.classList.remove('tab-messages-active');
@@ -61576,6 +62216,7 @@ setInterval(syncMessagesInProduction, 15000);
 
   </script>
   <script src="/js/maps-module.js?v=2.8.2"></script>
+  <script src="/js/actas-module.js?v=1.0.0"></script>
 
   <!-- ======================================================== -->
   <!-- TURBONETWORK PWA: SERVICE WORKER & GESTIÓN DE INSTALACIÓN -->

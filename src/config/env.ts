@@ -53,6 +53,11 @@ const envSchema = z.object({
   COMPANY_NAME: z.string().default("TurboNetwork ISP"),
   CURRENCY_SYMBOL: z.string().default("$"),
   DEFAULT_DUE_DAYS: z.coerce.number().default(5),
+  GEMINI_API_KEY: z.string().default(""),
+  BOT_MODEL: z.string().default("gemini-3.8-flash"),
+  BOT_EMBEDDING_MODEL: z.string().default("gemini-embedding-001"),
+  BOT_TENANT_ID: z.string().default(""),
+  MAIL_ENC_KEY: z.string().default(""),
 });
 
 const parsed = envSchema.safeParse(process.env);

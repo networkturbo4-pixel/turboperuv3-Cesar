@@ -70,6 +70,9 @@ function isPublicApiEndpoint(method: string, pathname: string, request: FastifyR
   // Sesiones emparejadas por QR del escáner móvil (/api/scanner/session/:sessionId...)
   if (pathname.startsWith("/api/scanner/session/")) return true;
 
+  // Firma pública de Actas de Instalación (/api/actas/public/:token/sign)
+  if (pathname.startsWith("/api/actas/public/")) return true;
+
   // Consulta de trazabilidad desde el escáner móvil si presenta una sesión de escáner activa válida
   if (pathname.startsWith("/api/inventory/traceability/") && m === "GET") {
     const query = request.query as Record<string, any> | undefined;
@@ -148,6 +151,21 @@ function checkRbacPermission(method: string, pathname: string, user: Authenticat
   // Gestión de red
   if (pathname.startsWith("/api/network") && isMutation && !perms.has("network:manage") && !perms.has("network:control")) {
     return "Se requiere permiso de administración o control de red.";
+  }
+
+  // Módulo de Correos
+  if (pathname.startsWith("/api/mail")) {
+    if (pathname.startsWith("/api/mail/accounts") && isMutation && !pathname.endsWith("/sync")) {
+      if (!perms.has("mail:manage") && !perms.has("messages:manage")) {
+        return "Se requiere permiso para administrar cuentas de correo.";
+      }
+    } else if (pathname === "/api/mail/send" && isMutation) {
+      if (!perms.has("mail:send") && !perms.has("messages:send")) {
+        return "Se requiere permiso para enviar correos.";
+      }
+    } else if (!perms.has("mail:view") && !perms.has("messages:view") && !perms.has("mail:send") && !perms.has("messages:send")) {
+      return "Se requiere permiso para acceder a la bandeja de correos.";
+    }
   }
 
   return null;
