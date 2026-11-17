@@ -25391,24 +25391,6 @@
       const btnText = document.getElementById('btn-create-customer-text');
 
       errBox.textContent = '';
-
-      const requiredHrFields = [
-        { id: 'emp-name', label: 'Nombre Completo' },
-        { id: 'emp-dni', label: 'DNI / Cédula de Identidad' },
-        { id: 'emp-phone', label: 'Teléfono / Celular' },
-        { id: 'emp-email', label: 'Correo Electrónico' },
-        { id: 'emp-position', label: 'Cargo / Puesto Asignado' },
-      ];
-      for (const f of requiredHrFields) {
-        const el = document.getElementById(f.id);
-        if (el && !el.value.trim()) {
-          errBox.textContent = `Completa el campo obligatorio "${f.label}" en la pestaña 1. Expediente RR.HH.`;
-          switchEmployeeModalTab('hr');
-          setTimeout(() => el.focus(), 30);
-          return;
-        }
-      }
-
       btn.disabled = true;
       btnText.textContent = 'Guardando...';
 
@@ -28305,24 +28287,6 @@ Estamos atentos para brindarle asistencia inmediata.
       const nsId = document.getElementById('ns-id').value;
 
       errBox.textContent = '';
-
-      const requiredHrFields = [
-        { id: 'emp-name', label: 'Nombre Completo' },
-        { id: 'emp-dni', label: 'DNI / Cédula de Identidad' },
-        { id: 'emp-phone', label: 'Teléfono / Celular' },
-        { id: 'emp-email', label: 'Correo Electrónico' },
-        { id: 'emp-position', label: 'Cargo / Puesto Asignado' },
-      ];
-      for (const f of requiredHrFields) {
-        const el = document.getElementById(f.id);
-        if (el && !el.value.trim()) {
-          errBox.textContent = `Completa el campo obligatorio "${f.label}" en la pestaña 1. Expediente RR.HH.`;
-          switchEmployeeModalTab('hr');
-          setTimeout(() => el.focus(), 30);
-          return;
-        }
-      }
-
       btn.disabled = true;
       btnText.textContent = 'Guardando...';
 
@@ -35422,24 +35386,6 @@ function copyRemoteScannerLink() {
       }
 
       errBox.textContent = '';
-
-      const requiredHrFields = [
-        { id: 'emp-name', label: 'Nombre Completo' },
-        { id: 'emp-dni', label: 'DNI / Cédula de Identidad' },
-        { id: 'emp-phone', label: 'Teléfono / Celular' },
-        { id: 'emp-email', label: 'Correo Electrónico' },
-        { id: 'emp-position', label: 'Cargo / Puesto Asignado' },
-      ];
-      for (const f of requiredHrFields) {
-        const el = document.getElementById(f.id);
-        if (el && !el.value.trim()) {
-          errBox.textContent = `Completa el campo obligatorio "${f.label}" en la pestaña 1. Expediente RR.HH.`;
-          switchEmployeeModalTab('hr');
-          setTimeout(() => el.focus(), 30);
-          return;
-        }
-      }
-
       btn.disabled = true;
       btnText.textContent = 'Registrando Asistencia...';
 
@@ -35557,24 +35503,6 @@ function copyRemoteScannerLink() {
       }
 
       errBox.textContent = '';
-
-      const requiredHrFields = [
-        { id: 'emp-name', label: 'Nombre Completo' },
-        { id: 'emp-dni', label: 'DNI / Cédula de Identidad' },
-        { id: 'emp-phone', label: 'Teléfono / Celular' },
-        { id: 'emp-email', label: 'Correo Electrónico' },
-        { id: 'emp-position', label: 'Cargo / Puesto Asignado' },
-      ];
-      for (const f of requiredHrFields) {
-        const el = document.getElementById(f.id);
-        if (el && !el.value.trim()) {
-          errBox.textContent = `Completa el campo obligatorio "${f.label}" en la pestaña 1. Expediente RR.HH.`;
-          switchEmployeeModalTab('hr');
-          setTimeout(() => el.focus(), 30);
-          return;
-        }
-      }
-
       btn.disabled = true;
       btnText.textContent = 'Validando TOTP...';
 
