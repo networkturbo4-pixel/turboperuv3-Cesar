@@ -64,9 +64,14 @@ html.dark .mail-shell {
 .mail-reader-pane {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   min-height: 0;
   background: var(--m-surface);
   overflow: hidden;
+}
+
+.mail-reader-pane > div {
+  min-width: 0;
 }
 
 .mail-pane-header {
@@ -169,11 +174,20 @@ html.dark .mail-modal-card {
   background: #ffffff;
   color: #1e293b;
   border-radius: 0.75rem;
-  padding: 1.25rem;
+  padding: 1rem;
   border: 1px solid rgba(148, 163, 184, 0.25);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   font-size: 14px;
   line-height: 1.6;
+}
+.mail-html-body table {
+  max-width: 100%;
 }
 .mail-html-body img {
   max-width: 100%;
@@ -239,7 +253,8 @@ html.dark .mail-editor-area {
 @media (max-width: 720px) {
   .mail-shell {
     grid-template-columns: minmax(0, 1fr);
-    height: calc(100vh - 110px);
+    height: calc(100dvh - 132px);
+    min-height: 420px;
   }
   .mail-shell.mail-mobile-reading .mail-list-pane {
     display: none;
