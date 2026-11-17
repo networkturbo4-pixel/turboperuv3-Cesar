@@ -488,18 +488,32 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
-  fastify.get("/inbox/events", async (request, reply) => {
-    reply.raw.writeHead(200, {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
+  fastify.get("/inbox/events", (request, reply) => {
+    reply.hijack();
+
+    const headers: Record<string, string> = {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform, no-store, must-revalidate",
       "X-Accel-Buffering": "no",
-    });
-    reply.raw.write("event: connected\ndata: {}\n\n");
+    };
+    const httpVersion = request.raw.httpVersion || "1.1";
+    if (httpVersion.startsWith("1.")) {
+      headers["Connection"] = "keep-alive";
+    }
+
+    try {
+      reply.raw.writeHead(200, headers);
+      reply.raw.flushHeaders?.();
+      reply.raw.write("event: connected\ndata: {}\n\n");
+    } catch {
+      return;
+    }
 
     const unsubscribe = subscribeInboxEvents((ev) => {
       try {
-        reply.raw.write(`event: inbox\ndata: ${JSON.stringify(ev)}\n\n`);
+        if (!reply.raw.writableEnded) {
+          reply.raw.write(`event: inbox\ndata: ${JSON.stringify(ev)}\n\n`);
+        }
       } catch {
         // Cliente desconectado
       }
@@ -507,18 +521,25 @@ export const omnichannelRoutes: FastifyPluginAsync = async (fastify) => {
 
     const keepAlive = setInterval(() => {
       try {
-        reply.raw.write(": ping\n\n");
+        if (!reply.raw.writableEnded) {
+          reply.raw.write(": ping\n\n");
+        }
       } catch {
         // Ignorar
       }
-    }, 25000);
+    }, 15000);
 
-    request.raw.on("close", () => {
+    let cleanedUp = false;
+    const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
       clearInterval(keepAlive);
       unsubscribe();
-    });
+    };
 
-    return reply;
+    request.raw.on("close", cleanup);
+    request.raw.on("error", cleanup);
+    reply.raw.on("close", cleanup);
   });
 
   fastify.get("/link-preview", async (request, reply) => {
