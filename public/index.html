@@ -34218,6 +34218,40 @@ function copyRemoteScannerLink() {
         if (opHireEl) opHireEl.value = emp.hireDate || '';
       }
 
+      // Cargar configuración de correo personal del colaborador si existe
+      const editMailChk = document.getElementById('emp-op-mail-enabled');
+      if (editMailChk) editMailChk.checked = false;
+      toggleEmployeeOpMailSection(false);
+      ['emp-op-mail-email', 'emp-op-mail-pass', 'emp-op-mail-imap-host', 'emp-op-mail-smtp-host', 'emp-op-mail-sig'].forEach(fid => {
+        const el = document.getElementById(fid);
+        if (el) el.value = '';
+      });
+      const editMailStatus = document.getElementById('emp-op-mail-status');
+      if (editMailStatus) editMailStatus.textContent = '';
+
+      const empMailTenant = emp.operatorTenantId || emp.tenantId || activeTenantId;
+      fetch('/api/mail/accounts', {
+        headers: empMailTenant ? { 'x-tenant-id': empMailTenant } : {}
+      }).then(r => r.json()).then(res => {
+        const acc = (res?.accounts || []).find(a => Number(a.ownerUserId) === Number(emp.id) || (emp.operatorId && Number(a.ownerUserId) === Number(emp.operatorId)));
+        if (acc) {
+          if (editMailChk) editMailChk.checked = true;
+          toggleEmployeeOpMailSection(true);
+          const setVal = (fid, v) => { const el = document.getElementById(fid); if (el) el.value = v ?? ''; };
+          const setChk = (fid, v) => { const el = document.getElementById(fid); if (el) el.checked = Boolean(v); };
+          setVal('emp-op-mail-email', acc.email);
+          setVal('emp-op-mail-imap-host', acc.imapHost);
+          setVal('emp-op-mail-imap-port', acc.imapPort || 993);
+          setChk('emp-op-mail-imap-ssl', acc.imapSecure !== false);
+          setVal('emp-op-mail-smtp-host', acc.smtpHost);
+          setVal('emp-op-mail-smtp-port', acc.smtpPort || 465);
+          setChk('emp-op-mail-smtp-ssl', acc.smtpSecure !== false);
+          setVal('emp-op-mail-sig', acc.signatureHtml || '');
+          const passEl = document.getElementById('emp-op-mail-pass');
+          if (passEl) passEl.placeholder = '(dejar vacío para mantener contraseña actual)';
+        }
+      }).catch(() => {});
+
       modal.classList.remove('hidden');
     }
 

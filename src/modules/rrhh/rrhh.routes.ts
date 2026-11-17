@@ -8,7 +8,72 @@ import os from "os";
 import child_process from "child_process";
 import { resolveTenantId, loadTenantsFromDisk } from "../tenants/tenants.service";
 import { SecurityService } from "../security/security.service";
-import { createMailAccount } from "../mail/mail.service";
+import { createMailAccount, updateMailAccount } from "../mail/mail.service";
+import { mailQuery } from "../mail/mail.db";
+
+async function upsertEmployeeMailAccount(
+  targetMailTenant: string,
+  emp: { id: number; name: string; email: string },
+  operatorUser: any,
+  mc: any
+): Promise<string> {
+  if (!mc || !mc.enabled) return "";
+  const mailEmail = String(mc.email || operatorUser?.email || emp.email || "").trim().toLowerCase();
+  if (!mailEmail) return "Correo del buzón no especificado.";
+
+  const ownerCtx = {
+    jti: "rrhh-sync",
+    sub: emp.id,
+    name: emp.name,
+    email: emp.email,
+    roleId: operatorUser?.roleId || 1,
+    roleName: operatorUser?.roleName || "Operador",
+    isSuperAdmin: false,
+    assignedTenantId: targetMailTenant,
+    allowedTenants: [targetMailTenant],
+    permissions: [],
+  };
+
+  try {
+    const existing = await mailQuery<{ id: number }>(
+      `SELECT id FROM mail_accounts WHERE tenant_id = $1 AND (owner_user_id = $2 OR LOWER(email) = $3) LIMIT 1`,
+      [targetMailTenant, emp.id, mailEmail]
+    );
+    if (existing.rows[0]) {
+      await updateMailAccount(targetMailTenant, ownerCtx, Number(existing.rows[0].id), {
+        displayName: mc.displayName || emp.name,
+        username: mc.username || mailEmail,
+        password: mc.password ? String(mc.password) : undefined,
+        imapHost: mc.imapHost,
+        imapPort: mc.imapPort,
+        imapSecure: mc.imapSecure,
+        smtpHost: mc.smtpHost,
+        smtpPort: mc.smtpPort,
+        smtpSecure: mc.smtpSecure,
+        signatureHtml: mc.signatureHtml !== undefined ? mc.signatureHtml : undefined,
+      });
+    } else if (mc.password) {
+      await createMailAccount(targetMailTenant, ownerCtx, {
+        email: mailEmail,
+        displayName: mc.displayName || emp.name,
+        username: mc.username || mailEmail,
+        password: String(mc.password),
+        imapHost: mc.imapHost,
+        imapPort: mc.imapPort,
+        imapSecure: mc.imapSecure,
+        smtpHost: mc.smtpHost,
+        smtpPort: mc.smtpPort,
+        smtpSecure: mc.smtpSecure,
+        signatureHtml: mc.signatureHtml || "",
+      });
+    } else {
+      return "Ingresa la contraseña / App Password para conectar el nuevo buzón.";
+    }
+    return "";
+  } catch (mailErr: any) {
+    return mailErr?.message || "No se pudo configurar la bandeja de correo del colaborador.";
+  }
+}
 import {
   extractCanonicalNumericId,
   allocateCanonicalUserId,
@@ -2183,44 +2248,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     employeesStore.unshift(newEmp);
     saveEmployeesToDisk(employeesStore);
 
-    let mailWarning = "";
     const mc = (body as any).mailConfig;
-    if (mc && mc.enabled && mc.password) {
-      const targetMailTenant = (operatorUser?.assignedTenantId || assignedEmpTenant || "turbonetwork").toLowerCase();
-      const mailEmail = String(mc.email || operatorUser?.email || newEmp.email || "").trim().toLowerCase();
-      try {
-        await createMailAccount(
-          targetMailTenant,
-          {
-            jti: "rrhh-create",
-            sub: canonicalId,
-            name: newEmp.name,
-            email: newEmp.email,
-            roleId: operatorUser?.roleId || 1,
-            roleName: operatorUser?.roleName || "Operador",
-            isSuperAdmin: false,
-            assignedTenantId: targetMailTenant,
-            allowedTenants: [targetMailTenant],
-            permissions: [],
-          },
-          {
-            email: mailEmail,
-            displayName: mc.displayName || newEmp.name,
-            username: mc.username || mailEmail,
-            password: String(mc.password),
-            imapHost: mc.imapHost,
-            imapPort: mc.imapPort,
-            imapSecure: mc.imapSecure,
-            smtpHost: mc.smtpHost,
-            smtpPort: mc.smtpPort,
-            smtpSecure: mc.smtpSecure,
-            signatureHtml: mc.signatureHtml || "",
-          }
-        );
-      } catch (mailErr: any) {
-        mailWarning = mailErr?.message || "No se pudo conectar la bandeja de correo del colaborador.";
-      }
-    }
+    const targetMailTenant = (operatorUser?.assignedTenantId || assignedEmpTenant || "turbonetwork").toLowerCase();
+    const mailWarning = await upsertEmployeeMailAccount(targetMailTenant, newEmp, operatorUser, mc);
 
     // Sincronizar automáticamente con ZKTeco usando SIEMPRE el ID numérico único (nunca el PIN de login)
     if (body.syncWithZkteco !== false && body.status === "active") {
@@ -2426,6 +2456,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     employeesStore[index] = updated;
     saveEmployeesToDisk(employeesStore);
 
+    const targetMailTenant = (operatorUser?.assignedTenantId || updated.operatorTenantId || updated.tenantId || "turbonetwork").toLowerCase();
+    const mailWarning = await upsertEmployeeMailAccount(targetMailTenant, updated, operatorUser, bodyAny.mailConfig);
+
     if (bodyAny.syncWithZkteco !== false) {
       try {
         if (updated.status === "inactive") {
@@ -2448,6 +2481,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({
       success: true,
       message: `Acta de personal actualizada exitosamente (ID único: ${zkUserIdStr})`,
+      mailWarning,
       data: enrichEmployeeExpediente(updated, leaves, peruDate),
     });
   });
