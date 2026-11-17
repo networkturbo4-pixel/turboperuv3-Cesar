@@ -10,7 +10,9 @@ export function getMailAuthToken(): string {
 }
 
 export function getActiveTenantId(): string {
-  return localStorage.getItem("turbonetwork_active_tenant") || "";
+  const w = window as any;
+  const fromGlobal = typeof w.activeTenantId === "string" && w.activeTenantId.trim() ? w.activeTenantId.trim() : "";
+  return fromGlobal || localStorage.getItem("turbonetwork_active_tenant") || "turbonetwork";
 }
 
 export async function mailApi<T = any>(url: string, options: RequestInit = {}): Promise<T> {

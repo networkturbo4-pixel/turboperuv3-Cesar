@@ -12203,6 +12203,59 @@
 
         <input type="hidden" id="nmodal-require-totp" value="false">
 
+        <!-- Bloque: Bandeja de Correo Personal del Usuario -->
+        <div class="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
+          <label class="flex items-center justify-between cursor-pointer">
+            <span class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              <span>Configurar Bandeja de Correo Personal</span>
+            </span>
+            <input type="checkbox" id="nmodal-mail-enabled" onchange="toggleCreateUserMailSection(this.checked)" class="w-4 h-4 rounded accent-blue-600">
+          </label>
+          <p class="text-[10px] text-slate-400">Al activar esta opción, el usuario verá su propia bandeja de correos dentro de su sede asignada al iniciar sesión.</p>
+
+          <div id="nmodal-mail-fields" class="hidden space-y-2.5 pt-2 border-t border-white/10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Correo del buzón (IMAP/SMTP)</label>
+                <input type="email" id="nmodal-mail-email" onblur="autodetectCreateUserMail()" placeholder="operador@tuempresa.com" class="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Contraseña / App Password</label>
+                <input type="password" id="nmodal-mail-pass" placeholder="••••••••••••" class="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Servidor IMAP</label>
+                <input type="text" id="nmodal-mail-imap-host" placeholder="mail.tuempresa.com" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Puerto IMAP</label>
+                <input type="number" id="nmodal-mail-imap-port" value="993" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Servidor SMTP</label>
+                <input type="text" id="nmodal-mail-smtp-host" placeholder="mail.tuempresa.com" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Puerto SMTP</label>
+                <input type="number" id="nmodal-mail-smtp-port" value="465" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-4 text-[11px] text-slate-300">
+              <label class="flex items-center gap-1.5"><input type="checkbox" id="nmodal-mail-imap-ssl" checked> IMAP SSL/TLS</label>
+              <label class="flex items-center gap-1.5"><input type="checkbox" id="nmodal-mail-smtp-ssl" checked> SMTP SSL/TLS</label>
+              <button type="button" onclick="testCreateUserMailConnection()" class="ml-auto px-2.5 py-1 rounded-lg bg-white/10 hover:bg-blue-600 hover:text-white text-[11px] font-semibold transition">Probar conexión</button>
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-1">Firma de correo (HTML opcional)</label>
+              <textarea id="nmodal-mail-sig" rows="2" placeholder="<p><strong>Nombre</strong><br>Área Comercial</p>" class="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+            <div id="nmodal-mail-status" class="text-[11px] font-mono"></div>
+          </div>
+        </div>
+
         <div id="nmodal-modal-error" class="text-xs text-rose-400 font-mono min-h-[18px]"></div>
       </form>
 
@@ -21502,6 +21555,9 @@
         if (typeof activeConfigSubTab !== 'undefined' && activeConfigSubTab === 'connections') {
           loadConnectionsConfigUI();
         }
+        if (window.TurboMail && typeof window.TurboMail.mount === 'function') {
+          window.TurboMail.mount(true);
+        }
         if (typeof activeTabId !== 'undefined' && activeTabId === 'mochila') {
           loadMochilaModule();
         }
@@ -29282,7 +29338,96 @@ Estamos atentos para brindarle asistencia inmediata.
         onUserFormTenantChange('nmodal', activeTenantId);
       }
       generateRandomCreateModalPin();
+      const mailChk = document.getElementById('nmodal-mail-enabled');
+      if (mailChk) mailChk.checked = false;
+      toggleCreateUserMailSection(false);
+      ['nmodal-mail-email', 'nmodal-mail-pass', 'nmodal-mail-imap-host', 'nmodal-mail-smtp-host', 'nmodal-mail-sig'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const mailStatus = document.getElementById('nmodal-mail-status');
+      if (mailStatus) mailStatus.textContent = '';
       modal.classList.remove('hidden');
+    }
+
+    function toggleCreateUserMailSection(enabled) {
+      const box = document.getElementById('nmodal-mail-fields');
+      if (!box) return;
+      if (enabled) {
+        box.classList.remove('hidden');
+        const mailEmailEl = document.getElementById('nmodal-mail-email');
+        const corpEmailEl = document.getElementById('nmodal-email');
+        if (mailEmailEl && !mailEmailEl.value && corpEmailEl && corpEmailEl.value) {
+          mailEmailEl.value = corpEmailEl.value.trim();
+          autodetectCreateUserMail();
+        }
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+
+    async function autodetectCreateUserMail() {
+      const email = (document.getElementById('nmodal-mail-email')?.value || '').trim();
+      if (!email.includes('@')) return;
+      try {
+        const res = await fetch('/api/mail/accounts/autodetect?email=' + encodeURIComponent(email));
+        const p = await res.json();
+        if (p && p.imapHost) {
+          const ih = document.getElementById('nmodal-mail-imap-host');
+          const ip = document.getElementById('nmodal-mail-imap-port');
+          const is = document.getElementById('nmodal-mail-imap-ssl');
+          const sh = document.getElementById('nmodal-mail-smtp-host');
+          const sp = document.getElementById('nmodal-mail-smtp-port');
+          const ss = document.getElementById('nmodal-mail-smtp-ssl');
+          if (ih && !ih.value) ih.value = p.imapHost;
+          if (ip) ip.value = p.imapPort || 993;
+          if (is) is.checked = p.imapSecure !== false;
+          if (sh && !sh.value) sh.value = p.smtpHost || p.imapHost;
+          if (sp) sp.value = p.smtpPort || 465;
+          if (ss) ss.checked = p.smtpSecure !== false;
+        }
+      } catch {}
+    }
+
+    async function testCreateUserMailConnection() {
+      const statusEl = document.getElementById('nmodal-mail-status');
+      if (statusEl) {
+        statusEl.textContent = 'Probando conexión IMAP/SMTP...';
+        statusEl.className = 'text-[11px] font-mono text-blue-400';
+      }
+      const email = (document.getElementById('nmodal-mail-email')?.value || '').trim();
+      try {
+        const res = await fetch('/api/mail/accounts/test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            username: email,
+            password: document.getElementById('nmodal-mail-pass')?.value || '',
+            imapHost: document.getElementById('nmodal-mail-imap-host')?.value.trim() || '',
+            imapPort: Number(document.getElementById('nmodal-mail-imap-port')?.value || 993),
+            imapSecure: document.getElementById('nmodal-mail-imap-ssl')?.checked !== false,
+            smtpHost: document.getElementById('nmodal-mail-smtp-host')?.value.trim() || '',
+            smtpPort: Number(document.getElementById('nmodal-mail-smtp-port')?.value || 465),
+            smtpSecure: document.getElementById('nmodal-mail-smtp-ssl')?.checked !== false,
+          })
+        });
+        const r = await res.json();
+        if (r.imapOk && r.smtpOk) {
+          if (statusEl) {
+            statusEl.textContent = `Conexión exitosa (${r.foldersCount} carpetas encontradas)`;
+            statusEl.className = 'text-[11px] font-mono text-emerald-400';
+          }
+        } else if (statusEl) {
+          statusEl.textContent = r.error || 'No se pudo validar la conexión';
+          statusEl.className = 'text-[11px] font-mono text-rose-400';
+        }
+      } catch (err) {
+        if (statusEl) {
+          statusEl.textContent = 'Error de red probando conexión';
+          statusEl.className = 'text-[11px] font-mono text-rose-400';
+        }
+      }
     }
 
     function closeCreateUserModal() {
@@ -29338,6 +29483,20 @@ Estamos atentos para brindarle asistencia inmediata.
 
       const assignedTenantId = document.getElementById('nmodal-assigned-tenant')?.value || activeTenantId;
       const syncWithZkteco = document.getElementById('nmodal-sync-zkteco')?.checked !== false;
+      const mailEnabled = document.getElementById('nmodal-mail-enabled')?.checked === true;
+      const mailConfig = mailEnabled ? {
+        enabled: true,
+        email: (document.getElementById('nmodal-mail-email')?.value || email).trim(),
+        displayName: name,
+        password: document.getElementById('nmodal-mail-pass')?.value || '',
+        imapHost: (document.getElementById('nmodal-mail-imap-host')?.value || '').trim(),
+        imapPort: Number(document.getElementById('nmodal-mail-imap-port')?.value || 993),
+        imapSecure: document.getElementById('nmodal-mail-imap-ssl')?.checked !== false,
+        smtpHost: (document.getElementById('nmodal-mail-smtp-host')?.value || '').trim(),
+        smtpPort: Number(document.getElementById('nmodal-mail-smtp-port')?.value || 465),
+        smtpSecure: document.getElementById('nmodal-mail-smtp-ssl')?.checked !== false,
+        signatureHtml: document.getElementById('nmodal-mail-sig')?.value || '',
+      } : undefined;
       try {
         const res = await fetch('/api/users', {
           method: 'POST',
@@ -29358,13 +29517,17 @@ Estamos atentos para brindarle asistencia inmediata.
             birthDate,
             assignedTenantId,
             requireTotp,
-            syncWithZkteco
+            syncWithZkteco,
+            mailConfig
           })
         });
         const data = await res.json();
 
         if (data.success) {
           showToast(`Operador ${name} creado con éxito`);
+          if (data.data?.mailWarning) {
+            showToast(`Aviso correo: ${data.data.mailWarning}`, 'error');
+          }
           closeCreateUserModal();
           await loadConfigModule();
         } else {

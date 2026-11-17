@@ -10,6 +10,7 @@ import { SecurityService } from "../security/security.service";
 import { AuditService } from "../security/audit.service";
 import { MediaService } from "../storage/media.service";
 import { extractCanonicalNumericId, allocateCanonicalUserId, toZktecoPin } from "./identity.service";
+import { createMailAccount } from "../mail/mail.service";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const ROLES_FILE = path.join(DATA_DIR, "roles.json");
@@ -488,6 +489,22 @@ const createUserSchema = z.object({
   allowedTenants: z.array(z.string()).nullable().optional(),
   requireTotp: z.boolean().optional(),
   syncWithZkteco: z.boolean().optional(),
+  mailConfig: z
+    .object({
+      enabled: z.boolean().optional(),
+      email: z.string().email().optional().or(z.literal("")),
+      displayName: z.string().optional(),
+      username: z.string().optional(),
+      password: z.string().optional(),
+      imapHost: z.string().optional(),
+      imapPort: z.coerce.number().optional(),
+      imapSecure: z.boolean().optional(),
+      smtpHost: z.string().optional(),
+      smtpPort: z.coerce.number().optional(),
+      smtpSecure: z.boolean().optional(),
+      signatureHtml: z.string().optional(),
+    })
+    .optional(),
 });
 
 const updateUserSchema = z.object({
@@ -510,6 +527,22 @@ const updateUserSchema = z.object({
   preferences: z.record(z.any()).optional(),
   requireTotp: z.boolean().optional(),
   syncWithZkteco: z.boolean().optional(),
+  mailConfig: z
+    .object({
+      enabled: z.boolean().optional(),
+      email: z.string().email().optional().or(z.literal("")),
+      displayName: z.string().optional(),
+      username: z.string().optional(),
+      password: z.string().optional(),
+      imapHost: z.string().optional(),
+      imapPort: z.coerce.number().optional(),
+      imapSecure: z.boolean().optional(),
+      smtpHost: z.string().optional(),
+      smtpPort: z.coerce.number().optional(),
+      smtpSecure: z.boolean().optional(),
+      signatureHtml: z.string().optional(),
+    })
+    .optional(),
 });
 
 const createRoleSchema = z.object({
@@ -1243,13 +1276,52 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       details: { name: newUser.name, email: newUser.email, roleName: newUser.roleName, zkUserId: zkUserIdStr },
     });
 
+    let mailAccount: any = null;
+    let mailWarning = "";
+    if (parse.data.mailConfig?.enabled && parse.data.mailConfig?.password) {
+      const mc = parse.data.mailConfig;
+      const mailEmail = (mc.email || newUser.email).trim().toLowerCase();
+      try {
+        mailAccount = await createMailAccount(
+          targetTenant,
+          {
+            jti: "user-create",
+            sub: canonicalId,
+            name: newUser.name,
+            email: newUser.email,
+            roleId: role.id,
+            roleName: role.name,
+            isSuperAdmin: false,
+            assignedTenantId: targetTenant,
+            allowedTenants: [targetTenant],
+            permissions: [],
+          },
+          {
+            email: mailEmail,
+            displayName: mc.displayName || newUser.name,
+            username: mc.username || mailEmail,
+            password: mc.password,
+            imapHost: mc.imapHost,
+            imapPort: mc.imapPort,
+            imapSecure: mc.imapSecure,
+            smtpHost: mc.smtpHost,
+            smtpPort: mc.smtpPort,
+            smtpSecure: mc.smtpSecure,
+            signatureHtml: mc.signatureHtml || "",
+          }
+        );
+      } catch (mailErr: any) {
+        mailWarning = mailErr?.message || "No se pudo conectar el buzón de correo del usuario.";
+      }
+    }
+
     const safeUser = sanitizeUserOutput(newUser);
     return reply.status(201).send({
       success: true,
       message: zktecoSync
         ? `Usuario registrado y encolado para ZKTeco (ID único: ${zkUserIdStr}).`
         : `Usuario registrado de forma segura (ID único: ${zkUserIdStr}).`,
-      data: { ...safeUser, pinMasked: "••••••••", zktecoSynced: !!zktecoSync },
+      data: { ...safeUser, pinMasked: "••••••••", zktecoSynced: !!zktecoSync, mailAccount, mailWarning },
     });
   });
 
