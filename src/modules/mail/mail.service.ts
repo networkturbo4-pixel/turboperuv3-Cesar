@@ -140,11 +140,13 @@ function createSmtpTransporter(cfg: {
   smtpSecure: boolean;
   username: string;
   password: string;
+  ehloDomain?: string;
 }) {
   return nodemailer.createTransport({
     host: cfg.smtpHost,
     port: cfg.smtpPort,
     secure: cfg.smtpSecure,
+    name: cfg.ehloDomain || undefined,
     auth: { user: cfg.username, pass: cfg.password },
     tls: { rejectUnauthorized: false },
     connectionTimeout: 15000,
@@ -1112,23 +1114,31 @@ export async function sendMailMessage(
     contentType: a.contentType || "application/octet-stream",
   }));
 
+  const senderDomain = (acc.email.split("@")[1] || acc.smtp_host || "localhost").trim();
+  const wrappedHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1e293b;">${finalHtml}</body></html>`;
+  const plainText = payload.text || extractMailSnippet("", finalHtml, 5000);
+  const generatedMessageId = `<${Date.now()}.${Math.random().toString(36).slice(2, 10)}@${senderDomain}>`;
+
   const transporter = createSmtpTransporter({
     smtpHost: acc.smtp_host,
     smtpPort: Number(acc.smtp_port),
     smtpSecure: Boolean(acc.smtp_secure),
     username: acc.username,
     password,
+    ehloDomain: senderDomain,
   });
 
   const fromHeader = acc.display_name ? `"${acc.display_name.replace(/"/g, "")}" <${acc.email}>` : acc.email;
   const info = await transporter.sendMail({
     from: fromHeader,
+    replyTo: acc.email,
     to: to.join(", "),
     cc: cc.length ? cc.join(", ") : undefined,
     bcc: bcc.length ? bcc.join(", ") : undefined,
     subject: payload.subject || "(sin asunto)",
-    html: finalHtml,
-    text: payload.text || extractMailSnippet("", finalHtml, 5000),
+    html: wrappedHtml,
+    text: plainText,
+    messageId: generatedMessageId,
     inReplyTo,
     references,
     attachments,
