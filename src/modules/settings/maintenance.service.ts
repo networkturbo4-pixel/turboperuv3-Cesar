@@ -136,6 +136,7 @@ export function formatDateTimeNice(isoOrDateStr: string | Date): string {
     const d = new Date(isoOrDateStr);
     if (isNaN(d.getTime())) return String(isoOrDateStr);
     return d.toLocaleString("es-PE", {
+      timeZone: "America/Lima",
       year: "numeric",
       month: "short",
       day: "2-digit",
@@ -324,15 +325,62 @@ function pruneOldBackups(keepCount = 5): void {
   try {
     const files = fs
       .readdirSync(BACKUPS_DIR)
-      .filter((f) => f.endsWith(".json"))
+      .filter((f) => f.endsWith(".json") && !f.endsWith(".meta.json"))
       .map((f) => ({ name: f, mtimeMs: fs.statSync(path.join(BACKUPS_DIR, f)).mtimeMs }))
       .sort((a, b) => b.mtimeMs - a.mtimeMs);
     for (const old of files.slice(keepCount)) {
       try {
         fs.unlinkSync(path.join(BACKUPS_DIR, old.name));
       } catch {}
+      try {
+        const meta = path.join(BACKUPS_DIR, old.name.replace(/\.json$/, ".meta.json"));
+        if (fs.existsSync(meta)) fs.unlinkSync(meta);
+      } catch {}
     }
   } catch {}
+}
+
+function readBackupHeaderFast(fullPath: string): any {
+  const metaPath = fullPath.replace(/\.json$/, ".meta.json");
+  if (fs.existsSync(metaPath)) {
+    try {
+      return JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+    } catch {}
+  }
+
+  // Leer solo los primeros 4 KB del archivo (evita OOM al listar backups de 200+ MB en cPanel)
+  let head = "";
+  const fd = fs.openSync(fullPath, "r");
+  try {
+    const buf = Buffer.alloc(4096);
+    const bytesRead = fs.readSync(fd, buf, 0, 4096, 0);
+    head = buf.toString("utf-8", 0, bytesRead);
+  } finally {
+    fs.closeSync(fd);
+  }
+
+  const pickStr = (key: string) => {
+    const m = head.match(new RegExp(`"${key}"\\s*:\\s*"([^"]*)"`));
+    return m ? m[1] : "";
+  };
+  const pickNum = (key: string) => {
+    const m = head.match(new RegExp(`"${key}"\\s*:\\s*(\\d+)`));
+    return m ? Number(m[1]) : 0;
+  };
+
+  return {
+    type: pickStr("type") || undefined,
+    notes: pickStr("notes"),
+    createdAt: pickStr("createdAt") || undefined,
+    gitCommit: pickStr("gitCommit"),
+    summary: {
+      tenantsCount: pickNum("tenantsCount"),
+      customersCount: pickNum("customersCount"),
+      attendanceCount: pickNum("attendanceCount"),
+      usersCount: pickNum("usersCount"),
+      filesCount: pickNum("filesCount"),
+    },
+  };
 }
 
 // 3. Crear copia de seguridad completa del sistema (JSON & Estructuras)
@@ -414,7 +462,20 @@ export async function createFullBackup(type: "manual" | "pre_update" = "manual",
     dataFiles,
   };
 
-  fs.writeFileSync(filePath, JSON.stringify(backupPackage, null, 2), "utf-8");
+  fs.writeFileSync(filePath, JSON.stringify(backupPackage), "utf-8");
+  try {
+    fs.writeFileSync(
+      filePath.replace(/\.json$/, ".meta.json"),
+      JSON.stringify({
+        type: backupPackage.type,
+        notes: backupPackage.notes,
+        createdAt: backupPackage.createdAt,
+        gitCommit: backupPackage.gitCommit,
+        summary: backupPackage.summary,
+      }),
+      "utf-8"
+    );
+  } catch {}
   pruneOldBackups(5);
 
   const stat = fs.statSync(filePath);
@@ -441,12 +502,11 @@ export function listBackups(): BackupItem[] {
   try {
     const files = fs.readdirSync(BACKUPS_DIR);
     for (const f of files) {
-      if (!f.endsWith(".json")) continue;
+      if (!f.endsWith(".json") || f.endsWith(".meta.json")) continue;
       const fullPath = path.join(BACKUPS_DIR, f);
       try {
         const stat = fs.statSync(fullPath);
-        const raw = fs.readFileSync(fullPath, "utf-8");
-        const parsed = JSON.parse(raw);
+        const parsed = readBackupHeaderFast(fullPath);
         const sizeFormatted = formatBytes(stat.size);
         const dateIso = parsed.createdAt || stat.mtime.toISOString();
 
@@ -504,11 +564,10 @@ export async function restoreBackup(fileName: string): Promise<{ success: boolea
     throw new Error("El archivo de copia de seguridad no tiene una estructura de datos válida.");
   }
 
-  // Restaurar cada archivo en su ruta correspondiente
+  // Restaurar cada archivo en su ruta correspondiente sin duplicar RAM
   const dataFiles = parsed.dataFiles;
   for (const relPath of Object.keys(dataFiles)) {
     const targetFile = path.resolve(DATA_DIR, relPath);
-    // Verificar que esté dentro de DATA_DIR por seguridad
     if (!targetFile.startsWith(DATA_DIR)) continue;
 
     const dir = path.dirname(targetFile);
@@ -518,8 +577,9 @@ export async function restoreBackup(fileName: string): Promise<{ success: boolea
     if (typeof content === "string") {
       fs.writeFileSync(targetFile, content, "utf-8");
     } else {
-      fs.writeFileSync(targetFile, JSON.stringify(content, null, 2), "utf-8");
+      fs.writeFileSync(targetFile, JSON.stringify(content), "utf-8");
     }
+    delete dataFiles[relPath];
   }
 
   return {
