@@ -639,71 +639,135 @@ function renderReader(): string {
   `;
 }
 
+function renderAttachmentChips(): string {
+  return state.composerAttachments
+    .map(
+      (a, i) => `
+    <span class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] flex items-center gap-1.5">
+      ${esc(a.filename)} (${formatBytes(a.size)})
+      <button type="button" data-rm-att="${i}" class="font-bold hover:text-rose-500">×</button>
+    </span>
+  `
+    )
+    .join("");
+}
+
 function renderComposerModal(): string {
   if (!state.composerOpen) return "";
   return `
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3">
-      <div class="w-full max-w-2xl rounded-2xl mail-modal-card shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-        <div class="px-4 py-3 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
-          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Nuevo Correo</h3>
-          <button type="button" id="mail-comp-close" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
+    <dialog id="mail-composer-dialog" class="mail-native-dialog" aria-labelledby="mail-comp-title">
+      <div class="w-full h-full rounded-2xl sm:rounded-2xl mail-modal-card flex flex-col max-h-[92dvh] overflow-hidden">
+        <div class="px-4 py-3 mail-pane-header flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+            <h3 id="mail-comp-title" class="text-sm font-bold mail-title">Nuevo Correo</h3>
+          </div>
+          <div class="flex items-center gap-1">
+            <button type="button" id="mail-comp-expand" title="Ampliar / Reducir" class="mail-toolbar-btn mail-text-muted">⤢</button>
+            <button type="button" id="mail-comp-close" aria-label="Cerrar" class="mail-toolbar-btn mail-text-muted">✕</button>
+          </div>
         </div>
+
         <div class="p-4 space-y-2.5 overflow-y-auto flex-1">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
-              <label class="text-[11px] font-semibold text-slate-500">De (Cuenta)</label>
-              <select id="mail-comp-account" class="w-full mt-0.5 px-3 py-1.5 rounded-xl text-xs bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+              <label for="mail-comp-account" class="text-[11px] font-semibold mail-text-muted">De (Cuenta)</label>
+              <select id="mail-comp-account" class="mail-input w-full mt-0.5 px-3 py-1.5 rounded-xl text-xs">
                 ${state.accounts.map((a) => `<option value="${a.id}">${esc(a.displayName || a.email)} (${esc(a.email)})</option>`).join("")}
               </select>
             </div>
             <div>
-              <label class="text-[11px] font-semibold text-slate-500">CC (opcional)</label>
-              <input id="mail-comp-cc" type="text" placeholder="cc1@dominio.com, cc2@..." class="w-full mt-0.5 px-3 py-1.5 rounded-xl text-xs bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10" />
+              <div class="flex items-center justify-between">
+                <label for="mail-comp-to" class="text-[11px] font-semibold mail-text-muted">Para</label>
+                <button type="button" id="mail-comp-toggle-cc" class="text-[10.5px] font-semibold text-blue-500 hover:underline">CC / CCO</button>
+              </div>
+              <input id="mail-comp-to" type="text" autofocus placeholder="destinatario@dominio.com" class="mail-input w-full mt-0.5 px-3 py-1.5 rounded-xl text-xs" />
             </div>
-          </div>
-          <div>
-            <label class="text-[11px] font-semibold text-slate-500">Para</label>
-            <input id="mail-comp-to" type="text" placeholder="destinatario@dominio.com" class="w-full mt-0.5 px-3 py-1.5 rounded-xl text-xs bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10" />
-          </div>
-          <div>
-            <label class="text-[11px] font-semibold text-slate-500">Asunto</label>
-            <input id="mail-comp-subject" type="text" placeholder="Asunto del correo" class="w-full mt-0.5 px-3 py-1.5 rounded-xl text-xs bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10" />
           </div>
 
-          <div class="rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
-            <div class="px-2 py-1.5 bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10 flex flex-wrap gap-1">
-              <button type="button" data-cmd="bold" class="px-2 py-1 rounded text-xs font-bold hover:bg-slate-200 dark:hover:bg-white/10">B</button>
-              <button type="button" data-cmd="italic" class="px-2 py-1 rounded text-xs italic hover:bg-slate-200 dark:hover:bg-white/10">I</button>
-              <button type="button" data-cmd="underline" class="px-2 py-1 rounded text-xs underline hover:bg-slate-200 dark:hover:bg-white/10">U</button>
-              <button type="button" data-cmd="insertUnorderedList" class="px-2 py-1 rounded text-xs hover:bg-slate-200 dark:hover:bg-white/10">• Lista</button>
-              <button type="button" id="mail-comp-link" class="px-2 py-1 rounded text-xs hover:bg-slate-200 dark:hover:bg-white/10">🔗 Enlace</button>
+          <div id="mail-comp-cc-row" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label for="mail-comp-cc" class="text-[11px] font-semibold mail-text-muted">CC</label>
+              <input id="mail-comp-cc" type="text" placeholder="cc1@dominio.com, cc2@..." class="mail-input w-full mt-0.5 px-3 py-1.5 rounded-xl text-xs" />
             </div>
-            <div id="mail-comp-editor" contenteditable="true" data-placeholder="Escribe tu mensaje aquí..." class="mail-editor-area bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100"></div>
+            <div>
+              <label for="mail-comp-bcc" class="text-[11px] font-semibold mail-text-muted">CCO (Oculto)</label>
+              <input id="mail-comp-bcc" type="text" placeholder="cco@dominio.com" class="mail-input w-full mt-0.5 px-3 py-1.5 rounded-xl text-xs" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div class="sm:col-span-2">
+              <label for="mail-comp-subject" class="text-[11px] font-semibold mail-text-muted">Asunto</label>
+              <input id="mail-comp-subject" type="text" placeholder="Asunto del correo" class="mail-input w-full mt-0.5 px-3 py-1.5 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label for="mail-comp-template" class="text-[11px] font-semibold mail-text-muted">Plantilla rápida</label>
+              <select id="mail-comp-template" class="mail-input w-full mt-0.5 px-2.5 py-1.5 rounded-xl text-xs">
+                <option value="">Insertar plantilla...</option>
+                <option value="saludo">Saludo corporativo</option>
+                <option value="soporte">Seguimiento técnico</option>
+                <option value="cobranza">Recordatorio de pago</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="rounded-xl border mail-divider overflow-hidden">
+            <div class="px-2 py-1.5 bg-slate-50 dark:bg-white/[0.04] border-b mail-divider flex flex-wrap items-center gap-1">
+              <select id="mail-comp-block" title="Formato de bloque" class="mail-input px-1.5 py-1 rounded text-[11px]">
+                <option value="P">Párrafo</option>
+                <option value="H2">Título</option>
+                <option value="H3">Subtítulo</option>
+                <option value="BLOCKQUOTE">Cita</option>
+              </select>
+              <span class="w-px h-4 bg-slate-300 dark:bg-white/15 mx-0.5"></span>
+              <button type="button" data-cmd="bold" title="Negrita" class="mail-toolbar-btn font-bold">B</button>
+              <button type="button" data-cmd="italic" title="Cursiva" class="mail-toolbar-btn italic">I</button>
+              <button type="button" data-cmd="underline" title="Subrayado" class="mail-toolbar-btn underline">U</button>
+              <button type="button" data-cmd="strikeThrough" title="Tachado" class="mail-toolbar-btn line-through">S</button>
+              <span class="w-px h-4 bg-slate-300 dark:bg-white/15 mx-0.5"></span>
+              <label title="Color de texto" class="mail-toolbar-btn cursor-pointer flex items-center gap-1">
+                <span class="text-[11px] font-bold">A</span>
+                <input type="color" id="mail-comp-forecolor" value="#1e293b" class="w-4 h-4 p-0 border-0 bg-transparent cursor-pointer">
+              </label>
+              <label title="Resaltado" class="mail-toolbar-btn cursor-pointer flex items-center gap-1">
+                <span class="text-[11px] px-1 rounded bg-amber-300 text-slate-900">ab</span>
+                <input type="color" id="mail-comp-hilite" value="#fef08a" class="w-4 h-4 p-0 border-0 bg-transparent cursor-pointer">
+              </label>
+              <span class="w-px h-4 bg-slate-300 dark:bg-white/15 mx-0.5"></span>
+              <button type="button" data-cmd="justifyLeft" title="Alinear izquierda" class="mail-toolbar-btn">⬅</button>
+              <button type="button" data-cmd="justifyCenter" title="Centrar" class="mail-toolbar-btn">⬌</button>
+              <button type="button" data-cmd="justifyRight" title="Alinear derecha" class="mail-toolbar-btn">➡</button>
+              <span class="w-px h-4 bg-slate-300 dark:bg-white/15 mx-0.5"></span>
+              <button type="button" data-cmd="insertUnorderedList" title="Lista con viñetas" class="mail-toolbar-btn">• Lista</button>
+              <button type="button" data-cmd="insertOrderedList" title="Lista numerada" class="mail-toolbar-btn">1. Lista</button>
+              <button type="button" data-cmd="insertHorizontalRule" title="Línea separadora" class="mail-toolbar-btn">—</button>
+              <button type="button" id="mail-comp-link" title="Insertar enlace" class="mail-toolbar-btn">🔗</button>
+              <button type="button" data-cmd="removeFormat" title="Limpiar formato" class="mail-toolbar-btn">✕Fmt</button>
+            </div>
+            <div id="mail-comp-editor" contenteditable="true" data-placeholder="Escribe tu mensaje aquí... (también puedes arrastrar archivos)" class="mail-editor-area"></div>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <label class="cursor-pointer px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/10 text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/15">
+            <label class="cursor-pointer px-3 py-1.5 rounded-xl mail-btn-subtle text-xs font-medium">
               📎 Adjuntar archivos
               <input type="file" id="mail-comp-files" multiple class="hidden" />
             </label>
-            ${state.composerAttachments
-              .map(
-                (a, i) => `
-              <span class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] flex items-center gap-1.5">
-                ${esc(a.filename)} (${formatBytes(a.size)})
-                <button type="button" data-rm-att="${i}" class="font-bold">×</button>
-              </span>
-            `
-              )
-              .join("")}
+            <div id="mail-comp-att-chips" class="flex flex-wrap items-center gap-1.5">
+              ${renderAttachmentChips()}
+            </div>
           </div>
         </div>
-        <div class="px-4 py-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-end gap-2">
-          <button type="button" id="mail-comp-cancel" class="px-3.5 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10">Cancelar</button>
-          <button type="button" id="mail-comp-send" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm">Enviar correo</button>
+
+        <div class="px-4 py-3 border-t mail-divider flex items-center justify-between gap-2">
+          <span class="text-[11px] mail-text-muted hidden sm:inline">Esc para cerrar</span>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" id="mail-comp-cancel" class="px-3.5 py-2 rounded-xl text-xs font-medium mail-btn-subtle">Cancelar</button>
+            <button type="button" id="mail-comp-send" class="mail-btn-primary px-4 py-2 rounded-xl text-xs font-semibold shadow-sm">Enviar correo</button>
+          </div>
         </div>
       </div>
-    </div>
+    </dialog>
   `;
 }
 
@@ -949,51 +1013,149 @@ function bindEvents() {
 
   // Composer events
   if (state.composerOpen) {
-    bindClick("mail-comp-close", () => { state.composerOpen = false; render(); });
-    bindClick("mail-comp-cancel", () => { state.composerOpen = false; render(); });
+    const dialogEl = document.getElementById("mail-composer-dialog") as HTMLDialogElement | null;
+    if (dialogEl && !dialogEl.open) {
+      try { dialogEl.showModal(); } catch {}
+      dialogEl.addEventListener("close", () => {
+        if (state.composerOpen) {
+          state.composerOpen = false;
+          render();
+        }
+      });
+    }
+
+    const closeComposer = () => {
+      state.composerOpen = false;
+      if (dialogEl?.open) dialogEl.close();
+      render();
+    };
+
+    bindClick("mail-comp-close", closeComposer);
+    bindClick("mail-comp-cancel", closeComposer);
+    bindClick("mail-comp-expand", () => {
+      dialogEl?.classList.toggle("mail-composer-expanded");
+    });
+    bindClick("mail-comp-toggle-cc", () => {
+      document.getElementById("mail-comp-cc-row")?.classList.toggle("hidden");
+    });
+
     rootEl.querySelectorAll<HTMLElement>("[data-cmd]").forEach((btn) => {
       btn.onclick = () => {
         document.execCommand(btn.dataset.cmd || "", false);
+        document.getElementById("mail-comp-editor")?.focus();
       };
     });
+
+    const blockSel = document.getElementById("mail-comp-block") as HTMLSelectElement | null;
+    if (blockSel) {
+      blockSel.onchange = () => {
+        document.execCommand("formatBlock", false, `<${blockSel.value}>`);
+        document.getElementById("mail-comp-editor")?.focus();
+      };
+    }
+
+    const foreEl = document.getElementById("mail-comp-forecolor") as HTMLInputElement | null;
+    if (foreEl) {
+      foreEl.onchange = () => document.execCommand("foreColor", false, foreEl.value);
+    }
+    const hiliteEl = document.getElementById("mail-comp-hilite") as HTMLInputElement | null;
+    if (hiliteEl) {
+      hiliteEl.onchange = () => document.execCommand("hiliteColor", false, hiliteEl.value);
+    }
+
+    const tplSel = document.getElementById("mail-comp-template") as HTMLSelectElement | null;
+    if (tplSel) {
+      tplSel.onchange = () => {
+        const editor = document.getElementById("mail-comp-editor");
+        const subj = document.getElementById("mail-comp-subject") as HTMLInputElement | null;
+        if (!editor) return;
+        const map: Record<string, { subject: string; body: string }> = {
+          saludo: {
+            subject: "Comunicación importante - TurboNetwork",
+            body: "<p>Estimado(a) cliente,</p><p>Esperamos que se encuentre muy bien. Nos comunicamos con usted para brindarle la siguiente información:</p><p><br></p>",
+          },
+          soporte: {
+            subject: "Actualización de soporte técnico",
+            body: "<p>Hola,</p><p>Hemos revisado su reporte técnico y nuestro equipo ya se encuentra trabajando en su solicitud. Le mantendremos informado por este medio.</p>",
+          },
+          cobranza: {
+            subject: "Recordatorio de estado de cuenta",
+            body: "<p>Estimado(a) cliente,</p><p>Le recordamos amablemente que su recibo del servicio de internet se encuentra próximo a vencer. Puede realizar el pago y enviarnos su comprobante respondiendo a este correo.</p>",
+          },
+        };
+        const chosen = map[tplSel.value];
+        if (chosen) {
+          if (subj && !subj.value.trim()) subj.value = chosen.subject;
+          editor.innerHTML = chosen.body + editor.innerHTML;
+          tplSel.value = "";
+        }
+      };
+    }
+
     bindClick("mail-comp-link", () => {
       const url = prompt("URL del enlace (https://...):");
       if (url) document.execCommand("createLink", false, url);
     });
+
+    const refreshAttachmentChips = () => {
+      const box = document.getElementById("mail-comp-att-chips");
+      if (!box) return;
+      box.innerHTML = renderAttachmentChips();
+      box.querySelectorAll<HTMLElement>("[data-rm-att]").forEach((btn) => {
+        btn.onclick = () => {
+          state.composerAttachments.splice(Number(btn.dataset.rmAtt), 1);
+          refreshAttachmentChips();
+        };
+      });
+    };
+
+    const addFiles = async (files: File[]) => {
+      for (const f of files) {
+        const b64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const res = String(reader.result || "");
+            resolve(res.includes(",") ? res.split(",")[1] : res);
+          };
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(f);
+        });
+        state.composerAttachments.push({
+          filename: f.name,
+          contentBase64: b64,
+          contentType: f.type || "application/octet-stream",
+          size: f.size,
+        });
+      }
+      refreshAttachmentChips();
+    };
+
     const fileInput = document.getElementById("mail-comp-files") as HTMLInputElement | null;
     if (fileInput) {
       fileInput.onchange = async () => {
-        const files = Array.from(fileInput.files || []);
-        for (const f of files) {
-          const b64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const res = String(reader.result || "");
-              resolve(res.includes(",") ? res.split(",")[1] : res);
-            };
-            reader.onerror = () => reject(reader.error);
-            reader.readAsDataURL(f);
-          });
-          state.composerAttachments.push({
-            filename: f.name,
-            contentBase64: b64,
-            contentType: f.type || "application/octet-stream",
-            size: f.size,
-          });
-        }
-        render();
+        await addFiles(Array.from(fileInput.files || []));
+        fileInput.value = "";
       };
     }
-    rootEl.querySelectorAll<HTMLElement>("[data-rm-att]").forEach((btn) => {
-      btn.onclick = () => {
-        state.composerAttachments.splice(Number(btn.dataset.rmAtt), 1);
-        render();
+
+    const editorDrop = document.getElementById("mail-comp-editor");
+    if (editorDrop) {
+      editorDrop.ondragover = (e) => { e.preventDefault(); };
+      editorDrop.ondrop = async (e) => {
+        if (e.dataTransfer?.files?.length) {
+          e.preventDefault();
+          await addFiles(Array.from(e.dataTransfer.files));
+        }
       };
-    });
+    }
+
+    refreshAttachmentChips();
+
     bindClick("mail-comp-send", async () => {
       const accountId = Number((document.getElementById("mail-comp-account") as HTMLSelectElement).value);
       const to = (document.getElementById("mail-comp-to") as HTMLInputElement).value;
-      const cc = (document.getElementById("mail-comp-cc") as HTMLInputElement).value;
+      const cc = (document.getElementById("mail-comp-cc") as HTMLInputElement)?.value || "";
+      const bcc = (document.getElementById("mail-comp-bcc") as HTMLInputElement)?.value || "";
       const subject = (document.getElementById("mail-comp-subject") as HTMLInputElement).value;
       const html = (document.getElementById("mail-comp-editor") as HTMLElement).innerHTML;
       try {
@@ -1003,6 +1165,7 @@ function bindEvents() {
             accountId,
             to,
             cc,
+            bcc,
             subject,
             html,
             replyToMessageId: state.replyToMessageId || undefined,
@@ -1011,6 +1174,7 @@ function bindEvents() {
           }),
         });
         state.composerOpen = false;
+        if (dialogEl?.open) dialogEl.close();
         toast("Correo enviado correctamente", "success");
         await loadMessages();
       } catch (err: any) {

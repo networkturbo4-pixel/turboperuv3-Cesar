@@ -10076,6 +10076,22 @@
         <span class="text-[11px] font-semibold tracking-tight text-slate-800 dark:text-slate-200 leading-tight">Chat / Live</span>
       </button>
 
+      <!-- 8. Correos -->
+      <button type="button" onclick="closeQuickActionsSheet(); switchTab('mail'); haptic('medium');" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/20 transition active:scale-95">
+        <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center mb-1.5 shadow-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        </div>
+        <span class="text-[11px] font-semibold tracking-tight text-slate-800 dark:text-slate-200 leading-tight">Correos</span>
+      </button>
+
+      <!-- 9. Actas de Instalación -->
+      <button type="button" onclick="closeQuickActionsSheet(); switchTab('actas'); haptic('medium');" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition active:scale-95">
+        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center mb-1.5 shadow-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <span class="text-[11px] font-semibold tracking-tight text-slate-800 dark:text-slate-200 leading-tight">Actas</span>
+      </button>
+
       <!-- 8. Buscar (Spotlight) -->
       <button type="button" onclick="closeQuickActionsSheet(); openCommandPalette(); haptic('medium');" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-500/10 hover:bg-slate-500/20 text-slate-600 dark:text-slate-300 border border-slate-500/20 transition active:scale-95">
         <div class="w-10 h-10 rounded-xl bg-slate-600 text-white flex items-center justify-center mb-1.5 shadow-sm">
@@ -10218,6 +10234,28 @@
             <span class="text-xs font-semibold">Mensajes & WhatsApp</span>
           </div>
           <span class="px-2 py-0.5 rounded-md text-[9px] font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-500/20">Live</span>
+        </button>
+
+        <!-- Bandeja de Correos -->
+        <button type="button" data-drawer-tab="mail" onclick="switchTab('mail'); closeMobileConfigDrawer();" class="drawer-nav-item w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <span class="text-xs font-semibold">Correos</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-md text-[9px] font-mono bg-sky-500/10 text-sky-700 dark:text-sky-400 font-bold border border-sky-500/20">IMAP</span>
+        </button>
+
+        <!-- Actas de Instalación -->
+        <button type="button" data-drawer-tab="actas" onclick="switchTab('actas'); closeMobileConfigDrawer();" class="drawer-nav-item w-full flex items-center justify-between p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-left active:scale-98 cursor-pointer">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <span class="text-xs font-semibold">Actas de Instalación</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-md text-[9px] font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-500/20">PDF</span>
         </button>
 
         <!-- RRHH -->

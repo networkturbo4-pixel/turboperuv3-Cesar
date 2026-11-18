@@ -225,6 +225,52 @@ html.dark .mail-editor-area {
   pointer-events: none;
 }
 
+dialog.mail-native-dialog {
+  padding: 0;
+  border: none;
+  border-radius: 1rem;
+  width: min(760px, 95dvw);
+  max-width: 95dvw;
+  max-height: 92dvh;
+  margin: auto;
+  background: transparent;
+  color: inherit;
+  box-shadow: 0 24px 64px rgba(2, 6, 23, 0.42);
+}
+dialog.mail-native-dialog.mail-composer-expanded {
+  width: min(1040px, 96dvw);
+  max-height: 94dvh;
+}
+dialog.mail-native-dialog:modal {
+  overscroll-behavior: contain;
+}
+dialog.mail-native-dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background: rgba(2, 6, 23, 0.62);
+  backdrop-filter: blur(4px);
+}
+.mail-toolbar-btn {
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.45rem;
+  font-size: 12px;
+  line-height: 1.2;
+  color: inherit;
+  transition: background-color 0.15s ease;
+}
+.mail-toolbar-btn:hover {
+  background: rgba(148, 163, 184, 0.2);
+}
+@media (max-width: 640px) {
+  dialog.mail-native-dialog {
+    width: 100dvw;
+    max-width: 100dvw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}
+
 @media (max-width: 1180px) {
   .mail-shell {
     grid-template-columns: 220px 300px minmax(0, 1fr);
