@@ -503,6 +503,7 @@ const createUserSchema = z.object({
       smtpPort: z.coerce.number().optional(),
       smtpSecure: z.boolean().optional(),
       signatureHtml: z.string().optional(),
+      avatarDataUrl: z.string().optional(),
     })
     .optional(),
 });
@@ -541,6 +542,7 @@ const updateUserSchema = z.object({
       smtpPort: z.coerce.number().optional(),
       smtpSecure: z.boolean().optional(),
       signatureHtml: z.string().optional(),
+      avatarDataUrl: z.string().optional(),
     })
     .optional(),
 });
@@ -1308,6 +1310,7 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
             smtpPort: mc.smtpPort,
             smtpSecure: mc.smtpSecure,
             signatureHtml: mc.signatureHtml || "",
+            avatarDataUrl: mc.avatarDataUrl || undefined,
           }
         );
       } catch (mailErr: any) {

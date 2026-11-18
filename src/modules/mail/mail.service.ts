@@ -1,5 +1,7 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
+import dns from "dns/promises";
 import { EventEmitter } from "events";
 import { ImapFlow } from "imapflow";
 import { simpleParser, ParsedMail, AddressObject } from "mailparser";
@@ -38,6 +40,7 @@ export interface MailAccountDTO {
   signatureHtml: string;
   signatureDefaultNew: boolean;
   signatureDefaultReply: boolean;
+  avatarUrl: string;
   color: string;
   status: string;
   lastSyncAt: string | null;
@@ -75,6 +78,7 @@ function mapAccountRow(row: any): MailAccountDTO {
     signatureHtml: row.signature_html || "",
     signatureDefaultNew: Boolean(row.signature_default_new),
     signatureDefaultReply: Boolean(row.signature_default_reply),
+    avatarUrl: row.avatar_url || "",
     color: row.color || "#3b82f6",
     status: row.status || "active",
     lastSyncAt: row.last_sync_at ? new Date(row.last_sync_at).toISOString() : null,
@@ -324,6 +328,13 @@ export async function createMailAccount(
   );
 
   const account = mapAccountRow(ins.rows[0]);
+  if (body.avatarDataUrl && typeof body.avatarDataUrl === "string") {
+    const savedUrl = saveAccountAvatarFromDataUrl(tenantId, account.id, body.avatarDataUrl);
+    if (savedUrl) {
+      await mailQuery(`UPDATE mail_accounts SET avatar_url = $1 WHERE id = $2`, [savedUrl, account.id]);
+      account.avatarUrl = savedUrl;
+    }
+  }
   if (!body.skipVerify) {
     // Disparar sincronización inicial en segundo plano
     syncAccount(tenantId, account.id).catch((err) => {
@@ -395,7 +406,111 @@ export async function updateMailAccount(
     ]
   );
 
-  return mapAccountRow(upd.rows[0]);
+  const updated = mapAccountRow(upd.rows[0]);
+  if (body.avatarDataUrl && typeof body.avatarDataUrl === "string") {
+    const savedUrl = saveAccountAvatarFromDataUrl(tenantId, updated.id, body.avatarDataUrl);
+    if (savedUrl) {
+      await mailQuery(`UPDATE mail_accounts SET avatar_url = $1 WHERE id = $2`, [savedUrl, updated.id]);
+      updated.avatarUrl = savedUrl;
+    }
+  } else if (body.clearAvatar === true) {
+    await mailQuery(`UPDATE mail_accounts SET avatar_url = '' WHERE id = $1`, [updated.id]);
+    updated.avatarUrl = "";
+  }
+  return updated;
+}
+
+function saveAccountAvatarFromDataUrl(tenantId: string, accountId: number, dataUrl: string): string {
+  const m = /^data:image\/(png|jpeg|jpg|webp|gif);base64,([A-Za-z0-9+/=]+)$/i.exec(dataUrl.trim());
+  if (!m) return "";
+  const ext = m[1].toLowerCase() === "jpeg" ? "jpg" : m[1].toLowerCase();
+  const buf = Buffer.from(m[2], "base64");
+  if (buf.length === 0 || buf.length > 2 * 1024 * 1024) return "";
+  const dir = path.join(getTenantDataDir(tenantId), "mail-avatars");
+  fs.mkdirSync(dir, { recursive: true });
+  for (const oldExt of ["png", "jpg", "webp", "gif"]) {
+    const oldFile = path.join(dir, `acc_${accountId}.${oldExt}`);
+    if (fs.existsSync(oldFile)) {
+      try { fs.unlinkSync(oldFile); } catch {}
+    }
+  }
+  fs.writeFileSync(path.join(dir, `acc_${accountId}.${ext}`), buf);
+  return `/api/mail/accounts/${accountId}/avatar?v=${Date.now()}`;
+}
+
+export async function getMailAccountAvatarFile(
+  tenantId: string,
+  accountId: number
+): Promise<{ filePath: string; mimeType: string } | null> {
+  const dir = path.join(getTenantDataDir(tenantId), "mail-avatars");
+  const mimeMap: Record<string, string> = {
+    png: "image/png",
+    jpg: "image/jpeg",
+    webp: "image/webp",
+    gif: "image/gif",
+  };
+  for (const ext of Object.keys(mimeMap)) {
+    const p = path.join(dir, `acc_${accountId}.${ext}`);
+    if (fs.existsSync(p)) {
+      return { filePath: p, mimeType: mimeMap[ext] };
+    }
+  }
+  return null;
+}
+
+function loadLocalProfileAvatarsByEmail(): Map<string, string> {
+  const map = new Map<string, string>();
+  const dataDir = path.resolve(process.cwd(), "data");
+  for (const file of ["users.json", "employees.json"]) {
+    try {
+      const full = path.join(dataDir, file);
+      if (!fs.existsSync(full)) continue;
+      const list = JSON.parse(fs.readFileSync(full, "utf-8"));
+      if (!Array.isArray(list)) continue;
+      for (const item of list) {
+        const email = String(item?.email || "").trim().toLowerCase();
+        const av = String(item?.avatar || "").trim();
+        if (email && av && !av.includes("api.dicebear.com") && !map.has(email)) {
+          map.set(email, av);
+        }
+      }
+    } catch {}
+  }
+  return map;
+}
+
+async function resolveSenderAvatars(tenantId: string, emails: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const unique = Array.from(new Set(emails.map((e) => String(e || "").trim().toLowerCase()).filter(Boolean)));
+  if (unique.length === 0) return out;
+
+  // 1. Cuentas de correo del tenant con avatar personalizado
+  try {
+    const accRes = await mailQuery<{ email: string; avatar_url: string }>(
+      `SELECT LOWER(email) AS email, avatar_url FROM mail_accounts WHERE tenant_id = $1 AND avatar_url <> ''`,
+      [tenantId]
+    );
+    for (const r of accRes.rows) {
+      if (r.email && r.avatar_url) out.set(r.email, r.avatar_url);
+    }
+  } catch {}
+
+  // 2. Perfiles locales de usuarios / colaboradores
+  const localMap = loadLocalProfileAvatarsByEmail();
+  for (const email of unique) {
+    if (!out.has(email) && localMap.has(email)) {
+      out.set(email, localMap.get(email)!);
+    }
+  }
+
+  // 3. Fallback a Gravatar (d=404 para que si no existe haga fallback limpio a iniciales en UI)
+  for (const email of unique) {
+    if (!out.has(email)) {
+      const hash = crypto.createHash("md5").update(email).digest("hex");
+      out.set(email, `https://www.gravatar.com/avatar/${hash}?s=80&d=404`);
+    }
+  }
+  return out;
 }
 
 export async function deleteMailAccount(
@@ -827,8 +942,16 @@ export async function listMailMessages(
     [...params, limit, offset]
   );
 
+  const avatarMap = await resolveSenderAvatars(
+    tenantId,
+    rowsRes.rows.map((r: any) => r.from_email)
+  );
+
   return {
-    items: rowsRes.rows,
+    items: rowsRes.rows.map((r: any) => ({
+      ...r,
+      sender_avatar_url: avatarMap.get(String(r.from_email || "").trim().toLowerCase()) || "",
+    })),
     total: Number(countRes.rows[0]?.cnt || 0),
   };
 }
@@ -873,6 +996,15 @@ export async function getMailMessageDetail(
       [tenantId, msg.account_id, msg.thread_id]
     );
     threadRows = tRes.rows;
+  }
+
+  const avatarMap = await resolveSenderAvatars(tenantId, [
+    msg.from_email,
+    ...threadRows.map((t: any) => t.from_email),
+  ]);
+  msg.sender_avatar_url = avatarMap.get(String(msg.from_email || "").trim().toLowerCase()) || "";
+  for (const t of threadRows) {
+    t.sender_avatar_url = avatarMap.get(String(t.from_email || "").trim().toLowerCase()) || "";
   }
 
   return {
@@ -1115,8 +1247,19 @@ export async function sendMailMessage(
   }));
 
   const senderDomain = (acc.email.split("@")[1] || acc.smtp_host || "localhost").trim();
-  const wrappedHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1e293b;">${finalHtml}</body></html>`;
-  const plainText = payload.text || extractMailSnippet("", finalHtml, 5000);
+  const wrappedHtml = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"></head><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1e293b;">${finalHtml}</body></html>`;
+  const htmlToCleanPlainText = (htmlStr: string): string =>
+    htmlStr
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|li|h[1-6]|blockquote|tr)>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  const plainText = payload.text || htmlToCleanPlainText(finalHtml) || extractMailSnippet("", finalHtml, 5000);
   const generatedMessageId = `<${Date.now()}.${Math.random().toString(36).slice(2, 10)}@${senderDomain}>`;
 
   const transporter = createSmtpTransporter({
@@ -1138,6 +1281,12 @@ export async function sendMailMessage(
     subject: payload.subject || "(sin asunto)",
     html: wrappedHtml,
     text: plainText,
+    encoding: "quoted-printable",
+    headers: {
+      "X-Mailer": "TurboNetwork Mail",
+      "MIME-Version": "1.0",
+      "Auto-Submitted": "no",
+    },
     messageId: generatedMessageId,
     inReplyTo,
     references,
@@ -1223,4 +1372,65 @@ export function startMailBackgroundWorkers(): void {
   try {
     loadTenantsFromDisk();
   } catch {}
+}
+
+export async function checkDomainDeliverability(email: string): Promise<{
+  domain: string;
+  spf: { ok: boolean; record: string };
+  dmarc: { ok: boolean; policy: string; record: string };
+  dkim: { ok: boolean; record: string };
+  recommendations: string[];
+}> {
+  const domain = (email.split("@")[1] || "").trim().toLowerCase();
+  const recommendations: string[] = [];
+  let spfRecord = "";
+  let dmarcRecord = "";
+  let dmarcPolicy = "missing";
+  let dkimRecord = "";
+
+  if (!domain) {
+    return {
+      domain: "",
+      spf: { ok: false, record: "" },
+      dmarc: { ok: false, policy: "missing", record: "" },
+      dkim: { ok: false, record: "" },
+      recommendations: ["Dominio inválido."],
+    };
+  }
+
+  try {
+    const txt = await dns.resolveTxt(domain);
+    const flat = txt.map((parts) => parts.join(""));
+    spfRecord = flat.find((r) => r.toLowerCase().startsWith("v=spf1")) || "";
+  } catch {}
+
+  try {
+    const txt = await dns.resolveTxt(`_dmarc.${domain}`);
+    const flat = txt.map((parts) => parts.join(""));
+    dmarcRecord = flat.find((r) => r.toLowerCase().startsWith("v=dmarc1")) || "";
+    const pm = dmarcRecord.match(/\bp=(none|quarantine|reject)/i);
+    if (pm) dmarcPolicy = pm[1].toLowerCase();
+  } catch {}
+
+  try {
+    const txt = await dns.resolveTxt(`default._domainkey.${domain}`);
+    const flat = txt.map((parts) => parts.join(""));
+    dkimRecord = flat.find((r) => r.toLowerCase().includes("v=dkim1")) || "";
+  } catch {}
+
+  if (!spfRecord) recommendations.push(`Falta registro TXT SPF en ${domain}.`);
+  if (!dkimRecord) recommendations.push(`No se detectó DKIM en default._domainkey.${domain}.`);
+  if (!dmarcRecord) {
+    recommendations.push(`Agrega un registro TXT _dmarc.${domain} con: v=DMARC1; p=quarantine; adkim=r; aspf=r;`);
+  } else if (dmarcPolicy === "none") {
+    recommendations.push(`Tu DMARC está en p=none; cámbialo a p=quarantine; adkim=r; aspf=r; para mejorar entrega en Gmail/Outlook.`);
+  }
+
+  return {
+    domain,
+    spf: { ok: Boolean(spfRecord), record: spfRecord },
+    dmarc: { ok: Boolean(dmarcRecord) && dmarcPolicy !== "none", policy: dmarcPolicy, record: dmarcRecord },
+    dkim: { ok: Boolean(dkimRecord), record: dkimRecord },
+    recommendations,
+  };
 }

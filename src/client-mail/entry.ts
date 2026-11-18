@@ -32,6 +32,8 @@ interface MailAppState {
   editingAccountId: number | null;
   composerAttachments: Array<{ filename: string; contentBase64: string; contentType: string; size: number }>;
   replyToMessageId: number | null;
+  editingAvatarDataUrl: string;
+  clearAccountAvatar: boolean;
 }
 
 const state: MailAppState = {
@@ -55,6 +57,8 @@ const state: MailAppState = {
   editingAccountId: null,
   composerAttachments: [],
   replyToMessageId: null,
+  editingAvatarDataUrl: "",
+  clearAccountAvatar: false,
 };
 
 let rootEl: HTMLElement | null = null;
@@ -105,6 +109,34 @@ function getInitials(name?: string, email?: string): string {
   const parts = src.split(/\s+/);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return src.slice(0, 2).toUpperCase();
+}
+
+function resolveAvatarSrc(rawUrl?: string): string {
+  if (!rawUrl) return "";
+  if (rawUrl.startsWith("/api/mail/")) {
+    const tok = getMailAuthToken();
+    const ten = getActiveTenantId();
+    const sep = rawUrl.includes("?") ? "&" : "?";
+    return `${rawUrl}${tok ? `${sep}token=${encodeURIComponent(tok)}` : ""}${ten ? `&tenantId=${encodeURIComponent(ten)}` : ""}`;
+  }
+  return rawUrl;
+}
+
+function renderAvatarBadge(
+  name: string | undefined,
+  email: string | undefined,
+  avatarUrl: string | undefined,
+  color: string | undefined,
+  sizeClass = "w-8 h-8 text-[11px]"
+): string {
+  const src = resolveAvatarSrc(avatarUrl);
+  return `
+    <div class="${sizeClass} relative rounded-full shrink-0 overflow-hidden flex items-center justify-center font-bold text-white"
+      style="background:${esc(color || "#3b82f6")}">
+      <span>${esc(getInitials(name, email))}</span>
+      ${src ? `<img src="${esc(src)}" alt="" loading="lazy" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()" />` : ""}
+    </div>
+  `;
 }
 
 function getFolderUnreadCount(role: string): number {
@@ -416,7 +448,11 @@ function renderSidebar(): string {
             class="mail-account-btn w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[12px] transition ${
               state.selectedAccountId === a.id ? "active" : ""
             }">
-            <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${esc(a.color)}"></span>
+            ${
+              a.avatarUrl
+                ? renderAvatarBadge(a.displayName, a.email, a.avatarUrl, a.color, "w-5 h-5 text-[9px]")
+                : `<span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${esc(a.color)}"></span>`
+            }
             <span class="truncate flex-1 text-left">${esc(a.displayName || a.email)}</span>
             ${
               a.status === "error"
@@ -502,10 +538,7 @@ function renderMessageList(): string {
                           class="mail-msg-row p-3 cursor-pointer transition flex gap-2.5 items-start ${
                             active ? "active" : ""
                           }">
-                          <div class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[11px] font-bold text-white"
-                            style="background:${esc(m.account_color || "#3b82f6")}">
-                            ${esc(getInitials(m.from_name, m.from_email))}
-                          </div>
+                          ${renderAvatarBadge(m.from_name, m.from_email, m.sender_avatar_url, m.account_color, "w-8 h-8 text-[11px]")}
                           <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-1">
                               <span class="text-[12.5px] truncate ${
@@ -588,11 +621,14 @@ function renderReader(): string {
       <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
         <div>
           <h2 class="text-lg font-bold text-slate-900 dark:text-white">${esc(m.subject)}</h2>
-          <div class="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <div>
-              <span class="font-semibold text-slate-800 dark:text-slate-200">${esc(m.from_name || m.from_email)}</span>
-              ${m.from_name ? `<span class="ml-1">&lt;${esc(m.from_email)}&gt;</span>` : ""}
-              <div class="text-[11px] mt-0.5">Para: ${esc(toText || m.account_email)}</div>
+          <div class="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs mail-text-muted">
+            <div class="flex items-center gap-2.5">
+              ${renderAvatarBadge(m.from_name, m.from_email, m.sender_avatar_url, m.account_color, "w-9 h-9 text-xs")}
+              <div>
+                <span class="font-semibold mail-title">${esc(m.from_name || m.from_email)}</span>
+                ${m.from_name ? `<span class="ml-1">&lt;${esc(m.from_email)}&gt;</span>` : ""}
+                <div class="text-[11px] mt-0.5">Para: ${esc(toText || m.account_email)}</div>
+              </div>
             </div>
             <div class="text-right">
               <div>${new Date(m.date).toLocaleString()}</div>
@@ -882,19 +918,48 @@ function renderAccountsModal(): string {
               <label class="flex items-center gap-1.5"><input id="mail-f-smtp-ssl" type="checkbox" ${editing ? (editing.smtpSecure ? "checked" : "") : "checked"} /> SMTP SSL/TLS (465)</label>
             </div>
 
-            <div class="space-y-1.5 pt-2 border-t border-slate-200 dark:border-white/10">
-              <label class="text-[11px] font-semibold text-slate-500">Firma de correo (HTML)</label>
+            <div class="space-y-1.5 pt-2 border-t mail-divider">
+              <label class="text-[11px] font-semibold mail-text-muted">Foto de perfil del buzón (opcional)</label>
+              <div class="flex flex-wrap items-center gap-3">
+                <div id="mail-f-avatar-preview">
+                  ${renderAvatarBadge(
+                    editing?.displayName,
+                    editing?.email,
+                    state.clearAccountAvatar ? "" : (state.editingAvatarDataUrl || editing?.avatarUrl),
+                    editing?.color || "#3b82f6",
+                    "w-11 h-11 text-sm"
+                  )}
+                </div>
+                <label class="cursor-pointer px-3 py-1.5 rounded-xl mail-btn-subtle text-xs font-medium">
+                  📷 Subir foto
+                  <input type="file" id="mail-f-avatar-file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" />
+                </label>
+                ${
+                  editing?.avatarUrl || state.editingAvatarDataUrl
+                    ? `<button type="button" id="mail-f-avatar-clear" class="px-2.5 py-1.5 rounded-xl text-xs text-rose-500 hover:bg-rose-500/10">Quitar foto</button>`
+                    : ""
+                }
+              </div>
+            </div>
+
+            <div class="space-y-1.5 pt-2 border-t mail-divider">
+              <label class="text-[11px] font-semibold mail-text-muted">Firma de correo (HTML)</label>
               <textarea id="mail-f-sig" rows="3" placeholder="<p><strong>Equipo Soporte</strong><br>TurboNetwork ISP</p>"
-                class="w-full px-3 py-2 rounded-xl text-xs font-mono bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">${esc(editing?.signatureHtml || "")}</textarea>
+                class="mail-input w-full px-3 py-2 rounded-xl text-xs font-mono">${esc(editing?.signatureHtml || "")}</textarea>
               <div class="flex flex-wrap gap-4 text-xs">
                 <label class="flex items-center gap-1.5"><input id="mail-f-sig-new" type="checkbox" ${editing ? (editing.signatureDefaultNew ? "checked" : "") : "checked"} /> Incluir firma en correos nuevos</label>
                 <label class="flex items-center gap-1.5"><input id="mail-f-sig-reply" type="checkbox" ${editing ? (editing.signatureDefaultReply ? "checked" : "") : "checked"} /> Incluir firma en respuestas</label>
               </div>
             </div>
 
+            <div id="mail-acc-dns-box" class="hidden p-2.5 rounded-xl border mail-divider text-[11px] space-y-1"></div>
+
             <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
-              <button type="button" id="mail-acc-test" class="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/10 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-white/15">Probar conexión</button>
-              <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">${editing ? "Guardar cambios" : "Conectar y Guardar"}</button>
+              <div class="flex items-center gap-2">
+                <button type="button" id="mail-acc-test" class="mail-btn-subtle px-3.5 py-2 rounded-xl text-xs font-semibold">Probar conexión</button>
+                <button type="button" id="mail-acc-dns-check" class="mail-btn-subtle px-3 py-2 rounded-xl text-xs font-semibold">Verificar SPF / DMARC</button>
+              </div>
+              <button type="submit" class="mail-btn-primary px-4 py-2 rounded-xl text-xs font-semibold">${editing ? "Guardar cambios" : "Conectar y Guardar"}</button>
             </div>
           </form>
         </div>
@@ -1185,10 +1250,25 @@ function bindEvents() {
 
   // Accounts modal events
   if (state.accountsModalOpen) {
-    bindClick("mail-acc-close", () => { state.accountsModalOpen = false; render(); });
-    bindClick("mail-acc-new", () => { state.editingAccountId = null; render(); });
+    bindClick("mail-acc-close", () => {
+      state.accountsModalOpen = false;
+      state.editingAvatarDataUrl = "";
+      state.clearAccountAvatar = false;
+      render();
+    });
+    bindClick("mail-acc-new", () => {
+      state.editingAccountId = null;
+      state.editingAvatarDataUrl = "";
+      state.clearAccountAvatar = false;
+      render();
+    });
     rootEl.querySelectorAll<HTMLElement>("[data-acc-edit]").forEach((btn) => {
-      btn.onclick = () => { state.editingAccountId = Number(btn.dataset.accEdit); render(); };
+      btn.onclick = () => {
+        state.editingAccountId = Number(btn.dataset.accEdit);
+        state.editingAvatarDataUrl = "";
+        state.clearAccountAvatar = false;
+        render();
+      };
     });
     rootEl.querySelectorAll<HTMLElement>("[data-acc-del]").forEach((btn) => {
       btn.onclick = async () => {
@@ -1246,6 +1326,80 @@ function bindEvents() {
       signatureHtml: (document.getElementById("mail-f-sig") as HTMLTextAreaElement).value,
       signatureDefaultNew: (document.getElementById("mail-f-sig-new") as HTMLInputElement).checked,
       signatureDefaultReply: (document.getElementById("mail-f-sig-reply") as HTMLInputElement).checked,
+      avatarDataUrl: state.editingAvatarDataUrl || undefined,
+      clearAvatar: state.clearAccountAvatar || undefined,
+    });
+
+    const avatarInput = document.getElementById("mail-f-avatar-file") as HTMLInputElement | null;
+    if (avatarInput) {
+      avatarInput.onchange = () => {
+        const f = avatarInput.files?.[0];
+        if (!f) return;
+        if (f.size > 2 * 1024 * 1024) {
+          toast("La imagen debe pesar menos de 2 MB", "error");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          state.editingAvatarDataUrl = String(reader.result || "");
+          state.clearAccountAvatar = false;
+          const prev = document.getElementById("mail-f-avatar-preview");
+          if (prev) {
+            prev.innerHTML = renderAvatarBadge(
+              (document.getElementById("mail-f-name") as HTMLInputElement)?.value,
+              (document.getElementById("mail-f-email") as HTMLInputElement)?.value,
+              state.editingAvatarDataUrl,
+              (document.getElementById("mail-f-color") as HTMLInputElement)?.value || "#3b82f6",
+              "w-11 h-11 text-sm"
+            );
+          }
+        };
+        reader.readAsDataURL(f);
+      };
+    }
+
+    bindClick("mail-f-avatar-clear", () => {
+      state.editingAvatarDataUrl = "";
+      state.clearAccountAvatar = true;
+      const prev = document.getElementById("mail-f-avatar-preview");
+      if (prev) {
+        prev.innerHTML = renderAvatarBadge(
+          (document.getElementById("mail-f-name") as HTMLInputElement)?.value,
+          (document.getElementById("mail-f-email") as HTMLInputElement)?.value,
+          "",
+          (document.getElementById("mail-f-color") as HTMLInputElement)?.value || "#3b82f6",
+          "w-11 h-11 text-sm"
+        );
+      }
+    });
+
+    bindClick("mail-acc-dns-check", async () => {
+      const emailVal = (document.getElementById("mail-f-email") as HTMLInputElement)?.value.trim();
+      if (!emailVal || !emailVal.includes("@")) {
+        toast("Ingresa un correo válido para verificar DNS", "info");
+        return;
+      }
+      const box = document.getElementById("mail-acc-dns-box");
+      if (box) {
+        box.classList.remove("hidden");
+        box.innerHTML = `<span class="mail-text-muted">Consultando SPF, DKIM y DMARC de ${esc(emailVal.split("@")[1])}...</span>`;
+      }
+      try {
+        const r = await mailApi<any>(`/api/mail/deliverability?email=${encodeURIComponent(emailVal)}`);
+        if (box) {
+          box.innerHTML = `
+            <div class="font-bold mail-title">Diagnóstico DNS (${esc(r.domain)})</div>
+            <div class="flex flex-wrap gap-2">
+              <span class="${r.spf.ok ? "text-emerald-500" : "text-rose-500"}">SPF: ${r.spf.ok ? "OK" : "Falta"}</span>
+              <span class="${r.dkim.ok ? "text-emerald-500" : "text-amber-500"}">DKIM: ${r.dkim.ok ? "OK" : "No detectado"}</span>
+              <span class="${r.dmarc.ok ? "text-emerald-500" : "text-amber-500"}">DMARC: ${esc(r.dmarc.policy)}</span>
+            </div>
+            ${(r.recommendations || []).map((rec: string) => `<div class="text-amber-500">• ${esc(rec)}</div>`).join("")}
+          `;
+        }
+      } catch (err: any) {
+        if (box) box.innerHTML = `<span class="text-rose-500">${esc(err?.message || "Error consultando DNS")}</span>`;
+      }
     });
 
     bindClick("mail-acc-test", async () => {

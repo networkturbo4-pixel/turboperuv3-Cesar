@@ -14167,6 +14167,17 @@
                   <button type="button" onclick="testEmployeeOpMailConnection()" class="ml-auto px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white text-[11px] font-semibold transition">Probar conexión</button>
                 </div>
                 <div>
+                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Foto de perfil del buzón (opcional)</label>
+                  <div class="flex items-center gap-3">
+                    <img id="emp-op-mail-avatar-preview" src="" alt="" class="hidden w-9 h-9 rounded-full object-cover border border-slate-300 dark:border-white/15">
+                    <label class="cursor-pointer px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white text-[11px] font-semibold transition">
+                      📷 Subir foto
+                      <input type="file" id="emp-op-mail-avatar-file" accept="image/png,image/jpeg,image/webp,image/gif" onchange="handleEmployeeOpMailAvatarSelect(this)" class="hidden">
+                    </label>
+                    <input type="hidden" id="emp-op-mail-avatar-data" value="">
+                  </div>
+                </div>
+                <div>
                   <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Firma de correo (HTML opcional)</label>
                   <textarea id="emp-op-mail-sig" rows="2" placeholder="<p><strong>Nombre</strong><br>Área / Cargo</p>" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"></textarea>
                 </div>
@@ -29520,6 +29531,27 @@ Estamos atentos para brindarle asistencia inmediata.
       }
     }
 
+    function handleEmployeeOpMailAvatarSelect(input) {
+      const f = input?.files?.[0];
+      if (!f) return;
+      if (f.size > 2 * 1024 * 1024) {
+        showToast('La foto debe pesar menos de 2 MB', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result || '');
+        const hid = document.getElementById('emp-op-mail-avatar-data');
+        const prev = document.getElementById('emp-op-mail-avatar-preview');
+        if (hid) hid.value = dataUrl;
+        if (prev) {
+          prev.src = dataUrl;
+          prev.classList.remove('hidden');
+        }
+      };
+      reader.readAsDataURL(f);
+    }
+
     function toggleEmployeeOpMailSection(enabled) {
       const box = document.getElementById('emp-op-mail-fields');
       if (!box) return;
@@ -34595,6 +34627,7 @@ function copyRemoteScannerLink() {
             smtpPort: Number(document.getElementById('emp-op-mail-smtp-port')?.value || 465),
             smtpSecure: document.getElementById('emp-op-mail-smtp-ssl')?.checked !== false,
             signatureHtml: document.getElementById('emp-op-mail-sig')?.value || '',
+            avatarDataUrl: document.getElementById('emp-op-mail-avatar-data')?.value || undefined,
           };
         }
       }

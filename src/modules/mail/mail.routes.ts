@@ -17,6 +17,8 @@ import {
   deleteMailMessage,
   sendMailMessage,
   mailEvents,
+  getMailAccountAvatarFile,
+  checkDomainDeliverability,
 } from "./mail.service";
 
 export async function mailRoutes(fastify: FastifyInstance) {
@@ -24,6 +26,26 @@ export async function mailRoutes(fastify: FastifyInstance) {
   fastify.get("/mail/accounts/autodetect", async (request, reply) => {
     const q = request.query as { email?: string };
     return reply.send(autodetectMailProvider(q?.email || ""));
+  });
+
+  // Diagnóstico DNS de entregabilidad (SPF / DKIM / DMARC)
+  fastify.get("/mail/deliverability", async (request, reply) => {
+    const q = request.query as { email?: string };
+    const report = await checkDomainDeliverability(q?.email || "");
+    return reply.send(report);
+  });
+
+  // Servir avatar personalizado de una cuenta de correo
+  fastify.get("/mail/accounts/:id/avatar", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const file = await getMailAccountAvatarFile(tenantId, Number(id));
+    if (!file) {
+      return reply.status(404).send({ error: "Avatar no encontrado." });
+    }
+    reply.header("Content-Type", file.mimeType);
+    reply.header("Cache-Control", "public, max-age=86400");
+    return reply.send(fs.createReadStream(file.filePath));
   });
 
   // Listar cuentas accesibles del tenant

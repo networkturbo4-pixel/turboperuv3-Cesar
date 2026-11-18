@@ -15,6 +15,7 @@ export interface MailAccount {
   signatureHtml: string;
   signatureDefaultNew: boolean;
   signatureDefaultReply: boolean;
+  avatarUrl?: string;
   color: string;
   status: string;
   lastSyncAt: string | null;
@@ -62,6 +63,7 @@ export interface MailMessageSummary {
   account_email: string;
   account_name: string;
   account_color: string;
+  sender_avatar_url?: string;
 }
 
 export interface MailAttachmentMeta {

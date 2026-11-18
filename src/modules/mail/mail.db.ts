@@ -25,6 +25,7 @@ async function initMailSchema(): Promise<void> {
       signature_html TEXT NOT NULL DEFAULT '',
       signature_default_new BOOLEAN NOT NULL DEFAULT TRUE,
       signature_default_reply BOOLEAN NOT NULL DEFAULT TRUE,
+      avatar_url TEXT NOT NULL DEFAULT '',
       color TEXT NOT NULL DEFAULT '#3b82f6',
       status TEXT NOT NULL DEFAULT 'active',
       last_sync_at TIMESTAMPTZ,
@@ -162,6 +163,9 @@ async function initMailSchema(): Promise<void> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+
+  // Migración segura para instalaciones existentes
+  await omnichannelDb.query(`ALTER TABLE mail_accounts ADD COLUMN IF NOT EXISTS avatar_url TEXT NOT NULL DEFAULT ''`).catch(() => {});
 
   // Índices de rendimiento multi-tenant
   await omnichannelDb.query(`CREATE INDEX IF NOT EXISTS idx_mail_accounts_tenant ON mail_accounts(tenant_id)`);

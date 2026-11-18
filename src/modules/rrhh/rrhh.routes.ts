@@ -51,6 +51,7 @@ async function upsertEmployeeMailAccount(
         smtpPort: mc.smtpPort,
         smtpSecure: mc.smtpSecure,
         signatureHtml: mc.signatureHtml !== undefined ? mc.signatureHtml : undefined,
+        avatarDataUrl: mc.avatarDataUrl || undefined,
       });
     } else if (mc.password) {
       await createMailAccount(targetMailTenant, ownerCtx, {
@@ -65,6 +66,7 @@ async function upsertEmployeeMailAccount(
         smtpPort: mc.smtpPort,
         smtpSecure: mc.smtpSecure,
         signatureHtml: mc.signatureHtml || "",
+        avatarDataUrl: mc.avatarDataUrl || undefined,
       });
     } else {
       return "Ingresa la contraseña / App Password para conectar el nuevo buzón.";
