@@ -7470,6 +7470,7 @@
                   <thead class="bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider text-[10px] border-b border-slate-200 dark:border-white/5">
                     <tr>
                       <th class="px-4 py-3.5">Colaborador</th>
+                      <th class="px-3 py-3.5">Sede</th>
                       <th class="px-3 py-3.5">Modalidad</th>
                       <th class="px-3 py-3.5">Fecha</th>
                       <th class="px-3 py-3.5">Entrada</th>
@@ -7483,7 +7484,7 @@
                   </thead>
                   <tbody id="attendance-table-body" class="divide-y divide-slate-200 dark:divide-white/5">
                     <tr>
-                      <td colspan="10" class="py-8 text-center text-slate-400">Cargando registros de asistencia...</td>
+                      <td colspan="11" class="py-8 text-center text-slate-400">Cargando registros de asistencia...</td>
                     </tr>
                   </tbody>
                 </table>
@@ -33321,6 +33322,22 @@ function copyRemoteScannerLink() {
       return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">📍 Web GPS</span>`;
     }
 
+    function getAttendanceStatusBadge(a) {
+      if (a.status === 'on_time') {
+        return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Puntual</span>';
+      }
+      if (a.status === 'late') {
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Tarde (+${a.minutesLate || 0}m)</span>`;
+      }
+      if (a.status === 'very_late_blocked') {
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> BLOQUEADO (+${a.minutesLate || 0}m)</span>`;
+      }
+      if (a.status === 'unlocked') {
+        return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Desbloqueado TOTP</span>';
+      }
+      return '';
+    }
+
     function renderAttendance(list) {
       const tbody = document.getElementById('attendance-table-body');
       const mobileContainer = document.getElementById('attendance-mobile-cards');
@@ -33338,27 +33355,26 @@ function copyRemoteScannerLink() {
 
       if (tbody) {
         tbody.innerHTML = list.map(a => {
-          let statusBadge = '';
-          if (a.status === 'on_time') {
-            statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Puntual</span>';
-          } else if (a.status === 'late') {
-            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Tarde (+${a.minutesLate}m)</span>`;
-          } else if (a.status === 'very_late_blocked') {
-            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> BLOQUEADO (+${a.minutesLate}m)</span>`;
-          } else if (a.status === 'unlocked') {
-            statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Desbloqueado TOTP</span>';
-          }
-          if (a.overtimeMinutes && a.overtimeMinutes > 0) {
-            statusBadge += ` <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-500/15 text-indigo-400">+${a.overtimeMinutes}m HE</span>`;
-          }
+          const statusBadge = getAttendanceStatusBadge(a);
 
           const mapsLink = a.location && a.location.latitude
             ? `https://www.google.com/maps?q=${a.location.latitude},${a.location.longitude}`
             : '#';
 
           const isPurged = a.photo === 'purged_after_60_days';
-          const photoPreviewSrc = (!a.photo || isPurged) ? 'https://api.dicebear.com/7.x/bottts/svg?seed=Staff' : a.photo;
+          const hasPhoto = Boolean(a.photo && !isPurged && !String(a.photo).includes('dicebear.com'));
+          const photoPreviewSrc = hasPhoto ? a.photo : 'https://api.dicebear.com/7.x/bottts/svg?seed=Staff';
           const safePhotoArg = isPurged ? 'purged_after_60_days' : (a.photo || '').replace(/'/g, "\\'");
+
+          const evidenceHtml = hasPhoto
+            ? `<button type="button" onclick="openAttendancePhoto('${safePhotoArg}', '${escapeHtml(a.employeeName).replace(/'/g, "\\'")}', '${a.checkInTime}')" class="group relative inline-block" title="Ver fotografía">
+                <img class="w-8 h-8 rounded-lg object-cover border border-slate-300 dark:border-white/15 group-hover:scale-110 transition shadow-sm" src="${photoPreviewSrc}" alt="Selfie">
+              </button>`
+            : `<span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 text-[11px]" title="${isPurged ? 'Fotografía depurada tras 60 días' : 'Sin fotografía (registro biométrico o sin selfie)'}"><i class="${isPurged ? 'ri-history-line' : 'ri-camera-off-line'}"></i></span>`;
+
+          const overtimeHtml = (a.overtimeMinutes && a.overtimeMinutes > 0)
+            ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-500/15 text-indigo-400 mt-0.5">+${a.overtimeMinutes}m HE</span>`
+            : '';
 
           const tenantBadge = a.isShared
             ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">🌐 Compartida</span>'
@@ -33391,11 +33407,7 @@ function copyRemoteScannerLink() {
               <td class="px-3.5 py-3.5">${getAttendanceModalityBadge(a)}</td>
               <td class="px-4 py-3.5 font-mono text-slate-600 dark:text-slate-300">${a.date}</td>
               <td class="px-4 py-3.5">${formatDualCheckInHtml(a, false)}</td>
-              <td class="px-4 py-3.5 text-center">
-                <button type="button" onclick="openAttendancePhoto('${safePhotoArg}', '${escapeHtml(a.employeeName).replace(/'/g, "\\'")}', '${a.checkInTime}')" class="group relative inline-block" title="Ver fotografía">
-                  <img class="w-8 h-8 rounded-lg object-cover border border-slate-300 dark:border-white/15 group-hover:scale-110 transition shadow-sm" src="${photoPreviewSrc}" alt="Selfie">
-                </button>
-              </td>
+              <td class="px-4 py-3.5 text-center">${evidenceHtml}</td>
               <td class="px-4 py-3.5 text-[11px]">
                 ${a.location && a.location.latitude ? `
                   <a href="${mapsLink}" target="_blank" class="inline-flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:underline font-mono">
@@ -33406,7 +33418,12 @@ function copyRemoteScannerLink() {
               <td class="px-4 py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">
                 ${a.lunchStart ? `${a.lunchStart} - ${a.lunchEndTime || 'En curso'}` : '--:--'}
               </td>
-              <td class="px-4 py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">${a.checkOut || '--:--'}</td>
+              <td class="px-4 py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                <div class="flex flex-col items-start">
+                  <span>${a.checkOut || '--:--'}</span>
+                  ${overtimeHtml}
+                </div>
+              </td>
               <td class="px-4 py-3.5">${statusBadge}</td>
               <td class="px-4 py-3.5 text-center">${actionHtml}</td>
             </tr>
@@ -33416,16 +33433,18 @@ function copyRemoteScannerLink() {
 
       if (mobileContainer) {
         mobileContainer.innerHTML = list.map(a => {
-          let statusBadge = a.status === 'on_time'
-            ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500">Puntual</span>'
-            : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-500">Tarde (+${a.minutesLate || 0}m)</span>`;
+          const statusBadge = getAttendanceStatusBadge(a);
 
           const approveBtns = (a.modality === 'manual_auth' && a.approvalStatus === 'pending') ? `
             <div class="pt-2 border-t border-slate-200 dark:border-white/10 flex items-center gap-2">
               <button type="button" onclick="approveManualAttendance(${a.id}, 'approved')" class="flex-1 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow">✓ Aprobar Asistencia Campo (1-Clic)</button>
               <button type="button" onclick="approveManualAttendance(${a.id}, 'rejected')" class="px-3 py-2 rounded-xl bg-rose-500/15 text-rose-500 text-xs font-bold">Rechazar</button>
             </div>
-          ` : '';
+          ` : (a.status === 'very_late_blocked' ? `
+            <div class="pt-2 border-t border-slate-200 dark:border-white/10">
+              <button type="button" onclick="openTotpUnlockModalForEmployee(${a.employeeId}, '${escapeHtml(a.employeeName).replace(/'/g, "\\'")}', ${a.minutesLate})" class="w-full py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow">Desbloquear TOTP</button>
+            </div>
+          ` : '');
 
           return `
             <div class="pro-card p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs space-y-2.5">

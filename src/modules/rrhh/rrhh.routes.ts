@@ -127,6 +127,7 @@ export interface ZktecoDeviceInfo {
   pushVersion?: string;
   totalSynced: number;
   lastAttlogStamp?: string;
+  lastAttPhotoStamp?: string;
 }
 
 export const zktecoDeviceCommands: Record<string, string[]> = {};
@@ -3472,6 +3473,14 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
+    const [curOutHour] = peruTime.split(":").map(Number);
+    if (curOutHour < 17) {
+      return reply.status(400).send({
+        success: false,
+        message: `La hora de salida solo puede marcarse estrictamente a partir de las 17:00 (5:00 p.m.). Hora actual: ${peruTime}`,
+      });
+    }
+
     record.checkOut = peruTime;
     record.webCheckOutTime = peruTime;
     if (location) record.checkOutLocation = location;
@@ -4818,8 +4827,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 // ============================================================================
 export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
   // Soporte universal para cualquier Content-Type que envie ZKTeco (text/plain, octet-stream, urlencoded, etc.)
-  fastify.addContentTypeParser("*", { parseAs: "string" }, (_req, body, done) => {
-    done(null, typeof body === "string" ? body : String(body || ""));
+  // Se lee como Buffer para no corromper imágenes JPEG binarias enviadas en table=ATTPHOTO
+  fastify.addContentTypeParser("*", { parseAs: "buffer" }, (_req, body, done) => {
+    done(null, Buffer.isBuffer(body) ? body : Buffer.from(String(body || ""), "utf8"));
   });
 
   // 1. Handshake inicial del ZKTeco (convierte el icono de servidor en pantalla de ROJO a VERDE)
@@ -4846,6 +4856,7 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       pushVersion: query.pushver || query.PushVer || prevDevice?.pushVersion || "2.4.1",
       totalSynced: prevDevice?.totalSynced || 0,
       lastAttlogStamp: prevDevice?.lastAttlogStamp,
+      lastAttPhotoStamp: prevDevice?.lastAttPhotoStamp,
     };
 
     if (!zktecoDeviceCommands[sn]) {
@@ -4865,13 +4876,14 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
     saveZktecoStateToDisk();
 
     const attlogStamp = zktecoAdmsDevices[sn].lastAttlogStamp || "0";
+    const attPhotoStamp = zktecoAdmsDevices[sn].lastAttPhotoStamp || "0";
     const configResponse = [
       `GET OPTION FROM: ${sn}`,
       `Stamp=9999`,
       `OpStamp=9999`,
       `ATTLOGStamp=${attlogStamp}`,
       `OPERLOGStamp=9999`,
-      `ATTPHOTOStamp=None`,
+      `ATTPHOTOStamp=${attPhotoStamp}`,
       `ErrorDelay=30`,
       `Delay=5`,
       `TransTimes=00:00;14:05`,
@@ -4888,6 +4900,57 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.type("text/plain; charset=utf-8").send(configResponse);
   });
 
+function extractZktecoPhoto(rawBuffer: Buffer, query: Record<string, string>) {
+  // Detectar cabecera JPEG (FF D8 FF) o PNG (89 50 4E 47) dentro del payload binario
+  const jpegStart = rawBuffer.indexOf(Buffer.from([0xff, 0xd8, 0xff]));
+  const pngStart = rawBuffer.indexOf(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+  let imgOffset = -1;
+  let ext = "jpg";
+
+  if (jpegStart !== -1 && (pngStart === -1 || jpegStart < pngStart)) {
+    imgOffset = jpegStart;
+    ext = "jpg";
+  } else if (pngStart !== -1) {
+    imgOffset = pngStart;
+    ext = "png";
+  }
+
+  const headerText = rawBuffer
+    .subarray(0, imgOffset !== -1 ? imgOffset : Math.min(rawBuffer.length, 4096))
+    .toString("utf8");
+
+  let imageBuffer: Buffer | null = null;
+  if (imgOffset !== -1) {
+    imageBuffer = rawBuffer.subarray(imgOffset);
+  } else {
+    const b64Match = headerText.match(/(?:photo|content|pic|image)\s*=\s*(?:data:image\/[a-z+]+;base64,)?([A-Za-z0-9+/=\r\n]{100,})/i);
+    if (b64Match) {
+      const cleaned = b64Match[1].replace(/\s+/g, "");
+      const decoded = Buffer.from(cleaned, "base64");
+      if (decoded.length > 100) imageBuffer = decoded;
+    }
+  }
+
+  const pinFieldMatch = headerText.match(/(?:^|[\r\n\t&\s])PIN\s*=\s*([^\r\n\t&\0]+)/i);
+  const fileFieldMatch = headerText.match(/(?:^|[\r\n\t&\s])(?:filename|FileName|Name)\s*=\s*([^\r\n\t&\0]+)/i);
+  const rawPinOrFile = (pinFieldMatch?.[1] || fileFieldMatch?.[1] || query.PIN || query.pin || "").trim();
+
+  // Muchos ZKTeco envían PIN=20261118151401-123.jpg o filename=20261118151401-123.jpg
+  let pin = rawPinOrFile;
+  let dateStr = "";
+  const tsFileMatch = rawPinOrFile.match(/^(\d{4})(\d{2})(\d{2})\d{6}-([^.\s]+)/);
+  if (tsFileMatch) {
+    dateStr = `${tsFileMatch[1]}-${tsFileMatch[2]}-${tsFileMatch[3]}`;
+    pin = tsFileMatch[4];
+  } else {
+    pin = rawPinOrFile.replace(/\.(jpg|jpeg|png)$/i, "");
+    const dateMatch = headerText.match(/(\d{4}-\d{2}-\d{2})/);
+    if (dateMatch) dateStr = dateMatch[1];
+  }
+
+  return { pin, dateStr, imageBuffer, ext };
+}
+
   // 2. Recepción en tiempo real de marcaciones de Huella (VERIFY=1) y Rostro (VERIFY=15)
   fastify.post("/iclock/cdata", async (request, reply) => {
     loadZktecoStateFromDisk();
@@ -4896,7 +4959,10 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
     const rawTable = query.table || query.Table || "ATTLOG";
     const table = rawTable.toUpperCase();
     const incomingStamp = query.Stamp || query.stamp;
-    let rawBody = typeof request.body === "string" ? request.body : JSON.stringify(request.body || "");
+    const rawBuffer = Buffer.isBuffer(request.body)
+      ? request.body
+      : Buffer.from(typeof request.body === "string" ? request.body : JSON.stringify(request.body || ""), "utf8");
+    let rawBody = rawBuffer.toString("utf8");
 
     if (isDiagnosticSn(sn)) {
       return reply.type("text/plain; charset=utf-8").send("OK\n");
@@ -4918,6 +4984,47 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
         lastSeen: new Date().toISOString(),
         totalSynced: 0,
       };
+    }
+
+    if (table === "ATTPHOTO" || table === "BIOPHOTO") {
+      const { pin, dateStr, imageBuffer, ext } = extractZktecoPhoto(rawBuffer, query);
+      if (pin && imageBuffer && imageBuffer.length > 100) {
+        const { peruDate } = getPeruDateTime();
+        const targetDate = dateStr || peruDate;
+        const emp = resolveEmployeeOrUser(pin, `Colaborador #${pin}`);
+        const resolvedEmpId = emp.id || extractCanonicalNumericId(pin) || 0;
+
+        const attUploadsDir = path.resolve(process.cwd(), "public", "uploads", "attendance");
+        if (!fs.existsSync(attUploadsDir)) {
+          fs.mkdirSync(attUploadsDir, { recursive: true });
+        }
+        const safePin = String(resolvedEmpId || pin).replace(/[^a-zA-Z0-9_-]/g, "");
+        const fileName = `${targetDate}_${safePin}_${Date.now()}.${ext}`;
+        fs.writeFileSync(path.join(attUploadsDir, fileName), imageBuffer);
+        const photoUrl = `/uploads/attendance/${fileName}`;
+
+        const attendanceList = loadAttendanceFromDisk();
+        const existing = attendanceList.find(
+          (a) => (resolvedEmpId ? a.employeeId === resolvedEmpId : false) && a.date === targetDate
+        );
+        if (existing) {
+          const hasWebSelfie = Boolean(existing.webCheckInTime && existing.photo && existing.photo.startsWith("data:image/"));
+          if (!hasWebSelfie || !existing.photo || existing.photo.includes("dicebear.com") || existing.photo === "purged_after_60_days") {
+            existing.photo = photoUrl;
+          }
+          (existing as any).biometricPhoto = photoUrl;
+          saveAttendanceToDisk(attendanceList);
+        }
+        console.log(`[ZKTeco ADMS] 📸 Foto ${table} guardada para PIN ${pin} (${targetDate}) -> ${photoUrl}`);
+      } else {
+        console.log(`[ZKTeco ADMS] Recibida tabla ${table} desde ${sn} sin imagen válida (${rawBuffer.length} bytes)`);
+      }
+
+      if (incomingStamp) {
+        zktecoAdmsDevices[sn].lastAttPhotoStamp = String(incomingStamp);
+      }
+      saveZktecoStateToDisk();
+      return reply.type("text/plain; charset=utf-8").send("OK\n");
     }
 
     if (table !== "ATTLOG") {
@@ -4996,12 +5103,14 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
           continue;
         }
 
+        const isExitAllowedTime = curMinutes >= 17 * 60; // Estrictamente a partir de las 17:00 (5:00 p.m.)
+
         if (statusFlag === 2) {
           existing.lunchStart = timeStr;
         } else if (statusFlag === 3) {
           existing.lunchEndTime = timeStr;
-        } else if (!existing.biometricCheckInTime && statusFlag !== 1 && statusFlag !== 5) {
-          // Primera huella del día en el reloj ZKTeco (convive con webCheckInTime, GPS y selfie previos sin pisarlos)
+        } else if (!existing.biometricCheckInTime && !isExitAllowedTime) {
+          // Primera huella del día antes de las 17:00 en el reloj ZKTeco (convive con webCheckInTime, GPS y selfie previos sin pisarlos)
           existing.biometricCheckInTime = timeStr;
           existing.biometricVerified = true;
           existing.biometricDeviceId = devLabel;
@@ -5009,22 +5118,22 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
           existing.notes = existing.webCheckInTime
             ? `Doble registro verificado — Web: ${existing.webCheckInTime} | ZKTeco (${sn}): ${timeStr}`
             : `Marcación automática en tiempo real vía ${devLabel} (${timeStr})`;
-        } else {
-          // Ya tenía huella de entrada hoy (o marcó explícitamente Salida en el teclado del ZKTeco)
+        } else if (isExitAllowedTime) {
+          // Salida permitida estrictamente a partir de las 17:00 (5:00 p.m.)
           const prevBioSec = existing.biometricCheckInTime ? timeStrToSeconds(existing.biometricCheckInTime) : 0;
           const curSec = timeStrToSeconds(timeStr);
           const isExplicitOut = statusFlag === 1 || statusFlag === 5;
-          const isAfternoonOrEnd = curH >= 13 || curMinutes >= expOutMinutes - 90;
 
           // Evitar que un doble toque accidental del dedo en menos de 5 minutos marque Salida por error
           if (!isExplicitOut && existing.biometricCheckInTime && Math.abs(curSec - prevBioSec) < 300) {
             continue;
           }
 
-          if (isExplicitOut || isAfternoonOrEnd || existing.biometricCheckInTime) {
-            existing.checkOut = timeStr;
-            existing.biometricCheckOutTime = timeStr;
-          }
+          existing.checkOut = timeStr;
+          existing.biometricCheckOutTime = timeStr;
+        } else {
+          // Marcación antes de las 17:00 cuando ya existe entrada biométrica: no se registra como salida
+          continue;
         }
 
         existing.biometricVerified = true;
@@ -5049,6 +5158,8 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
       const matchedTenantObj = tenantsAll.find((t) => t.id.toLowerCase() === resolvedTenantId);
       const resolvedTenantName = matchedTenantObj?.name || "Oficina Central";
 
+      const isNewExitAllowedTime = curMinutes >= 17 * 60 && (statusFlag === 1 || statusFlag === 5);
+
       const newRec: AttendanceRecord = {
         id: nextId,
         employeeId: resolvedEmpId,
@@ -5060,16 +5171,16 @@ export const zktecoIclockRoutes: FastifyPluginAsync = async (fastify) => {
         checkIn: new Date().toISOString(),
         checkInTime: timeStr,
         webCheckInTime: null,
-        biometricCheckInTime: statusFlag === 1 || statusFlag === 5 ? null : timeStr,
-        biometricCheckOutTime: statusFlag === 1 || statusFlag === 5 ? timeStr : null,
+        biometricCheckInTime: isNewExitAllowedTime ? null : timeStr,
+        biometricCheckOutTime: isNewExitAllowedTime ? timeStr : null,
         workModality: emp.workModality || "office",
         remoteHomeAlert: false,
         lunchStart: null,
         lunchEndTime: null,
-        checkOut: statusFlag === 1 || statusFlag === 5 ? timeStr : null,
+        checkOut: isNewExitAllowedTime ? timeStr : null,
         overtimeUnlocked: false,
         overtimeMinutes: 0,
-        photo: emp.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(emp.name)}`,
+        photo: emp.avatar || "",
         location: null,
         modality: "fingerprint",
         biometricVerified: true,
