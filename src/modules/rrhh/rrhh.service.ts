@@ -318,6 +318,35 @@ export function savePayrollsStatusToDisk(map: Record<string, { paymentStatus: "d
 // 6. LÓGICA DE EXPEDIENTE Y ALERTAS A 15 DÍAS
 // ==========================================
 
+export function resolveOperatorAvatarForEmployee(emp: any): string {
+  const current = String(emp?.avatar || "").trim();
+  if (current && !current.includes("dicebear.com")) {
+    return current;
+  }
+  try {
+    const usersFile = path.join(DATA_DIR, "users.json");
+    if (!fs.existsSync(usersFile)) return current;
+    const users = JSON.parse(fs.readFileSync(usersFile, "utf-8"));
+    if (!Array.isArray(users)) return current;
+    const empDni = String(emp?.dni || emp?.biometricPin || emp?.id || "").trim();
+    const empEmail = String(emp?.email || "").trim().toLowerCase();
+    const empOpId = emp?.operatorId || emp?.id;
+    const matched = users.find((u: any) => {
+      const uDni = String(u.dni || u.id || "").trim();
+      const uEmail = String(u.email || "").trim().toLowerCase();
+      return (
+        (empOpId && u.id === empOpId) ||
+        (empDni && uDni === empDni) ||
+        (empEmail && uEmail === empEmail)
+      );
+    });
+    if (matched?.avatar && !String(matched.avatar).includes("dicebear.com")) {
+      return String(matched.avatar);
+    }
+  } catch {}
+  return current;
+}
+
 export function enrichEmployeeExpediente(emp: any, approvedLeaves: LeaveRequest[], todayStr: string): any {
   // Calcular vacaciones acumuladas según fecha de ingreso (2.5 días por mes completo en Perú = 30 días/año)
   const hireDateStr = emp.hireDate || todayStr;
@@ -389,9 +418,11 @@ export function enrichEmployeeExpediente(emp: any, approvedLeaves: LeaveRequest[
 
   const resolvedIn = emp.expectedCheckInTime || (emp.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00";
   const resolvedOut = emp.expectedCheckOutTime || (emp.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00";
+  const resolvedAvatar = resolveOperatorAvatarForEmployee(emp);
 
   return {
     ...emp,
+    avatar: resolvedAvatar || emp.avatar,
     expectedCheckInTime: resolvedIn,
     expectedCheckOutTime: resolvedOut,
     contractType,

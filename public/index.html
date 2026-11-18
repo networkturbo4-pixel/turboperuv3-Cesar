@@ -33364,6 +33364,10 @@ function copyRemoteScannerLink() {
           const isPurged = a.photo === 'purged_after_60_days';
           const hasPhoto = Boolean(a.photo && !isPurged && !String(a.photo).includes('dicebear.com'));
           const photoPreviewSrc = hasPhoto ? a.photo : 'https://api.dicebear.com/7.x/bottts/svg?seed=Staff';
+          const hasEmpAvatar = Boolean(a.employeeAvatar && !String(a.employeeAvatar).includes('dicebear.com'));
+          const empAvatarSrc = hasEmpAvatar
+            ? a.employeeAvatar
+            : (hasPhoto ? a.photo : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(a.employeeName || 'Staff')}`);
           const safePhotoArg = isPurged ? 'purged_after_60_days' : (a.photo || '').replace(/'/g, "\\'");
 
           const evidenceHtml = hasPhoto
@@ -33396,7 +33400,7 @@ function copyRemoteScannerLink() {
             <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition font-sans text-xs">
               <td class="px-5 py-3.5">
                 <div class="flex items-center space-x-3">
-                  <img class="w-8 h-8 rounded-full border border-slate-200 dark:border-white/10 object-cover" src="${photoPreviewSrc}" alt="Avatar">
+                  <img class="w-8 h-8 rounded-full border border-slate-200 dark:border-white/10 object-cover" src="${empAvatarSrc}" alt="Avatar">
                   <div>
                     <span class="font-bold text-slate-900 dark:text-slate-100 block">${escapeHtml(a.employeeName)}</span>
                     <span class="text-[10px] text-slate-400 font-mono">ID #${a.employeeId}</span>
@@ -33434,6 +33438,11 @@ function copyRemoteScannerLink() {
       if (mobileContainer) {
         mobileContainer.innerHTML = list.map(a => {
           const statusBadge = getAttendanceStatusBadge(a);
+          const hasEmpAvatar = Boolean(a.employeeAvatar && !String(a.employeeAvatar).includes('dicebear.com'));
+          const hasPhoto = Boolean(a.photo && a.photo !== 'purged_after_60_days' && !String(a.photo).includes('dicebear.com'));
+          const empAvatarSrc = hasEmpAvatar
+            ? a.employeeAvatar
+            : (hasPhoto ? a.photo : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(a.employeeName || 'Staff')}`);
 
           const approveBtns = (a.modality === 'manual_auth' && a.approvalStatus === 'pending') ? `
             <div class="pt-2 border-t border-slate-200 dark:border-white/10 flex items-center gap-2">
@@ -33449,9 +33458,12 @@ function copyRemoteScannerLink() {
           return `
             <div class="pro-card p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs space-y-2.5">
               <div class="flex items-start justify-between gap-2">
-                <div>
-                  <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm">${escapeHtml(a.employeeName)}</h4>
-                  <div class="flex items-center gap-2 mt-1">${getAttendanceModalityBadge(a)} <span class="text-[11px] font-mono text-slate-400">${a.date}</span></div>
+                <div class="flex items-center gap-2.5">
+                  <img class="w-9 h-9 rounded-full border border-slate-200 dark:border-white/10 object-cover shrink-0" src="${empAvatarSrc}" alt="Avatar">
+                  <div>
+                    <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm">${escapeHtml(a.employeeName)}</h4>
+                    <div class="flex items-center gap-2 mt-1">${getAttendanceModalityBadge(a)} <span class="text-[11px] font-mono text-slate-400">${a.date}</span></div>
+                  </div>
                 </div>
                 ${statusBadge}
               </div>

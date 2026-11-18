@@ -2583,10 +2583,18 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
 
+    const enrichedList = list.map((a) => {
+      const resolvedEmp = resolveEmployeeOrUser(a.employeeId, a.employeeName);
+      const empAvatar = resolvedEmp?.avatar && !String(resolvedEmp.avatar).includes("dicebear.com")
+        ? resolvedEmp.avatar
+        : "";
+      return empAvatar ? { ...a, employeeAvatar: empAvatar } : a;
+    });
+
     return reply.send({
       success: true,
-      count: list.length,
-      data: list,
+      count: enrichedList.length,
+      data: enrichedList,
       tenantId: activeTenant,
     });
   });

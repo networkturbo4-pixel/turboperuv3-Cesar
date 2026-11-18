@@ -554,6 +554,39 @@ const createRoleSchema = z.object({
   allowedModules: z.array(z.string()).optional(),
 });
 
+function syncUserAvatarToEmployee(user: UserRecord) {
+  if (!user.avatar) return;
+  try {
+    const empFile = path.join(DATA_DIR, "employees.json");
+    if (!fs.existsSync(empFile)) return;
+    const raw = fs.readFileSync(empFile, "utf-8");
+    const emps = JSON.parse(raw);
+    if (!Array.isArray(emps)) return;
+    const userEmail = String(user.email || "").trim().toLowerCase();
+    const userDni = String((user as any).dni || user.id || "").trim();
+    let changed = false;
+    for (const emp of emps) {
+      const empDni = String(emp.dni || emp.biometricPin || emp.id || "").trim();
+      const empEmail = String(emp.email || "").trim().toLowerCase();
+      if (
+        emp.id === user.id ||
+        emp.operatorId === user.id ||
+        (userDni && empDni === userDni) ||
+        (userEmail && empEmail === userEmail)
+      ) {
+        if (emp.avatar !== user.avatar) {
+          emp.avatar = user.avatar;
+          emp.updatedAt = new Date().toISOString();
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      fs.writeFileSync(empFile, JSON.stringify(emps, null, 2), "utf-8");
+    }
+  } catch {}
+}
+
 export const usersRoutes: FastifyPluginAsync = async (fastify) => {
   // Configuración pública de política de sesión e inactividad
   fastify.get("/auth/session-config", async (_request, reply) => {
@@ -1415,6 +1448,7 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     if (data.email) user.email = data.email;
     if (data.avatar !== undefined) {
       user.avatar = MediaService.externalizeAvatarIfNeeded(data.avatar, `usr${user.id}`);
+      syncUserAvatarToEmployee(user);
     }
     if (data.pin) {
       const newLookup = SecurityService.hmacPinLookup(data.pin);
@@ -1613,6 +1647,7 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     user.email = email;
     if (avatar) {
       user.avatar = MediaService.externalizeAvatarIfNeeded(avatar, `usr${user.id}`);
+      syncUserAvatarToEmployee(user);
     }
 
     saveUsersToDisk();
