@@ -305,13 +305,42 @@ export async function checkForSystemUpdates(): Promise<CheckUpdatesResult> {
   }
 }
 
+function getPeruTimestampStr(date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Lima",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value || "00";
+  return `${get("year")}-${get("month")}-${get("day")}_${get("hour")}-${get("minute")}-${get("second")}_PE`;
+}
+
+function pruneOldBackups(keepCount = 5): void {
+  try {
+    const files = fs
+      .readdirSync(BACKUPS_DIR)
+      .filter((f) => f.endsWith(".json"))
+      .map((f) => ({ name: f, mtimeMs: fs.statSync(path.join(BACKUPS_DIR, f)).mtimeMs }))
+      .sort((a, b) => b.mtimeMs - a.mtimeMs);
+    for (const old of files.slice(keepCount)) {
+      try {
+        fs.unlinkSync(path.join(BACKUPS_DIR, old.name));
+      } catch {}
+    }
+  } catch {}
+}
+
 // 3. Crear copia de seguridad completa del sistema (JSON & Estructuras)
 export async function createFullBackup(type: "manual" | "pre_update" = "manual", notes = ""): Promise<BackupItem> {
   ensureBackupsDir();
 
   const now = new Date();
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  const timestampStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  const timestampStr = getPeruTimestampStr(now);
   const fileName = `backup_${type}_${timestampStr}.json`;
   const filePath = path.join(BACKUPS_DIR, fileName);
 
@@ -386,6 +415,7 @@ export async function createFullBackup(type: "manual" | "pre_update" = "manual",
   };
 
   fs.writeFileSync(filePath, JSON.stringify(backupPackage, null, 2), "utf-8");
+  pruneOldBackups(5);
 
   const stat = fs.statSync(filePath);
   const sizeFormatted = formatBytes(stat.size);
@@ -491,9 +521,6 @@ export async function restoreBackup(fileName: string): Promise<{ success: boolea
       fs.writeFileSync(targetFile, JSON.stringify(content, null, 2), "utf-8");
     }
   }
-
-  // Tocar restart.txt para que cPanel Passenger recargue si está activo
-  touchCpanelRestart();
 
   return {
     success: true,
@@ -780,25 +807,27 @@ export async function executeSystemUpdate(options: {
       try {
         await execAsync("git checkout HEAD -- public/assets/ public/index.html src/", { cwd: ROOT_DIR });
       } catch (e) {}
-      try {
-        await execAsync("git checkout HEAD -- data/", { cwd: ROOT_DIR });
-      } catch (e) {}
-      log("✅ Permisos Git validados e índice de trabajo preparado.");
+      log("✅ Permisos Git validados e índice de trabajo preparado (carpeta data/ protegida).");
     } catch (e) {
       log("ℹ️ Directorio Git preparado.");
     }
 
-    // PASO 4: Git Pull desde GitHub con Auto-Recuperación Resiliente (execFile sin interpolación de shell)
-    log(`⬇️ [4/7] Descargando últimas actualizaciones desde GitHub (git pull origin ${branch})...`);
+    // PASO 4: Git Pull desde GitHub protegiendo siempre data/ (sin git reset --hard sobre data/)
+    log(`⬇️ [4/7] Descargando últimas actualizaciones desde GitHub (origin/${branch})...`);
     let pullOut = "";
     try {
+      await execFileAsync("git", ["fetch", "origin", branch], { cwd: ROOT_DIR, timeout: 60000 });
+      await execFileAsync("git", ["reset", "--mixed", `origin/${branch}`], { cwd: ROOT_DIR, timeout: 30000 });
+      const coRes = await execFileAsync(
+        "git",
+        ["checkout", `origin/${branch}`, "--", "src/", "public/", "package.json", "tsconfig.json", "tsup.config.ts", "tailwind.config.js", "drizzle.config.ts", ".env.example"],
+        { cwd: ROOT_DIR, timeout: 45000 }
+      );
+      pullOut = coRes.stdout || `Código sincronizado limpiamente con origin/${branch} preservando data/.`;
+    } catch (pullErr: any) {
+      log(`⚠️ Aviso durante sincronización selectiva: ${pullErr.message}`);
       const res = await execFileAsync("git", ["pull", "origin", branch], { cwd: ROOT_DIR, timeout: 60000 });
       pullOut = res.stdout;
-    } catch (pullErr: any) {
-      log(`⚠️ git pull detectó modificaciones locales en assets compilados (${pullErr.message}). Aplicando auto-recuperación limpia con origin/${branch}...`);
-      await execFileAsync("git", ["fetch", "origin", branch], { cwd: ROOT_DIR, timeout: 60000 });
-      const resetRes = await execFileAsync("git", ["reset", "--hard", `origin/${branch}`], { cwd: ROOT_DIR, timeout: 30000 });
-      pullOut = resetRes.stdout || `Sincronización forzada a origin/${branch} completada con éxito.`;
     }
     log(`📥 Resultado Git Pull:\n${pullOut.trim()}`);
 

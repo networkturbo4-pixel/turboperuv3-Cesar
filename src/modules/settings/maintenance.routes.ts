@@ -153,7 +153,11 @@ export const maintenanceRoutes: FastifyPluginAsync = async (fastify) => {
     const { fileName } = request.params as { fileName: string };
     try {
       const result = await restoreBackup(fileName);
-      return reply.send(result);
+      await reply.send(result);
+      setTimeout(() => {
+        touchCpanelRestart();
+      }, 1500);
+      return;
     } catch (err: any) {
       return reply.status(500).send({ success: false, message: err.message });
     }
