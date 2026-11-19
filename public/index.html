@@ -12474,14 +12474,10 @@
           </div>
         </div>
 
-        <!-- Bloque: Nuevo PIN -->
-        <div>
-          <div class="flex justify-between items-center mb-1">
-            <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Nuevo PIN de 8 Dígitos (Opcional)</label>
-            <button type="button" onclick="generateRandomEditPin()" class="text-[10px] dynamic-primary-text hover:underline font-mono">Generar Aleatorio</button>
-          </div>
-          <input type="text" id="ue-pin" maxlength="8" pattern="\d{8}" placeholder="•••••••• (Dejar en blanco para conservar el actual)" class="w-full bg-white/5 dark:bg-white/5 bg-black/5 border border-white/10 dark:border-white/10 border-black/10 rounded-lg px-3 py-2 text-xs font-mono tracking-widest focus:outline-none focus:border-blue-500">
-          <p class="text-[10px] text-slate-500 mt-1">Si no deseas cambiar el PIN del operador, deja este campo en blanco.</p>
+        <!-- Bloque: PIN de Acceso (DNI) -->
+        <div class="p-3 rounded-xl bg-blue-500/[0.06] border border-blue-500/20">
+          <span class="block text-[11px] font-semibold text-blue-400 uppercase tracking-wider mb-0.5">🔐 PIN de Acceso (DNI del Operador)</span>
+          <p class="text-[11px] text-slate-400">El PIN de ingreso al sistema y reloj ZKTeco se sincroniza automáticamente con el <b>DNI</b> del operador.</p>
         </div>
 
         <input type="hidden" id="ue-require-totp" value="false">
@@ -30039,7 +30035,8 @@ Estamos atentos para brindarle asistencia inmediata.
 
       document.getElementById('ue-hire-date').value = user.hireDate || "";
       document.getElementById('ue-birth-date').value = user.birthDate || "";
-      document.getElementById('ue-pin').value = "";
+      const uePinEl = document.getElementById('ue-pin');
+      if (uePinEl) uePinEl.value = "";
       document.getElementById('ue-modal-error').textContent = "";
       
       const ueTotp = document.getElementById('ue-require-totp');
@@ -30074,8 +30071,8 @@ Estamos atentos para brindarle asistencia inmediata.
     }
 
     function generateRandomEditPin() {
-      const pin = Math.floor(10000000 + Math.random() * 90000000).toString();
-      document.getElementById('ue-pin').value = pin;
+      const el = document.getElementById('ue-pin');
+      if (el) el.value = Math.floor(10000000 + Math.random() * 90000000).toString();
     }
 
     function updateCurrentUserDisplay() {
@@ -30130,7 +30127,6 @@ Estamos atentos para brindarle asistencia inmediata.
       if (!schedule) schedule = `${timeStart} - ${timeEnd}`;
       const hireDate = document.getElementById('ue-hire-date').value;
       const birthDate = document.getElementById('ue-birth-date').value;
-      const pin = document.getElementById('ue-pin').value.trim();
       const requireTotp = document.getElementById('ue-require-totp')?.checked || false;
 
       if (!name) {
@@ -30143,10 +30139,6 @@ Estamos atentos para brindarle asistencia inmediata.
       }
       if (!email) {
         errorDiv.textContent = "El correo es obligatorio";
-        return;
-      }
-      if (pin && !/^\d{8}$/.test(pin)) {
-        errorDiv.textContent = "El PIN debe tener exactamente 8 dígitos numéricos";
         return;
       }
 
@@ -30179,9 +30171,6 @@ Estamos atentos para brindarle asistencia inmediata.
         accessTarget,
         assignedApartadoId
       };
-      if (pin) {
-        payload.pin = pin;
-      }
 
       try {
         const res = await fetch(`/api/users/${id}`, {

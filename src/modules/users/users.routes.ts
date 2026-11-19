@@ -382,6 +382,16 @@ function loadUsersFromDisk(): SystemUser[] {
             }
           }
 
+          // Sincronizar roleName con los roles reales del tenant asignado (ej. TECNICO en lugar de Operador)
+          if (u.roleId && u.assignedTenantId && u.assignedTenantId !== "*") {
+            const tenantRoles = loadRolesForTenant(u.assignedTenantId);
+            const matchedRole = tenantRoles.find((r) => r.id === Number(u.roleId));
+            if (matchedRole && matchedRole.name && u.roleName !== matchedRole.name) {
+              u.roleName = matchedRole.name;
+              changed = true;
+            }
+          }
+
           // Extraer avatares Base64 incrustados en JSON hacia data/uploads/avatars
           if (typeof u.avatar === "string" && u.avatar.startsWith("data:image/") && !u.avatar.startsWith("data:image/svg+xml")) {
             const externalUrl = MediaService.externalizeAvatarIfNeeded(u.avatar, `usr${u.id || ""}`);
@@ -1532,7 +1542,7 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
     if (data.roleId) {
       user.roleId = data.roleId;
-      const targetTenant = user.assignedTenantId || resolveTenantId(request);
+      const targetTenant = (data.assignedTenantId ? String(data.assignedTenantId).trim().toLowerCase() : "") || user.assignedTenantId || resolveTenantId(request);
       const tenantRoles = loadRolesForTenant(targetTenant);
       const role = tenantRoles.find((r) => r.id === data.roleId) || rolesStore.find((r) => r.id === data.roleId);
       if (role) user.roleName = role.name;
