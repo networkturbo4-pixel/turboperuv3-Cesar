@@ -27,6 +27,8 @@
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
 
   <link rel="stylesheet" href="/assets/tailwind.min.css?v=apartados_v3">
+  <link rel="stylesheet" href="/assets/mapbox-gl.css">
+  <script src="/js/mapbox-gl.js"></script>
   <script src="/js/session-guard.js"></script>
   <script src="/js/jsQR.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -194,11 +196,6 @@
         </div>
 
         <div class="flex items-center gap-1.5 flex-shrink-0">
-          <!-- Botón Admin (solo visible si el usuario es Superadmin previsualizando el apartado) -->
-          <a id="tech-back-admin-btn" href="/" style="white-space:nowrap;" class="hidden px-2.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[11px] font-extrabold flex items-center gap-1 transition" title="Volver al Sistema General">
-            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-            <span>Admin</span>
-          </a>
           <button onclick="toggleTechTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 transition" title="Cambiar Tema">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -245,6 +242,52 @@
             <div id="hero-kpi-commissions" class="text-lg font-semibold font-mono tabular-nums mt-0.5">S/ 0</div>
             <div class="text-[11px] text-amber-400 font-medium">Acumulado mes</div>
           </button>
+        </div>
+      </section>
+
+      <!-- WIDGET MODERNO DE ASISTENCIA CONECTADO A RR.HH -->
+      <section id="tech-rrhh-attendance-widget" class="rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-white/10 p-4 shadow-xs space-y-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <h3 class="text-xs font-extrabold text-slate-900 dark:text-white truncate">Mi Asistencia RR.HH</h3>
+                <span id="tech-hw-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300">Sincronizando</span>
+              </div>
+              <p id="tech-hw-schedule" class="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">Turno: 08:00 - 17:00</p>
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div id="tech-hw-clock" class="text-sm font-mono font-extrabold text-slate-900 dark:text-white tabular-nums">--:--</div>
+            <button onclick="openTechApp('attendance_gps')" class="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline">Historial</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2 text-center">
+          <div class="p-2 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/10">
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Entrada</div>
+            <div id="tech-hw-in" class="text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5 tabular-nums">--:--</div>
+          </div>
+          <div class="p-2 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/10">
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Almuerzo</div>
+            <div id="tech-hw-lunch" class="text-xs font-mono font-extrabold text-amber-600 dark:text-amber-400 mt-0.5 tabular-nums">--:--</div>
+          </div>
+          <div class="p-2 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/10">
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Retorno</div>
+            <div id="tech-hw-return" class="text-xs font-mono font-extrabold text-blue-600 dark:text-blue-400 mt-0.5 tabular-nums">--:--</div>
+          </div>
+          <div class="p-2 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/10">
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Salida</div>
+            <div id="tech-hw-out" class="text-xs font-mono font-extrabold text-rose-600 dark:text-rose-400 mt-0.5 tabular-nums">--:--</div>
+          </div>
+        </div>
+
+        <div id="tech-hw-actions" class="grid grid-cols-2 gap-2">
+          <button onclick="submitTechAttendance('check-in')" class="py-2.5 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs">Marcar Entrada GPS</button>
+          <button onclick="openTechApp('attendance_gps')" class="py-2.5 px-3 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-white/10 transition">Más opciones</button>
         </div>
       </section>
 
@@ -571,16 +614,6 @@
         document.getElementById('tech-user-avatar').src = techUser.avatar;
       }
 
-      // Mostrar botón "Panel Admin" solo si es Superadministrador previsualizando
-      const backBtn = document.getElementById('tech-back-admin-btn');
-      if (backBtn) {
-        if (techUser.isSuperAdmin || techUser.roleId === 1) {
-          backBtn.classList.remove('hidden');
-        } else {
-          backBtn.classList.add('hidden');
-        }
-      }
-
       const urlParams = new URLSearchParams(window.location.search);
       const slugParam = urlParams.get('apartado') || 'tecnicos';
 
@@ -679,16 +712,27 @@
       }).join('');
     }
 
+    let cachedAttendance = [];
+    let cachedEmployees = [];
+    let techMapboxConfig = { accessToken: '', defaultStyle: 'mapbox://styles/mapbox/satellite-streets-v12', center: [-77.0368, -12.0970], zoom: 14 };
+    let techMapInstance = null;
+    let techMapStyleMode = 'satellite';
+    let techClockTimer = null;
+
     async function refreshAllTechData() {
       try {
-        const [instRes, stockRes, prodRes, commRes, advRes, matRes, mapRes] = await Promise.all([
+        const tenantId = techUser?.assignedTenantId || 'turbonetwork';
+        const [instRes, stockRes, prodRes, commRes, advRes, matRes, mapRes, attRes, empRes, connRes] = await Promise.all([
           fetch('/api/apartados/installations').then(r => r.json()).catch(() => ({ data: [] })),
           fetch('/api/inventory/personnel-assignments').then(r => r.json()).catch(() => ({ data: [] })),
           fetch('/api/inventory/products').then(r => r.json()).catch(() => ({ data: [] })),
           fetch('/api/rrhh/commissions').then(r => r.json()).catch(() => ({ data: [] })),
           fetch('/api/apartados/advances').then(r => r.json()).catch(() => ({ data: [] })),
           fetch('/api/apartados/material-requests').then(r => r.json()).catch(() => ({ data: [] })),
-          fetch('/api/maps/data').then(r => r.json()).catch(() => ({ nodes: [] })),
+          fetch(`/api/maps/data?tenantId=${encodeURIComponent(tenantId)}`).then(r => r.json()).catch(() => ({ nodes: [] })),
+          fetch('/api/rrhh/attendance').then(r => r.json()).catch(() => ({ data: [] })),
+          fetch('/api/rrhh/employees').then(r => r.json()).catch(() => ({ data: [] })),
+          fetch(`/api/settings/connections?tenantId=${encodeURIComponent(tenantId)}`).then(r => r.json()).catch(() => ({})),
         ]);
 
         cachedInstallations = Array.isArray(instRes.data) ? instRes.data : [];
@@ -698,7 +742,19 @@
         cachedCommissions = Array.isArray(commRes.data) ? commRes.data : [];
         cachedAdvances = Array.isArray(advRes.data) ? advRes.data : [];
         cachedMaterialRequests = Array.isArray(matRes.data) ? matRes.data : [];
-        cachedMapNodes = Array.isArray(mapRes.nodes) ? mapRes.nodes : (Array.isArray(mapRes.data?.nodes) ? mapRes.data.nodes : []);
+        const mapPayload = mapRes.data || mapRes || {};
+        cachedMapNodes = Array.isArray(mapPayload.nodes) ? mapPayload.nodes : (Array.isArray(mapRes.nodes) ? mapRes.nodes : []);
+        if (Array.isArray(mapPayload.center) && mapPayload.center.length === 2) techMapboxConfig.center = mapPayload.center;
+        if (mapPayload.zoom) techMapboxConfig.zoom = mapPayload.zoom;
+        if (connRes?.data?.mapbox) {
+          techMapboxConfig.accessToken = connRes.data.mapbox.accessToken || '';
+          techMapboxConfig.defaultStyle = connRes.data.mapbox.defaultStyle || techMapboxConfig.defaultStyle;
+          if (Array.isArray(connRes.data.mapbox.defaultCenter) && connRes.data.mapbox.defaultCenter.length === 2) {
+            techMapboxConfig.center = connRes.data.mapbox.defaultCenter;
+          }
+        }
+        cachedAttendance = Array.isArray(attRes.data) ? attRes.data : [];
+        cachedEmployees = Array.isArray(empRes.data) ? empRes.data : [];
 
         // Actualizar KPIs del Hero
         const pendingInst = cachedInstallations.filter(i => i.status !== 'completada');
@@ -708,9 +764,111 @@
         const totalComm = cachedCommissions.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
         document.getElementById('hero-kpi-commissions').textContent = `S/ ${totalComm.toFixed(0)}`;
 
+        renderHomeAttendanceWidget();
         renderNextVisitPreview(pendingInst[0]);
       } catch (err) {
         console.warn('Error sincronizando datos de campo:', err);
+      }
+    }
+
+    function getMyRrhhAttendanceRecords() {
+      const uid = Number(techUser?.id || 0);
+      const uname = String(techUser?.name || '').trim().toLowerCase();
+      return (cachedAttendance || []).filter(r =>
+        (uid > 0 && Number(r.employeeId) === uid) ||
+        (uname && String(r.employeeName || '').trim().toLowerCase() === uname)
+      );
+    }
+
+    function renderHomeAttendanceWidget() {
+      const clockEl = document.getElementById('tech-hw-clock');
+      const updateClock = () => {
+        if (!clockEl) return;
+        clockEl.textContent = new Date().toLocaleTimeString('es-PE', { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      };
+      updateClock();
+      if (!techClockTimer) {
+        techClockTimer = setInterval(updateClock, 1000);
+      }
+
+      const uid = Number(techUser?.id || 0);
+      const uemail = String(techUser?.email || '').trim().toLowerCase();
+      const myEmp = (cachedEmployees || []).find(e =>
+        (uid > 0 && (Number(e.id) === uid || Number(e.operatorId) === uid)) ||
+        (uemail && String(e.email || '').trim().toLowerCase() === uemail)
+      );
+      const schedEl = document.getElementById('tech-hw-schedule');
+      if (schedEl) {
+        const sched = myEmp?.workSchedule || techUser?.workSchedule || '08:00 - 17:00';
+        const pos = myEmp?.position ? ` • ${myEmp.position}` : '';
+        schedEl.textContent = `Turno RR.HH: ${sched}${pos}`;
+      }
+
+      const todayPeru = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      const myRecords = getMyRrhhAttendanceRecords();
+      const todayRec = myRecords.find(r => r.date === todayPeru) || {};
+
+      const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '--:--'; };
+      setText('tech-hw-in', todayRec.checkInTime);
+      setText('tech-hw-lunch', todayRec.lunchStart);
+      setText('tech-hw-return', todayRec.lunchEndTime);
+      setText('tech-hw-out', todayRec.checkOut || todayRec.checkOutTime);
+
+      const badge = document.getElementById('tech-hw-status-badge');
+      const pill = document.getElementById('tech-attendance-pill');
+      const actionsBox = document.getElementById('tech-hw-actions');
+      const canCheckin = hasAppPermission('attendance:checkin');
+      const canLunch = hasAppPermission('attendance:lunch');
+
+      let statusLabel = 'Sin marcar hoy';
+      let badgeCls = 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300';
+      if (todayRec.checkOut || todayRec.checkOutTime) {
+        statusLabel = 'Turno Cerrado';
+        badgeCls = 'bg-rose-500/15 text-rose-500';
+        if (pill) pill.textContent = 'Turno Cerrado';
+      } else if (todayRec.lunchStart && !todayRec.lunchEndTime) {
+        statusLabel = 'En Refrigerio';
+        badgeCls = 'bg-amber-500/15 text-amber-500';
+        if (pill) pill.textContent = 'En Refrigerio';
+      } else if (todayRec.checkInTime) {
+        statusLabel = 'En Jornada';
+        badgeCls = 'bg-emerald-500/15 text-emerald-500';
+        if (pill) pill.textContent = 'En Ruta';
+      }
+
+      if (badge) {
+        badge.textContent = statusLabel;
+        badge.className = `px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeCls}`;
+      }
+
+      if (actionsBox) {
+        if (!todayRec.checkInTime) {
+          actionsBox.innerHTML = `
+            <button ${canCheckin ? '' : 'disabled'} onclick="submitTechAttendance('check-in')" class="py-2.5 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs disabled:opacity-40">1. Marcar Entrada GPS</button>
+            <button onclick="openTechApp('attendance_gps')" class="py-2.5 px-3 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-white/10 transition">Ver Historial</button>
+          `;
+        } else if (!todayRec.lunchStart && !(todayRec.checkOut || todayRec.checkOutTime)) {
+          actionsBox.innerHTML = `
+            <button ${canLunch ? '' : 'disabled'} onclick="submitTechAttendance('lunch-start')" class="py-2.5 px-3 rounded-2xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition shadow-xs disabled:opacity-40">2. Iniciar Almuerzo</button>
+            <button ${canCheckin ? '' : 'disabled'} onclick="submitTechAttendance('check-out')" class="py-2.5 px-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition shadow-xs disabled:opacity-40">4. Marcar Salida</button>
+          `;
+        } else if (todayRec.lunchStart && !todayRec.lunchEndTime && !(todayRec.checkOut || todayRec.checkOutTime)) {
+          actionsBox.innerHTML = `
+            <button ${canLunch ? '' : 'disabled'} onclick="submitTechAttendance('lunch-end')" class="py-2.5 px-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-xs disabled:opacity-40">3. Fin de Almuerzo</button>
+            <button ${canCheckin ? '' : 'disabled'} onclick="submitTechAttendance('check-out')" class="py-2.5 px-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition shadow-xs disabled:opacity-40">4. Marcar Salida</button>
+          `;
+        } else if (!(todayRec.checkOut || todayRec.checkOutTime)) {
+          actionsBox.innerHTML = `
+            <button ${canCheckin ? '' : 'disabled'} onclick="submitTechAttendance('check-out')" class="py-2.5 px-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition shadow-xs disabled:opacity-40">4. Marcar Salida GPS</button>
+            <button onclick="openTechApp('attendance_gps')" class="py-2.5 px-3 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-white/10 transition">Ver Historial</button>
+          `;
+        } else {
+          actionsBox.innerHTML = `
+            <div class="col-span-2 py-2 px-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+              Jornada de hoy completada y sincronizada con RR.HH
+            </div>
+          `;
+        }
       }
     }
 
@@ -741,7 +899,7 @@
           <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5">
             <span class="text-[11px] font-mono text-blue-600 dark:text-blue-400 font-semibold">${order.napCode || 'NAP'} • ${order.napPort || ''}</span>
             <div class="flex items-center gap-2">
-              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.lat + ',' + order.lng)}" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 text-xs font-bold text-slate-700 dark:text-slate-200">Ruta GPS</a>
+              <button type="button" onclick="openTechCoordsInMapbox(${Number(order.lat || currentGps.lat)}, ${Number(order.lng || currentGps.lng)}, '${String(order.customerName || 'Orden').replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 text-xs font-bold text-slate-700 dark:text-slate-200">Mapa GPS</button>
               <button onclick="openTechApp('my_installations')" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold">Atender</button>
             </div>
           </div>
@@ -838,8 +996,12 @@
       try {
         const res = await fetch('/api/rrhh/attendance');
         const data = await res.json();
-        const records = Array.isArray(data.data) ? data.data.slice(0, 6) : [];
-        const todayRec = records[0] || {};
+        cachedAttendance = Array.isArray(data.data) ? data.data : [];
+        const myAll = getMyRrhhAttendanceRecords();
+        const records = myAll.slice(0, 8);
+        const todayPeru = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+        const todayRec = myAll.find(r => r.date === todayPeru) || {};
+        renderHomeAttendanceWidget();
         const todayBox = document.getElementById('tech-today-summary');
         if (todayBox) {
           todayBox.innerHTML = `
@@ -903,7 +1065,13 @@
           if (action === 'lunch-start') pill.textContent = 'En Refrigerio';
           if (action === 'check-out') pill.textContent = 'Turno Cerrado';
         }
-        renderAppAttendance();
+        const attRes = await fetch('/api/rrhh/attendance').then(r => r.json()).catch(() => ({ data: [] }));
+        cachedAttendance = Array.isArray(attRes.data) ? attRes.data : cachedAttendance;
+        renderHomeAttendanceWidget();
+        const modalEl = document.getElementById('techAppDialog');
+        if (modalEl && modalEl.open && document.getElementById('tech-attendance-list')) {
+          renderAppAttendance();
+        }
       } catch (e) {
         showTechToast('Error al registrar asistencia GPS', 'error');
       }
@@ -1021,6 +1189,37 @@
       return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
+    let techSortedNapsCache = [];
+
+    function getTechFallbackMapStyle(mode) {
+      if (mode === 'streets') {
+        return {
+          version: 8,
+          sources: {
+            osm: {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: 'OSM'
+            }
+          },
+          layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
+        };
+      }
+      return {
+        version: 8,
+        sources: {
+          esri: {
+            type: 'raster',
+            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+            tileSize: 256,
+            attribution: 'Esri'
+          }
+        },
+        layers: [{ id: 'esri-sat', type: 'raster', source: 'esri' }]
+      };
+    }
+
     function renderAppNearbyNaps() {
       const body = document.getElementById('techModalBody');
       const fallbackNaps = [
@@ -1042,44 +1241,193 @@
           lat: nLat,
           lng: nLng,
           distance: dist,
-          portsFree: n.portsFree ?? ((idx * 3 + 4) % 8 + 1),
-          portsTotal: n.portsTotal ?? 16,
-          dbm: n.dbm || `-1${8 + (idx % 3)}.${idx + 2} dBm`
+          portsFree: n.portsFree ?? n.freePorts ?? ((idx * 3 + 4) % 8 + 1),
+          portsTotal: n.portsTotal ?? n.totalPorts ?? 16,
+          dbm: n.dbm || n.power || `-1${8 + (idx % 3)}.${idx + 2} dBm`
         };
       }).sort((a, b) => a.distance - b.distance);
+      techSortedNapsCache = sortedNaps;
 
       body.innerHTML = `
-        <div class="p-4 rounded-3xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-between">
-          <div>
-            <div class="text-xs font-extrabold text-blue-600 dark:text-blue-400">Radar FTTH en Tiempo Real</div>
-            <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">Tu GPS: ${currentGps.lat.toFixed(5)}, ${currentGps.lng.toFixed(5)}</div>
+        <div class="relative rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-md bg-slate-900" style="height: 320px;">
+          <div id="tech-mapbox-canvas" class="w-full h-full" style="transform: translate3d(0,0,0); will-change: transform;"></div>
+          <div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 pointer-events-none">
+            <div class="px-3 py-1.5 rounded-2xl bg-slate-900/85 backdrop-blur-md border border-white/15 text-white pointer-events-auto">
+              <div class="text-[10px] font-bold text-blue-400">Mapbox FTTH en Vivo</div>
+              <div class="text-[10px] font-mono text-slate-300">${sortedNaps.length} nodos • ${currentGps.lat.toFixed(4)}, ${currentGps.lng.toFixed(4)}</div>
+            </div>
+            <div class="flex items-center gap-1.5 pointer-events-auto">
+              <button type="button" onclick="toggleTechMapStyle()" class="px-2.5 py-1.5 rounded-xl bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md border border-white/15 text-white text-[10px] font-bold transition">
+                Satélite / Calles
+              </button>
+              <button type="button" onclick="centerTechMapOnGps()" class="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold shadow-sm transition">
+                Mi GPS
+              </button>
+            </div>
           </div>
-          <span class="px-2.5 py-1 rounded-xl bg-blue-600 text-white text-xs font-mono font-bold">${sortedNaps.length} Nodos</span>
         </div>
 
-        <div class="space-y-2.5">
-          ${sortedNaps.map(nap => `
-            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-3">
+        <div id="tech-selected-nap-banner" class="hidden p-3 rounded-2xl bg-blue-600/15 border border-blue-500/30 text-xs text-slate-800 dark:text-slate-100"></div>
+
+        <div class="space-y-2 max-h-[260px] overflow-y-auto pr-0.5">
+          ${sortedNaps.map((nap, idx) => `
+            <div onclick="focusTechNapOnMap(${idx})" class="cursor-pointer p-3 rounded-2xl bg-slate-50 dark:bg-white/5 hover:bg-blue-500/10 border border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-3 transition">
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
                   <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-blue-500/15 text-blue-500">${nap.type}</span>
                   <span class="text-xs font-extrabold text-slate-900 dark:text-white truncate">${nap.name}</span>
                 </div>
                 <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1">
-                  Distancia: <strong class="text-emerald-500">${nap.distance} m</strong> • Libres: <strong>${nap.portsFree}/${nap.portsTotal}</strong> • Potencia: ${nap.dbm}
+                  Distancia: <strong class="text-emerald-500">${nap.distance} m</strong> • Libres: <strong>${nap.portsFree}/${nap.portsTotal}</strong> • ${nap.dbm}
                 </div>
               </div>
-              <a
-                href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nap.lat + ',' + nap.lng)}"
-                target="_blank"
-                class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex-shrink-0 transition"
-              >
-                Ir GPS
-              </a>
+              <button type="button" onclick="event.stopPropagation(); focusTechNapOnMap(${idx});" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex-shrink-0 transition">
+                Ver Ruta
+              </button>
             </div>
           `).join('')}
         </div>
       `;
+
+      requestAnimationFrame(() => initTechMapbox(sortedNaps));
+    }
+
+    function initTechMapbox(naps) {
+      const container = document.getElementById('tech-mapbox-canvas');
+      if (!container || typeof mapboxgl === 'undefined') return;
+      if (techMapInstance) {
+        try { techMapInstance.remove(); } catch (_) {}
+        techMapInstance = null;
+      }
+
+      const hasToken = Boolean(techMapboxConfig.accessToken && techMapboxConfig.accessToken.trim().startsWith('pk.'));
+      let styleSpec;
+      if (hasToken) {
+        mapboxgl.accessToken = techMapboxConfig.accessToken;
+        styleSpec = techMapStyleMode === 'streets'
+          ? 'mapbox://styles/mapbox/streets-v12'
+          : (techMapboxConfig.defaultStyle || 'mapbox://styles/mapbox/satellite-streets-v12');
+      } else {
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZHVtbXkiLCJhIjoiZHVtbXkifQ.dummy';
+        styleSpec = getTechFallbackMapStyle(techMapStyleMode);
+      }
+
+      const initialCenter = (naps[0] && Number.isFinite(naps[0].lng) && Number.isFinite(naps[0].lat))
+        ? [naps[0].lng, naps[0].lat]
+        : [currentGps.lng, currentGps.lat];
+
+      const map = new mapboxgl.Map({
+        container: 'tech-mapbox-canvas',
+        style: styleSpec,
+        center: initialCenter,
+        zoom: 15,
+        attributionControl: false,
+        trackResize: true,
+        touchZoomRotate: true,
+        fadeDuration: 0
+      });
+      techMapInstance = map;
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+      const ro = window.ResizeObserver ? new ResizeObserver(() => { if (techMapInstance) techMapInstance.resize(); }) : null;
+      if (ro) ro.observe(container);
+
+      map.on('load', () => {
+        // Fuente GeoJSON para línea de ruta GPS -> NAP
+        map.addSource('tech-route-line', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] }
+        });
+        map.addLayer({
+          id: 'tech-route-line-layer',
+          type: 'line',
+          source: 'tech-route-line',
+          paint: {
+            'line-color': '#3b82f6',
+            'line-width': 4,
+            'line-dasharray': [2, 1.5]
+          }
+        });
+
+        // Marcador GPS actual del técnico
+        const gpsEl = document.createElement('div');
+        gpsEl.className = 'w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg';
+        new mapboxgl.Marker(gpsEl)
+          .setLngLat([currentGps.lng, currentGps.lat])
+          .setPopup(new mapboxgl.Popup({ offset: 12 }).setText('Tu ubicación GPS actual'))
+          .addTo(map);
+
+        // Marcadores de NAPs / Mufas
+        naps.forEach((nap, idx) => {
+          const el = document.createElement('div');
+          el.className = 'px-1.5 py-0.5 rounded-lg bg-emerald-600 text-white text-[10px] font-mono font-bold border border-white shadow cursor-pointer';
+          el.textContent = nap.type;
+          el.addEventListener('click', () => focusTechNapOnMap(idx));
+          new mapboxgl.Marker(el)
+            .setLngLat([nap.lng, nap.lat])
+            .addTo(map);
+        });
+      });
+    }
+
+    function focusTechNapOnMap(idx) {
+      const nap = techSortedNapsCache[idx];
+      if (!nap || !techMapInstance) return;
+      techMapInstance.flyTo({ center: [nap.lng, nap.lat], zoom: 17, essential: true });
+      const src = techMapInstance.getSource('tech-route-line');
+      if (src) {
+        src.setData({
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            geometry: {
+              type: 'LineString',
+              coordinates: [[currentGps.lng, currentGps.lat], [nap.lng, nap.lat]]
+            }
+          }]
+        });
+      }
+      const banner = document.getElementById('tech-selected-nap-banner');
+      if (banner) {
+        banner.classList.remove('hidden');
+        banner.innerHTML = `<strong>${nap.name}</strong> • ${nap.distance} m desde tu GPS • Libres: <strong>${nap.portsFree}/${nap.portsTotal}</strong> • ${nap.dbm}`;
+      }
+    }
+
+    function centerTechMapOnGps() {
+      if (techMapInstance) {
+        techMapInstance.flyTo({ center: [currentGps.lng, currentGps.lat], zoom: 16, essential: true });
+      }
+    }
+
+    function toggleTechMapStyle() {
+      techMapStyleMode = techMapStyleMode === 'satellite' ? 'streets' : 'satellite';
+      initTechMapbox(techSortedNapsCache);
+    }
+
+    function openTechCoordsInMapbox(lat, lng, label) {
+      openTechApp('nearby_naps');
+      setTimeout(() => {
+        if (!techMapInstance) return;
+        const targetLng = Number(lng || currentGps.lng);
+        const targetLat = Number(lat || currentGps.lat);
+        techMapInstance.flyTo({ center: [targetLng, targetLat], zoom: 17, essential: true });
+        new mapboxgl.Marker({ color: '#ef4444' })
+          .setLngLat([targetLng, targetLat])
+          .setPopup(new mapboxgl.Popup({ offset: 14 }).setText(label || 'Destino'))
+          .addTo(techMapInstance)
+          .togglePopup();
+        const src = techMapInstance.getSource('tech-route-line');
+        if (src) {
+          src.setData({
+            type: 'FeatureCollection',
+            features: [{
+              type: 'Feature',
+              geometry: { type: 'LineString', coordinates: [[currentGps.lng, currentGps.lat], [targetLng, targetLat]] }
+            }]
+          });
+        }
+      }, 350);
     }
 
     // =========================================================================
@@ -1361,7 +1709,7 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200/60 dark:border-white/10">
                   <a href="tel:${inst.customerPhone}" class="px-3 py-1.5 rounded-xl bg-slate-200/70 dark:bg-white/10 text-xs font-bold">📞 Llamar</a>
-                  <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((inst.lat || -12.076) + ',' + (inst.lng || -77.084))}" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-200/70 dark:bg-white/10 text-xs font-bold">📍 Mapa GPS</a>
+                  <button type="button" onclick="openTechCoordsInMapbox(${Number(inst.lat || currentGps.lat)}, ${Number(inst.lng || currentGps.lng)}, '${String(inst.customerName || 'Cliente').replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-xl bg-slate-200/70 dark:bg-white/10 text-xs font-bold">📍 Mapa GPS</button>
                   ${!isDone ? `
                     <button onclick="completeInstallationOrder('${inst.id}')" class="ml-auto px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold">
                       ✓ Finalizar Orden
@@ -1472,7 +1820,7 @@
               </div>
               ` : ''}
               <div class="flex items-center justify-between pt-1">
-                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.lat + ',' + c.lng)}" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-200/70 dark:bg-white/10 text-xs font-bold">📍 Ubicación</a>
+                <button type="button" onclick="openTechCoordsInMapbox(${Number(c.lat || currentGps.lat)}, ${Number(c.lng || currentGps.lng)}, '${String(c.name || c.ciz || 'Cliente').replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-xl bg-slate-200/70 dark:bg-white/10 text-xs font-bold">📍 Ubicación</button>
                 <div class="flex items-center gap-2">
                   ${canDiag ? `<button onclick="showTechToast('Ping a ${c.ipAddress}: ${c.pingMs} (0% pérdida)')" class="px-3 py-1.5 rounded-xl bg-sky-500/15 text-sky-500 text-xs font-bold">Test Ping</button>` : ''}
                   ${canReactivate && !isOnline ? `<button onclick="reactivateCustomerFromField(${c.id})" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold">Reactivar</button>` : ''}

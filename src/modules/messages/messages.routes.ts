@@ -823,6 +823,11 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       cleanedUp = true;
       clearInterval(heartbeatTimer);
       messageClients.delete(client);
+      try {
+        if (!reply.raw.writableEnded && !reply.raw.destroyed) {
+          reply.raw.end();
+        }
+      } catch (_) {}
       if (currentUserId) {
         console.log(`🔌 [SSE DISCONNECT] Usuario ${currentUserId} desconectado (Restantes: ${messageClients.size})`);
       }

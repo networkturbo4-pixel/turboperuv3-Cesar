@@ -3216,6 +3216,13 @@ async function simulateIncomingMessageTest() {
 
 function initMessagesRealtime() {
   const myId = (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ? String(currentUser.id || currentUser.username) : '';
+  if (!myId) {
+    if (messagesEventSource) {
+      try { messagesEventSource.close(); } catch (_) {}
+      messagesEventSource = null;
+    }
+    return;
+  }
   const tenant = (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork';
 
   if (messagesEventSource) {

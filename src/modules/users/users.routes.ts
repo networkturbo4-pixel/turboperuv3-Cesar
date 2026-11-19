@@ -11,6 +11,7 @@ import { AuditService } from "../security/audit.service";
 import { MediaService } from "../storage/media.service";
 import { extractCanonicalNumericId, allocateCanonicalUserId, toZktecoPin } from "./identity.service";
 import { createMailAccount } from "../mail/mail.service";
+import { syncUserApartadoLink } from "../apartados/apartados.routes";
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const ROLES_FILE = path.join(DATA_DIR, "roles.json");
@@ -128,6 +129,8 @@ export interface SystemUser {
   birthDate?: string;
   preferences?: Record<string, any>;
   requireTotp?: boolean; // Switcher para exigir o no Google Authenticator por usuario
+  accessTarget?: "system" | "apartado"; // Regla de ingreso: sistema general o apartado específico
+  assignedApartadoId?: string; // ID o slug del apartado vinculado
 }
 
 export const DEFAULT_ROLES: Role[] = [
@@ -457,6 +460,8 @@ function buildAuthenticatedUserResponse(user: SystemUser, requestedTenant?: stri
       preferences: user.preferences || {},
       permissions: userPermissions,
       allowedModules: userAllowedModules,
+      accessTarget: user.accessTarget || "system",
+      assignedApartadoId: user.assignedApartadoId || undefined,
     },
   };
 }
@@ -489,6 +494,8 @@ const createUserSchema = z.object({
   allowedTenants: z.array(z.string()).nullable().optional(),
   requireTotp: z.boolean().optional(),
   syncWithZkteco: z.boolean().optional(),
+  accessTarget: z.enum(["system", "apartado"]).optional(),
+  assignedApartadoId: z.string().nullable().optional(),
   mailConfig: z
     .object({
       enabled: z.boolean().optional(),
@@ -528,6 +535,8 @@ const updateUserSchema = z.object({
   preferences: z.record(z.any()).optional(),
   requireTotp: z.boolean().optional(),
   syncWithZkteco: z.boolean().optional(),
+  accessTarget: z.enum(["system", "apartado"]).optional(),
+  assignedApartadoId: z.string().nullable().optional(),
   mailConfig: z
     .object({
       enabled: z.boolean().optional(),
@@ -1271,10 +1280,24 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       birthDate: parse.data.birthDate || matchedEmp?.birthDate || "",
       preferences: {},
       requireTotp: parse.data.requireTotp === true,
+      accessTarget: parse.data.accessTarget === "apartado" ? "apartado" : "system",
+      assignedApartadoId:
+        parse.data.accessTarget === "apartado" && parse.data.assignedApartadoId
+          ? String(parse.data.assignedApartadoId).trim()
+          : undefined,
     };
 
     usersStore.push(newUser);
     saveUsersToDisk();
+
+    try {
+      syncUserApartadoLink(
+        targetTenant,
+        canonicalId,
+        newUser.accessTarget || "system",
+        newUser.assignedApartadoId
+      );
+    } catch {}
 
     if (matchedEmpIdx >= 0) {
       empsDisk[matchedEmpIdx] = {
@@ -1513,8 +1536,32 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
     if (data.preferences !== undefined) user.preferences = { ...(user.preferences || {}), ...data.preferences };
     if (data.requireTotp !== undefined) user.requireTotp = Boolean(data.requireTotp);
+    if (data.accessTarget !== undefined) {
+      user.accessTarget = data.accessTarget === "apartado" ? "apartado" : "system";
+      if (user.accessTarget === "system") {
+        user.assignedApartadoId = undefined;
+      }
+    }
+    if (data.assignedApartadoId !== undefined) {
+      user.assignedApartadoId =
+        user.accessTarget === "apartado" && data.assignedApartadoId
+          ? String(data.assignedApartadoId).trim()
+          : undefined;
+    }
 
     saveUsersToDisk();
+
+    if (data.accessTarget !== undefined || data.assignedApartadoId !== undefined) {
+      try {
+        const linkTenant = user.assignedTenantId && user.assignedTenantId !== "*" ? user.assignedTenantId : resolveTenantId(request);
+        syncUserApartadoLink(
+          linkTenant,
+          user.id,
+          user.accessTarget || "system",
+          user.assignedApartadoId
+        );
+      } catch {}
+    }
 
     if (prevUserId !== user.id) {
       remapUserIdentityReferences(prevUserId, user.id, user.name, user.assignedTenantId);

@@ -10,6 +10,7 @@ import { resolveTenantId, loadTenantsFromDisk } from "../tenants/tenants.service
 import { SecurityService } from "../security/security.service";
 import { createMailAccount, updateMailAccount } from "../mail/mail.service";
 import { mailQuery } from "../mail/mail.db";
+import { syncUserApartadoLink } from "../apartados/apartados.routes";
 
 async function upsertEmployeeMailAccount(
   targetMailTenant: string,
@@ -75,6 +76,39 @@ async function upsertEmployeeMailAccount(
   } catch (mailErr: any) {
     return mailErr?.message || "No se pudo configurar la bandeja de correo del colaborador.";
   }
+}
+
+async function upsertEmployeeMultiTenantMails(
+  targetMailTenant: string,
+  emp: { id: number; name: string; email: string },
+  operatorUser: any,
+  mc: any,
+  sharedTenants?: string[],
+  additionalMailConfigs?: any[]
+): Promise<string> {
+  const warnings: string[] = [];
+  const primaryWarn = await upsertEmployeeMailAccount(targetMailTenant, emp, operatorUser, mc);
+  if (primaryWarn) warnings.push(primaryWarn);
+
+  if (mc && mc.enabled && Array.isArray(sharedTenants)) {
+    for (const rawT of sharedTenants) {
+      const t = String(rawT || "").trim().toLowerCase();
+      if (!t || t === targetMailTenant) continue;
+      const w = await upsertEmployeeMailAccount(t, emp, operatorUser, mc);
+      if (w) warnings.push(`[${t}] ${w}`);
+    }
+  }
+
+  if (Array.isArray(additionalMailConfigs)) {
+    for (const extra of additionalMailConfigs) {
+      const t = String(extra?.tenantId || "").trim().toLowerCase();
+      if (!t || !extra?.email) continue;
+      const w = await upsertEmployeeMailAccount(t, emp, operatorUser, { ...extra, enabled: true });
+      if (w) warnings.push(`[${t}] ${w}`);
+    }
+  }
+
+  return warnings.join(" | ");
 }
 import {
   extractCanonicalNumericId,
@@ -2191,8 +2225,33 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           birthDate: body.operatorBirthDate || body.birthDate || "",
           preferences: {},
           requireTotp: false,
+          accessTarget: (body as any).accessTarget === "apartado" ? "apartado" : "system",
+          assignedApartadoId:
+            (body as any).accessTarget === "apartado" && (body as any).assignedApartadoId
+              ? String((body as any).assignedApartadoId).trim()
+              : undefined,
         };
         usersList.push(operatorUser);
+      }
+
+      if (operatorUser) {
+        const extraTenants = [
+          ...(Array.isArray((body as any).mailSharedTenants) ? (body as any).mailSharedTenants : []),
+          ...(Array.isArray((body as any).additionalMailConfigs) ? (body as any).additionalMailConfigs.map((c: any) => c?.tenantId) : []),
+        ]
+          .map((t: any) => String(t || "").trim().toLowerCase())
+          .filter(Boolean);
+        if (extraTenants.length > 0 && Array.isArray(operatorUser.allowedTenants) && !operatorUser.allowedTenants.includes("*")) {
+          operatorUser.allowedTenants = Array.from(new Set([...operatorUser.allowedTenants, ...extraTenants]));
+        }
+        try {
+          syncUserApartadoLink(
+            operatorUser.assignedTenantId || targetTenant,
+            operatorUser.id,
+            operatorUser.accessTarget || "system",
+            operatorUser.assignedApartadoId
+          );
+        } catch {}
       }
 
       saveSystemUsersToDisk(usersList);
@@ -2253,7 +2312,14 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     const mc = (body as any).mailConfig;
     const targetMailTenant = (operatorUser?.assignedTenantId || assignedEmpTenant || "turbonetwork").toLowerCase();
-    const mailWarning = await upsertEmployeeMailAccount(targetMailTenant, newEmp, operatorUser, mc);
+    const mailWarning = await upsertEmployeeMultiTenantMails(
+      targetMailTenant,
+      newEmp,
+      operatorUser,
+      mc,
+      (body as any).mailSharedTenants,
+      (body as any).additionalMailConfigs
+    );
 
     // Sincronizar automáticamente con ZKTeco usando SIEMPRE el ID numérico único (nunca el PIN de login)
     if (body.syncWithZkteco !== false && body.status === "active") {
@@ -2407,13 +2473,53 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           birthDate: bodyAny.operatorBirthDate || body.birthDate || current.birthDate || "",
           preferences: {},
           requireTotp: false,
+          accessTarget: bodyAny.accessTarget === "apartado" ? "apartado" : "system",
+          assignedApartadoId:
+            bodyAny.accessTarget === "apartado" && bodyAny.assignedApartadoId
+              ? String(bodyAny.assignedApartadoId).trim()
+              : undefined,
         };
         usersList.push(operatorUser);
+      }
+
+      if (operatorUser) {
+        if (bodyAny.accessTarget !== undefined) {
+          operatorUser.accessTarget = bodyAny.accessTarget === "apartado" ? "apartado" : "system";
+          operatorUser.assignedApartadoId =
+            operatorUser.accessTarget === "apartado" && bodyAny.assignedApartadoId
+              ? String(bodyAny.assignedApartadoId).trim()
+              : undefined;
+        }
+        const extraTenants = [
+          ...(Array.isArray(bodyAny.mailSharedTenants) ? bodyAny.mailSharedTenants : []),
+          ...(Array.isArray(bodyAny.additionalMailConfigs) ? bodyAny.additionalMailConfigs.map((c: any) => c?.tenantId) : []),
+        ]
+          .map((t: any) => String(t || "").trim().toLowerCase())
+          .filter(Boolean);
+        if (extraTenants.length > 0 && Array.isArray(operatorUser.allowedTenants) && !operatorUser.allowedTenants.includes("*")) {
+          operatorUser.allowedTenants = Array.from(new Set([...operatorUser.allowedTenants, ...extraTenants]));
+        }
+        if (bodyAny.accessTarget !== undefined || bodyAny.assignedApartadoId !== undefined) {
+          try {
+            syncUserApartadoLink(
+              operatorUser.assignedTenantId || targetTenant,
+              operatorUser.id,
+              operatorUser.accessTarget || "system",
+              operatorUser.assignedApartadoId
+            );
+          } catch {}
+        }
       }
 
       saveSystemUsersToDisk(usersList);
     } else if (linkedIdx >= 0) {
       // Mantener sincronizados datos básicos del operador vinculado con el mismo ID único
+      const nextAccessTarget = bodyAny.accessTarget !== undefined
+        ? (bodyAny.accessTarget === "apartado" ? "apartado" : "system")
+        : usersList[linkedIdx].accessTarget;
+      const nextApartadoId = bodyAny.accessTarget !== undefined
+        ? (nextAccessTarget === "apartado" && bodyAny.assignedApartadoId ? String(bodyAny.assignedApartadoId).trim() : undefined)
+        : usersList[linkedIdx].assignedApartadoId;
       usersList[linkedIdx] = {
         ...usersList[linkedIdx],
         id: current.id,
@@ -2425,8 +2531,20 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         expectedCheckInTime: expectedTime || "08:00",
         expectedCheckOutTime: expectedOutTime || "17:00",
         isActive: (body.status || current.status) === "active",
+        accessTarget: nextAccessTarget,
+        assignedApartadoId: nextApartadoId,
       };
       operatorUser = usersList[linkedIdx];
+      if (bodyAny.accessTarget !== undefined || bodyAny.assignedApartadoId !== undefined) {
+        try {
+          syncUserApartadoLink(
+            operatorUser.assignedTenantId || current.tenantId || detectPrimaryLoaTenantId(),
+            operatorUser.id,
+            operatorUser.accessTarget || "system",
+            operatorUser.assignedApartadoId
+          );
+        } catch {}
+      }
       saveSystemUsersToDisk(usersList);
     }
 
@@ -2460,7 +2578,14 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     saveEmployeesToDisk(employeesStore);
 
     const targetMailTenant = (operatorUser?.assignedTenantId || updated.operatorTenantId || updated.tenantId || "turbonetwork").toLowerCase();
-    const mailWarning = await upsertEmployeeMailAccount(targetMailTenant, updated, operatorUser, bodyAny.mailConfig);
+    const mailWarning = await upsertEmployeeMultiTenantMails(
+      targetMailTenant,
+      updated,
+      operatorUser,
+      bodyAny.mailConfig,
+      bodyAny.mailSharedTenants,
+      bodyAny.additionalMailConfigs
+    );
 
     if (bodyAny.syncWithZkteco !== false) {
       try {

@@ -238,7 +238,7 @@ function getDefaultApartados(): ApartadoConfig[] {
   ];
 }
 
-function loadApartadosForTenant(tenantId: string): ApartadoConfig[] {
+export function loadApartadosForTenant(tenantId: string): ApartadoConfig[] {
   const filePath = getTenantFilePath(tenantId, "apartados.json");
   try {
     if (fs.existsSync(filePath)) {
@@ -255,7 +255,7 @@ function loadApartadosForTenant(tenantId: string): ApartadoConfig[] {
   return defaults;
 }
 
-function saveApartadosForTenant(tenantId: string, list: ApartadoConfig[]): void {
+export function saveApartadosForTenant(tenantId: string, list: ApartadoConfig[]): void {
   const filePath = getTenantFilePath(tenantId, "apartados.json");
   try {
     const dir = path.dirname(filePath);
@@ -264,6 +264,45 @@ function saveApartadosForTenant(tenantId: string, list: ApartadoConfig[]): void 
   } catch (err) {
     console.error(`[Apartados] Error guardando apartados para ${tenantId}:`, err);
   }
+}
+
+export function syncUserApartadoLink(
+  tenantId: string,
+  userId: number,
+  accessTarget: "system" | "apartado",
+  assignedApartadoId?: string
+): ApartadoConfig | null {
+  if (!Number.isFinite(userId) || userId <= 0) return null;
+  const apartados = loadApartadosForTenant(tenantId);
+  let linkedApartado: ApartadoConfig | null = null;
+  let changed = false;
+  const targetKey = (assignedApartadoId || "").trim();
+
+  for (const apt of apartados) {
+    if (!Array.isArray(apt.assignedUserIds)) {
+      apt.assignedUserIds = [];
+    }
+    const isTarget = accessTarget === "apartado" && targetKey !== "" && (apt.id === targetKey || apt.slug === targetKey);
+    const hasUser = apt.assignedUserIds.includes(userId);
+
+    if (isTarget) {
+      linkedApartado = apt;
+      if (!hasUser) {
+        apt.assignedUserIds.push(userId);
+        apt.updatedAt = new Date().toISOString();
+        changed = true;
+      }
+    } else if (hasUser) {
+      apt.assignedUserIds = apt.assignedUserIds.filter((id) => id !== userId);
+      apt.updatedAt = new Date().toISOString();
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    saveApartadosForTenant(tenantId, apartados);
+  }
+  return linkedApartado;
 }
 
 function loadCustomersForSeed(tenantId: string): any[] {
@@ -455,20 +494,32 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
 
   // 3. Consultar si un usuario/rol tiene acceso exclusivo a un apartado y obtener sus apps/permisos
   fastify.get("/apartados/my-access", async (request, reply) => {
-    const tenantId = resolveTenantId(request);
-    const query = request.query as { userId?: string; roleId?: string; slug?: string };
-    const userId = Number(query.userId || 0);
-    const roleId = Number(query.roleId || 0);
+    const query = request.query as { userId?: string; roleId?: string; slug?: string; tenantId?: string; apartadoId?: string };
+    const authAssignedTenant =
+      request.authUser?.assignedTenantId && request.authUser.assignedTenantId !== "*"
+        ? request.authUser.assignedTenantId.trim().toLowerCase()
+        : "";
+    const tenantId =
+      (query.tenantId && query.tenantId.trim().toLowerCase()) ||
+      authAssignedTenant ||
+      resolveTenantId(request);
+    const userId = Number(query.userId || request.authUser?.sub || 0);
+    const roleId = Number(query.roleId || request.authUser?.roleId || 0);
     const slug = (query.slug || "tecnicos").trim();
+    const apartadoId = (query.apartadoId || "").trim();
 
     const apartados = loadApartadosForTenant(tenantId);
-    let matched = apartados.find(
-      (a) =>
-        a.isActive &&
-        ((userId > 0 && a.assignedUserIds.includes(userId)) ||
-          (roleId > 0 && a.assignedRoleIds.includes(roleId)))
-    );
+    let matched: ApartadoConfig | undefined;
 
+    if (apartadoId) {
+      matched = apartados.find((a) => a.isActive && (a.id === apartadoId || a.slug === apartadoId));
+    }
+    if (!matched && userId > 0) {
+      matched = apartados.find((a) => a.isActive && Array.isArray(a.assignedUserIds) && a.assignedUserIds.includes(userId));
+    }
+    if (!matched && roleId > 0) {
+      matched = apartados.find((a) => a.isActive && Array.isArray(a.assignedRoleIds) && a.assignedRoleIds.includes(roleId));
+    }
     if (!matched && slug) {
       matched = apartados.find((a) => a.slug === slug) || apartados[0];
     }

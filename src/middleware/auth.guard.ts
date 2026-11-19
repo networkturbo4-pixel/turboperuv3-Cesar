@@ -93,6 +93,7 @@ const TENANT_AGNOSTIC_PREFIXES = [
   "/api/permissions",
   "/api/health",
   "/api/users/profile",
+  "/api/apartados/my-access",
 ];
 
 function checkRbacPermission(method: string, pathname: string, user: AuthenticatedUserPayload): string | null {

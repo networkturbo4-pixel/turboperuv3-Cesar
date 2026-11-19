@@ -8142,6 +8142,27 @@
                       <p class="text-[10px] text-slate-500 mt-1">El operador pertenecerá a esta sede y solo aparecerá en ella.</p>
                     </div>
 
+                    <!-- Regla de Ingreso: Sistema General vs. Apartado Específico -->
+                    <div class="p-3 rounded-xl bg-slate-100/80 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-2">
+                      <div class="flex items-center justify-between gap-2">
+                        <div>
+                          <span class="block text-[11px] font-semibold text-slate-700 dark:text-slate-200">Regla de Acceso al Iniciar Sesión</span>
+                          <span id="rnu-access-rule-label" class="text-[10px] text-slate-500 dark:text-slate-400">Ingresa al Sistema General</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                          <input type="checkbox" id="rnu-access-apartado-switch" onchange="toggleUserAccessApartadoSwitch('rnu', this.checked)" class="sr-only peer">
+                          <div class="w-10 h-5 bg-slate-300 dark:bg-slate-700 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                        </label>
+                      </div>
+                      <div id="rnu-apartado-box" class="hidden pt-2 border-t border-slate-200 dark:border-white/10 space-y-1">
+                        <label class="block text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">Conectar con Apartado Específico *</label>
+                        <select id="rnu-apartado-select" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                          <option value="">Cargando apartados...</option>
+                        </select>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400">Al iniciar sesión será redirigido automáticamente y conectado a este apartado.</p>
+                      </div>
+                    </div>
+
                     <div>
                       <div class="flex justify-between items-center mb-1">
                         <label class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">PIN de 8 Dígitos *</label>
@@ -12242,6 +12263,27 @@
 
         <input type="hidden" id="nmodal-require-totp" value="false">
 
+        <!-- Regla de Ingreso: Sistema General vs. Apartado Específico -->
+        <div class="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 space-y-2.5">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <span class="block text-[11px] font-semibold text-slate-200 uppercase tracking-wider">Regla de Acceso al Iniciar Sesión</span>
+              <span id="nmodal-access-rule-label" class="text-[11px] text-slate-400">Llevar al Sistema General</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" id="nmodal-access-apartado-switch" onchange="toggleUserAccessApartadoSwitch('nmodal', this.checked)" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+            </label>
+          </div>
+          <div id="nmodal-apartado-box" class="hidden pt-2.5 border-t border-white/10 space-y-1.5">
+            <label class="block text-[10px] font-semibold text-blue-400 uppercase tracking-wider">Conectar con Apartado Específico *</label>
+            <select id="nmodal-apartado-select" class="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-blue-500">
+              <option value="">Cargando apartados...</option>
+            </select>
+            <p class="text-[10px] text-slate-400">Al activar esta regla, el usuario se conectará directamente con el apartado seleccionado y al iniciar sesión irá directo a él.</p>
+          </div>
+        </div>
+
         <!-- Bloque: Bandeja de Correo Personal del Usuario -->
         <div class="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
           <label class="flex items-center justify-between cursor-pointer">
@@ -12450,6 +12492,27 @@
         </div>
 
         <input type="hidden" id="ue-require-totp" value="false">
+
+        <!-- Regla de Ingreso: Sistema General vs. Apartado Específico -->
+        <div class="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 space-y-2.5">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <span class="block text-[11px] font-semibold text-slate-200 uppercase tracking-wider">Regla de Acceso al Iniciar Sesión</span>
+              <span id="ue-access-rule-label" class="text-[11px] text-slate-400">Llevar al Sistema General</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" id="ue-access-apartado-switch" onchange="toggleUserAccessApartadoSwitch('ue', this.checked)" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+            </label>
+          </div>
+          <div id="ue-apartado-box" class="hidden pt-2.5 border-t border-white/10 space-y-1.5">
+            <label class="block text-[10px] font-semibold text-blue-400 uppercase tracking-wider">Conectar con Apartado Específico *</label>
+            <select id="ue-apartado-select" class="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-blue-500">
+              <option value="">Cargando apartados...</option>
+            </select>
+            <p class="text-[10px] text-slate-400">Al activar esta regla, el usuario se conectará directamente con el apartado seleccionado y al iniciar sesión irá directo a él.</p>
+          </div>
+        </div>
 
         <div id="ue-modal-error" class="text-xs text-rose-400 font-mono min-h-[18px]"></div>
       </form>
@@ -13740,6 +13803,10 @@
             <span>🛡️ 2. Operador del Sistema & Reloj ZKTeco</span>
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           </button>
+          <button type="button" id="emp-modal-tab-btn-conn" onclick="switchEmployeeModalTab('conn')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition flex items-center space-x-2">
+            <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+            <span>🔗 3. Conexiones del Sistema</span>
+          </button>
         </div>
         <span class="text-[10px] text-slate-400 font-mono hidden sm:inline-flex items-center gap-1.5">
           <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Sincronización Automática
@@ -14122,67 +14189,106 @@
                 <span>Este PIN es privado para ingresar a la web. En el reloj ZKTeco el usuario se guarda siempre con su <b>ID único numérico (DNI)</b> sin mezclar claves.</span>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- BANDEJA DE CORREO PERSONAL DEL COLABORADOR -->
-            <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-2.5">
-              <label class="flex items-center justify-between cursor-pointer">
-                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                  <span>📧 Configurar Bandeja de Correo Personal</span>
-                </span>
-                <input type="checkbox" id="emp-op-mail-enabled" onchange="toggleEmployeeOpMailSection(this.checked)" class="w-4 h-4 rounded accent-blue-600">
+        <!-- VISTA TAB 3: CONEXIONES DEL SISTEMA (REDIRECCIONAMIENTO & CORREOS MULTI-TENANT) -->
+        <div id="emp-modal-view-conn" class="hidden space-y-4">
+          <!-- REGLA DE REDIRECCIONAMIENTO AL INICIAR SESIÓN -->
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 space-y-3">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">Regla de Redireccionamiento al Entrar al Sistema</h4>
+                <span id="emp-op-access-rule-label" class="text-[11px] text-slate-500 dark:text-slate-400">Llevar al Sistema General</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" id="emp-op-access-apartado-switch" onchange="toggleUserAccessApartadoSwitch('emp-op', this.checked)" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-300 dark:bg-slate-700 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
               </label>
-              <p class="text-[10px] text-slate-500 dark:text-slate-400">Si se activa, el colaborador verá únicamente su propia bandeja de correos dentro de su sede asignada.</p>
+            </div>
+            <div id="emp-op-apartado-box" class="hidden pt-2.5 border-t border-slate-200 dark:border-white/10 space-y-1.5">
+              <label class="block text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Conectar con Apartado Específico *</label>
+              <select id="emp-op-apartado-select" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                <option value="">Cargando apartados...</option>
+              </select>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400">Al activar esta regla, el colaborador quedará conectado a este apartado y al iniciar sesión será redirigido directamente a él.</p>
+            </div>
+          </div>
 
-              <div id="emp-op-mail-fields" class="hidden space-y-2.5 pt-2 border-t border-slate-200 dark:border-white/10">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
-                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Correo del buzón (IMAP/SMTP)</label>
-                    <input type="email" id="emp-op-mail-email" onblur="autodetectEmployeeOpMail()" placeholder="colaborador@tuempresa.com" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
-                  </div>
-                  <div>
-                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Contraseña / App Password</label>
-                    <input type="password" id="emp-op-mail-pass" placeholder="••••••••••••" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div>
-                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Servidor IMAP</label>
-                    <input type="text" id="emp-op-mail-imap-host" placeholder="mail.tuempresa.com" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
-                  </div>
-                  <div>
-                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Puerto IMAP</label>
-                    <input type="number" id="emp-op-mail-imap-port" value="993" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
-                  </div>
-                  <div>
-                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Servidor SMTP</label>
-                    <input type="text" id="emp-op-mail-smtp-host" placeholder="mail.tuempresa.com" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
-                  </div>
-                  <div>
-                    <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Puerto SMTP</label>
-                    <input type="number" id="emp-op-mail-smtp-port" value="465" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
-                  </div>
-                </div>
-                <div class="flex flex-wrap items-center gap-4 text-[11px] text-slate-700 dark:text-slate-300">
-                  <label class="flex items-center gap-1.5"><input type="checkbox" id="emp-op-mail-imap-ssl" checked> IMAP SSL/TLS</label>
-                  <label class="flex items-center gap-1.5"><input type="checkbox" id="emp-op-mail-smtp-ssl" checked> SMTP SSL/TLS</label>
-                  <button type="button" onclick="testEmployeeOpMailConnection()" class="ml-auto px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white text-[11px] font-semibold transition">Probar conexión</button>
+          <!-- BANDEJA DE CORREO PERSONAL DEL COLABORADOR (MULTI-TENANT) -->
+          <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-3">
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                <span>📧 Configurar Bandeja de Correo Personal</span>
+              </span>
+              <input type="checkbox" id="emp-op-mail-enabled" onchange="toggleEmployeeOpMailSection(this.checked)" class="w-4 h-4 rounded accent-blue-600">
+            </label>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400">Si se activa, el colaborador verá su bandeja de correos dentro de su sede principal y podrás compartirla o agregar correos adicionales para otras empresas/tenants.</p>
+
+            <div id="emp-op-mail-fields" class="hidden space-y-3 pt-2.5 border-t border-slate-200 dark:border-white/10">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Correo del buzón principal (IMAP/SMTP)</label>
+                  <input type="email" id="emp-op-mail-email" onblur="autodetectEmployeeOpMail()" placeholder="colaborador@tuempresa.com" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
-                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Foto de perfil del buzón (opcional)</label>
-                  <div class="flex items-center gap-3">
-                    <img id="emp-op-mail-avatar-preview" src="" alt="" class="hidden w-9 h-9 rounded-full object-cover border border-slate-300 dark:border-white/15">
-                    <label class="cursor-pointer px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white text-[11px] font-semibold transition">
-                      📷 Subir foto
-                      <input type="file" id="emp-op-mail-avatar-file" accept="image/png,image/jpeg,image/webp,image/gif" onchange="handleEmployeeOpMailAvatarSelect(this)" class="hidden">
-                    </label>
-                    <input type="hidden" id="emp-op-mail-avatar-data" value="">
-                  </div>
+                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Contraseña / App Password</label>
+                  <input type="password" id="emp-op-mail-pass" placeholder="••••••••••••" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                </div>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div>
+                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Servidor IMAP</label>
+                  <input type="text" id="emp-op-mail-imap-host" placeholder="mail.tuempresa.com" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
-                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Firma de correo (HTML opcional)</label>
-                  <textarea id="emp-op-mail-sig" rows="2" placeholder="<p><strong>Nombre</strong><br>Área / Cargo</p>" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"></textarea>
+                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Puerto IMAP</label>
+                  <input type="number" id="emp-op-mail-imap-port" value="993" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
                 </div>
-                <div id="emp-op-mail-status" class="text-[11px] font-mono"></div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Servidor SMTP</label>
+                  <input type="text" id="emp-op-mail-smtp-host" placeholder="mail.tuempresa.com" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Puerto SMTP</label>
+                  <input type="number" id="emp-op-mail-smtp-port" value="465" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                </div>
+              </div>
+              <div class="flex flex-wrap items-center gap-4 text-[11px] text-slate-700 dark:text-slate-300">
+                <label class="flex items-center gap-1.5"><input type="checkbox" id="emp-op-mail-imap-ssl" checked> IMAP SSL/TLS</label>
+                <label class="flex items-center gap-1.5"><input type="checkbox" id="emp-op-mail-smtp-ssl" checked> SMTP SSL/TLS</label>
+                <button type="button" onclick="testEmployeeOpMailConnection()" class="ml-auto px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white text-[11px] font-semibold transition">Probar conexión</button>
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Foto de perfil del buzón (opcional)</label>
+                <div class="flex items-center gap-3">
+                  <img id="emp-op-mail-avatar-preview" src="" alt="" class="hidden w-9 h-9 rounded-full object-cover border border-slate-300 dark:border-white/15">
+                  <label class="cursor-pointer px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-white/10 hover:bg-blue-600 hover:text-white text-[11px] font-semibold transition">
+                    📷 Subir foto
+                    <input type="file" id="emp-op-mail-avatar-file" accept="image/png,image/jpeg,image/webp,image/gif" onchange="handleEmployeeOpMailAvatarSelect(this)" class="hidden">
+                  </label>
+                  <input type="hidden" id="emp-op-mail-avatar-data" value="">
+                </div>
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-500 dark:text-slate-400 mb-1">Firma de correo (HTML opcional)</label>
+                <textarea id="emp-op-mail-sig" rows="2" placeholder="<p><strong>Nombre</strong><br>Área / Cargo</p>" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"></textarea>
+              </div>
+              <div id="emp-op-mail-status" class="text-[11px] font-mono"></div>
+
+              <!-- Opciones Multi-Tenant: usar mismo correo o agregar correos adicionales -->
+              <div class="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2.5">
+                <div>
+                  <span class="block text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">Usar este mismo correo en otras empresas (Tenants)</span>
+                  <div id="emp-op-mail-shared-tenants" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Correos adicionales por empresa</span>
+                    <button type="button" onclick="addEmployeeAdditionalMailRow()" class="px-2.5 py-1 rounded-lg bg-blue-600/10 hover:bg-blue-600 text-blue-600 dark:text-blue-400 hover:text-white text-[10px] font-semibold transition">+ Agregar correo adicional</button>
+                  </div>
+                  <div id="emp-op-additional-mails-list" class="space-y-2"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -24603,16 +24709,30 @@
         } catch (e) {}
       }
       const loggedUser = data?.data?.user;
-      if (loggedUser && !loggedUser.isSuperAdmin && loggedUser.roleId !== 1) {
+      if (
+        loggedUser &&
+        loggedUser.accessTarget !== 'system' &&
+        (loggedUser.accessTarget === 'apartado' || (!loggedUser.isSuperAdmin && loggedUser.roleId !== 1))
+      ) {
         try {
-          const aptCheck = await fetch(`/api/apartados/my-access?userId=${encodeURIComponent(loggedUser.id || 0)}&roleId=${encodeURIComponent(loggedUser.roleId || 0)}`).then(r => r.json());
-          if (aptCheck && aptCheck.apartado && aptCheck.apartado.exclusiveAccess && (
-            (Array.isArray(aptCheck.apartado.assignedRoleIds) && aptCheck.apartado.assignedRoleIds.includes(Number(loggedUser.roleId))) ||
-            (Array.isArray(aptCheck.apartado.assignedUserIds) && aptCheck.apartado.assignedUserIds.includes(Number(loggedUser.id)))
-          )) {
-            localStorage.setItem('turbonetwork_session', JSON.stringify(loggedUser));
-            window.location.href = aptCheck.apartado.routePath || '/tech';
-            return;
+          const targetAptTenant = loggedUser.assignedTenantId || activeTenantId || 'turbonetwork';
+          const aptUrl = `/api/apartados/my-access?userId=${encodeURIComponent(loggedUser.id || 0)}&roleId=${encodeURIComponent(loggedUser.roleId || 0)}&tenantId=${encodeURIComponent(targetAptTenant)}${loggedUser.assignedApartadoId ? `&apartadoId=${encodeURIComponent(loggedUser.assignedApartadoId)}` : ''}`;
+          const aptRes = await fetch(aptUrl);
+          if (aptRes.ok) {
+            const aptCheck = await aptRes.json();
+            const isExplicitApartado = loggedUser.accessTarget === 'apartado' && aptCheck?.apartado;
+            const isExclusiveMatch = Boolean(
+              aptCheck?.apartado?.exclusiveAccess && (
+                (Array.isArray(aptCheck.apartado.assignedRoleIds) && aptCheck.apartado.assignedRoleIds.includes(Number(loggedUser.roleId))) ||
+                (Array.isArray(aptCheck.apartado.assignedUserIds) && aptCheck.apartado.assignedUserIds.includes(Number(loggedUser.id)))
+              )
+            );
+            if (isExplicitApartado || isExclusiveMatch) {
+              localStorage.setItem('turbonetwork_session', JSON.stringify(loggedUser));
+              const destRoute = aptCheck.apartado.routePath || (aptCheck.apartado.slug ? `/tech?apartado=${encodeURIComponent(aptCheck.apartado.slug)}` : '/tech');
+              window.location.href = destRoute;
+              return;
+            }
           }
         } catch (e) {}
       }
@@ -24944,6 +25064,14 @@
       } catch (e) {}
       document.documentElement.classList.remove('has-session');
       currentUser = null;
+      if (typeof messagesSseReconnectTimer !== 'undefined' && messagesSseReconnectTimer) {
+        clearTimeout(messagesSseReconnectTimer);
+        messagesSseReconnectTimer = null;
+      }
+      if (typeof messagesEventSource !== 'undefined' && messagesEventSource) {
+        try { messagesEventSource.close(); } catch (_) {}
+        messagesEventSource = null;
+      }
       applyBranding(appSettings);
       renderWorkspaceDropdown();
       currentPin = "";
@@ -28494,8 +28622,57 @@ Estamos atentos para brindarle asistencia inmediata.
 
     let currentUsersFilterTenant = null;
 
+    function toggleUserAccessApartadoSwitch(prefix, isApartado) {
+      const normPrefix = prefix === 'emodal' ? 'ue' : prefix;
+      const box = document.getElementById(`${normPrefix}-apartado-box`);
+      const label = document.getElementById(`${normPrefix}-access-rule-label`);
+      if (box) {
+        box.classList.toggle('hidden', !isApartado);
+      }
+      if (label) {
+        label.textContent = isApartado
+          ? 'Redirigir y conectar con Apartado Específico'
+          : (normPrefix === 'rnu' ? 'Ingresa al Sistema General' : 'Llevar al Sistema General');
+      }
+      if (isApartado) {
+        const tenantSelId = normPrefix === 'rnu' ? 'rnu-assigned-tenant' : (normPrefix === 'nmodal' ? 'nmodal-assigned-tenant' : 'emodal-assigned-tenant');
+        const targetTenant = document.getElementById(tenantSelId)?.value || (typeof activeTenantId !== 'undefined' ? activeTenantId : 'turbonetwork');
+        const sel = document.getElementById(`${normPrefix}-apartado-select`);
+        if (sel && (!sel.value || sel.options.length === 0 || sel.options[0]?.value === '')) {
+          loadApartadosForUserForm(normPrefix, targetTenant);
+        }
+      }
+    }
+
+    async function loadApartadosForUserForm(prefix, targetTenantId, selectedApartadoId = null) {
+      const normPrefix = prefix === 'emodal' ? 'ue' : prefix;
+      const sel = document.getElementById(`${normPrefix}-apartado-select`);
+      const tenant = (targetTenantId || (typeof activeTenantId !== 'undefined' ? activeTenantId : 'turbonetwork')).trim();
+      if (!sel || !tenant) return;
+      try {
+        const res = await fetch(`/api/apartados?tenantId=${encodeURIComponent(tenant)}`, {
+          headers: { 'x-tenant-id': tenant }
+        });
+        const data = await res.json();
+        const list = Array.isArray(data?.data) ? data.data : (Array.isArray(data?.apartados) ? data.apartados : []);
+        if (list.length === 0) {
+          sel.innerHTML = `<option value="">Sin apartados disponibles</option>`;
+          return;
+        }
+        const prev = selectedApartadoId || sel.value;
+        sel.innerHTML = list.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)} (${escapeHtml(a.routePath || '/tech')})</option>`).join('');
+        if (prev && list.some(a => a.id === prev || a.slug === prev)) {
+          const match = list.find(a => a.id === prev || a.slug === prev);
+          sel.value = match.id;
+        }
+      } catch (err) {
+        console.warn("Aviso al cargar apartados para formulario de usuario:", err);
+      }
+    }
+
     async function onUserFormTenantChange(prefix, targetTenantId) {
       if (!targetTenantId) return;
+      loadApartadosForUserForm(prefix, targetTenantId);
       try {
         const res = await fetch(`/api/roles?tenantId=${encodeURIComponent(targetTenantId)}`);
         const data = await res.json();
@@ -29432,6 +29609,9 @@ Estamos atentos para brindarle asistencia inmediata.
         nTotp.checked = false;
         updateFormTotpLabel('nmodal-totp-label', false);
       }
+      const nAptSwitch = document.getElementById('nmodal-access-apartado-switch');
+      if (nAptSwitch) nAptSwitch.checked = false;
+      toggleUserAccessApartadoSwitch('nmodal', false);
       populateRoleSelect(currentRoles);
       populateAssignedTenantSelects(true);
       const nTenant = document.getElementById('nmodal-assigned-tenant');
@@ -29688,6 +29868,15 @@ Estamos atentos para brindarle asistencia inmediata.
 
       const assignedTenantId = document.getElementById('nmodal-assigned-tenant')?.value || activeTenantId;
       const syncWithZkteco = document.getElementById('nmodal-sync-zkteco')?.checked !== false;
+      const isApartadoTarget = document.getElementById('nmodal-access-apartado-switch')?.checked === true;
+      const accessTarget = isApartadoTarget ? 'apartado' : 'system';
+      const assignedApartadoId = isApartadoTarget ? (document.getElementById('nmodal-apartado-select')?.value || '').trim() : undefined;
+      if (isApartadoTarget && !assignedApartadoId) {
+        errorDiv.textContent = "Selecciona el apartado específico al que se conectará el usuario";
+        btn.disabled = false;
+        btnText.textContent = "Registrar Operador";
+        return;
+      }
       const mailEnabled = document.getElementById('nmodal-mail-enabled')?.checked === true;
       const mailConfig = mailEnabled ? {
         enabled: true,
@@ -29723,6 +29912,8 @@ Estamos atentos para brindarle asistencia inmediata.
             assignedTenantId,
             requireTotp,
             syncWithZkteco,
+            accessTarget,
+            assignedApartadoId,
             mailConfig
           })
         });
@@ -29885,6 +30076,11 @@ Estamos atentos para brindarle asistencia inmediata.
         eTenant.value = targetUserTenant;
         onUserFormTenantChange('emodal', targetUserTenant);
       }
+      const isApt = user.accessTarget === 'apartado';
+      const ueAptSwitch = document.getElementById('ue-access-apartado-switch');
+      if (ueAptSwitch) ueAptSwitch.checked = isApt;
+      toggleUserAccessApartadoSwitch('ue', isApt);
+      loadApartadosForUserForm('ue', targetUserTenant, user.assignedApartadoId || null);
 
       document.getElementById('user-edit-modal').classList.remove('hidden');
     }
@@ -29975,6 +30171,15 @@ Estamos atentos para brindarle asistencia inmediata.
       btnText.textContent = "Guardando...";
 
       const assignedTenantId = document.getElementById('emodal-assigned-tenant')?.value || activeTenantId;
+      const isApartadoTarget = document.getElementById('ue-access-apartado-switch')?.checked === true;
+      const accessTarget = isApartadoTarget ? 'apartado' : 'system';
+      const assignedApartadoId = isApartadoTarget ? (document.getElementById('ue-apartado-select')?.value || '').trim() : null;
+      if (isApartadoTarget && !assignedApartadoId) {
+        errorDiv.textContent = "Selecciona el apartado específico al que se conectará el usuario";
+        btn.disabled = false;
+        btnText.textContent = "Guardar Cambios";
+        return;
+      }
       const payload = {
         name,
         dni,
@@ -29987,7 +30192,9 @@ Estamos atentos para brindarle asistencia inmediata.
         hireDate: hireDate,
         birthDate: birthDate,
         assignedTenantId: assignedTenantId,
-        requireTotp
+        requireTotp,
+        accessTarget,
+        assignedApartadoId
       };
       if (pin) {
         payload.pin = pin;
@@ -34171,6 +34378,11 @@ function copyRemoteScannerLink() {
       });
       const empMailStatus = document.getElementById('emp-op-mail-status');
       if (empMailStatus) empMailStatus.textContent = '';
+      const extraMailsList = document.getElementById('emp-op-additional-mails-list');
+      if (extraMailsList) extraMailsList.innerHTML = '';
+      const empAptSwitch = document.getElementById('emp-op-access-apartado-switch');
+      if (empAptSwitch) empAptSwitch.checked = false;
+      toggleUserAccessApartadoSwitch('emp-op', false);
       initEmployeeOpTenantAndRoles();
       populateAssignedTenantSelects(true).then(() => {
         const empTenSel = document.getElementById('emp-tenant');
@@ -34329,8 +34541,20 @@ function copyRemoteScannerLink() {
       });
       const editMailStatus = document.getElementById('emp-op-mail-status');
       if (editMailStatus) editMailStatus.textContent = '';
+      const extraMailsList = document.getElementById('emp-op-additional-mails-list');
+      if (extraMailsList) extraMailsList.innerHTML = '';
 
-      const empMailTenant = emp.operatorTenantId || emp.tenantId || activeTenantId;
+      const linkedOpUser = (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers))
+        ? currentUsers.find(u => Number(u.id) === Number(emp.operatorId || emp.id))
+        : null;
+      const empMailTenant = (emp.operatorTenantId || emp.tenantId || activeTenantId || 'turbonetwork').toLowerCase();
+      const isAptTarget = linkedOpUser?.accessTarget === 'apartado';
+      const empAptSwitch = document.getElementById('emp-op-access-apartado-switch');
+      if (empAptSwitch) empAptSwitch.checked = isAptTarget;
+      toggleUserAccessApartadoSwitch('emp-op', isAptTarget);
+      loadApartadosForUserForm('emp-op', empMailTenant, linkedOpUser?.assignedApartadoId || null);
+      renderEmployeeMailSharedTenants(empMailTenant);
+
       fetch('/api/mail/accounts', {
         headers: empMailTenant ? { 'x-tenant-id': empMailTenant } : {}
       }).then(r => r.json()).then(res => {
@@ -34351,6 +34575,30 @@ function copyRemoteScannerLink() {
           const passEl = document.getElementById('emp-op-mail-pass');
           if (passEl) passEl.placeholder = '(dejar vacío para mantener contraseña actual)';
         }
+        // Cargar buzones en otros tenants (compartidos o adicionales)
+        const otherTenants = (tenantsList || []).map(t => String(t.id).toLowerCase()).filter(tid => tid !== empMailTenant);
+        const sharedMatched = [];
+        otherTenants.forEach(tid => {
+          fetch(`/api/mail/accounts?tenantId=${encodeURIComponent(tid)}`, { headers: { 'x-tenant-id': tid } })
+            .then(r => r.json())
+            .then(otherRes => {
+              const otherAcc = (otherRes?.accounts || []).find(a => Number(a.ownerUserId) === Number(emp.id) || (emp.operatorId && Number(a.ownerUserId) === Number(emp.operatorId)));
+              if (!otherAcc) return;
+              if (acc && String(otherAcc.email).toLowerCase() === String(acc.email).toLowerCase()) {
+                sharedMatched.push(tid);
+                renderEmployeeMailSharedTenants(empMailTenant, sharedMatched);
+              } else {
+                addEmployeeAdditionalMailRow({
+                  tenantId: tid,
+                  email: otherAcc.email,
+                  imapHost: otherAcc.imapHost,
+                  imapPort: otherAcc.imapPort,
+                  smtpHost: otherAcc.smtpHost,
+                  smtpPort: otherAcc.smtpPort,
+                });
+              }
+            }).catch(() => {});
+        });
       }).catch(() => {});
 
       modal.classList.remove('hidden');
@@ -34391,24 +34639,83 @@ function copyRemoteScannerLink() {
     function switchEmployeeModalTab(tab) {
       const hrView = document.getElementById('emp-modal-view-hr');
       const opView = document.getElementById('emp-modal-view-op');
+      const connView = document.getElementById('emp-modal-view-conn');
       const btnHr = document.getElementById('emp-modal-tab-btn-hr');
       const btnOp = document.getElementById('emp-modal-tab-btn-op');
+      const btnConn = document.getElementById('emp-modal-tab-btn-conn');
 
       const activeClass = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-2 btn-brand-primary shadow-xs";
       const inactiveClass = "px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition flex items-center space-x-2";
 
+      if (hrView) hrView.classList.toggle('hidden', tab !== 'hr');
+      if (opView) opView.classList.toggle('hidden', tab !== 'op');
+      if (connView) connView.classList.toggle('hidden', tab !== 'conn');
+      if (btnHr) btnHr.className = tab === 'hr' ? activeClass : inactiveClass;
+      if (btnOp) btnOp.className = tab === 'op' ? activeClass : inactiveClass;
+      if (btnConn) btnConn.className = tab === 'conn' ? activeClass : inactiveClass;
+
       if (tab === 'op') {
-        if (hrView) hrView.classList.add('hidden');
-        if (opView) opView.classList.remove('hidden');
-        if (btnHr) btnHr.className = inactiveClass;
-        if (btnOp) btnOp.className = activeClass;
         syncEmployeeToOperatorFields();
-      } else {
-        if (hrView) hrView.classList.remove('hidden');
-        if (opView) opView.classList.add('hidden');
-        if (btnHr) btnHr.className = activeClass;
-        if (btnOp) btnOp.className = inactiveClass;
+      } else if (tab === 'conn') {
+        const opTenant = document.getElementById('emp-op-tenant')?.value || activeTenantId || 'turbonetwork';
+        renderEmployeeMailSharedTenants(opTenant);
+        const sel = document.getElementById('emp-op-apartado-select');
+        if (sel && (!sel.value || sel.options.length === 0 || sel.options[0]?.value === '')) {
+          loadApartadosForUserForm('emp-op', opTenant);
+        }
       }
+    }
+
+    function renderEmployeeMailSharedTenants(primaryTenantId, preselectedTenants = []) {
+      const container = document.getElementById('emp-op-mail-shared-tenants');
+      if (!container) return;
+      const primary = String(primaryTenantId || activeTenantId || 'turbonetwork').toLowerCase();
+      const currentChecked = preselectedTenants.length > 0
+        ? preselectedTenants.map(t => String(t).toLowerCase())
+        : Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value.toLowerCase());
+      const others = (tenantsList || []).filter(t => String(t.id).toLowerCase() !== primary);
+      if (others.length === 0) {
+        container.innerHTML = `<span class="text-[10px] text-slate-400">No hay otras empresas/tenants configurados.</span>`;
+        return;
+      }
+      container.innerHTML = others.map(t => {
+        const tid = String(t.id).toLowerCase();
+        const checked = currentChecked.includes(tid) ? 'checked' : '';
+        return `<label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 text-[11px] text-slate-700 dark:text-slate-200 cursor-pointer">
+          <input type="checkbox" class="emp-op-mail-shared-chk accent-blue-600" value="${escapeHtml(tid)}" ${checked}>
+          <span>🏢 ${escapeHtml(t.name)}</span>
+        </label>`;
+      }).join('');
+    }
+
+    function addEmployeeAdditionalMailRow(preset = {}) {
+      const listEl = document.getElementById('emp-op-additional-mails-list');
+      if (!listEl) return;
+      const tenants = tenantsList || [];
+      const primary = String(document.getElementById('emp-op-tenant')?.value || activeTenantId || 'turbonetwork').toLowerCase();
+      const optionsHtml = tenants.map(t => {
+        const tid = String(t.id).toLowerCase();
+        const sel = (preset.tenantId ? String(preset.tenantId).toLowerCase() === tid : tid !== primary) ? 'selected' : '';
+        return `<option value="${escapeHtml(tid)}" ${sel}>🏢 ${escapeHtml(t.name)}</option>`;
+      }).join('');
+      const row = document.createElement('div');
+      row.className = 'emp-extra-mail-row p-2.5 rounded-lg bg-white dark:bg-slate-900/70 border border-slate-300 dark:border-white/10 space-y-2';
+      row.innerHTML = `
+        <div class="flex items-center justify-between gap-2">
+          <select class="emp-extra-mail-tenant flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1 text-[11px] text-slate-900 dark:text-slate-100">${optionsHtml}</select>
+          <button type="button" onclick="this.closest('.emp-extra-mail-row').remove()" class="px-2 py-1 rounded bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white text-[10px] font-semibold transition">Quitar</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <input type="email" class="emp-extra-mail-email bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1 text-[11px] text-slate-900 dark:text-slate-100" placeholder="correo@otraempresa.com" value="${escapeHtml(preset.email || '')}">
+          <input type="password" class="emp-extra-mail-pass bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1 text-[11px] text-slate-900 dark:text-slate-100" placeholder="${preset.email ? '(dejar vacío para mantener clave)' : 'Contraseña / App Password'}" value="">
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          <input type="text" class="emp-extra-mail-imap-host bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1 text-[10px] text-slate-900 dark:text-slate-100" placeholder="IMAP host" value="${escapeHtml(preset.imapHost || '')}">
+          <input type="number" class="emp-extra-mail-imap-port bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1 text-[10px] text-slate-900 dark:text-slate-100" value="${preset.imapPort || 993}">
+          <input type="text" class="emp-extra-mail-smtp-host bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1 text-[10px] text-slate-900 dark:text-slate-100" placeholder="SMTP host" value="${escapeHtml(preset.smtpHost || '')}">
+          <input type="number" class="emp-extra-mail-smtp-port bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-2 py-1 text-[10px] text-slate-900 dark:text-slate-100" value="${preset.smtpPort || 465}">
+        </div>`;
+      listEl.appendChild(row);
     }
 
     function toggleEmployeeOpFields(enabled) {
@@ -34478,6 +34785,8 @@ function copyRemoteScannerLink() {
 
     async function onEmployeeOpTenantChange(targetTenantId, selectedRoleId = null) {
       if (!targetTenantId) return;
+      loadApartadosForUserForm('emp-op', targetTenantId);
+      renderEmployeeMailSharedTenants(targetTenantId);
       try {
         const res = await fetch(`/api/roles?tenantId=${encodeURIComponent(targetTenantId)}`);
         const data = await res.json();
@@ -34512,9 +34821,17 @@ function copyRemoteScannerLink() {
       const birthDate = document.getElementById('rnu-birth-date').value;
       const pin = document.getElementById('rnu-pin').value.trim();
       const assignedTenantId = document.getElementById('rnu-assigned-tenant')?.value || activeTenantId;
+      const isApartadoTarget = document.getElementById('rnu-access-apartado-switch')?.checked === true;
+      const accessTarget = isApartadoTarget ? 'apartado' : 'system';
+      const assignedApartadoId = isApartadoTarget ? (document.getElementById('rnu-apartado-select')?.value || '').trim() : undefined;
 
       if (!/^\d{6,9}$/.test(dni)) {
         statusDiv.textContent = "Ingresa un DNI numérico válido (ej. 8 dígitos)";
+        statusDiv.className = "text-xs text-rose-400 font-mono";
+        return;
+      }
+      if (isApartadoTarget && !assignedApartadoId) {
+        statusDiv.textContent = "Selecciona el apartado específico al que se conectará el usuario";
         statusDiv.className = "text-xs text-rose-400 font-mono";
         return;
       }
@@ -34538,7 +34855,9 @@ function copyRemoteScannerLink() {
             hireDate,
             birthDate,
             assignedTenantId,
-            syncWithZkteco: true
+            syncWithZkteco: true,
+            accessTarget,
+            assignedApartadoId
           })
         });
         const data = await res.json();
@@ -34547,6 +34866,9 @@ function copyRemoteScannerLink() {
           statusDiv.textContent = "Operador registrado y sincronizado con ZKTeco";
           statusDiv.className = "text-xs dynamic-accent-text font-mono";
           document.getElementById('rrhh-new-user-form').reset();
+          const rnuAptSwitch = document.getElementById('rnu-access-apartado-switch');
+          if (rnuAptSwitch) rnuAptSwitch.checked = false;
+          toggleUserAccessApartadoSwitch('rnu', false);
           const rnuAssigned = document.getElementById('rnu-assigned-tenant');
           if (rnuAssigned) rnuAssigned.value = activeTenantId;
           generateRandomPinForRRHH();
@@ -34645,22 +34967,47 @@ function copyRemoteScannerLink() {
         payload.operatorHireDate = document.getElementById('emp-op-hire-date')?.value || payload.hireDate;
         payload.operatorBirthDate = document.getElementById('emp-op-birth-date')?.value || '';
         payload.syncWithZkteco = true;
-        if (document.getElementById('emp-op-mail-enabled')?.checked) {
-          payload.mailConfig = {
-            enabled: true,
-            email: (document.getElementById('emp-op-mail-email')?.value || payload.operatorEmail || payload.email).trim(),
-            displayName: payload.operatorName || payload.name,
-            password: document.getElementById('emp-op-mail-pass')?.value || '',
-            imapHost: (document.getElementById('emp-op-mail-imap-host')?.value || '').trim(),
-            imapPort: Number(document.getElementById('emp-op-mail-imap-port')?.value || 993),
-            imapSecure: document.getElementById('emp-op-mail-imap-ssl')?.checked !== false,
-            smtpHost: (document.getElementById('emp-op-mail-smtp-host')?.value || '').trim(),
-            smtpPort: Number(document.getElementById('emp-op-mail-smtp-port')?.value || 465),
-            smtpSecure: document.getElementById('emp-op-mail-smtp-ssl')?.checked !== false,
-            signatureHtml: document.getElementById('emp-op-mail-sig')?.value || '',
-            avatarDataUrl: document.getElementById('emp-op-mail-avatar-data')?.value || undefined,
-          };
-        }
+      }
+
+      const empIsApartado = document.getElementById('emp-op-access-apartado-switch')?.checked === true;
+      payload.accessTarget = empIsApartado ? 'apartado' : 'system';
+      payload.assignedApartadoId = empIsApartado ? (document.getElementById('emp-op-apartado-select')?.value || '').trim() : undefined;
+      if (empIsApartado && !payload.assignedApartadoId) {
+        errBox.textContent = 'Selecciona el apartado específico en "3. Conexiones del Sistema".';
+        switchEmployeeModalTab('conn');
+        btn.disabled = false;
+        btnText.textContent = id ? 'Guardar Cambios' : 'Guardar Colaborador';
+        return;
+      }
+
+      if (document.getElementById('emp-op-mail-enabled')?.checked) {
+        payload.mailConfig = {
+          enabled: true,
+          email: (document.getElementById('emp-op-mail-email')?.value || payload.operatorEmail || payload.email).trim(),
+          displayName: payload.operatorName || payload.name,
+          password: document.getElementById('emp-op-mail-pass')?.value || '',
+          imapHost: (document.getElementById('emp-op-mail-imap-host')?.value || '').trim(),
+          imapPort: Number(document.getElementById('emp-op-mail-imap-port')?.value || 993),
+          imapSecure: document.getElementById('emp-op-mail-imap-ssl')?.checked !== false,
+          smtpHost: (document.getElementById('emp-op-mail-smtp-host')?.value || '').trim(),
+          smtpPort: Number(document.getElementById('emp-op-mail-smtp-port')?.value || 465),
+          smtpSecure: document.getElementById('emp-op-mail-smtp-ssl')?.checked !== false,
+          signatureHtml: document.getElementById('emp-op-mail-sig')?.value || '',
+          avatarDataUrl: document.getElementById('emp-op-mail-avatar-data')?.value || undefined,
+        };
+        payload.mailSharedTenants = Array.from(document.querySelectorAll('.emp-op-mail-shared-chk:checked')).map(c => c.value);
+        payload.additionalMailConfigs = Array.from(document.querySelectorAll('.emp-extra-mail-row')).map(row => ({
+          tenantId: row.querySelector('.emp-extra-mail-tenant')?.value || '',
+          email: (row.querySelector('.emp-extra-mail-email')?.value || '').trim(),
+          displayName: payload.operatorName || payload.name,
+          password: row.querySelector('.emp-extra-mail-pass')?.value || '',
+          imapHost: (row.querySelector('.emp-extra-mail-imap-host')?.value || '').trim(),
+          imapPort: Number(row.querySelector('.emp-extra-mail-imap-port')?.value || 993),
+          imapSecure: true,
+          smtpHost: (row.querySelector('.emp-extra-mail-smtp-host')?.value || '').trim(),
+          smtpPort: Number(row.querySelector('.emp-extra-mail-smtp-port')?.value || 465),
+          smtpSecure: true,
+        })).filter(c => c.tenantId && c.email);
       }
 
       const url = id ? `/api/rrhh/employees/${id}` : '/api/rrhh/employees';
@@ -53381,6 +53728,18 @@ function initMessagesRealtime() {
       }
     } catch (_) {}
   }
+  if (!myId) {
+    if (messagesSseReconnectTimer) {
+      clearTimeout(messagesSseReconnectTimer);
+      messagesSseReconnectTimer = null;
+    }
+    if (messagesEventSource) {
+      try { messagesEventSource.close(); } catch (_) {}
+      messagesEventSource = null;
+    }
+    return;
+  }
+
   const tenant = (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork';
 
   if (messagesEventSource) {
@@ -53390,9 +53749,7 @@ function initMessagesRealtime() {
   }
 
   try {
-    const sseUrl = myId 
-      ? `/api/messages/events?userId=${encodeURIComponent(myId)}&tenantId=${encodeURIComponent(tenant)}` 
-      : `/api/messages/events?tenantId=${encodeURIComponent(tenant)}`;
+    const sseUrl = `/api/messages/events?userId=${encodeURIComponent(myId)}&tenantId=${encodeURIComponent(tenant)}`;
     messagesEventSource = new EventSource(sseUrl);
     messagesEventSource._connectedUserId = myId;
 
@@ -53528,6 +53885,14 @@ function initMessagesRealtime() {
       if (messagesEventSource) {
         messagesEventSource.close();
         messagesEventSource = null;
+      }
+      const hasActiveSess = Boolean(
+        (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ||
+        localStorage.getItem('turbonetwork_session')
+      );
+      if (!hasActiveSess) {
+        clearTimeout(messagesSseReconnectTimer);
+        return;
       }
       messagesSseRetryCount++;
       const delay = Math.min(25000, 4000 + messagesSseRetryCount * 2000);
@@ -62824,7 +63189,11 @@ setInterval(syncMessagesInProduction, 15000);
       window.addEventListener('offline', () => showPwaToast(null, 'offline'));
       window.addEventListener('online', () => {
         showPwaToast(null, 'online');
-        if (typeof initMessagesRealtime === 'function') {
+        const hasActiveSess = Boolean(
+          (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.username)) ||
+          localStorage.getItem('turbonetwork_session')
+        );
+        if (hasActiveSess && typeof initMessagesRealtime === 'function') {
           messagesSseRetryCount = 0;
           initMessagesRealtime();
         }
