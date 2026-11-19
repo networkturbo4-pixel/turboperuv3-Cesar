@@ -2139,10 +2139,20 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const publicToken = `emp-${slugName}-${randomHex}`;
     const totpSecret = "JBSWY3DPEHPK3PXP";
 
-    // Sincronización unificada de Operador Web (mismo ID numérico, PIN de acceso cifrado y separado de ZKTeco)
+    // Sincronización unificada de Operador Web (mismo ID numérico, PIN de acceso = DNI del expediente)
     let operatorCreated = false;
-    const operatorPin = body.operatorPin ? String(body.operatorPin).trim() : "";
+    const rawDniPin = String(body.dni || canonicalId || "").trim();
+    const operatorPin = /^\d{6,9}$/.test(rawDniPin)
+      ? rawDniPin
+      : (body.operatorPin ? String(body.operatorPin).trim() : "");
     let operatorUser: any = null;
+
+    if (body.createOperator && !operatorPin) {
+      return reply.status(400).send({
+        success: false,
+        message: "El colaborador debe tener un DNI numérico válido (6 a 9 dígitos) para habilitar su acceso.",
+      });
+    }
 
     if (body.createOperator && operatorPin) {
       const targetTenant = (body.operatorTenantId || (request.headers["x-tenant-id"] as string) || "turbonetwork").trim().toLowerCase();
@@ -2363,7 +2373,10 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const bodyAny = request.body as any;
     const cleanDni = body.dni !== undefined ? String(body.dni).trim() : String(current.dni || "").trim();
     const zkUserIdStr = toZktecoPin(current.id);
-    const operatorPin = bodyAny.operatorPin ? String(bodyAny.operatorPin).trim() : "";
+    const rawDniPin = String(body.dni || current.dni || current.id || "").trim();
+    const operatorPin = /^\d{6,9}$/.test(rawDniPin)
+      ? rawDniPin
+      : (bodyAny.operatorPin ? String(bodyAny.operatorPin).trim() : "");
     let operatorUser: any = null;
 
     let expectedTime = body.expectedCheckInTime || current.expectedCheckInTime;

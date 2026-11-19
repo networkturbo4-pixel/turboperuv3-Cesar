@@ -1552,6 +1552,7 @@ export async function sendWhatsAppQrReaction(
 export async function triggerManualWhatsAppFullSync(): Promise<{
   synced: boolean;
   totalConversations: number;
+  message?: string;
 }> {
   try {
     touchSync(3000);

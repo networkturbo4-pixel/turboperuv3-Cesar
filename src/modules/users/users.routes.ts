@@ -361,6 +361,27 @@ function loadUsersFromDisk(): SystemUser[] {
             }
           }
 
+          // Regla global: para operadores regulares (no SuperAdmin), el PIN de acceso web es su DNI
+          if (!u.isSuperAdmin && u.id !== 1) {
+            const rawDni = String(u.dni || (Number(u.id) >= 100000 ? u.id : "") || u.biometricPin || "").trim();
+            if (/^\d{6,9}$/.test(rawDni)) {
+              const targetLookup = SecurityService.hmacPinLookup(rawDni);
+              const hasConflict = parsed.some(
+                (other: any) =>
+                  other !== u &&
+                  other.id !== u.id &&
+                  other.pinLookup === targetLookup
+              );
+              if (!hasConflict && u.pinLookup !== targetLookup) {
+                if (!u.dni) u.dni = rawDni;
+                u.pinHash = SecurityService.hashPin(rawDni);
+                u.pinLookup = targetLookup;
+                delete u.pin;
+                changed = true;
+              }
+            }
+          }
+
           // Extraer avatares Base64 incrustados en JSON hacia data/uploads/avatars
           if (typeof u.avatar === "string" && u.avatar.startsWith("data:image/") && !u.avatar.startsWith("data:image/svg+xml")) {
             const externalUrl = MediaService.externalizeAvatarIfNeeded(u.avatar, `usr${u.id || ""}`);
@@ -481,7 +502,7 @@ const createUserSchema = z.object({
   name: z.string().min(3),
   email: z.string().email(),
   dni: z.string().nullable().optional(),
-  pin: z.string().length(8).regex(/^\d{8}$/),
+  pin: z.string().regex(/^\d{6,9}$/).optional(),
   roleId: z.number().int().positive(),
   workSchedule: z.string().nullable().optional(),
   expectedCheckInTime: z.string().nullable().optional(),
@@ -520,7 +541,7 @@ const updateUserSchema = z.object({
   email: z.string().email().optional(),
   dni: z.string().nullable().optional(),
   avatar: z.string().nullable().optional(),
-  pin: z.string().length(8).regex(/^\d{8}$/).optional(),
+  pin: z.string().regex(/^\d{6,9}$/).optional(),
   roleId: z.number().int().positive().optional(),
   isActive: z.boolean().optional(),
   workSchedule: z.string().nullable().optional(),
@@ -563,7 +584,7 @@ const createRoleSchema = z.object({
   allowedModules: z.array(z.string()).optional(),
 });
 
-function syncUserAvatarToEmployee(user: UserRecord) {
+function syncUserAvatarToEmployee(user: SystemUser) {
   if (!user.avatar) return;
   try {
     const empFile = path.join(DATA_DIR, "employees.json");
@@ -1201,13 +1222,24 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ success: false, message: "Ya existe un usuario con este correo" });
     }
 
-    const candidateLookup = SecurityService.hmacPinLookup(parse.data.pin);
+    const cleanDniInput = parse.data.dni ? String(parse.data.dni).trim() : "";
+    const effectivePin = /^\d{6,9}$/.test(cleanDniInput)
+      ? cleanDniInput
+      : (parse.data.pin ? String(parse.data.pin).trim() : "");
+    if (!/^\d{6,9}$/.test(effectivePin)) {
+      return reply.status(400).send({
+        success: false,
+        message: "Ingresa un DNI numérico válido (6 a 9 dígitos) para el acceso del operador",
+      });
+    }
+
+    const candidateLookup = SecurityService.hmacPinLookup(effectivePin);
     if (
       usersStore.some(
-        (u) => u.pinLookup === candidateLookup || SecurityService.verifyPin(parse.data.pin, u).valid
+        (u) => u.pinLookup === candidateLookup || SecurityService.verifyPin(effectivePin, u).valid
       )
     ) {
-      return reply.status(400).send({ success: false, message: "Este PIN ya está asignado a otro operador" });
+      return reply.status(400).send({ success: false, message: "Este DNI/PIN ya está asignado a otro operador" });
     }
 
     // Vincular automáticamente con employees.json si coincide por DNI o correo (un solo ID canónico)
@@ -1256,7 +1288,7 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       biometricPin: zkUserIdStr,
       name: parse.data.name,
       email: parse.data.email,
-      pinHash: SecurityService.hashPin(parse.data.pin),
+      pinHash: SecurityService.hashPin(effectivePin),
       pinLookup: candidateLookup,
       roleId: role.id,
       roleName: role.name,
@@ -1460,9 +1492,20 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
         user.dni = cleanDni;
         if (user.id === 1) {
           user.biometricPin = toZktecoPin(dniNum);
-        } else if (user.id !== dniNum) {
-          user.id = dniNum;
-          user.biometricPin = toZktecoPin(dniNum);
+        } else {
+          if (user.id !== dniNum) {
+            user.id = dniNum;
+            user.biometricPin = toZktecoPin(dniNum);
+          }
+          if (!user.isSuperAdmin && /^\d{6,9}$/.test(cleanDni)) {
+            const dniLookup = SecurityService.hmacPinLookup(cleanDni);
+            if (user.pinLookup !== dniLookup) {
+              user.pinHash = SecurityService.hashPin(cleanDni);
+              user.pinLookup = dniLookup;
+              delete user.pin;
+              shouldRevokeSessions = true;
+            }
+          }
         }
       }
     }

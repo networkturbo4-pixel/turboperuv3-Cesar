@@ -115,7 +115,7 @@
       this.options = Object.assign(this.options, opts);
       this.injectUI();
       this.bindGlobalEvents();
-      console.log('⚡ [TurboCalls] Módulo de llamadas WebRTC inicializado (Usuario ID: ' + this.getUserId() + ')');
+      console.log('⚡ [TurboCalls] Módulo de llamadas WebRTC inicializado');
     },
 
     // ==========================================
