@@ -12566,7 +12566,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Teléfono / Celular *</label>
-            <input type="text" id="nc-phone" required placeholder="Ej: +51 987 654 321" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs">
+            <input type="text" id="nc-customer-phone" required placeholder="Ej: +51 987 654 321" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs">
           </div>
           <div>
             <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Correo Electrónico</label>
@@ -25561,7 +25561,7 @@
       const payload = {
         fullName: document.getElementById('nc-fullname').value.trim(),
         identification: document.getElementById('nc-identification').value.trim(),
-        phone: document.getElementById('nc-phone').value.trim(),
+        phone: document.getElementById('nc-customer-phone').value.trim(),
         email: document.getElementById('nc-email').value.trim() || undefined,
         address: document.getElementById('nc-address').value.trim(),
         serviceId: serviceId || undefined,
@@ -25586,9 +25586,11 @@
           await loadCustomers();
         } else {
           errBox.textContent = data.message || (data.errors ? JSON.stringify(data.errors) : 'Error al registrar cliente.');
+          errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       } catch (err) {
         errBox.textContent = 'Error de conexión con el servidor.';
+        errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       } finally {
         btn.disabled = false;
         btnText.textContent = 'Guardar Cliente';
