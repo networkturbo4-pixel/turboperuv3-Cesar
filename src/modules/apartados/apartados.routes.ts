@@ -918,14 +918,21 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
       address: body.locationLabel || "App Móvil TurboTech GPS",
     };
 
+    const isNewRecord = !record;
     if (!record) {
+      if (action !== "check-in") {
+        return reply.status(400).send({
+          success: false,
+          message: "Primero debes marcar tu Entrada GPS antes de registrar almuerzo o salida.",
+        });
+      }
       const nextId = records.length > 0 ? Math.max(...records.map((r) => Number(r.id) || 0)) + 1 : 1;
       record = {
         id: nextId,
         employeeId: empId,
         employeeName: empName,
         tenantId,
-        tenantName: "TurboNetwork",
+        tenantName: tenantId,
         isShared: true,
         date: peruDate,
         checkIn: now.toISOString(),
@@ -941,24 +948,50 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
         manualApprovalStatus: "not_required",
         status: "on_time",
         minutesLate: 0,
+        lastAttendanceActionAt: now.toISOString(),
       };
       records.unshift(record);
     } else {
+      const lastActionMs = record.lastAttendanceActionAt ? new Date(record.lastAttendanceActionAt).getTime() : 0;
+      if (lastActionMs && now.getTime() - lastActionMs < 60_000) {
+        const waitSec = Math.ceil((60_000 - (now.getTime() - lastActionMs)) / 1000);
+        return reply.status(429).send({
+          success: false,
+          message: `Espera ${waitSec}s antes de registrar la siguiente marcación.`,
+        });
+      }
+      if (action === "check-in" && record.checkInTime) {
+        return reply.status(400).send({ success: false, message: "Ya registraste tu entrada de hoy." });
+      }
+      if (action === "lunch-start") {
+        if (!record.checkInTime) return reply.status(400).send({ success: false, message: "Primero debes marcar tu entrada." });
+        if (record.lunchStart) return reply.status(400).send({ success: false, message: "Ya registraste el inicio de almuerzo." });
+      }
+      if (action === "lunch-end") {
+        if (!record.lunchStart) return reply.status(400).send({ success: false, message: "Primero debes iniciar tu almuerzo." });
+        if (record.lunchEndTime) return reply.status(400).send({ success: false, message: "Ya registraste el fin de almuerzo." });
+      }
+      if (action === "check-out") {
+        if (!record.checkInTime) return reply.status(400).send({ success: false, message: "Primero debes marcar tu entrada." });
+        if (record.checkOut || record.checkOutTime) return reply.status(400).send({ success: false, message: "Ya registraste tu salida de hoy." });
+      }
       record.location = locObj;
       record.gpsVerified = true;
+      record.lastAttendanceActionAt = now.toISOString();
     }
 
     let message = `Marcación GPS registrada a las ${peruTime}`;
     if (action === "check-in") {
-      record.checkIn = now.toISOString();
-      record.checkInTime = peruTime;
-      record.checkOut = null;
+      if (!isNewRecord) {
+        record.checkIn = now.toISOString();
+        record.checkInTime = peruTime;
+        record.checkOut = null;
+      }
       message = `✓ Entrada GPS registrada a las ${peruTime}`;
     } else if (action === "lunch-start") {
       record.lunchStart = peruTime;
       message = `🍴 Inicio de almuerzo registrado a las ${peruTime}`;
     } else if (action === "lunch-end") {
-      if (!record.lunchStart) record.lunchStart = peruTime;
       record.lunchEndTime = peruTime;
       message = `✓ Fin de almuerzo registrado a las ${peruTime}`;
     } else if (action === "check-out") {

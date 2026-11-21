@@ -1052,7 +1052,17 @@
       } catch (e) {}
     }
 
+    let attendanceSubmitting = false;
+
     async function submitTechAttendance(action) {
+      if (attendanceSubmitting) return;
+      if (action === 'check-out') {
+        const ok = window.confirm('¿Confirmas marcar tu SALIDA de turno por hoy? Esta acción cierra tu jornada.');
+        if (!ok) return;
+      }
+      attendanceSubmitting = true;
+      const hwButtons = document.querySelectorAll('#tech-hw-actions button');
+      hwButtons.forEach((b) => { b.disabled = true; });
       try {
         const empId = techUser?.id || 1;
         const payload = {
@@ -1069,6 +1079,10 @@
           body: JSON.stringify(payload)
         });
         const data = await res.json();
+        if (!res.ok || !data.success) {
+          showTechToast(data.message || 'No se pudo registrar la marcación GPS', 'error');
+          return;
+        }
         showTechToast(data.message || 'Marcación GPS registrada correctamente');
         const pill = document.getElementById('tech-attendance-pill');
         if (pill) {
@@ -1085,6 +1099,10 @@
         }
       } catch (e) {
         showTechToast('Error al registrar asistencia GPS', 'error');
+      } finally {
+        attendanceSubmitting = false;
+        const remainingBtns = document.querySelectorAll('#tech-hw-actions button');
+        remainingBtns.forEach((b) => { if (!b.hasAttribute('data-locked')) b.disabled = false; });
       }
     }
 
