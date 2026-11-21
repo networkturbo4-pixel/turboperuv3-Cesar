@@ -50882,75 +50882,51 @@ function getUnifiedTechPersonnelList() {
   const seenKeys = new Set();
 
   const isTechRole = (pos) => /t[eé]cnic|instalad|cuadrill|campo|soporte|red|fibra|operaci[oó]n|ayudante|planta/i.test(pos || '');
-
-  // 1. Colaboradores de RRHH (Técnicos de campo, cuadrillas, soporte, etc.)
   const emps = Array.isArray(currentEmployees) ? currentEmployees : [];
-  emps.forEach(e => {
-    if (e.status && e.status !== 'active') return;
-    const normName = (e.name || '').trim().toLowerCase();
-    const dni = (e.dni || '').trim();
-    const pos = (e.position || 'Colaborador').trim();
-    const isTech = isTechRole(pos);
-
-    const item = {
-      id: e.id,
-      originalId: e.id,
-      source: 'employee',
-      name: e.name,
-      roleName: pos,
-      position: pos,
-      dni: dni,
-      email: e.email || '',
-      area: e.area || e.department || 'CDS',
-      avatar: e.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(e.name)),
-      isTechnician: isTech,
-      publicToken: e.publicToken || '',
-      biometricPin: e.biometricPin || ''
-    };
-
-    const key = dni ? `dni_${dni}` : (e.email ? `email_${e.email.toLowerCase()}` : `name_${normName}`);
-    seenKeys.add(key);
-    unified.push(item);
-  });
-
-  // 2. Usuarios del sistema / operadores
   const users = Array.isArray(currentUsers) ? currentUsers : [];
+
+  // Solo incluir usuarios con cuenta de operador activa (enriquecidos con su expediente RRHH si existe)
   users.forEach(u => {
     if (u.isActive === false) return;
     const normName = (u.name || '').trim().toLowerCase();
-    const dni = (u.dni || u.document || '').trim();
-    const role = (u.roleName || 'Operador').trim();
-    const isTech = isTechRole(role);
+    const uDni = String(u.dni || u.document || '').trim();
+    const uEmail = String(u.email || '').trim().toLowerCase();
 
-    const key = dni ? `dni_${dni}` : (u.email ? `email_${u.email.toLowerCase()}` : `name_${normName}`);
-    if (seenKeys.has(key)) {
-      const existing = unified.find(x => (dni && x.dni === dni) || (u.email && x.email.toLowerCase() === u.email.toLowerCase()) || x.name.toLowerCase() === normName);
-      if (existing) {
-        if (!existing.roleName || existing.roleName === 'Colaborador') existing.roleName = role;
-        if (u.avatar && !existing.avatar) existing.avatar = u.avatar;
-      }
-      return;
-    }
+    const matchedEmp = emps.find(e => {
+      if (e.status && e.status !== 'active') return false;
+      if (Number(e.id) === Number(u.id) || Number(e.operatorId) === Number(u.id)) return true;
+      if (uDni && e.dni && String(e.dni).trim() === uDni) return true;
+      if (uEmail && e.email && String(e.email).trim().toLowerCase() === uEmail) return true;
+      return normName && (e.name || '').trim().toLowerCase() === normName;
+    });
 
+    const dni = uDni || (matchedEmp && matchedEmp.dni ? String(matchedEmp.dni).trim() : '');
+    const role = (u.roleName || (matchedEmp && matchedEmp.position) || 'Operador').trim();
+    const position = (matchedEmp && matchedEmp.position) ? matchedEmp.position.trim() : role;
+    const isTech = isTechRole(role) || isTechRole(position);
+
+    const key = dni ? `dni_${dni}` : (uEmail ? `email_${uEmail}` : `id_${u.id}`);
+    if (seenKeys.has(key)) return;
     seenKeys.add(key);
+
     unified.push({
       id: u.id,
       originalId: u.id,
       source: 'user',
       name: u.name,
       roleName: role,
-      position: role,
+      position: position,
       dni: dni,
-      email: u.email || '',
-      area: u.department || 'SISTEMA',
-      avatar: u.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(u.name)),
+      email: u.email || (matchedEmp && matchedEmp.email) || '',
+      area: (matchedEmp && (matchedEmp.area || matchedEmp.department)) || u.department || 'SISTEMA',
+      avatar: u.avatar || (matchedEmp && matchedEmp.avatar) || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(u.name)),
       isTechnician: isTech,
-      publicToken: u.publicToken || '',
-      biometricPin: ''
+      publicToken: u.publicToken || (matchedEmp && matchedEmp.publicToken) || '',
+      biometricPin: (matchedEmp && matchedEmp.biometricPin) || ''
     });
   });
 
-  // Ordenar: Técnicos de campo primero, luego el resto de colaboradores y usuarios
+  // Ordenar: Técnicos de campo primero, luego el resto de operadores
   unified.sort((a, b) => {
     if (a.isTechnician && !b.isTechnician) return -1;
     if (!a.isTechnician && b.isTechnician) return 1;
