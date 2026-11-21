@@ -383,8 +383,9 @@ function loadUsersFromDisk(): SystemUser[] {
           }
 
           // Sincronizar roleName con los roles reales del tenant asignado (ej. TECNICO en lugar de Operador)
-          if (u.roleId && u.assignedTenantId && u.assignedTenantId !== "*") {
-            const tenantRoles = loadRolesForTenant(u.assignedTenantId);
+          const effectiveTenant = resolveUserEffectiveTenant(u);
+          if (u.roleId && effectiveTenant && effectiveTenant !== "*") {
+            const tenantRoles = loadRolesForTenant(effectiveTenant);
             const matchedRole = tenantRoles.find((r) => r.id === Number(u.roleId));
             if (matchedRole && matchedRole.name && u.roleName !== matchedRole.name) {
               u.roleName = matchedRole.name;
@@ -421,6 +422,16 @@ function saveUsersToDisk() {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(USERS_FILE, JSON.stringify(usersStore, null, 2), "utf-8");
   } catch {}
+}
+
+function resolveUserEffectiveTenant(u: Partial<SystemUser>): string {
+  if (u.assignedTenantId && String(u.assignedTenantId).trim()) {
+    return String(u.assignedTenantId).trim().toLowerCase();
+  }
+  if (Array.isArray(u.allowedTenants) && u.allowedTenants.length > 0 && !u.allowedTenants.includes("*")) {
+    return String(u.allowedTenants[0]).trim().toLowerCase();
+  }
+  return "turbonetwork";
 }
 
 function sanitizeUserOutput(u: SystemUser) {
@@ -1053,6 +1064,20 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     saveRolesForTenant(tenantId, roles);
 
+    if (body.name) {
+      usersStore = loadUsersFromDisk();
+      let usersUpdated = false;
+      for (const u of usersStore) {
+        if (Number(u.roleId) === roleId && resolveUserEffectiveTenant(u) === tenantId && u.roleName !== role.name) {
+          u.roleName = role.name;
+          usersUpdated = true;
+        }
+      }
+      if (usersUpdated) {
+        saveUsersToDisk();
+      }
+    }
+
     AuditService.log({
       actorUserId: request.authUser?.sub,
       actorName: request.authUser?.name,
@@ -1143,15 +1168,16 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     const sanitized = list.map((u) => {
       const safeUser = sanitizeUserOutput(u);
+      const effectiveTenant = resolveUserEffectiveTenant(safeUser);
+      let resolvedRoleName = safeUser.roleName;
+      if (safeUser.roleId && effectiveTenant !== "*") {
+        const matchedRole = loadRolesForTenant(effectiveTenant).find((r) => r.id === Number(safeUser.roleId));
+        if (matchedRole?.name) resolvedRoleName = matchedRole.name;
+      }
       return {
         ...safeUser,
-        assignedTenantId:
-          safeUser.assignedTenantId ||
-          (Array.isArray(safeUser.allowedTenants) &&
-          safeUser.allowedTenants.length > 0 &&
-          !safeUser.allowedTenants.includes("*")
-            ? safeUser.allowedTenants[0]
-            : "turbonetwork"),
+        roleName: resolvedRoleName,
+        assignedTenantId: effectiveTenant,
         workSchedule: safeUser.workSchedule || "08:00 - 17:00",
         scheduleStartDate: safeUser.scheduleStartDate || "",
         scheduleEndDate: safeUser.scheduleEndDate || "",
@@ -1586,6 +1612,13 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
     if (user.allowedTenants) {
       user.allowedTenants = user.allowedTenants.filter(Boolean);
+    }
+    if ((data.assignedTenantId !== undefined || data.allowedTenants !== undefined) && user.roleId) {
+      const effectiveTenant = resolveUserEffectiveTenant(user);
+      if (effectiveTenant !== "*") {
+        const matchedRole = loadRolesForTenant(effectiveTenant).find((r) => r.id === Number(user.roleId));
+        if (matchedRole?.name) user.roleName = matchedRole.name;
+      }
     }
     if (data.preferences !== undefined) user.preferences = { ...(user.preferences || {}), ...data.preferences };
     if (data.requireTotp !== undefined) user.requireTotp = Boolean(data.requireTotp);

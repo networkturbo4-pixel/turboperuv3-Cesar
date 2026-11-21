@@ -28655,7 +28655,7 @@ Estamos atentos para brindarle asistencia inmediata.
       }
     }
 
-    async function onUserFormTenantChange(prefix, targetTenantId) {
+    async function onUserFormTenantChange(prefix, targetTenantId, desiredRoleId = null) {
       if (!targetTenantId) return;
       loadApartadosForUserForm(prefix, targetTenantId);
       try {
@@ -28665,10 +28665,10 @@ Estamos atentos para brindarle asistencia inmediata.
           let roleSelectId = prefix === 'nu' ? 'nu-role' : (prefix === 'nmodal' ? 'nmodal-role' : (prefix === 'rnu' ? 'rnu-role' : (prefix === 'emp-op' ? 'emp-op-role' : 'ue-role')));
           const sel = document.getElementById(roleSelectId);
           if (sel) {
-            const prev = sel.value;
+            const targetRole = desiredRoleId !== null && desiredRoleId !== undefined ? desiredRoleId : sel.value;
             sel.innerHTML = data.data.map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
-            if (prev && data.data.some(r => String(r.id) === String(prev))) {
-              sel.value = prev;
+            if (targetRole && data.data.some(r => String(r.id) === String(targetRole))) {
+              sel.value = String(targetRole);
             }
           }
         }
@@ -30056,7 +30056,7 @@ Estamos atentos para brindarle asistencia inmediata.
       const eTenant = document.getElementById('emodal-assigned-tenant');
       if (eTenant) {
         eTenant.value = targetUserTenant;
-        onUserFormTenantChange('emodal', targetUserTenant);
+        onUserFormTenantChange('emodal', targetUserTenant, user.roleId);
       }
       const isApt = user.accessTarget === 'apartado';
       const ueAptSwitch = document.getElementById('ue-access-apartado-switch');

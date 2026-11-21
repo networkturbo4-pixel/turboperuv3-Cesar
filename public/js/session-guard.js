@@ -304,8 +304,30 @@
     if (isApiCall) {
       var activeTenant = "turbonetwork";
       try {
-        activeTenant = localStorage.getItem("turbonetwork_active_tenant") || "turbonetwork";
-      } catch (_) {}
+        activeTenant = localStorage.getItem("turbonetwork_active_tenant") || "";
+        var rawSession = localStorage.getItem(SESSION_KEY);
+        if (rawSession) {
+          var sUser = JSON.parse(rawSession);
+          if (sUser && !sUser.isSuperAdmin) {
+            var allowed = Array.isArray(sUser.allowedTenants) ? sUser.allowedTenants : [];
+            if (allowed.indexOf("*") === -1) {
+              var fallbackTenant = (sUser.assignedTenantId && sUser.assignedTenantId !== "*")
+                ? sUser.assignedTenantId
+                : (allowed[0] || "turbonetwork");
+              var allowedLower = allowed.map(function (t) { return String(t).toLowerCase(); });
+              if (!activeTenant || (allowedLower.length > 0 && allowedLower.indexOf(activeTenant.toLowerCase()) === -1)) {
+                activeTenant = fallbackTenant;
+                localStorage.setItem("turbonetwork_active_tenant", activeTenant);
+              }
+            }
+          } else if (!activeTenant && sUser && sUser.assignedTenantId && sUser.assignedTenantId !== "*") {
+            activeTenant = sUser.assignedTenantId;
+          }
+        }
+        if (!activeTenant) activeTenant = "turbonetwork";
+      } catch (_) {
+        activeTenant = "turbonetwork";
+      }
 
       var meta = readMeta();
       var token = meta && meta.token ? meta.token : "";
@@ -355,6 +377,14 @@
                 lastActivityAt: now,
                 idleTimeoutMs: body.data.idleTimeoutMs || DEFAULT_IDLE_MS,
               });
+              try {
+                var u = body.data.user;
+                if (u && u.assignedTenantId && u.assignedTenantId !== "*") {
+                  localStorage.setItem("turbonetwork_active_tenant", u.assignedTenantId);
+                } else if (u && Array.isArray(u.allowedTenants) && u.allowedTenants.length > 0 && u.allowedTenants[0] !== "*") {
+                  localStorage.setItem("turbonetwork_active_tenant", u.allowedTenants[0]);
+                }
+              } catch (_) {}
               lastActivityWrite = now;
               lastServerRefresh = now;
             }

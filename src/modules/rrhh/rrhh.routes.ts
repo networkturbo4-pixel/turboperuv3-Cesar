@@ -1181,6 +1181,13 @@ autoMigrateUnifiedIdentitiesOnStartup();
 
 export function getTenantRolesList(tenantId: string): any[] {
   try {
+    const { loadRolesForTenant } = require("../users/users.routes");
+    if (typeof loadRolesForTenant === "function") {
+      const roles = loadRolesForTenant(tenantId);
+      if (Array.isArray(roles) && roles.length > 0) return roles;
+    }
+  } catch {}
+  try {
     const safeTenant = tenantId.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase() || "turbonetwork";
     const filePath = path.join(DATA_DIR, "tenants", safeTenant, "roles.json");
     if (fs.existsSync(filePath)) {

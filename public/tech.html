@@ -564,6 +564,10 @@
           }
           techUser = data.data.user;
           localStorage.setItem('turbonetwork_session', JSON.stringify(techUser));
+          const techTenant = (techUser.assignedTenantId && techUser.assignedTenantId !== '*')
+            ? techUser.assignedTenantId
+            : (Array.isArray(techUser.allowedTenants) && techUser.allowedTenants[0] && techUser.allowedTenants[0] !== '*' ? techUser.allowedTenants[0] : 'turbonetwork');
+          localStorage.setItem('turbonetwork_active_tenant', techTenant);
           document.getElementById('tech-login-overlay').classList.add('hidden');
           techPinBuffer = "";
           updateTechPinDots();
@@ -608,6 +612,13 @@
         document.getElementById('tech-login-overlay').classList.remove('hidden');
         return;
       }
+
+      try {
+        const techTenant = (techUser.assignedTenantId && techUser.assignedTenantId !== '*')
+          ? techUser.assignedTenantId
+          : (Array.isArray(techUser.allowedTenants) && techUser.allowedTenants[0] && techUser.allowedTenants[0] !== '*' ? techUser.allowedTenants[0] : '');
+        if (techTenant) localStorage.setItem('turbonetwork_active_tenant', techTenant);
+      } catch (e) {}
 
       document.getElementById('tech-user-name').textContent = techUser.name || 'Técnico FTTH';
       if (techUser.avatar) {
