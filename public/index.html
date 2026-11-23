@@ -16533,7 +16533,7 @@
                     <span class="text-base">⚖️</span>
                     <span class="font-bold text-xs text-slate-900 dark:text-white">A Granel</span>
                   </div>
-                  <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Metros, bobinas, kg, SKU unidad</p>
+                  <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Unidades, metros, kg, litros, rollos</p>
                 </div>
 
                 <!-- 3. Producto EPP -->
@@ -16650,17 +16650,23 @@
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div>
                   <label class="block text-[10.5px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Unidad de Medida *</label>
-                  <select id="inv-bulk-unit" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
-                    <option value="Metros (m)">Metros (m) - Fibra / Cable</option>
-                    <option value="Bobina / Rollo">Bobina / Rollo (Carrete)</option>
+                  <select id="inv-bulk-unit" onchange="handleBulkUnitChange(this.value)" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500">
+                    <option value="Unidad (ud)">Unidad (ud)</option>
+                    <option value="Metros (m)">Metros (m)</option>
+                    <option value="Centímetros (cm)">Centímetros (cm)</option>
                     <option value="Kilogramos (kg)">Kilogramos (kg)</option>
-                    <option value="Litros (L)">Litros (L) - Alcohol Isoprop.</option>
-                    <option value="Caja (Unidades)">Caja de distribución</option>
+                    <option value="Gramos (g)">Gramos (g)</option>
+                    <option value="Litros (L)">Litros (L)</option>
+                    <option value="Mililitros (ml)">Mililitros (ml)</option>
+                    <option value="Rollo / Bobina">Rollo / Bobina</option>
+                    <option value="Caja">Caja</option>
+                    <option value="Paquete">Paquete</option>
+                    <option value="Par">Par</option>
                   </select>
                 </div>
                 <div>
                   <label class="block text-[10.5px] font-semibold text-slate-600 dark:text-slate-300 mb-1">SKU Unidad de Medida *</label>
-                  <input type="text" id="inv-bulk-unit-sku" placeholder="FBR-DROP-MTR" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 uppercase">
+                  <input type="text" id="inv-bulk-unit-sku" placeholder="Ej: UND-CINTA / MTR-01" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 uppercase">
                 </div>
                 <div class="flex items-center pt-4">
                   <label class="flex items-center space-x-2 cursor-pointer">
@@ -40504,6 +40510,13 @@ function lightboxResetZoom() {
 }
 
 // 4. INTERACTIVIDAD DE TIPO DE PRODUCTO (SIMPLE, GRANEL, EPP)
+function handleBulkUnitChange(unitValue) {
+  const decimalsChk = document.getElementById('inv-bulk-decimals');
+  if (!decimalsChk) return;
+  const discreteUnits = new Set(['Unidad (ud)', 'Caja', 'Paquete', 'Par', 'Caja (Unidades)']);
+  decimalsChk.checked = !discreteUnits.has(unitValue);
+}
+
 function selectProductType(type) {
   currentSelectedProductType = type;
 
@@ -41037,6 +41050,9 @@ function openCreateProductModal() {
   renderProductImagesPreview();
   selectProductType('simple');
 
+  const bulkUnitSel = document.getElementById('inv-bulk-unit');
+  if (bulkUnitSel) handleBulkUnitChange(bulkUnitSel.value);
+
   document.getElementById('inv-prod-stock-min').value = '5';
   document.getElementById('inv-prod-stock-critical').value = '2';
   document.getElementById('inv-prod-stock').value = '0';
@@ -41097,7 +41113,20 @@ function openEditProductModal(id) {
   if (pType === 'bulk') {
     const unit = product.unitOfMeasure || product.bulkUnit || 'Metros (m)';
     const unitSel = document.getElementById('inv-bulk-unit');
-    if (unitSel) unitSel.value = unit;
+    if (unitSel) {
+      const legacyMap = {
+        'Bobina / Rollo': 'Rollo / Bobina',
+        'Caja (Unidades)': 'Caja'
+      };
+      const normalizedUnit = legacyMap[unit] || unit;
+      if (!Array.from(unitSel.options).some(opt => opt.value === normalizedUnit)) {
+        const opt = document.createElement('option');
+        opt.value = normalizedUnit;
+        opt.textContent = normalizedUnit;
+        unitSel.appendChild(opt);
+      }
+      unitSel.value = normalizedUnit;
+    }
     document.getElementById('inv-bulk-unit-sku').value = product.unitSku || product.sku || '';
     document.getElementById('inv-bulk-decimals').checked = product.allowDecimals !== false;
   }
