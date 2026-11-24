@@ -35882,7 +35882,7 @@ function copyRemoteScannerLink() {
       btnText.textContent = 'Registrando Asistencia...';
 
       const sharedEl = document.getElementById('checkin-mode-shared');
-      const isShared = sharedEl ? sharedEl.checked : true;
+      const isShared = sharedEl ? sharedEl.checked : false;
       const targetSelect = document.getElementById('checkin-target-tenant');
       const targetTenantId = (!isShared && targetSelect && targetSelect.value) ? targetSelect.value : activeTenantId;
       const targetTenantObj = (tenantsList || []).find(t => t.id === targetTenantId);

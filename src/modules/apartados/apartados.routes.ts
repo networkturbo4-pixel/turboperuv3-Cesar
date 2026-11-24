@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from "fastify";
 import fs from "fs";
 import path from "path";
-import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
+import { resolveTenantId, getTenantFilePath, loadTenantsFromDisk } from "../tenants/tenants.service";
 
 export interface ApartadoAppPermission {
   id: string;
@@ -927,13 +927,22 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
       const nextId = records.length > 0 ? Math.max(...records.map((r) => Number(r.id) || 0)) + 1 : 1;
+      const authAssignedTenant = String((request as any).authUser?.assignedTenantId || "").trim().toLowerCase();
+      const effectiveTenantId =
+        authAssignedTenant && authAssignedTenant !== "*" && authAssignedTenant !== "shared"
+          ? authAssignedTenant
+          : String(tenantId || "turbonetwork").trim().toLowerCase();
+      const tenantList = loadTenantsFromDisk();
+      const matchedTenant = tenantList.find((t) => String(t.id).toLowerCase() === effectiveTenantId);
+      const effectiveTenantName = matchedTenant?.name || effectiveTenantId;
+      const isSharedAttendance = authAssignedTenant === "shared" || authAssignedTenant === "*";
       record = {
         id: nextId,
         employeeId: empId,
         employeeName: empName,
-        tenantId,
-        tenantName: tenantId,
-        isShared: true,
+        tenantId: effectiveTenantId,
+        tenantName: effectiveTenantName,
+        isShared: isSharedAttendance,
         date: peruDate,
         checkIn: now.toISOString(),
         checkInTime: peruTime,

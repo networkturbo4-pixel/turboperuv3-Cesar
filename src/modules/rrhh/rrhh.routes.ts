@@ -742,18 +742,46 @@ export function healAttendanceRecords(list: AttendanceRecord[]): boolean {
   let changed = false;
   let cachedEmployees: Employee[] | null = null;
   let cachedUsers: any[] | null = null;
+  let tenantNameById: Map<string, string> | null = null;
+  const resolvedEmpCache = new Map<string, ReturnType<typeof resolveEmployeeOrUser>>();
+
+  const getResolvedEmp = (empId: number | string) => {
+    const key = String(empId ?? "").trim();
+    const existing = resolvedEmpCache.get(key);
+    if (existing) return existing;
+    if (!cachedEmployees) cachedEmployees = loadEmployeesFromDisk();
+    if (!cachedUsers) cachedUsers = loadUsersListOnceForResolve();
+    const resolved = resolveEmployeeOrUser(empId, "Colaborador", cachedEmployees, cachedUsers);
+    resolvedEmpCache.set(key, resolved);
+    return resolved;
+  };
+
   for (const record of list) {
     const isPlaceholder =
       !record.employeeName ||
       record.employeeName === "Colaborador" ||
       record.employeeName.startsWith("Colaborador #");
     if (isPlaceholder) {
-      if (!cachedEmployees) cachedEmployees = loadEmployeesFromDisk();
-      if (!cachedUsers) cachedUsers = loadUsersListOnceForResolve();
-      const resolved = resolveEmployeeOrUser(record.employeeId, "Colaborador", cachedEmployees, cachedUsers);
+      const resolved = getResolvedEmp(record.employeeId);
       if (resolved && resolved.name && resolved.name !== "Colaborador" && !resolved.name.startsWith("Colaborador #")) {
         record.employeeId = resolved.id;
         record.employeeName = resolved.name;
+        changed = true;
+      }
+    }
+    if (record.isShared === true) {
+      const resolved = getResolvedEmp(record.employeeId);
+      const empTenant = String(resolved?.tenantId || "").trim().toLowerCase();
+      if (empTenant && empTenant !== "shared" && empTenant !== "*") {
+        if (!tenantNameById) {
+          tenantNameById = new Map<string, string>();
+          for (const t of loadTenantsFromDisk()) {
+            if (t && t.id) tenantNameById.set(String(t.id).toLowerCase(), t.name || t.id);
+          }
+        }
+        record.isShared = false;
+        record.tenantId = empTenant;
+        record.tenantName = tenantNameById.get(empTenant) || empTenant;
         changed = true;
       }
     }
@@ -2909,7 +2937,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
         clientTime: d.clientTime,
         tenantId: d.tenantId,
         tenantName: d.tenantName,
-        isShared: d.isShared !== undefined ? !!d.isShared : true,
+        isShared: d.isShared !== undefined ? !!d.isShared : undefined,
       }));
 
     const parse = checkInSchema.safeParse(request.body);
@@ -2921,20 +2949,28 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       employeeId,
       photo,
       location,
-      isShared,
       modality,
       biometricVerified,
       biometricDeviceId,
       gpsVerified,
       fieldWorkReason,
     } = parse.data;
-    const resolvedTenant = (parse.data.tenantId || resolveTenantId(request)).toLowerCase();
+    const resolvedUser = resolveEmployeeOrUser(employeeId, parse.data.employeeName);
+    const empTenantRaw = String(resolvedUser.tenantId || "").trim().toLowerCase();
+    const isShared =
+      parse.data.isShared !== undefined
+        ? Boolean(parse.data.isShared)
+        : empTenantRaw === "shared" || empTenantRaw === "*";
+    const resolvedTenant = (
+      parse.data.tenantId ||
+      (empTenantRaw && empTenantRaw !== "shared" && empTenantRaw !== "*" ? empTenantRaw : "") ||
+      resolveTenantId(request)
+    ).toLowerCase();
     const allTenants = loadTenantsFromDisk();
     const tenantObj = allTenants.find((t) => t.id === resolvedTenant);
     const resolvedTenantName =
       parse.data.tenantName || tenantObj?.name || (resolvedTenant === "turbonetwork" ? "TurboNetwork" : resolvedTenant);
 
-    const resolvedUser = resolveEmployeeOrUser(employeeId, parse.data.employeeName);
     const resolvedName = resolvedUser.name || "Colaborador";
     const resolvedNameLower = resolvedName.trim().toLowerCase();
 
@@ -3163,13 +3199,17 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       const diff = curH * 60 + curM - (expH * 60 + expM);
 
       const nextId = attendanceStore.length > 0 ? Math.max(...attendanceStore.map((a) => a.id)) + 1 : 1;
+      const empTenantRaw = String(emp.tenantId || "").trim().toLowerCase();
+      const recTenantId =
+        empTenantRaw && empTenantRaw !== "shared" && empTenantRaw !== "*" ? empTenantRaw : activeTenant;
+      const recTenantObj = loadTenantsFromDisk().find((t) => String(t.id).toLowerCase() === recTenantId);
       const rec: AttendanceRecord = {
         id: nextId,
         employeeId: empId,
         employeeName: emp.name,
-        tenantId: activeTenant,
-        tenantName: "Oficina Central",
-        isShared: true,
+        tenantId: recTenantId,
+        tenantName: recTenantObj?.name || recTenantId,
+        isShared: empTenantRaw === "shared" || empTenantRaw === "*",
         date: dateStr,
         checkIn: now.toISOString(),
         checkInTime: timeStr,
@@ -3255,13 +3295,19 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const nextId = attendanceStore.length > 0 ? Math.max(...attendanceStore.map((a) => a.id)) + 1 : 1;
+    const manualEmpTenantRaw = String(emp.tenantId || "").trim().toLowerCase();
+    const manualTenantId =
+      manualEmpTenantRaw && manualEmpTenantRaw !== "shared" && manualEmpTenantRaw !== "*"
+        ? manualEmpTenantRaw
+        : activeTenant;
+    const manualTenantObj = loadTenantsFromDisk().find((t) => String(t.id).toLowerCase() === manualTenantId);
     const newRec: AttendanceRecord = {
       id: nextId,
       employeeId: empId,
       employeeName: emp.name,
-      tenantId: activeTenant,
-      tenantName: "Trabajo en Campo",
-      isShared: true,
+      tenantId: manualTenantId,
+      tenantName: manualTenantObj?.name || manualTenantId,
+      isShared: manualEmpTenantRaw === "shared" || manualEmpTenantRaw === "*",
       date: targetDate,
       checkIn: now.toISOString(),
       checkInTime,
