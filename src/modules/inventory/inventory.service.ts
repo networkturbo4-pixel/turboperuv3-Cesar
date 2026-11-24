@@ -2219,6 +2219,7 @@ export function getPersonnelAssignments(
       productSku: sku || "--",
       productImage: image || undefined,
       category: category || "Insumos",
+      unit: (a as any).unit || (prod as any)?.unit || (prod as any)?.measurementUnit || "ud",
       expirationDate: a.expirationDate || prod?.expirationDate || undefined,
       hasLifespanControl: a.hasLifespanControl !== undefined ? a.hasLifespanControl : (prod?.hasLifespanControl || false),
       alertBeforeDays: a.alertBeforeDays !== undefined ? a.alertBeforeDays : (prod?.alertBeforeDays ?? 30),

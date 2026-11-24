@@ -33,10 +33,13 @@ interface RateLimitBucket {
 const sessionsMap = new Map<string, SessionRecord>();
 const rateLimitMap = new Map<string, RateLimitBucket>();
 let flushTimer: NodeJS.Timeout | null = null;
+let lastDiskMtimeMs = 0;
 
 function loadSessionsFromDisk(): void {
   try {
     if (!fs.existsSync(SESSIONS_FILE)) return;
+    const stat = fs.statSync(SESSIONS_FILE);
+    lastDiskMtimeMs = stat.mtimeMs;
     const raw = fs.readFileSync(SESSIONS_FILE, "utf-8");
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
@@ -49,6 +52,59 @@ function loadSessionsFromDisk(): void {
     }
   } catch {
     // Si el archivo de sesiones está corrupto, iniciar limpio
+  }
+}
+
+function reloadSessionsFromDiskIfChanged(): void {
+  try {
+    if (!fs.existsSync(SESSIONS_FILE)) return;
+    const stat = fs.statSync(SESSIONS_FILE);
+    if (stat.mtimeMs <= lastDiskMtimeMs) return;
+    lastDiskMtimeMs = stat.mtimeMs;
+    const raw = fs.readFileSync(SESSIONS_FILE, "utf-8");
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const now = Date.now();
+      for (const item of parsed) {
+        if (item && item.jti && !item.revoked && item.maxExpiresAt > now) {
+          if (!sessionsMap.has(item.jti)) {
+            sessionsMap.set(item.jti, item as SessionRecord);
+          }
+        }
+      }
+    }
+  } catch {
+    // Ignorar errores transitorios de lectura concurrente
+  }
+}
+
+function flushSessionsNowSync(): void {
+  try {
+    if (flushTimer) {
+      clearTimeout(flushTimer);
+      flushTimer = null;
+    }
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    const now = Date.now();
+    const active: SessionRecord[] = [];
+    for (const [jti, s] of sessionsMap.entries()) {
+      if (s.revoked || now >= s.maxExpiresAt || now - s.lastActivityAt > s.idleTimeoutMs) {
+        sessionsMap.delete(jti);
+      } else {
+        active.push(s);
+      }
+    }
+    const tmpFile = `${SESSIONS_FILE}.tmp.${process.pid}`;
+    fs.writeFileSync(tmpFile, JSON.stringify(active, null, 2), { encoding: "utf-8", mode: 0o600 });
+    fs.renameSync(tmpFile, SESSIONS_FILE);
+    try {
+      lastDiskMtimeMs = fs.statSync(SESSIONS_FILE).mtimeMs;
+    } catch {}
+  } catch {
+    // Fallback: programar flush asíncrono si falló el sync
+    scheduleSessionsFlush();
   }
 }
 
@@ -228,7 +284,8 @@ export class SecurityService {
       revoked: false,
     };
     sessionsMap.set(record.jti, record);
-    scheduleSessionsFlush();
+    reloadSessionsFromDiskIfChanged();
+    flushSessionsNowSync();
     return record;
   }
 
@@ -240,7 +297,11 @@ export class SecurityService {
     touch = true
   ): { valid: boolean; reason?: "not_found" | "revoked" | "expired_max" | "expired_idle"; session?: SessionRecord } {
     if (!jti) return { valid: false, reason: "not_found" };
-    const session = sessionsMap.get(jti);
+    let session = sessionsMap.get(jti);
+    if (!session) {
+      reloadSessionsFromDiskIfChanged();
+      session = sessionsMap.get(jti);
+    }
     if (!session) return { valid: false, reason: "not_found" };
     if (session.revoked) {
       sessionsMap.delete(jti);
@@ -274,7 +335,7 @@ export class SecurityService {
     if (!s) return false;
     s.revoked = true;
     sessionsMap.delete(jti);
-    scheduleSessionsFlush();
+    flushSessionsNowSync();
     return true;
   }
 
@@ -287,7 +348,7 @@ export class SecurityService {
         count++;
       }
     }
-    if (count > 0) scheduleSessionsFlush();
+    if (count > 0) flushSessionsNowSync();
     return count;
   }
 

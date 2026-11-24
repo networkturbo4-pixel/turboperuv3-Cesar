@@ -539,7 +539,11 @@
       if (fb) fb.textContent = "";
     }
 
+    let techPinSubmitting = false;
+
     async function submitTechPinLogin() {
+      if (techPinSubmitting) return;
+      techPinSubmitting = true;
       const fb = document.getElementById('tech-login-feedback');
       if (fb) {
         fb.textContent = "Verificando acceso de técnico...";
@@ -551,7 +555,12 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ pin: techPinBuffer })
         });
-        const data = await res.json();
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (_) {
+          data = { success: false, message: `Error del servidor (${res.status}). Intenta nuevamente.` };
+        }
         if (data.success && data.data?.user) {
           if (data.data.token) {
             const now = Date.now();
@@ -568,6 +577,10 @@
             ? techUser.assignedTenantId
             : (Array.isArray(techUser.allowedTenants) && techUser.allowedTenants[0] && techUser.allowedTenants[0] !== '*' ? techUser.allowedTenants[0] : 'turbonetwork');
           localStorage.setItem('turbonetwork_active_tenant', techTenant);
+          if (fb) {
+            fb.textContent = "";
+            fb.className = "text-xs font-mono min-h-[20px] text-slate-400 mb-4";
+          }
           document.getElementById('tech-login-overlay').classList.add('hidden');
           techPinBuffer = "";
           updateTechPinDots();
@@ -581,7 +594,14 @@
           updateTechPinDots();
         }
       } catch (e) {
-        if (fb) fb.textContent = "Error de conexión con el servidor";
+        if (fb) {
+          fb.textContent = "Error de conexión con el servidor";
+          fb.className = "text-xs font-mono min-h-[20px] text-rose-400 mb-4";
+        }
+        techPinBuffer = "";
+        updateTechPinDots();
+      } finally {
+        techPinSubmitting = false;
       }
     }
 
@@ -595,6 +615,20 @@
         localStorage.removeItem('turbonetwork_auth_meta');
       } catch (e) {}
       techUser = null;
+      techMapDataLoaded = false;
+      techProductsLoaded = false;
+      techPinBuffer = "";
+      updateTechPinDots();
+      const fb = document.getElementById('tech-login-feedback');
+      if (fb) {
+        if (fromGuard) {
+          fb.textContent = "Tu sesión expiró. Ingresa tu PIN nuevamente.";
+          fb.className = "text-xs font-mono min-h-[20px] text-amber-400 mb-4";
+        } else {
+          fb.textContent = "";
+          fb.className = "text-xs font-mono min-h-[20px] text-slate-400 mb-4";
+        }
+      }
       document.getElementById('tech-login-overlay').classList.remove('hidden');
     }
 
@@ -726,33 +760,33 @@
     let cachedAttendance = [];
     let cachedEmployees = [];
     let techMapboxConfig = { accessToken: '', defaultStyle: 'mapbox://styles/mapbox/satellite-streets-v12', center: [-77.0368, -12.0970], zoom: 14 };
+    let techMapDataLoaded = false;
+    let techProductsLoaded = false;
     let techMapInstance = null;
     let techMapStyleMode = 'satellite';
     let techClockTimer = null;
 
-    async function refreshAllTechData() {
+    function getActiveTechTenantId() {
       try {
-        const tenantId = techUser?.assignedTenantId || 'turbonetwork';
-        const [instRes, stockRes, prodRes, commRes, advRes, matRes, mapRes, attRes, empRes, connRes] = await Promise.all([
-          fetch('/api/apartados/installations').then(r => r.json()).catch(() => ({ data: [] })),
-          fetch('/api/inventory/personnel-assignments').then(r => r.json()).catch(() => ({ data: [] })),
-          fetch('/api/inventory/products').then(r => r.json()).catch(() => ({ data: [] })),
-          fetch('/api/rrhh/commissions').then(r => r.json()).catch(() => ({ data: [] })),
-          fetch('/api/apartados/advances').then(r => r.json()).catch(() => ({ data: [] })),
-          fetch('/api/apartados/material-requests').then(r => r.json()).catch(() => ({ data: [] })),
-          fetch(`/api/maps/data?tenantId=${encodeURIComponent(tenantId)}`).then(r => r.json()).catch(() => ({ nodes: [] })),
-          fetch('/api/rrhh/attendance').then(r => r.json()).catch(() => ({ data: [] })),
-          fetch('/api/rrhh/employees').then(r => r.json()).catch(() => ({ data: [] })),
-          fetch(`/api/settings/connections?tenantId=${encodeURIComponent(tenantId)}`).then(r => r.json()).catch(() => ({})),
-        ]);
+        const stored = localStorage.getItem('turbonetwork_active_tenant');
+        if (stored && stored !== '*') return stored;
+      } catch (_) {}
+      if (techUser?.assignedTenantId && techUser.assignedTenantId !== '*') return techUser.assignedTenantId;
+      if (Array.isArray(techUser?.allowedTenants) && techUser.allowedTenants[0] && techUser.allowedTenants[0] !== '*') {
+        return techUser.allowedTenants[0];
+      }
+      return 'turbonetwork';
+    }
 
-        cachedInstallations = Array.isArray(instRes.data) ? instRes.data : [];
-        const allAssignments = Array.isArray(stockRes.data) ? stockRes.data : (Array.isArray(stockRes) ? stockRes : []);
-        cachedStock = allAssignments.filter(a => a.status === 'active' || !a.status);
-        cachedProducts = Array.isArray(prodRes.data) ? prodRes.data : (Array.isArray(prodRes) ? prodRes : []);
-        cachedCommissions = Array.isArray(commRes.data) ? commRes.data : [];
-        cachedAdvances = Array.isArray(advRes.data) ? advRes.data : [];
-        cachedMaterialRequests = Array.isArray(matRes.data) ? matRes.data : [];
+    async function ensureTechMapDataLoaded() {
+      if (techMapDataLoaded || !techUser) return;
+      techMapDataLoaded = true;
+      const tenantId = getActiveTechTenantId();
+      try {
+        const [mapRes, connRes] = await Promise.all([
+          fetch(`/api/maps/data?tenantId=${encodeURIComponent(tenantId)}`).then(r => r.ok ? r.json() : { nodes: [] }).catch(() => ({ nodes: [] })),
+          fetch(`/api/settings/connections?tenantId=${encodeURIComponent(tenantId)}`).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+        ]);
         const mapPayload = mapRes.data || mapRes || {};
         cachedMapNodes = Array.isArray(mapPayload.nodes) ? mapPayload.nodes : (Array.isArray(mapRes.nodes) ? mapRes.nodes : []);
         if (Array.isArray(mapPayload.center) && mapPayload.center.length === 2) techMapboxConfig.center = mapPayload.center;
@@ -764,8 +798,77 @@
             techMapboxConfig.center = connRes.data.mapbox.defaultCenter;
           }
         }
+      } catch (_) {
+        techMapDataLoaded = false;
+      }
+    }
+
+    async function ensureTechProductsLoaded() {
+      if (techProductsLoaded || !techUser) return;
+      techProductsLoaded = true;
+      try {
+        const prodRes = await fetch('/api/inventory/products').then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] }));
+        cachedProducts = Array.isArray(prodRes.data) ? prodRes.data : (Array.isArray(prodRes) ? prodRes : []);
+      } catch (_) {
+        techProductsLoaded = false;
+      }
+    }
+
+    function normalizeTechText(val) {
+      return String(val || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\([^)]*\)/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+    }
+
+    function filterMyActiveBackpackAssignments(allAssignments) {
+      if (!Array.isArray(allAssignments)) return [];
+      const uid = String(techUser?.id ?? '').trim();
+      const udni = String(techUser?.dni ?? '').trim();
+      const uname = normalizeTechText(techUser?.name);
+
+      return allAssignments.filter((a) => {
+        if (!a) return false;
+        const st = String(a.status || '').trim().toLowerCase();
+        if (st === 'devuelto' || st === 'baja' || st === 'returned' || st === 'inactive') {
+          return false;
+        }
+        const aEmpId = String(a.employeeId ?? '').trim();
+        if (uid && aEmpId && aEmpId === uid) return true;
+        if (udni && aEmpId && aEmpId === udni) return true;
+        const aName = normalizeTechText(a.employeeName || a.personnelName);
+        if (uname && aName && (aName === uname || aName.includes(uname) || uname.includes(aName))) {
+          return true;
+        }
+        return false;
+      });
+    }
+
+    async function refreshAllTechData() {
+      if (!techUser) return;
+      try {
+        const empIdParam = techUser?.id ? `?employeeId=${encodeURIComponent(techUser.id)}` : '';
+        const [instRes, stockRes, commRes, advRes, matRes, attRes] = await Promise.all([
+          fetch('/api/apartados/installations').then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
+          fetch('/api/inventory/personnel-assignments').then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
+          fetch('/api/rrhh/commissions').then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
+          fetch('/api/apartados/advances').then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
+          fetch('/api/apartados/material-requests').then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
+          fetch(`/api/rrhh/attendance${empIdParam}`).then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
+        ]);
+
+        if (!techUser) return;
+
+        cachedInstallations = Array.isArray(instRes.data) ? instRes.data : [];
+        const allAssignments = Array.isArray(stockRes.data) ? stockRes.data : (Array.isArray(stockRes) ? stockRes : []);
+        cachedStock = filterMyActiveBackpackAssignments(allAssignments);
+        cachedCommissions = Array.isArray(commRes.data) ? commRes.data : [];
+        cachedAdvances = Array.isArray(advRes.data) ? advRes.data : [];
+        cachedMaterialRequests = Array.isArray(matRes.data) ? matRes.data : [];
         cachedAttendance = Array.isArray(attRes.data) ? attRes.data : [];
-        cachedEmployees = Array.isArray(empRes.data) ? empRes.data : [];
 
         // Actualizar KPIs del Hero
         const pendingInst = cachedInstallations.filter(i => i.status !== 'completada');
@@ -1005,7 +1108,8 @@
       `;
 
       try {
-        const res = await fetch('/api/rrhh/attendance');
+        const empIdParam = techUser?.id ? `?employeeId=${encodeURIComponent(techUser.id)}` : '';
+        const res = await fetch(`/api/rrhh/attendance${empIdParam}`);
         const data = await res.json();
         cachedAttendance = Array.isArray(data.data) ? data.data : [];
         const myAll = getMyRrhhAttendanceRecords();
@@ -1090,7 +1194,8 @@
           if (action === 'lunch-start') pill.textContent = 'En Refrigerio';
           if (action === 'check-out') pill.textContent = 'Turno Cerrado';
         }
-        const attRes = await fetch('/api/rrhh/attendance').then(r => r.json()).catch(() => ({ data: [] }));
+        const empIdParam = techUser?.id ? `?employeeId=${encodeURIComponent(techUser.id)}` : '';
+        const attRes = await fetch(`/api/rrhh/attendance${empIdParam}`).then(r => r.json()).catch(() => ({ data: [] }));
         cachedAttendance = Array.isArray(attRes.data) ? attRes.data : cachedAttendance;
         renderHomeAttendanceWidget();
         const modalEl = document.getElementById('techAppDialog');
@@ -1249,8 +1354,12 @@
       };
     }
 
-    function renderAppNearbyNaps() {
+    async function renderAppNearbyNaps() {
       const body = document.getElementById('techModalBody');
+      if (!techMapDataLoaded) {
+        body.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 font-mono">Cargando nodos NAP y mapa FTTH...</div>`;
+        await ensureTechMapDataLoaded();
+      }
       const fallbackNaps = [
         { id: 'nap-1', name: 'NAP-01-A (Troncal Norte)', type: 'nap', lat: currentGps.lat + 0.0006, lng: currentGps.lng - 0.0004, portsFree: 5, portsTotal: 16, dbm: '-18.4 dBm' },
         { id: 'nap-2', name: 'NAP-02-B (Parque Central)', type: 'nap', lat: currentGps.lat - 0.0009, lng: currentGps.lng + 0.0008, portsFree: 3, portsTotal: 8, dbm: '-19.1 dBm' },
@@ -1462,41 +1571,66 @@
     // =========================================================================
     // 4. MINI-APP: MI STOCK (MOCHILA TÉCNICA EN MANO)
     // =========================================================================
-    function renderAppMyStock() {
+    async function renderAppMyStock() {
       const body = document.getElementById('techModalBody');
-      body.innerHTML = `
-        <div class="flex items-center justify-between p-3.5 rounded-2xl bg-purple-500/15 border border-purple-500/30">
-          <div>
-            <div class="text-xs font-extrabold text-purple-600 dark:text-purple-400">Inventario en Mi Mochila</div>
-            <div class="text-[11px] text-slate-500 dark:text-slate-400">Equipos, fibra, conectores y EPPs en custodia</div>
+      const paintStock = () => {
+        const totalUnits = cachedStock.reduce((acc, it) => acc + (Number(it.quantity) || 1), 0);
+        body.innerHTML = `
+          <div class="flex items-center justify-between p-3.5 rounded-2xl bg-purple-500/15 border border-purple-500/30">
+            <div>
+              <div class="text-xs font-extrabold text-purple-600 dark:text-purple-400">Inventario en Mi Mochila (${cachedStock.length} ítems • ${totalUnits} uds)</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">Equipos, fibra, conectores y EPPs en custodia</div>
+            </div>
+            <button onclick="openTechApp('material_requests')" class="px-3 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold flex-shrink-0">
+              + Pedir / Devolver
+            </button>
           </div>
-          <button onclick="openTechApp('material_requests')" class="px-3 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold">
-            + Pedir / Devolver
-          </button>
-        </div>
 
-        <div class="space-y-2.5">
-          ${cachedStock.length === 0 ? `
-            <div class="p-6 rounded-2xl bg-slate-50 dark:bg-white/5 text-center text-xs text-slate-400">
-              No tienes materiales activos registrados en tu mochila. Puedes solicitarlos desde "Solicitar y Devolver Material".
-            </div>
-          ` : cachedStock.map(item => `
-            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center justify-between">
-              <div>
-                <div class="text-xs font-extrabold text-slate-900 dark:text-white">${item.itemName || item.productName || 'Material FTTH'}</div>
-                <div class="text-[11px] font-mono text-slate-400 mt-0.5">
-                  Categoría: ${item.itemType || 'Suministro'} ${item.serialNumber ? `• S/N: ${item.serialNumber}` : ''}
+          <div class="space-y-2.5">
+            ${cachedStock.length === 0 ? `
+              <div class="p-6 rounded-2xl bg-slate-50 dark:bg-white/5 text-center text-xs text-slate-400">
+                No tienes materiales activos registrados en tu mochila. Puedes solicitarlos desde "Solicitar y Devolver Material".
+              </div>
+            ` : cachedStock.map(item => {
+              const title = item.productName || item.itemName || 'Material FTTH';
+              const cat = item.category || item.itemType || 'Suministro';
+              const skuCode = item.unitSku || item.serialNumber || (item.productSku && item.productSku !== '--' ? item.productSku : '');
+              const variant = item.variantName ? ` • ${item.variantName}` : '';
+              const dateStr = item.assignedAt ? new Date(item.assignedAt).toLocaleDateString('es-PE') : '';
+              return `
+                <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-3">
+                  <div class="min-w-0 flex-1">
+                    <div class="text-xs font-extrabold text-slate-900 dark:text-white truncate">${title}</div>
+                    <div class="text-[11px] font-mono text-slate-400 mt-0.5 truncate">
+                      ${cat}${variant}${skuCode ? ` • ${skuCode}` : ''}
+                    </div>
+                    ${item.notes ? `<div class="text-[10px] text-slate-400 mt-0.5 line-clamp-1">${item.notes}</div>` : ''}
+                    ${dateStr ? `<div class="text-[10px] font-mono text-slate-500 mt-0.5">Asignado: ${dateStr}</div>` : ''}
+                  </div>
+                  <div class="text-right flex-shrink-0">
+                    <span class="px-2.5 py-1 rounded-xl bg-purple-500/15 text-purple-500 font-mono text-xs font-extrabold">
+                      ${item.quantity || 1} ${item.unit || 'ud'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div class="text-right">
-                <span class="px-2.5 py-1 rounded-xl bg-purple-500/15 text-purple-500 font-mono text-xs font-extrabold">
-                  ${item.quantity || 1} ${item.unit || 'und'}
-                </span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
+              `;
+            }).join('')}
+          </div>
+        `;
+      };
+
+      paintStock();
+      try {
+        const res = await fetch('/api/inventory/personnel-assignments');
+        if (res.ok) {
+          const data = await res.json();
+          const allAssignments = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+          cachedStock = filterMyActiveBackpackAssignments(allAssignments);
+          const kpiEl = document.getElementById('hero-kpi-stock');
+          if (kpiEl) kpiEl.textContent = cachedStock.length;
+          paintStock();
+        }
+      } catch (_) {}
     }
 
     // =========================================================================
@@ -1613,8 +1747,12 @@
     // =========================================================================
     // 6. MINI-APP: SOLICITAR Y DEVOLVER MATERIAL
     // =========================================================================
-    function renderAppMaterialRequests() {
+    async function renderAppMaterialRequests() {
       const body = document.getElementById('techModalBody');
+      if (!techProductsLoaded) {
+        body.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 font-mono">Cargando catálogo de materiales...</div>`;
+        await ensureTechProductsLoaded();
+      }
       body.innerHTML = `
         <form onsubmit="submitTechMaterialRequest(event)" class="p-4 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-3">
           <div class="text-xs font-extrabold text-slate-900 dark:text-white">Nueva Operación con Almacén</div>

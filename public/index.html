@@ -24685,6 +24685,17 @@
       }
     });
 
+    function isDefaultTechnicianUser(u) {
+      if (!u || u.isSuperAdmin || Number(u.roleId) === 1) return false;
+      if (u.accessTarget === 'apartado') return true;
+      if (Number(u.roleId) === 4) return true;
+      const rName = String(u.roleName || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+      return /tecnic|campo|instalador|cuadrilla/.test(rName);
+    }
+
     async function completeLoginSuccess(data) {
       if (data?.data?.token) {
         try {
@@ -24698,13 +24709,23 @@
         } catch (e) {}
       }
       const loggedUser = data?.data?.user;
+      const isTechDefault = isDefaultTechnicianUser(loggedUser);
       if (
         loggedUser &&
-        loggedUser.accessTarget !== 'system' &&
-        (loggedUser.accessTarget === 'apartado' || (!loggedUser.isSuperAdmin && loggedUser.roleId !== 1))
+        (isTechDefault || (loggedUser.accessTarget !== 'system' && !loggedUser.isSuperAdmin && loggedUser.roleId !== 1))
       ) {
+        const targetAptTenant = (loggedUser.assignedTenantId && loggedUser.assignedTenantId !== '*')
+          ? loggedUser.assignedTenantId
+          : (Array.isArray(loggedUser.allowedTenants) && loggedUser.allowedTenants[0] && loggedUser.allowedTenants[0] !== '*'
+              ? loggedUser.allowedTenants[0]
+              : (activeTenantId || 'turbonetwork'));
         try {
-          const targetAptTenant = loggedUser.assignedTenantId || activeTenantId || 'turbonetwork';
+          localStorage.setItem('turbonetwork_session', JSON.stringify(loggedUser));
+          if (targetAptTenant) localStorage.setItem('turbonetwork_active_tenant', targetAptTenant);
+        } catch (e) {}
+
+        let destRoute = isTechDefault ? '/tech' : '';
+        try {
           const aptUrl = `/api/apartados/my-access?userId=${encodeURIComponent(loggedUser.id || 0)}&roleId=${encodeURIComponent(loggedUser.roleId || 0)}&tenantId=${encodeURIComponent(targetAptTenant)}${loggedUser.assignedApartadoId ? `&apartadoId=${encodeURIComponent(loggedUser.assignedApartadoId)}` : ''}`;
           const aptRes = await fetch(aptUrl);
           if (aptRes.ok) {
@@ -24716,14 +24737,16 @@
                 (Array.isArray(aptCheck.apartado.assignedUserIds) && aptCheck.apartado.assignedUserIds.includes(Number(loggedUser.id)))
               )
             );
-            if (isExplicitApartado || isExclusiveMatch) {
-              localStorage.setItem('turbonetwork_session', JSON.stringify(loggedUser));
-              const destRoute = aptCheck.apartado.routePath || (aptCheck.apartado.slug ? `/tech?apartado=${encodeURIComponent(aptCheck.apartado.slug)}` : '/tech');
-              window.location.href = destRoute;
-              return;
+            if ((isTechDefault || isExplicitApartado || isExclusiveMatch) && aptCheck?.apartado) {
+              destRoute = aptCheck.apartado.routePath || (aptCheck.apartado.slug ? `/tech?apartado=${encodeURIComponent(aptCheck.apartado.slug)}` : '/tech');
             }
           }
         } catch (e) {}
+
+        if (destRoute) {
+          window.location.replace(destRoute);
+          return;
+        }
       }
       currentUser = data.data.user;
       currentUser.permissions = data.data.permissions || data.data.user?.permissions || [];
@@ -32527,6 +32550,20 @@ Estamos atentos para brindarle asistencia inmediata.
         try {
           currentUser = JSON.parse(sessionStr);
           if (currentUser) {
+            // Si es técnico, redirigir directamente a su Apartado Técnico (/tech)
+            const stayInPanel = new URLSearchParams(window.location.search).get('stay') === '1';
+            if (!stayInPanel && typeof isDefaultTechnicianUser === 'function' && isDefaultTechnicianUser(currentUser)) {
+              const targetTechTenant = (currentUser.assignedTenantId && currentUser.assignedTenantId !== '*')
+                ? currentUser.assignedTenantId
+                : (Array.isArray(currentUser.allowedTenants) && currentUser.allowedTenants[0] && currentUser.allowedTenants[0] !== '*'
+                    ? currentUser.allowedTenants[0]
+                    : '');
+              if (targetTechTenant) {
+                try { localStorage.setItem('turbonetwork_active_tenant', targetTechTenant); } catch (_) {}
+              }
+              window.location.replace('/tech');
+              return;
+            }
             // Sanitizar avatar corrupto o placeholder literal para prevenir bucles de red
             if (currentUser.avatar && (currentUser.avatar.includes('[[') || currentUser.avatar.includes('%5B') || currentUser.avatar.includes('{') || currentUser.avatar.includes('%7B') || currentUser.avatar.includes('defaultAvatar'))) {
               currentUser.avatar = '';

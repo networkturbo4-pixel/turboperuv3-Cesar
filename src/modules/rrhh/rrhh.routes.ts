@@ -536,12 +536,28 @@ function saveEmployeesToDisk(list: Employee[]) {
   }
 }
 
-export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colaborador") {
+function loadUsersListOnceForResolve(): any[] {
+  try {
+    const uFile = path.join(DATA_DIR, "users.json");
+    if (fs.existsSync(uFile)) {
+      const uStore = JSON.parse(fs.readFileSync(uFile, "utf-8"));
+      if (Array.isArray(uStore)) return uStore;
+    }
+  } catch (_e) {}
+  return [];
+}
+
+export function resolveEmployeeOrUser(
+  id: number | string,
+  fallbackName = "Colaborador",
+  preloadedEmployees?: Employee[],
+  preloadedUsers?: any[]
+) {
   const numId = extractCanonicalNumericId(id) ?? (typeof id === "string" ? parseInt(id, 10) : id);
   const strId = String(id ?? "").trim();
 
   // 1. Buscar en employees.json usando coincidencia estricta por ID numérico único / DNI
-  const empList = loadEmployeesFromDisk();
+  const empList = preloadedEmployees ?? loadEmployeesFromDisk();
   const emp = empList.find((e) => matchesCanonicalIdentity(e, strId));
   if (emp) {
     return {
@@ -569,10 +585,8 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
 
   // 2. Buscar en users.json por ID numérico único / DNI (JAMÁS por PIN secreto de login)
   try {
-    const uFile = path.join(DATA_DIR, "users.json");
-    if (fs.existsSync(uFile)) {
-      const uStore = JSON.parse(fs.readFileSync(uFile, "utf-8"));
-      const user = Array.isArray(uStore) ? uStore.find((u: any) => matchesCanonicalIdentity(u, strId)) : null;
+    const uStore = preloadedUsers ?? loadUsersListOnceForResolve();
+    const user = Array.isArray(uStore) ? uStore.find((u: any) => matchesCanonicalIdentity(u, strId)) : null;
       if (user) {
         return {
           id: user.id,
@@ -597,7 +611,6 @@ export function resolveEmployeeOrUser(id: number | string, fallbackName = "Colab
           isRegisteredEmployee: false,
         };
       }
-    }
   } catch (_e) {}
 
   return {
@@ -727,13 +740,17 @@ export function applyUnifiedCheckInRules(
 
 export function healAttendanceRecords(list: AttendanceRecord[]): boolean {
   let changed = false;
+  let cachedEmployees: Employee[] | null = null;
+  let cachedUsers: any[] | null = null;
   for (const record of list) {
     const isPlaceholder =
       !record.employeeName ||
       record.employeeName === "Colaborador" ||
       record.employeeName.startsWith("Colaborador #");
     if (isPlaceholder) {
-      const resolved = resolveEmployeeOrUser(record.employeeId);
+      if (!cachedEmployees) cachedEmployees = loadEmployeesFromDisk();
+      if (!cachedUsers) cachedUsers = loadUsersListOnceForResolve();
+      const resolved = resolveEmployeeOrUser(record.employeeId, "Colaborador", cachedEmployees, cachedUsers);
       if (resolved && resolved.name && resolved.name !== "Colaborador" && !resolved.name.startsWith("Colaborador #")) {
         record.employeeId = resolved.id;
         record.employeeName = resolved.name;
@@ -2728,11 +2745,21 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
 
+    const preloadedEmployees = loadEmployeesFromDisk();
+    const preloadedUsers = loadUsersListOnceForResolve();
+    const avatarCache = new Map<string, string>();
     const enrichedList = list.map((a) => {
-      const resolvedEmp = resolveEmployeeOrUser(a.employeeId, a.employeeName);
-      const empAvatar = resolvedEmp?.avatar && !String(resolvedEmp.avatar).includes("dicebear.com")
-        ? resolvedEmp.avatar
-        : "";
+      const cacheKey = `${a.employeeId ?? ""}|${a.employeeName ?? ""}`;
+      let empAvatar = avatarCache.get(cacheKey);
+      if (empAvatar === undefined) {
+        const resolvedEmp = resolveEmployeeOrUser(a.employeeId, a.employeeName, preloadedEmployees, preloadedUsers);
+        const resolvedAvatar =
+          resolvedEmp?.avatar && !String(resolvedEmp.avatar).includes("dicebear.com")
+            ? String(resolvedEmp.avatar)
+            : "";
+        avatarCache.set(cacheKey, resolvedAvatar);
+        empAvatar = resolvedAvatar;
+      }
       return empAvatar ? { ...a, employeeAvatar: empAvatar } : a;
     });
 

@@ -502,7 +502,18 @@ function buildAuthenticatedUserResponse(user: SystemUser, requestedTenant?: stri
       preferences: user.preferences || {},
       permissions: userPermissions,
       allowedModules: userAllowedModules,
-      accessTarget: user.accessTarget || "system",
+      accessTarget:
+        user.accessTarget ||
+        (!user.isSuperAdmin &&
+        Number(user.roleId) !== 1 &&
+        (Number(user.roleId) === 4 ||
+          /tecnic|campo|instalador|cuadrilla/i.test(
+            String(user.roleName || "")
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+          ))
+          ? "apartado"
+          : "system"),
       assignedApartadoId: user.assignedApartadoId || undefined,
     },
   };
