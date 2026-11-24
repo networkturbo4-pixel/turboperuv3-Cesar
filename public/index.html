@@ -90,6 +90,52 @@
         }
       }
     }, true);
+
+    // Cola temprana de clics de navegación/cabecera para evitar ReferenceError mientras termina de cargar el script principal
+    window.__pendingEarlyCalls = [];
+    window.__flushPendingEarlyCalls = function() {
+      var queue = window.__pendingEarlyCalls.splice(0, window.__pendingEarlyCalls.length);
+      for (var i = 0; i < queue.length; i++) {
+        var item = queue[i];
+        var fn = window[item.name];
+        if (typeof fn === 'function' && !fn.__isEarlyStub) {
+          try { fn.apply(window, item.args); } catch (err) { console.error('[EarlyClickReplay]', item.name, err); }
+        }
+      }
+    };
+    [
+      'toggleWorkspaceSwitcher',
+      'openMobileWorkspaceModal',
+      'toggleMobileWorkspaceSwitcher',
+      'toggleSidebarCollapse',
+      'switchTab',
+      'openMobileConfigDrawer',
+      'openQuickActionsSheet',
+      'openCommandPalette',
+      'toggleThemeMode',
+      'toggleTableDensity',
+      'openMyProfileModal',
+      'openNewTenantModal',
+      'openManageTenantsModal',
+      'logout',
+      'openAttendanceCheckinModal',
+      'openCreateCustomerModal',
+      'switchConfigSubTab'
+    ].forEach(function(fnName) {
+      if (typeof window[fnName] !== 'function') {
+        var stub = function() {
+          var args = Array.prototype.slice.call(arguments);
+          if (args[0] && typeof args[0] === 'object' && typeof args[0].stopPropagation === 'function') {
+            args[0].stopPropagation();
+            args[0] = null;
+          }
+          window.__pendingEarlyCalls = window.__pendingEarlyCalls.filter(function(c) { return c.name !== fnName; });
+          window.__pendingEarlyCalls.push({ name: fnName, args: args });
+        };
+        stub.__isEarlyStub = true;
+        window[fnName] = stub;
+      }
+    });
   </script>
   
   <script>
@@ -63064,6 +63110,9 @@ function triggerCustomerPhoneCall() {
   if (menu) menu.classList.add('hidden');
 }
 setInterval(syncMessagesInProduction, 15000);
+if (typeof window.__flushPendingEarlyCalls === 'function') {
+  setTimeout(window.__flushPendingEarlyCalls, 0);
+}
 
   </script>
   <script src="/js/maps-module.js?v=2.8.2"></script>
