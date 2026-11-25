@@ -977,6 +977,10 @@
                   <span id="dispatch-tech-status" class="text-[10px] font-semibold text-amber-500">Requerido</span>
                 </div>
               </div>
+              <div class="relative mb-1.5">
+                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+                <input type="search" id="dispatch-employee-search" data-select-search="dispatch-employee-select" placeholder="Buscar técnico o personal..." aria-label="Buscar técnico o personal para despacho" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" class="alm-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
+              </div>
               <select id="dispatch-employee-select" onchange="handleDispatchTechChange()" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold">
                 <option value="">— Seleccionar técnico / personal —</option>
               </select>
@@ -1079,10 +1083,16 @@
 
       <!-- Sub-vista 2A: Asignaciones Activas en Mochila (Devolución parcial/masiva, Swap, Semáforo >7d, Acta RRHH) -->
       <div id="returns-sub-active" class="space-y-3">
-        <div class="alm-surface rounded-2xl p-3.5 flex flex-wrap items-center gap-2.5">
-          <select id="returns-employee-filter" onchange="renderReturnsList()" class="alm-input px-3 py-2 rounded-xl text-xs font-semibold">
-            <option value="">Todos los técnicos</option>
-          </select>
+        <div class="alm-surface rounded-2xl p-3.5 flex flex-wrap items-end gap-2.5">
+          <div class="flex flex-col gap-1 min-w-[220px]">
+            <div class="relative">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+              <input type="search" data-select-search="returns-employee-filter" placeholder="Buscar técnico..." aria-label="Buscar técnico en devoluciones" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" class="alm-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
+            </div>
+            <select id="returns-employee-filter" onchange="renderReturnsList()" class="alm-input px-3 py-2 rounded-xl text-xs font-semibold">
+              <option value="">Todos los técnicos</option>
+            </select>
+          </div>
           <input id="returns-search-input" type="text" oninput="renderReturnsList()" placeholder="Filtrar serie, SKU, últimos 4 dígitos o material..." class="alm-input px-3 py-2 rounded-xl text-xs flex-1 min-w-[180px]" />
           <button type="button" onclick="processBulkSelectedReturns()" id="btn-bulk-returns" class="hidden pos-press px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs">
             Devolver Seleccionados (<span id="bulk-returns-count">0</span>)
@@ -1110,6 +1120,10 @@
           <p class="text-xs text-slate-500">Los equipos retirados entran como <b>Recuperados / En Laboratorio</b> y quedan bloqueados para despacho hasta aprobar su test.</p>
           <div>
             <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Equipo / Modelo *</label>
+            <div class="relative mb-1.5">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+              <input type="search" data-select-search="rec-product-select" placeholder="Buscar equipo o SKU..." aria-label="Buscar equipo o modelo recuperado" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" class="alm-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
+            </div>
             <select id="rec-product-select" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold"></select>
           </div>
           <div class="grid grid-cols-2 gap-2.5">
@@ -1129,6 +1143,10 @@
             </div>
             <div>
               <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Técnico que retiró</label>
+              <div class="relative mb-1.5">
+                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+                <input type="search" data-select-search="rec-tech-select" placeholder="Buscar técnico..." aria-label="Buscar técnico que retiró" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" class="alm-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
+              </div>
               <select id="rec-tech-select" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold"></select>
             </div>
           </div>
@@ -1328,14 +1346,26 @@
 
       <!-- Sub-vista Técnico → Técnico -->
       <div id="transfer-sub-tech" class="space-y-3">
-        <div class="alm-surface flex flex-wrap items-center gap-2.5 rounded-2xl p-3.5">
-          <select id="tr-source-employee" onchange="renderTechTransferList()" class="alm-input px-3 py-2 rounded-xl text-xs font-semibold">
-            <option value="">Origen: Todos los técnicos</option>
-          </select>
-          <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-          <select id="tr-target-employee" class="alm-input px-3 py-2 rounded-xl border-emerald-500/40 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-            <option value="">Destino: Seleccionar técnico receptor *</option>
-          </select>
+        <div class="alm-surface flex flex-wrap items-end gap-2.5 rounded-2xl p-3.5">
+          <div class="flex flex-col gap-1 min-w-[220px] flex-1">
+            <div class="relative">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+              <input type="search" data-select-search="tr-source-employee" placeholder="Buscar técnico origen..." aria-label="Buscar técnico origen" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" class="alm-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
+            </div>
+            <select id="tr-source-employee" onchange="renderTechTransferList()" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold">
+              <option value="">Origen: Todos los técnicos</option>
+            </select>
+          </div>
+          <svg class="w-4 h-4 text-emerald-500 flex-shrink-0 mb-2.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          <div class="flex flex-col gap-1 min-w-[220px] flex-1">
+            <div class="relative">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+              <input type="search" data-select-search="tr-target-employee" placeholder="Buscar técnico receptor..." aria-label="Buscar técnico receptor" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" class="alm-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
+            </div>
+            <select id="tr-target-employee" class="alm-input w-full px-3 py-2 rounded-xl border-emerald-500/40 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              <option value="">Destino: Seleccionar técnico receptor *</option>
+            </select>
+          </div>
         </div>
         <div id="transfer-tech-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
       </div>
@@ -1346,10 +1376,18 @@
           <h3 class="text-sm font-bold text-slate-900 dark:text-white">Enviar Stock a Nodo POP</h3>
           <div>
             <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Nodo POP *</label>
+            <div class="relative mb-1.5">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+              <input type="search" data-select-search="tr-node-select" placeholder="Buscar nodo POP..." aria-label="Buscar nodo POP" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" class="alm-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
+            </div>
             <select id="tr-node-select" onchange="loadSelectedNodeStock()" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold"></select>
           </div>
           <div>
             <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Producto de Almacén *</label>
+            <div class="relative mb-1.5">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+              <input type="search" data-select-search="tr-node-product" placeholder="Buscar producto o SKU..." aria-label="Buscar producto para nodo POP" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" class="alm-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
+            </div>
             <select id="tr-node-product" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold"></select>
           </div>
           <div class="grid grid-cols-2 gap-2.5">
@@ -1388,6 +1426,10 @@
           </div>
           <div>
             <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Producto a Enviar *</label>
+            <div class="relative mb-1.5">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+              <input type="search" data-select-search="tr-sede-product" placeholder="Buscar producto o SKU..." aria-label="Buscar producto para traslado entre sedes" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" class="alm-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
+            </div>
             <select id="tr-sede-product" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold"></select>
           </div>
           <div class="grid grid-cols-2 gap-2.5">
@@ -1500,6 +1542,10 @@
           </div>
           <div>
             <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Producto</label>
+            <div class="relative mb-1.5">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+              <input type="search" data-select-search="label-product-select" placeholder="Buscar producto o SKU..." aria-label="Buscar producto para etiqueta" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" class="alm-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
+            </div>
             <select id="label-product-select" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold"></select>
           </div>
           <div class="grid grid-cols-2 gap-2.5">
@@ -1714,6 +1760,10 @@
       <div class="space-y-3">
         <div>
           <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Producto Seriado Destino</label>
+          <div class="relative mb-1.5">
+            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+            <input type="search" data-select-search="burst-product-select" placeholder="Buscar producto o SKU..." aria-label="Buscar producto seriado destino" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" class="alm-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
+          </div>
           <select id="burst-product-select" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold"></select>
         </div>
         <form onsubmit="handleBurstScanSubmit(event)" class="flex gap-2">

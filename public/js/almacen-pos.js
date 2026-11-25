@@ -688,14 +688,60 @@
     });
   }
 
+  function mergeWarehousePersonnel(employees, users) {
+    const baseEmps = Array.isArray(employees) ? employees : [];
+    const baseUsers = Array.isArray(users) ? users : [];
+    const merged = baseEmps.map((e) => ({ ...e }));
+
+    baseUsers.forEach((u) => {
+      if (!u || u.isActive === false) return;
+      const roleLow = String(u.roleName || u.role || "").toLowerCase();
+      if (roleLow.includes("cliente")) return;
+
+      const uName = String(u.name || u.fullName || "").trim().toLowerCase();
+      const uEmail = String(u.email || "").trim().toLowerCase();
+      const uDni = String(u.dni || u.document || "").trim();
+
+      const matched = merged.find((e) => {
+        if (Number(e.id) === Number(u.id) || Number(e.operatorId) === Number(u.id)) return true;
+        if (uDni && e.dni && String(e.dni).trim() === uDni) return true;
+        if (uEmail && e.email && String(e.email).trim().toLowerCase() === uEmail) return true;
+        return uName && getEmployeeDisplayName(e).trim().toLowerCase() === uName;
+      });
+
+      const resolvedRole = u.roleName || (u.isSuperAdmin ? "Superadministrador" : "Operador");
+      if (matched) {
+        if (!matched.position) matched.position = resolvedRole;
+        if (!matched.roleName) matched.roleName = resolvedRole;
+        if (u.isSuperAdmin) matched.isSuperAdmin = true;
+      } else {
+        merged.push({
+          id: u.id,
+          operatorId: u.id,
+          name: u.name || u.fullName || `Usuario #${u.id}`,
+          fullName: u.name || u.fullName || `Usuario #${u.id}`,
+          position: resolvedRole,
+          roleName: resolvedRole,
+          email: u.email || "",
+          dni: uDni,
+          isSuperAdmin: Boolean(u.isSuperAdmin),
+          source: "user",
+        });
+      }
+    });
+
+    return merged;
+  }
+
   window.refreshAllWarehouseData = async function (showFeedback) {
     const icon = document.getElementById("alm-refresh-icon");
     if (icon) icon.classList.add("animate-spin");
     try {
-      const [prodRes, catRes, empRes, asgRes, reqRes, assetRes, movRes, purchRes, instRes, trSedeRes] = await Promise.all([
+      const [prodRes, catRes, empRes, usersRes, asgRes, reqRes, assetRes, movRes, purchRes, instRes, trSedeRes] = await Promise.all([
         fetch("/api/inventory/products").then((r) => r.json()).catch(() => ({ data: [] })),
         fetch("/api/inventory/categories").then((r) => r.json()).catch(() => ({ data: [] })),
         fetch("/api/rrhh/employees").then((r) => r.json()).catch(() => ({ data: [] })),
+        fetch("/api/users").then((r) => r.json()).catch(() => ({ data: [] })),
         fetch("/api/inventory/personnel-assignments").then((r) => r.json()).catch(() => ({ data: [] })),
         fetch("/api/apartados/material-requests").then((r) => r.json()).catch(() => ({ data: [] })),
         fetch("/api/inventory/assets").then((r) => r.json()).catch(() => ({ data: [] })),
@@ -707,7 +753,7 @@
 
       almProducts = Array.isArray(prodRes.data) ? prodRes.data : [];
       almCategories = Array.isArray(catRes.data) ? catRes.data : [];
-      almEmployees = Array.isArray(empRes.data) ? empRes.data : [];
+      almEmployees = mergeWarehousePersonnel(empRes.data, usersRes.data);
       almAssignments = Array.isArray(asgRes.data) ? asgRes.data : [];
       almRequests = Array.isArray(reqRes.data) ? reqRes.data : [];
       almMovements = Array.isArray(movRes.data) ? movRes.data : [];
@@ -850,6 +896,79 @@
       const uniqueSups = Array.from(new Set([...fromHist, ...defaultSuppliers]));
       supList.innerHTML = uniqueSups.map((s) => `<option value="${esc(s)}"></option>`).join("");
     }
+
+    syncSearchableSelects();
+  }
+
+  function applySelectSearchFilter(selectEl, query) {
+    if (!selectEl) return;
+    if (!Array.isArray(selectEl._allOptions)) {
+      selectEl._allOptions = Array.from(selectEl.options).map((opt) => ({
+        value: opt.value,
+        text: opt.textContent || "",
+        dataName: opt.getAttribute("data-name") || "",
+      }));
+    }
+
+    const q = String(query || "").trim().toLowerCase();
+    const prevValue = selectEl.value;
+    const filtered = selectEl._allOptions.filter((opt) => {
+      if (opt.value === "") return true;
+      if (!q) return true;
+      return opt.text.toLowerCase().includes(q) || opt.dataName.toLowerCase().includes(q);
+    });
+
+    const hasMatches = filtered.some((opt) => opt.value !== "");
+    let html = filtered
+      .map(
+        (opt) =>
+          `<option value="${esc(opt.value)}"${opt.dataName ? ` data-name="${esc(opt.dataName)}"` : ""}>${esc(opt.text)}</option>`
+      )
+      .join("");
+
+    if (q && !hasMatches) {
+      html += `<option value="" disabled>Sin coincidencias para "${esc(query.trim())}"</option>`;
+    }
+
+    selectEl.innerHTML = html;
+    if (prevValue && filtered.some((opt) => opt.value === prevValue)) {
+      selectEl.value = prevValue;
+    }
+  }
+
+  function syncSearchableSelects() {
+    document.querySelectorAll("input[data-select-search]").forEach((input) => {
+      const targetId = input.getAttribute("data-select-search");
+      const selectEl = targetId ? document.getElementById(targetId) : null;
+      if (!selectEl) return;
+
+      selectEl._allOptions = Array.from(selectEl.options).map((opt) => ({
+        value: opt.value,
+        text: opt.textContent || "",
+        dataName: opt.getAttribute("data-name") || "",
+      }));
+
+      if (!input.dataset.searchBound) {
+        input.dataset.searchBound = "1";
+        input.addEventListener("input", () => {
+          applySelectSearchFilter(selectEl, input.value);
+        });
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const firstMatch = Array.from(selectEl.options).find((o) => o.value !== "" && !o.disabled);
+            if (firstMatch) {
+              selectEl.value = firstMatch.value;
+              selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+          }
+        });
+      }
+
+      if (input.value && input.value.trim()) {
+        applySelectSearchFilter(selectEl, input.value);
+      }
+    });
   }
 
   function getEmployeeSizesMap() {
@@ -1362,8 +1481,14 @@
     if (!req) return;
 
     const dispEmp = document.getElementById("dispatch-employee-select");
-    if (dispEmp && req.techId) {
-      dispEmp.value = String(req.techId);
+    if (dispEmp) {
+      if (req.techId) dispEmp.value = String(req.techId);
+      if (!dispEmp.value && req.techName) {
+        const matchEmp = almEmployees.find(
+          (e) => getEmployeeDisplayName(e).trim().toLowerCase() === String(req.techName).trim().toLowerCase()
+        );
+        if (matchEmp) dispEmp.value = String(matchEmp.id);
+      }
       handleDispatchTechChange();
     }
 
