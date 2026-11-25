@@ -5,7 +5,7 @@ import path from "path";
 import { env } from "../../config/env";
 import { resolveTenantId, getTenantFilePath, loadTenantsFromDisk } from "../tenants/tenants.service";
 import { is2faRequiredForTenant, getMasterTotpSecret } from "../settings/connections.service";
-import { verifyTOTP, enqueueZktecoUserInfo, enqueueZktecoDeleteUser, remapUserIdentityReferences } from "../rrhh/rrhh.routes";
+import { verifyTOTP, enqueueZktecoUserInfo, enqueueZktecoDeleteUser, remapUserIdentityReferences, markLoginTotpVerifiedAndUnlockToday } from "../rrhh/rrhh.routes";
 import { SecurityService } from "../security/security.service";
 import { AuditService } from "../security/audit.service";
 import { MediaService } from "../storage/media.service";
@@ -799,6 +799,9 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
           message: "Código de Google Authenticator incorrecto o expirado.",
         });
       }
+
+      // Evitar doble verificación: si el usuario ya validó TOTP al iniciar sesión, desbloquear su tardanza de hoy
+      markLoginTotpVerifiedAndUnlockToday(matchedUser.id, assignedTenant);
     }
 
     SecurityService.clearLoginFailures(clientIp);

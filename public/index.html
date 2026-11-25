@@ -23,21 +23,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Preload condicional de fondos solo si no hay sesión iniciada (ahorra 2.5MB a usuarios autenticados) -->
-  <script>
-    if (!localStorage.getItem('turbonetwork_session')) {
-      ['/assets/login_bg/slide-1.jpg', '/assets/login_bg/slide-2.jpg', '/assets/login_bg/slide-3.png'].forEach(function(href) {
-        var l = document.createElement('link');
-        l.rel = 'preload';
-        l.as = 'image';
-        l.href = href;
-        document.head.appendChild(l);
-      });
-    }
-  </script>
-  
   <!-- Tailwind CSS Compilado Estático de Alto Rendimiento (0ms de tiempo de compilación en runtime) -->
-  <link rel="stylesheet" href="/assets/tailwind.min.css?v=unslop_v5">
+  <link rel="stylesheet" href="/assets/tailwind.min.css?v=unslop_v7">
   <link rel="stylesheet" href="/assets/remixicon/remixicon.css">
   <link rel="stylesheet" href="/assets/omnichannel-inbox.css?v=12">
   <link rel="stylesheet" href="/assets/mail-inbox.css?v=3">
@@ -985,227 +972,164 @@
     }
 
     /* ======================================================== */
-    /* SLIDER DE FONDO CINEMÁTICO & PROFUNDIDAD                 */
+    /* PANTALLA DE LOGIN — DISEÑO MINIMALISTA & TÁCTIL          */
     /* ======================================================== */
-    .login-bg-slide {
-      position: absolute;
-      inset: 0;
-      background-size: cover;
-      background-position: center;
-      opacity: 0;
-      z-index: 1;
-      will-change: opacity, transform;
-      transform: scale(1.0) translateZ(0);
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      transition: opacity 1.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .login-bg-slide.active {
-      opacity: 1 !important;
-      z-index: 3 !important;
-      transform: scale(1.05) translateZ(0) !important;
-      transition: opacity 1.6s cubic-bezier(0.4, 0, 0.2, 1), transform 8s cubic-bezier(0.25, 1, 0.5, 1) !important;
-    }
-    .login-bg-slide.prev-active {
-      opacity: 1 !important;
-      z-index: 2 !important;
-      transform: scale(1.05) translateZ(0) !important;
-      transition: none !important;
+    :root {
+      --login-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    .bg-radial-vignette {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at center, rgba(7, 8, 13, 0.35) 0%, rgba(7, 8, 13, 0.72) 55%, rgba(4, 5, 8, 0.94) 100%);
-      pointer-events: none;
-      z-index: 4;
-    }
-    html:not(.dark) .bg-radial-vignette {
-      background: radial-gradient(circle at center, transparent 0%, rgba(241, 245, 249, 0.25) 55%, rgba(226, 232, 240, 0.55) 100%) !important;
+    #pin-login-screen {
+      background-color: #0b0d12;
+      color: #eef0f5;
+      min-height: 100dvh;
     }
 
-    /* ======================================================== */
-    /* DESENFOQUE GAUSSIANO A LOS COSTADOS (PROFUNDIDAD LATERAL)*/
-    /* ======================================================== */
-    .lateral-depth-blur-left {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: 32%;
-      max-width: 480px;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, transparent 100%);
-      mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, transparent 100%);
-      background: linear-gradient(to right, rgba(5, 6, 10, 0.7) 0%, rgba(5, 6, 10, 0.25) 55%, transparent 100%);
-      pointer-events: none;
-      z-index: 5;
-    }
-    html:not(.dark) .lateral-depth-blur-left {
-      width: 55% !important;
-      background: linear-gradient(to right, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.82) 48%, rgba(255, 255, 255, 0.25) 85%, transparent 100%) !important;
+    .login-surface-card {
+      background-color: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
     }
 
-    .lateral-depth-blur-right {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      right: 0;
-      width: 32%;
-      max-width: 480px;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, transparent 100%);
-      mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, transparent 100%);
-      background: linear-gradient(to left, rgba(5, 6, 10, 0.7) 0%, rgba(5, 6, 10, 0.25) 55%, transparent 100%);
-      pointer-events: none;
-      z-index: 5;
-    }
-    html:not(.dark) .lateral-depth-blur-right {
-      background: linear-gradient(to left, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.3) 55%, transparent 100%) !important;
+    @media (min-width: 1024px) {
+      .login-surface-card {
+        background-color: #11141c;
+        border: 1px solid rgba(238, 240, 245, 0.08);
+        border-radius: 20px;
+        box-shadow: 0 20px 50px -24px rgba(0, 0, 0, 0.65);
+      }
     }
 
-    /* ======================================================== */
-    /* GLASSMORFISMO MODERNO (APPLE FROSTED GLASS CARD)         */
-    /* ======================================================== */
-    .glass-login-card {
-      background: rgba(14, 18, 27, 0.68) !important;
-      backdrop-filter: blur(28px) saturate(190%) !important;
-      -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
-      border: 1px solid rgba(255, 255, 255, 0.16) !important;
-      box-shadow: 
-        0 30px 70px -15px rgba(0, 0, 0, 0.85),
-        0 15px 35px -10px rgba(0, 0, 0, 0.65),
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
-        inset 0 -1px 0 0 rgba(255, 255, 255, 0.05) !important;
-      border-radius: 28px;
-      transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    .login-divider-v {
+      background-color: rgba(238, 240, 245, 0.08);
     }
 
-    .glass-badge {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    }
-
-    .glass-welcome-card {
-      background: rgba(14, 18, 27, 0.78) !important;
-      backdrop-filter: blur(32px) saturate(200%) !important;
-      -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
-      border: 1px solid rgba(255, 255, 255, 0.18) !important;
-      box-shadow: 
-        0 35px 80px -15px rgba(0, 0, 0, 0.85),
-        0 0 45px -10px rgba(var(--brand-primary-rgb), 0.3),
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.3) !important;
-      border-radius: 32px;
-      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    /* ======================================================== */
-    /* TECLADO NUMÉRICO DE ALTO CONTRASTE (DIAL PAD MODERNO)    */
-    /* ======================================================== */
-    .glass-pin-btn {
+    .login-pin-btn {
       position: relative;
-      background: rgba(255, 255, 255, 0.06) !important;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.16) !important;
-      color: #ffffff !important;
-      box-shadow: 
-        0 4px 14px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+      height: 60px;
+      border-radius: 14px;
+      background-color: #161a24;
+      border: 1px solid rgba(238, 240, 245, 0.08);
+      color: #eef0f5;
+      font-size: 1.4375rem;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
       user-select: none;
-    }
-    .glass-pin-btn:hover {
-      background: rgba(255, 255, 255, 0.18) !important;
-      border-color: rgba(255, 255, 255, 0.45) !important;
-      transform: translateY(-2px);
-      box-shadow: 
-        0 8px 22px rgba(0, 0, 0, 0.45),
-        0 0 14px rgba(var(--brand-primary-rgb), 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    }
-    .glass-pin-btn:active {
-      background: rgba(var(--brand-primary-rgb), 0.36) !important;
-      border-color: var(--brand-primary) !important;
-      transform: scale(0.93) translateY(0);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-    }
-    .glass-pin-btn .keypad-number {
-      font-size: 1.35rem;
-      line-height: 1.15;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: #ffffff;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    }
-    .glass-pin-btn .keypad-subtext {
-      font-size: 8px;
-      font-weight: 600;
-      letter-spacing: 0.18em;
-      color: rgba(203, 213, 225, 0.75);
-      text-transform: uppercase;
-      line-height: 1;
-      margin-top: 1px;
-    }
-    .glass-pin-btn:hover .keypad-subtext {
-      color: #ffffff;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 120ms var(--login-ease), background-color 140ms ease, border-color 140ms ease, color 140ms ease;
     }
 
-    .glass-action-btn {
+    @media (min-width: 1024px) {
+      .login-pin-btn {
+        height: 52px;
+        border-radius: 12px;
+        background-color: #181c26;
+        font-size: 1.25rem;
+      }
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .login-pin-btn:hover {
+        background-color: #202534;
+        border-color: rgba(238, 240, 245, 0.16);
+      }
+    }
+
+    .login-pin-btn:active,
+    .login-pin-btn.is-pressed {
+      transform: scale(0.96);
+      background-color: #282f42;
+      border-color: rgba(238, 240, 245, 0.24);
+    }
+
+    .login-action-btn {
       position: relative;
-      background: rgba(255, 255, 255, 0.05) !important;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.12) !important;
-      color: #cbd5e1 !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-      transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+      height: 60px;
+      border-radius: 14px;
+      background-color: transparent;
+      border: 1px solid transparent;
+      color: #9aa2b2;
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
       user-select: none;
-    }
-    .glass-action-btn:hover {
-      background: rgba(255, 255, 255, 0.15) !important;
-      border-color: rgba(255, 255, 255, 0.3) !important;
-      color: #ffffff !important;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-    }
-    .glass-action-btn:active {
-      transform: scale(0.93) translateY(0);
-      background: rgba(255, 255, 255, 0.22) !important;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 120ms var(--login-ease), background-color 140ms ease, color 140ms ease;
     }
 
-    .security-dot,
-    .glass-dot {
-      width: 11px;
-      height: 11px;
+    @media (min-width: 1024px) {
+      .login-action-btn {
+        height: 52px;
+        border-radius: 12px;
+        font-size: 0.8125rem;
+      }
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .login-action-btn:hover {
+        background-color: rgba(238, 240, 245, 0.05);
+        color: #eef0f5;
+      }
+    }
+
+    .login-action-btn:active,
+    .login-action-btn.is-pressed {
+      transform: scale(0.96);
+      background-color: rgba(238, 240, 245, 0.09);
+      color: #eef0f5;
+    }
+
+    .security-dot {
+      width: 10px;
+      height: 10px;
       border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.12);
-      border: 1.5px solid rgba(255, 255, 255, 0.35);
-      backdrop-filter: blur(6px);
-      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      background-color: transparent;
+      border: 1.5px solid rgba(238, 240, 245, 0.24);
+      transition: transform 160ms var(--login-ease), background-color 140ms ease, border-color 140ms ease;
     }
-    .security-dot.active,
-    .glass-dot.active {
+
+    .security-dot.active {
       background-color: var(--brand-primary) !important;
-      border-color: #ffffff !important;
-      box-shadow: 0 0 14px var(--brand-primary), 0 0 3px #ffffff;
-      transform: scale(1.35);
+      border-color: var(--brand-primary) !important;
+      transform: scale(1.15);
+    }
+
+    .login-welcome-card {
+      background-color: #11141c;
+      border: 1px solid rgba(238, 240, 245, 0.08);
+      border-radius: 20px;
+      box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.7);
+      transition: transform 240ms var(--login-ease), opacity 220ms ease;
     }
 
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-6px); }
-      40%, 80% { transform: translateX(6px); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
     }
     .shake-error {
-      animation: shake 0.35s ease-in-out both;
+      animation: shake 280ms var(--login-ease) both;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .login-pin-btn:active,
+      .login-pin-btn.is-pressed,
+      .login-action-btn:active,
+      .login-action-btn.is-pressed {
+        transform: none;
+      }
+      .shake-error {
+        animation: none;
+      }
     }
 
     /* ======================================================== */
@@ -1464,166 +1388,88 @@
       color: #ffffff !important;
     }
 
-    /* PANTALLA DE LOGIN & TECLADO CON ALTO CONTRASTE EN MODO CLARO */
-    html:not(.dark) .glass-login-card {
-      background: rgba(255, 255, 255, 0.95) !important;
-      backdrop-filter: blur(32px) saturate(200%) !important;
-      -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
-      border: 1.5px solid rgba(203, 213, 225, 0.9) !important;
-      box-shadow: 
-        0 30px 70px -12px rgba(15, 23, 42, 0.35),
-        0 12px 30px -8px rgba(15, 23, 42, 0.18),
-        inset 0 1px 0 0 #ffffff !important;
+    /* PANTALLA DE LOGIN & TECLADO EN MODO CLARO */
+    html:not(.dark) #pin-login-screen {
+      background-color: #ffffff !important;
+      color: #111827 !important;
+    }
+    html:not(.dark) .login-surface-card {
+      background-color: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    @media (min-width: 1024px) {
+      html:not(.dark) #pin-login-screen {
+        background-color: #f5f7fa !important;
+      }
+      html:not(.dark) .login-surface-card {
+        background-color: #ffffff !important;
+        border: 1px solid rgba(17, 24, 39, 0.08) !important;
+        box-shadow: 0 8px 28px -8px rgba(15, 23, 42, 0.08) !important;
+      }
+    }
+    html:not(.dark) .login-divider-v {
+      background-color: rgba(17, 24, 39, 0.08) !important;
     }
     html:not(.dark) #login-logo-wrapper {
-      background: var(--brand-primary) !important;
-      border: 2px solid rgba(255, 255, 255, 0.6) !important;
-      box-shadow: 0 10px 25px -4px rgba(var(--brand-primary-rgb), 0.55), 0 4px 6px -2px rgba(var(--brand-primary-rgb), 0.25) !important;
+      background-color: var(--brand-primary) !important;
+      border-color: transparent !important;
     }
     html:not(.dark) #login-default-icon {
       color: #ffffff !important;
-      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
     }
-    html:not(.dark) #login-system-title {
-      color: #0f172a !important;
-      font-weight: 800 !important;
-      text-shadow: none !important;
+    html:not(.dark) #login-system-title,
+    html:not(.dark) #login-headline,
+    html:not(.dark) #login-clock-time,
+    html:not(.dark) #login-2fa-user-name {
+      color: #111827 !important;
     }
-    html:not(.dark) #login-system-tagline {
-      color: #334155 !important;
-      font-weight: 600 !important;
+    html:not(.dark) #login-system-tagline,
+    html:not(.dark) #login-clock-date,
+    html:not(.dark) #login-subcopy {
+      color: #4b5565 !important;
     }
-    html:not(.dark) .glass-badge {
-      background: rgba(15, 23, 42, 0.08) !important;
-      border: 1.5px solid rgba(15, 23, 42, 0.16) !important;
-      color: #0f172a !important;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+    html:not(.dark) .login-pin-btn {
+      background-color: #f3f4f6 !important;
+      border-color: rgba(17, 24, 39, 0.08) !important;
+      color: #111827 !important;
     }
-    html:not(.dark) .glass-badge * {
-      color: #0f172a !important;
-      font-weight: 700 !important;
+    @media (hover: hover) and (pointer: fine) {
+      html:not(.dark) .login-pin-btn:hover {
+        background-color: #e9ecf1 !important;
+        border-color: rgba(17, 24, 39, 0.16) !important;
+      }
     }
-    html:not(.dark) .glass-badge #daily-quote-date {
-      color: #475569 !important;
-      font-weight: 600 !important;
+    html:not(.dark) .login-pin-btn:active,
+    html:not(.dark) .login-pin-btn.is-pressed {
+      background-color: #dfe4ec !important;
+      border-color: rgba(17, 24, 39, 0.22) !important;
     }
-    html:not(.dark) #daily-quote-text {
-      color: #0f172a !important;
-      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95), 0 2px 8px rgba(255, 255, 255, 0.8) !important;
-      font-weight: 600 !important;
+    html:not(.dark) .login-action-btn {
+      color: #4b5565 !important;
     }
-    html:not(.dark) #daily-quote-icon {
-      color: rgba(15, 23, 42, 0.2) !important;
+    @media (hover: hover) and (pointer: fine) {
+      html:not(.dark) .login-action-btn:hover {
+        background-color: rgba(17, 24, 39, 0.05) !important;
+        color: #111827 !important;
+      }
     }
-    html:not(.dark) #daily-quote-author {
-      color: #0f172a !important;
-      font-weight: 800 !important;
-      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    html:not(.dark) .security-dot {
+      border-color: rgba(17, 24, 39, 0.22) !important;
     }
-    html:not(.dark) #daily-quote-tag {
-      color: #1e293b !important;
-      font-weight: 600 !important;
+    html:not(.dark) .login-welcome-card {
+      background-color: #ffffff !important;
+      border-color: rgba(17, 24, 39, 0.08) !important;
+      box-shadow: 0 16px 40px -12px rgba(15, 23, 42, 0.14) !important;
     }
-    html:not(.dark) #slider-dock-container {
-      background: rgba(255, 255, 255, 0.94) !important;
-      border: 1.5px solid rgba(203, 213, 225, 0.9) !important;
-      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.1) !important;
+    html:not(.dark) .login-welcome-card #welcome-title {
+      color: #111827 !important;
     }
-    html:not(.dark) #slider-dock-container button:not(.dynamic-primary-bg) {
-      background: #94a3b8 !important;
-    }
-    html:not(.dark) #slider-counter {
-      color: #0f172a !important;
-      font-weight: 800 !important;
-    }
-    html:not(.dark) #slider-scene-name {
-      color: #0f172a !important;
-      font-weight: 700 !important;
-    }
-    html:not(.dark) #slider-scene-info * {
-      color: #334155 !important;
-    }
-    html:not(.dark) .glass-welcome-card {
-      background: rgba(255, 255, 255, 0.96) !important;
-      border: 1.5px solid rgba(203, 213, 225, 0.9) !important;
-      box-shadow: 
-        0 35px 80px -10px rgba(15, 23, 42, 0.3),
-        0 0 35px -5px rgba(var(--brand-primary-rgb), 0.25),
-        inset 0 1px 0 0 #ffffff !important;
-    }
-    html:not(.dark) .glass-welcome-card #welcome-title {
-      color: #0f172a !important;
-      font-weight: 800 !important;
-    }
-    html:not(.dark) .glass-welcome-card #welcome-saludo {
-      color: #1e293b !important;
-      font-weight: 700 !important;
-    }
-    html:not(.dark) .glass-pin-btn {
-      background: #ffffff !important;
-      border: 1.5px solid #94a3b8 !important;
-      color: #0f172a !important;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1) !important;
-    }
-    html:not(.dark) .glass-pin-btn .keypad-number {
-      color: #0f172a !important;
-      font-weight: 800 !important;
-      text-shadow: none !important;
-    }
-    html:not(.dark) .glass-pin-btn .keypad-subtext {
-      color: #475569 !important;
-      font-weight: 700 !important;
-    }
-    html:not(.dark) .glass-pin-btn:hover {
-      background: #f1f5f9 !important;
-      border-color: var(--brand-primary) !important;
-      box-shadow: 0 6px 20px rgba(var(--brand-primary-rgb), 0.28) !important;
-    }
-    html:not(.dark) .glass-pin-btn:hover .keypad-number {
-      color: var(--brand-primary) !important;
-    }
-    html:not(.dark) .glass-pin-btn:hover .keypad-subtext {
-      color: var(--brand-primary) !important;
-    }
-    html:not(.dark) .glass-pin-btn:active {
-      background: #e2e8f0 !important;
-      transform: scale(0.93);
-    }
-    html:not(.dark) .glass-action-btn {
-      background: #f8fafc !important;
-      border: 1.5px solid #94a3b8 !important;
-      color: #0f172a !important;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
-    }
-    html:not(.dark) .glass-action-btn span {
-      color: #0f172a !important;
-      font-weight: 800 !important;
-    }
-    html:not(.dark) .glass-action-btn:hover {
-      background: #e2e8f0 !important;
-      border-color: #475569 !important;
-      color: #0f172a !important;
-    }
-    html:not(.dark) .glass-action-btn svg {
-      stroke: #0f172a !important;
-      stroke-width: 2.2 !important;
-    }
-    html:not(.dark) .glass-action-btn:hover svg {
-      stroke: #000000 !important;
-    }
-    html:not(.dark) .security-dot.glass-dot {
-      background: #e2e8f0 !important;
-      border: 2px solid #64748b !important;
-      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-    }
-    html:not(.dark) .security-dot.glass-dot.active {
-      background-color: var(--brand-primary) !important;
-      border-color: var(--brand-primary) !important;
-      box-shadow: 0 0 14px rgba(var(--brand-primary-rgb), 0.7) !important;
+    html:not(.dark) .login-welcome-card #welcome-saludo {
+      color: #4b5565 !important;
     }
     html:not(.dark) #login-feedback {
-      color: #e11d48 !important;
-      font-weight: 700 !important;
+      color: #dc2626 !important;
     }
 
     /* Cajas internas, chips y bordes en Modo Claro */
@@ -2685,293 +2531,187 @@
   <!-- ======================================================== -->
   <!-- 1. LOGIN DE SEGURIDAD CON PIN DE 8 DÍGITOS               -->
   <!-- ======================================================== -->
-  <div id="pin-login-screen" class="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden p-4 sm:p-8 lg:p-12 xl:p-16 select-none">
-    
-    <!-- Background Slider Container with Lateral Gaussian Depth -->
-    <div id="login-slider-container" class="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-[#07090e]">
-      <!-- Slide 1: Eye Close-Up Texture (Clean) -->
-      <div id="login-slide-0" class="login-bg-slide active absolute inset-0 bg-cover bg-center" style="background-image: url('/assets/login_bg/slide-1.jpg');"></div>
-      
-      <!-- Slide 2: Cinematic Keyhole Silhouette (Clean) -->
-      <div id="login-slide-1" class="login-bg-slide absolute inset-0 bg-cover bg-center" style="background-image: url('/assets/login_bg/slide-2.jpg');"></div>
-      
-      <!-- Slide 3: Cafe Depth & Bokeh Scene -->
-      <div id="login-slide-2" class="login-bg-slide absolute inset-0 bg-cover bg-center" style="background-image: url('/assets/login_bg/slide-3.png');"></div>
+  <div id="pin-login-screen" class="fixed inset-0 z-[200] flex flex-col lg:flex-row items-center justify-center overflow-y-auto px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] lg:p-8 select-none">
 
-      <!-- Static subtle cinematic contrast overlay (Dark mode darkens, Light mode brightens) -->
-      <div class="absolute inset-0 bg-slate-950/40 dark:block hidden pointer-events-none z-[4]"></div>
-      <div class="absolute inset-0 bg-white/45 block dark:hidden pointer-events-none z-[4]"></div>
+    <!-- Contenedor Split Minimalista (fullscreen nativo en móvil, tarjeta split en escritorio) -->
+    <div class="login-surface-card w-full max-w-[380px] lg:max-w-[780px] min-h-[calc(100dvh-3.5rem)] lg:min-h-0 flex flex-col justify-between lg:grid lg:grid-cols-[1fr_1px_348px] overflow-hidden my-auto">
 
-      <!-- Depth Blur Optical Base Layer -->
-      <div class="absolute inset-0 backdrop-blur-[1px] z-[4]"></div>
-      
-      <!-- Lateral Gaussian Blur & Depth Vignette - Left Side -->
-      <div class="lateral-depth-blur-left"></div>
-
-      <!-- Lateral Gaussian Blur & Depth Vignette - Right Side -->
-      <div class="lateral-depth-blur-right"></div>
-
-      <!-- Atmospheric Radial Vignette Layer -->
-      <div class="bg-radial-vignette"></div>
-    </div>
-
-    <!-- Container Principal: Frase Motivadora & Slider Dock a la Izquierda + Card de Login a la Derecha -->
-    <div class="relative z-10 w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-14 xl:gap-20 px-2 sm:px-6 lg:px-8">
-      
-      <!-- LADO IZQUIERDO: FRASE DIARIA MOTIVADORA Y DOCK DEL SLIDER -->
-      <div class="hidden md:flex flex-col items-start justify-center max-w-lg lg:max-w-xl xl:max-w-2xl text-left select-none pl-2 sm:pl-4">
-        
-        <!-- Badge de Inspiración Diaria & Fecha -->
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-badge text-xs font-mono text-white/90 shadow-md mb-6">
-          <span class="w-2 h-2 rounded-full dynamic-primary-bg animate-pulse"></span>
-          <span class="tracking-wider uppercase font-semibold text-[11px] text-white">Inspiración del Día</span>
-          <span class="text-white/30">•</span>
-          <span id="daily-quote-date" class="text-slate-300 text-[11px] font-mono">18 Sep</span>
-        </div>
-
-        <!-- Cita Motivadora con Icono Tipográfico Sutil -->
-        <div class="relative">
-          <svg id="daily-quote-icon" class="w-10 h-10 text-white/15 absolute -top-5 -left-6 pointer-events-none -z-10 transition-colors" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
-          </svg>
-          <blockquote id="daily-quote-text" class="text-2xl sm:text-3xl xl:text-[32px] font-light tracking-tight text-white leading-relaxed drop-shadow-md transition-colors">
-            "La velocidad y estabilidad de tu red es la fuerza invisible que conecta vidas y transforma futuros."
-          </blockquote>
-        </div>
-
-        <!-- Autor y Etiqueta -->
-        <div class="mt-4 flex items-center gap-3">
-          <div class="w-7 h-0.5 dynamic-primary-bg rounded-full"></div>
-          <span id="daily-quote-author" class="text-sm font-semibold text-white/90 tracking-wide transition-colors">TurboNetwork Core</span>
-          <span class="text-xs text-slate-400 font-normal">• <span id="daily-quote-tag" class="transition-colors">Excelencia en Conectividad</span></span>
-        </div>
-
-        <!-- DEBAJO: EL DOCK DEL SLIDER CON NAVEGACIÓN CINEMÁTICA -->
-        <div class="mt-8 sm:mt-10 flex items-center gap-4">
-          <!-- Dock Flotante con Glassmorfismo -->
-          <div id="slider-dock-container" class="inline-flex items-center gap-2 p-1.5 px-3 rounded-full bg-slate-900/70 backdrop-blur-xl border border-white/20 shadow-2xl transition-all">
-            <button type="button" onclick="setLoginSlide(0)" id="slide-indicator-0" class="h-2 rounded-full transition-all duration-500 w-8 dynamic-primary-bg shadow-sm cursor-pointer" title="Fondo 1: Visión Óptica"></button>
-            <button type="button" onclick="setLoginSlide(1)" id="slide-indicator-1" class="h-2 rounded-full transition-all duration-500 w-2.5 bg-white/30 hover:bg-white/70 cursor-pointer" title="Fondo 2: Seguridad Core"></button>
-            <button type="button" onclick="setLoginSlide(2)" id="slide-indicator-2" class="h-2 rounded-full transition-all duration-500 w-2.5 bg-white/30 hover:bg-white/70 cursor-pointer" title="Fondo 3: Infraestructura"></button>
+      <!-- LADO IZQUIERDO (Móvil: cabecera centrada sobria | Escritorio: identidad + reloj) -->
+      <div class="flex flex-col items-center lg:items-start justify-between pt-4 pb-2 lg:p-10 text-center lg:text-left">
+        <!-- Marca -->
+        <div class="flex flex-col lg:flex-row items-center gap-3">
+          <div id="login-logo-wrapper" class="w-12 h-12 lg:w-10 lg:h-10 rounded-[14px] lg:rounded-[10px] flex items-center justify-center border border-white/10 overflow-hidden bg-white/[0.06] flex-shrink-0">
+            <svg id="login-default-icon" class="w-6 h-6 lg:w-5 lg:h-5 text-white" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <img id="login-custom-img" class="w-full h-full object-contain p-1 hidden" alt="Logo">
           </div>
-
-          <!-- Contador y Nombre de Escena -->
-          <div id="slider-scene-info" class="text-[12px] font-mono text-slate-300/80 flex items-center gap-2 transition-colors">
-            <span id="slider-counter" class="text-white font-bold transition-colors">01</span>
-            <span class="text-white/30">/</span>
-            <span class="text-white/50">03</span>
-            <span class="text-white/20">•</span>
-            <span id="slider-scene-name" class="text-white/80 font-sans text-[11px] font-medium tracking-wide transition-colors">Visión de Red</span>
+          <div class="min-w-0">
+            <h1 id="login-system-title" class="text-[16px] lg:text-[15px] font-medium tracking-[-0.01em] text-[#eef0f5] leading-snug">TurboNetwork Enterprise</h1>
+            <p id="login-system-tagline" class="text-xs text-[#9aa2b2] mt-0.5 lg:mt-0">Plataforma operativa ISP</p>
           </div>
         </div>
 
+        <!-- Contexto operativo (solo escritorio) -->
+        <div class="hidden lg:block my-10">
+          <h2 id="login-headline" class="text-[26px] leading-[1.2] font-medium tracking-[-0.02em] text-[#eef0f5]">
+            Control de red y operaciones
+          </h2>
+          <p id="login-subcopy" class="text-[13px] leading-relaxed text-[#9aa2b2] mt-3 max-w-[300px]">
+            Acceso interno para gestión de clientes, facturación, soporte y control de asistencia.
+          </p>
+        </div>
+
+        <!-- Hora local y estado sobrio (solo escritorio) -->
+        <div class="hidden lg:block pt-6 border-t border-white/[0.07] w-full">
+          <div id="login-clock-time" class="text-[28px] leading-none font-medium tracking-[-0.02em] tabular-nums text-[#eef0f5]">--:--</div>
+          <div id="login-clock-date" class="text-xs text-[#9aa2b2] mt-1.5 capitalize">Cargando fecha</div>
+          <div class="flex items-center gap-2 mt-4 text-[12px] text-[#6b7385]">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+            <span>Sesión cifrada · Acceso por PIN</span>
+          </div>
+        </div>
       </div>
 
-      <!-- LADO DERECHO: CARD DE AUTENTICACIÓN CON TECLADO NUMÉRICO MEJORADO -->
-      <div class="glass-login-card relative w-full max-w-[360px] p-6 sm:p-7 flex flex-col items-center text-center shadow-2xl">
-        
-        <!-- Brand Logo Container -->
-        <div id="login-logo-wrapper" class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl mb-3.5 border border-white/20 overflow-hidden transition-all duration-200 bg-white/10 backdrop-blur-md">
-          <svg id="login-default-icon" class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-          </svg>
-          <img id="login-custom-img" class="w-full h-full object-contain p-1 hidden" alt="Brand Logo">
-        </div>
+      <!-- Separador hairline vertical -->
+      <div class="hidden lg:block login-divider-v"></div>
+
+      <!-- LADO DERECHO: TECLADO NUMÉRICO Y VERIFICACIÓN 2FA -->
+      <div class="flex-1 flex flex-col items-center justify-center py-4 lg:p-8 text-center">
 
         <!-- PASO 1: TECLADO Y PIN DE 8 DÍGITOS -->
-        <div id="login-pin-step" class="w-full flex flex-col items-center">
-          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full glass-badge text-[10px] font-mono text-slate-200 mb-2">
-            <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg animate-pulse"></span>
-            <span class="tracking-wider">TERMINAL AUTORIZADA</span>
+        <div id="login-pin-step" class="w-full max-w-[316px] lg:max-w-[264px] flex flex-col items-center">
+          <p class="text-[17px] lg:text-[15px] font-medium tracking-[-0.01em]">Ingresa tu PIN</p>
+          <p class="text-[13px] lg:text-xs text-[#9aa2b2] mt-1">Código personal de 8 dígitos</p>
+
+          <!-- Indicador de 8 dígitos -->
+          <div id="pin-dots-container" class="flex items-center justify-center gap-3.5 lg:gap-3 mt-6 mb-3 lg:my-6" aria-label="Progreso del PIN">
+            <div class="security-dot" id="dot-0"></div>
+            <div class="security-dot" id="dot-1"></div>
+            <div class="security-dot" id="dot-2"></div>
+            <div class="security-dot" id="dot-3"></div>
+            <div class="security-dot" id="dot-4"></div>
+            <div class="security-dot" id="dot-5"></div>
+            <div class="security-dot" id="dot-6"></div>
+            <div class="security-dot" id="dot-7"></div>
           </div>
 
-          <h1 id="login-system-title" class="text-lg font-semibold tracking-tight text-white drop-shadow-sm">TurboNetwork Enterprise</h1>
-          <p id="login-system-tagline" class="text-xs text-slate-300/80 mt-0.5 font-normal">Ingrese el PIN de acceso de 8 dígitos</p>
+          <!-- Feedback inline -->
+          <div id="login-feedback" class="text-xs min-h-[20px] text-rose-400 font-medium mb-4 tabular-nums"></div>
 
-          <!-- 8-Digit Security Dots -->
-          <div id="pin-dots-container" class="flex items-center justify-center space-x-2.5 my-5">
-            <div class="security-dot glass-dot" id="dot-0"></div>
-            <div class="security-dot glass-dot" id="dot-1"></div>
-            <div class="security-dot glass-dot" id="dot-2"></div>
-            <div class="security-dot glass-dot" id="dot-3"></div>
-            <div class="security-dot glass-dot" id="dot-4"></div>
-            <div class="security-dot glass-dot" id="dot-5"></div>
-            <div class="security-dot glass-dot" id="dot-6"></div>
-            <div class="security-dot glass-dot" id="dot-7"></div>
-          </div>
+          <!-- Teclado numérico limpio (amplio y cómodo en móvil) -->
+          <div class="grid grid-cols-3 gap-3 lg:gap-2.5 w-full">
+            <button type="button" data-digit="1" onclick="pressDigit('1')" class="login-pin-btn">1</button>
+            <button type="button" data-digit="2" onclick="pressDigit('2')" class="login-pin-btn">2</button>
+            <button type="button" data-digit="3" onclick="pressDigit('3')" class="login-pin-btn">3</button>
 
-          <!-- Feedback -->
-          <div id="login-feedback" class="text-xs min-h-[20px] text-rose-400 font-medium mb-3 font-mono drop-shadow"></div>
+            <button type="button" data-digit="4" onclick="pressDigit('4')" class="login-pin-btn">4</button>
+            <button type="button" data-digit="5" onclick="pressDigit('5')" class="login-pin-btn">5</button>
+            <button type="button" data-digit="6" onclick="pressDigit('6')" class="login-pin-btn">6</button>
 
-          <!-- Precision Numeric Keypad with High Contrast & Tactical Feel -->
-          <div class="grid grid-cols-3 gap-3 w-full max-w-[280px]">
-            <button type="button" onclick="pressDigit('1')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-              <span class="keypad-number">1</span>
-              <span class="keypad-subtext">&nbsp;</span>
-            </button>
-            <button type="button" onclick="pressDigit('2')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-              <span class="keypad-number">2</span>
-              <span class="keypad-subtext">ABC</span>
-            </button>
-            <button type="button" onclick="pressDigit('3')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-              <span class="keypad-number">3</span>
-              <span class="keypad-subtext">DEF</span>
-            </button>
-            
-            <button type="button" onclick="pressDigit('4')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-              <span class="keypad-number">4</span>
-              <span class="keypad-subtext">GHI</span>
-            </button>
-            <button type="button" onclick="pressDigit('5')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-              <span class="keypad-number">5</span>
-              <span class="keypad-subtext">JKL</span>
-            </button>
-            <button type="button" onclick="pressDigit('6')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-              <span class="keypad-number">6</span>
-              <span class="keypad-subtext">MNO</span>
-            </button>
+            <button type="button" data-digit="7" onclick="pressDigit('7')" class="login-pin-btn">7</button>
+            <button type="button" data-digit="8" onclick="pressDigit('8')" class="login-pin-btn">8</button>
+            <button type="button" data-digit="9" onclick="pressDigit('9')" class="login-pin-btn">9</button>
 
-            <button type="button" onclick="pressDigit('7')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-              <span class="keypad-number">7</span>
-              <span class="keypad-subtext">PQRS</span>
+            <button type="button" onclick="clearPin()" class="login-action-btn" aria-label="Limpiar PIN">
+              <span>Limpiar</span>
             </button>
-            <button type="button" onclick="pressDigit('8')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-              <span class="keypad-number">8</span>
-              <span class="keypad-subtext">TUV</span>
-            </button>
-            <button type="button" onclick="pressDigit('9')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-              <span class="keypad-number">9</span>
-              <span class="keypad-subtext">WXYZ</span>
-            </button>
-
-            <button type="button" onclick="clearPin()" class="glass-action-btn h-13 sm:h-14 rounded-2xl flex flex-col items-center justify-center text-xs font-semibold tracking-wide">
-              <span class="text-[10px] font-bold tracking-wider uppercase">Borrar</span>
-            </button>
-            <button type="button" onclick="pressDigit('0')" class="glass-pin-btn h-13 sm:h-14 py-1.5 rounded-2xl flex flex-col items-center justify-center">
-              <span class="keypad-number">0</span>
-              <span class="keypad-subtext">+</span>
-            </button>
-            <button type="button" onclick="backspacePin()" class="glass-action-btn h-13 sm:h-14 rounded-2xl flex items-center justify-center">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <button type="button" data-digit="0" onclick="pressDigit('0')" class="login-pin-btn">0</button>
+            <button type="button" onclick="backspacePin()" class="login-action-btn" aria-label="Borrar último dígito">
+              <svg class="w-5 h-5 lg:w-[18px] lg:h-[18px]" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6-6h12a2 2 0 012 2v8a2 2 0 01-2 2H9l-6-6z" />
               </svg>
             </button>
           </div>
+
+          <p class="hidden lg:block text-[11px] text-[#6b7385] mt-5">
+            También puedes escribir con el teclado
+          </p>
         </div>
 
-        <!-- PASO 2: VERIFICACIÓN GOOGLE AUTHENTICATOR (REGLA ESTRICTA 2FA POR NEGOCIO) -->
-        <div id="login-2fa-step" class="hidden flex-col items-center w-full max-w-[320px] text-center space-y-4">
-          <!-- Avatar del Usuario -->
-          <div class="relative mt-1">
-            <div class="w-16 h-16 rounded-full p-0.5 border border-amber-500/40 bg-slate-800 overflow-hidden mx-auto">
-              <img id="login-2fa-avatar" class="w-full h-full rounded-full object-cover" src="https://api.dicebear.com/7.x/bottts/svg?seed=Cesar" alt="Avatar">
+        <!-- PASO 2: VERIFICACIÓN GOOGLE AUTHENTICATOR -->
+        <div id="login-2fa-step" class="hidden flex-col items-center w-full max-w-[316px] lg:max-w-[280px] text-center space-y-5">
+          <!-- Identidad del operador -->
+          <div class="flex flex-col items-center gap-2.5">
+            <div class="w-14 h-14 lg:w-12 lg:h-12 rounded-full border border-white/10 bg-white/[0.04] overflow-hidden">
+              <img id="login-2fa-avatar" class="w-full h-full object-cover" src="https://api.dicebear.com/7.x/bottts/svg?seed=Operador" alt="Avatar">
             </div>
-            <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-500 border-2 border-slate-900 flex items-center justify-center">
-              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            </div>
-          </div>
-
-          <div>
-            <h2 id="login-2fa-user-name" class="text-base font-semibold text-white tracking-tight">Verificación en dos pasos</h2>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 mt-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-medium">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-              <span id="login-2fa-tenant-name">Sede Activa</span>
+            <div>
+              <h2 id="login-2fa-user-name" class="text-[16px] lg:text-[15px] font-medium tracking-[-0.01em] text-[#eef0f5]">Verificación en dos pasos</h2>
+              <p id="login-2fa-tenant-name" class="text-xs text-[#9aa2b2] mt-0.5">Sede activa</p>
             </div>
           </div>
 
-          <div class="p-3.5 rounded-2xl bg-white/[0.06] border border-white/10 text-left space-y-1">
-            <span class="text-[11px] font-bold text-amber-400 flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-              Regla Estricta 2FA Activa
-            </span>
-            <p class="text-[11px] text-slate-300/80 leading-relaxed font-normal">
-              Ingrese el código dinámico de 6 dígitos que muestra su app <strong class="text-white">Google Authenticator</strong> para este negocio:
-            </p>
-          </div>
+          <p id="login-2fa-rule-desc" class="text-[13px] lg:text-xs text-[#9aa2b2] leading-relaxed">
+            Ingresa el código de 6 dígitos de Google Authenticator para continuar
+          </p>
 
-          <!-- Input de 6 Dígitos -->
+          <!-- Input de 6 dígitos -->
           <div class="w-full space-y-2">
-            <input type="text" id="login-totp-input" maxlength="6" pattern="\d{6}" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" class="w-full h-14 bg-white/10 dark:bg-black/50 border-2 border-amber-500/60 focus:border-amber-400 rounded-xl px-4 text-center text-2xl font-mono tabular-nums font-semibold tracking-[0.35em] text-white placeholder:text-white/20 focus:outline-none focus:ring-4 focus:ring-amber-500/25 transition-colors">
-            <div id="login-2fa-feedback" class="text-xs min-h-[18px] text-rose-400 font-medium font-mono"></div>
+            <input
+              type="text"
+              id="login-totp-input"
+              maxlength="6"
+              pattern="\d{6}"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              placeholder="000000"
+              class="w-full h-13 lg:h-12 bg-white/[0.04] border border-white/15 focus:border-blue-500 rounded-[12px] lg:rounded-[10px] px-4 text-center text-2xl lg:text-xl font-mono tabular-nums font-medium tracking-[0.35em] text-[#eef0f5] placeholder:text-white/20 focus:outline-none transition-colors"
+            >
+            <div id="login-2fa-feedback" class="text-xs min-h-[18px] text-rose-400 font-medium tabular-nums"></div>
           </div>
 
-          <!-- Botones de Acción -->
-          <div class="w-full space-y-2 pt-1">
-            <button type="button" onclick="submitTotpLogin()" id="btn-submit-totp-login" class="w-full h-12 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-sm flex items-center justify-center gap-2 transition-colors active:scale-[0.98]">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <span>Verificar y Entrar</span>
+          <!-- Botones de acción -->
+          <div class="w-full space-y-2">
+            <button type="button" onclick="submitTotpLogin()" id="btn-submit-totp-login" class="w-full h-12 lg:h-11 rounded-[12px] lg:rounded-[10px] dynamic-primary-bg text-white font-medium text-sm flex items-center justify-center transition-[transform,opacity] duration-150 hover:opacity-95 active:scale-[0.97]">
+              <span>Verificar y entrar</span>
             </button>
-            <button type="button" onclick="cancelTotpLogin()" class="w-full py-2 text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-              <span>Volver / Cambiar PIN</span>
+            <button type="button" onclick="cancelTotpLogin()" class="w-full py-2.5 lg:py-2 text-xs font-medium text-[#9aa2b2] hover:text-[#eef0f5] transition-colors">
+              Volver al teclado PIN
             </button>
           </div>
-        </div>
-
-        <!-- Indicador alternativo visible en móviles -->
-        <div class="flex md:hidden items-center justify-center space-x-2 mt-5">
-          <button type="button" onclick="setLoginSlide(0)" class="mobile-slide-indicator h-1.5 rounded-full transition-all duration-500 w-6 dynamic-primary-bg" id="mobile-indicator-0"></button>
-          <button type="button" onclick="setLoginSlide(1)" class="mobile-slide-indicator h-1.5 rounded-full transition-all duration-500 w-1.5 bg-white/30" id="mobile-indicator-1"></button>
-          <button type="button" onclick="setLoginSlide(2)" class="mobile-slide-indicator h-1.5 rounded-full transition-all duration-500 w-1.5 bg-white/30" id="mobile-indicator-2"></button>
         </div>
 
       </div>
+
+      <!-- Pie sobrio solo en móvil -->
+      <div class="flex lg:hidden items-center justify-center gap-2 pb-2 text-[12px] text-[#6b7385]">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+        <span>Sesión cifrada · Acceso por PIN</span>
+      </div>
+
     </div>
   </div>
 
   <!-- ======================================================== -->
-  <!-- 2. MODAL DE BIENVENIDA & AUTORIZACIÓN (APPLE / VISIONOS) -->
+  <!-- 2. MODAL DE BIENVENIDA & AUTORIZACIÓN                    -->
   <!-- ======================================================== -->
-  <div id="welcome-modal" class="fixed inset-0 z-[250] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-2xl px-4 transition-all duration-300">
-    
-    <!-- Resplandor ambiental dinámico con el color de marca -->
-    <div class="absolute w-80 h-80 rounded-full dynamic-primary-bg opacity-30 blur-[100px] pointer-events-none animate-pulse"></div>
+  <div id="welcome-modal" class="fixed inset-0 z-[250] hidden flex items-center justify-center bg-black/70 backdrop-blur-md px-4 transition-opacity duration-200">
+    <div id="welcome-card" class="login-welcome-card relative max-w-[360px] w-full p-7 text-center flex flex-col items-center transform scale-95 opacity-0">
 
-    <div id="welcome-card" class="glass-welcome-card relative max-w-md w-full p-8 rounded-3xl text-center flex flex-col items-center shadow-2xl border border-white/20 transform transition-all duration-300 scale-95 opacity-0">
-      
-      <!-- Avatar con Anillo Dinámico y Sombra de Profundidad -->
-      <div class="relative mb-5">
-        <div class="absolute -inset-1.5 rounded-full dynamic-primary-bg opacity-40 blur-md animate-pulse"></div>
-        <div class="relative w-20 h-20 rounded-full p-0.5 bg-gradient-to-b from-white/30 to-white/5 border border-white/30 shadow-2xl overflow-hidden">
-          <img id="welcome-avatar" class="w-full h-full rounded-full object-cover" src="" alt="Avatar">
-        </div>
-        <!-- Badge de Identidad Verificada -->
-        <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full dynamic-primary-bg border-2 border-[#0e121b] flex items-center justify-center shadow-lg">
-          <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
+      <!-- Avatar limpio -->
+      <div class="w-16 h-16 rounded-full border border-white/10 bg-white/[0.04] overflow-hidden mb-4">
+        <img id="welcome-avatar" class="w-full h-full object-cover" src="" alt="Avatar">
       </div>
 
-      <!-- Saludo Dinámico según la hora del día -->
-      <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full glass-badge text-[11px] font-medium text-slate-200 mb-3 shadow-sm">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-        <span id="welcome-saludo">¡Hola de nuevo!</span>
+      <!-- Saludo y datos del operador -->
+      <p id="welcome-saludo" class="text-xs text-[#9aa2b2] mb-1">Iniciando sesión</p>
+      <h2 id="welcome-title" class="text-lg font-medium tracking-[-0.01em] text-[#eef0f5]"></h2>
+
+      <div class="flex items-center gap-2 mt-1.5 mb-6 text-xs text-[#9aa2b2]">
+        <span id="welcome-role" class="font-medium"></span>
+        <span class="opacity-40">·</span>
+        <span>Acceso autorizado</span>
       </div>
 
-      <!-- Nombre del Operador -->
-      <h2 id="welcome-title" class="text-2xl font-bold tracking-tight text-white drop-shadow-sm"></h2>
-      
-      <!-- Rol y Estado de Seguridad -->
-      <div class="flex items-center gap-2 mt-1.5 mb-6">
-        <span id="welcome-role" class="px-3 py-0.5 rounded-full dynamic-primary-subtle border text-[10px] font-semibold tracking-wider uppercase shadow-sm"></span>
-        <span class="text-white/30">•</span>
-        <span class="text-xs text-slate-300/80 font-mono tracking-wide">Acceso Autorizado</span>
-      </div>
-
-      <!-- Barra de Estado y Progreso Visual -->
-      <div class="w-full max-w-xs space-y-2 mt-1">
-        <div class="flex justify-between items-center text-[11px] font-mono">
-          <span id="welcome-status-msg" class="text-slate-300 flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg animate-pulse"></span>
-            <span>Iniciando workspace...</span>
-          </span>
-          <span id="welcome-percent" class="text-slate-400 font-semibold">0%</span>
+      <!-- Barra de progreso minimalista -->
+      <div class="w-full space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <span id="welcome-status-msg" class="text-[#9aa2b2]">Verificando permisos</span>
+          <span id="welcome-percent" class="text-[#6b7385] tabular-nums font-medium">0%</span>
         </div>
-
-        <!-- Track con Resplandor de Neón -->
-        <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden p-[1px] shadow-inner">
-          <div id="welcome-progress" class="dynamic-primary-bg h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(var(--brand-primary-rgb),0.8)]" style="width: 0%"></div>
+        <div class="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+          <div id="welcome-progress" class="dynamic-primary-bg h-full rounded-full transition-[width] duration-500 ease-out" style="width: 0%"></div>
         </div>
       </div>
 
@@ -24678,8 +24418,16 @@
     }
 
     // 8-Digit Keypad
+    function flashKeypadDigit(d) {
+      const btn = document.querySelector(`#login-pin-step .login-pin-btn[data-digit="${d}"]`);
+      if (!btn) return;
+      btn.classList.add('is-pressed');
+      setTimeout(() => btn.classList.remove('is-pressed'), 110);
+    }
+
     function pressDigit(d) {
       if (currentPin.length < 8) {
+        if (typeof window.haptic === 'function') window.haptic('light');
         currentPin += d;
         updatePinDots();
         if (currentPin.length === 8) submitPinLogin();
@@ -24688,6 +24436,7 @@
 
     function backspacePin() {
       if (currentPin.length > 0) {
+        if (typeof window.haptic === 'function') window.haptic('light');
         currentPin = currentPin.slice(0, -1);
         updatePinDots();
       }
@@ -24696,7 +24445,8 @@
     function clearPin() {
       currentPin = "";
       updatePinDots();
-      document.getElementById('login-feedback').textContent = "";
+      const fb = document.getElementById('login-feedback');
+      if (fb) fb.textContent = "";
     }
 
     function fillPin(pin) {
@@ -24725,11 +24475,25 @@
         return;
       }
       if (loginScreen && !loginScreen.classList.contains('hidden')) {
-        if (/^[0-9]$/.test(e.key)) pressDigit(e.key);
-        else if (e.key === 'Backspace') backspacePin();
+        if (/^[0-9]$/.test(e.key)) {
+          flashKeypadDigit(e.key);
+          pressDigit(e.key);
+        } else if (e.key === 'Backspace') backspacePin();
         else if (e.key === 'Escape') clearPin();
       }
     });
+
+    function getSafeRedirectTarget() {
+      try {
+        const raw = new URLSearchParams(window.location.search).get('redirect') || '';
+        if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw === '/' || raw === '/index.html') {
+          return '';
+        }
+        return raw;
+      } catch (_) {
+        return '';
+      }
+    }
 
     function isDefaultTechnicianUser(u) {
       if (!u || u.isSuperAdmin || Number(u.roleId) === 1) return false;
@@ -24755,6 +24519,7 @@
         } catch (e) {}
       }
       const loggedUser = data?.data?.user;
+      const requestedRedirect = getSafeRedirectTarget();
       const isTechDefault = isDefaultTechnicianUser(loggedUser);
       if (
         loggedUser &&
@@ -24799,7 +24564,16 @@
       currentUser.allowedModules = data.data.allowedModules || data.data.user?.allowedModules || [];
       try {
         localStorage.setItem('turbonetwork_session', JSON.stringify(currentUser));
+        if (currentUser.assignedTenantId && currentUser.assignedTenantId !== '*') {
+          localStorage.setItem('turbonetwork_active_tenant', currentUser.assignedTenantId);
+        } else if (Array.isArray(currentUser.allowedTenants) && currentUser.allowedTenants[0] && currentUser.allowedTenants[0] !== '*') {
+          localStorage.setItem('turbonetwork_active_tenant', currentUser.allowedTenants[0]);
+        }
       } catch (e) {}
+      if (requestedRedirect) {
+        window.location.replace(requestedRedirect);
+        return;
+      }
       document.documentElement.classList.add('has-session');
       const feedback = document.getElementById('login-feedback');
       if (feedback) feedback.textContent = "";
@@ -24879,7 +24653,7 @@
       }
 
       const userName = document.getElementById('login-2fa-user-name');
-      if (userName && data.user?.name) userName.textContent = `¡Hola, ${data.user.name}!`;
+      if (userName && data.user?.name) userName.textContent = data.user.name;
 
       const userAvatar = document.getElementById('login-2fa-avatar');
       if (userAvatar && data.user?.avatar) userAvatar.src = data.user.avatar;
@@ -24888,8 +24662,10 @@
       if (tenantName && data.tenantName) tenantName.textContent = `Sede: ${data.tenantName}`;
 
       const ruleDesc = document.getElementById('login-2fa-rule-desc');
-      if (ruleDesc && data.message) {
-        ruleDesc.innerHTML = `${escapeHtml(data.message)} Ingrese los 6 dígitos dinámicos que muestra su app <strong class="text-white">Google Authenticator</strong>:`;
+      if (ruleDesc) {
+        ruleDesc.textContent = data.message
+          ? `${data.message} Ingresa el código de 6 dígitos de Google Authenticator.`
+          : 'Ingresa el código de 6 dígitos de Google Authenticator para continuar';
       }
 
       const totpInp = document.getElementById('login-totp-input');
@@ -25009,20 +24785,22 @@
     }
 
     function shakeKeypad() {
+      if (typeof window.haptic === 'function') window.haptic('error');
       const container = document.getElementById('pin-dots-container');
+      if (!container) return;
       container.classList.add('shake-error');
-      setTimeout(() => container.classList.remove('shake-error'), 400);
+      setTimeout(() => container.classList.remove('shake-error'), 320);
     }
 
     function getTimeGreeting() {
       const h = new Date().getHours();
-      if (h >= 5 && h < 12) return "¡Buenos días!";
-      if (h >= 12 && h < 19) return "¡Buenas tardes!";
-      return "¡Buenas noches!";
+      if (h >= 5 && h < 12) return "Buenos días";
+      if (h >= 12 && h < 19) return "Buenas tardes";
+      return "Buenas noches";
     }
 
     function showWelcomeGreeting(user) {
-      stopLoginSlider();
+      stopLoginClock();
       document.getElementById('pin-login-screen').classList.add('hidden');
       
       const modal = document.getElementById('welcome-modal');
@@ -25032,9 +24810,9 @@
       const statusMsg = document.getElementById('welcome-status-msg');
       const saludoEl = document.getElementById('welcome-saludo');
 
-      // 1. Saludo personalizado con el nombre del operador
+      // 1. Saludo sobrio con el nombre del operador
       const firstName = (user.name || "Operador").split(' ')[0];
-      if (saludoEl) saludoEl.textContent = `${getTimeGreeting()} ${firstName}`;
+      if (saludoEl) saludoEl.textContent = `${getTimeGreeting()}, ${firstName}`;
       
       document.getElementById('welcome-avatar').src = user.avatar || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(user.name));
       document.getElementById('welcome-title').textContent = user.name;
@@ -25064,49 +24842,47 @@
       const mobRole = document.getElementById('drawer-user-role');
       if (mobRole) mobRole.textContent = user.roleName;
 
-      // 2. Animación de entrada fluida estilo Apple
-      modal.classList.remove('hidden');
-      modal.classList.remove('opacity-0');
+      // 2. Entrada suave desde scale(0.95)
+      modal.classList.remove('hidden', 'opacity-0');
       if (card) {
-        card.classList.remove('scale-105', 'opacity-0');
+        card.classList.remove('scale-100', 'opacity-100');
         card.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => {
+        requestAnimationFrame(() => {
           card.classList.remove('scale-95', 'opacity-0');
           card.classList.add('scale-100', 'opacity-100');
-        }, 20);
+        });
       }
 
-      // 3. Secuencia de progreso y feedback dinámico
-      if (prog) prog.style.width = '20%';
-      if (percentEl) percentEl.textContent = '20%';
-      if (statusMsg) statusMsg.innerHTML = '<span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg animate-pulse"></span><span>Verificando permisos...</span>';
+      // 3. Progreso limpio y rápido
+      if (prog) prog.style.width = '25%';
+      if (percentEl) percentEl.textContent = '25%';
+      if (statusMsg) statusMsg.textContent = 'Verificando permisos';
 
       setTimeout(() => {
-        if (prog) prog.style.width = '65%';
-        if (percentEl) percentEl.textContent = '65%';
-        if (statusMsg) statusMsg.innerHTML = '<span class="w-1.5 h-1.5 rounded-full dynamic-primary-bg animate-pulse"></span><span>Sincronizando preferencias...</span>';
-      }, 380);
+        if (prog) prog.style.width = '70%';
+        if (percentEl) percentEl.textContent = '70%';
+        if (statusMsg) statusMsg.textContent = 'Cargando entorno';
+      }, 320);
 
       setTimeout(() => {
         if (prog) prog.style.width = '100%';
         if (percentEl) percentEl.textContent = '100%';
-        if (statusMsg) statusMsg.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>Workspace conectado</span>';
-      }, 850);
+        if (statusMsg) statusMsg.textContent = 'Listo';
+      }, 720);
 
-      // 4. Salida cinemática y revelación del workspace
+      // 4. Salida rápida hacia el workspace
       setTimeout(() => {
         if (card) {
           card.classList.remove('scale-100', 'opacity-100');
-          card.classList.add('scale-105', 'opacity-0');
+          card.classList.add('scale-95', 'opacity-0');
         }
         modal.classList.add('opacity-0');
         setTimeout(() => {
           modal.classList.add('hidden');
           modal.classList.remove('opacity-0');
-          if (card) card.classList.remove('scale-105');
           init();
-        }, 280);
-      }, 1350);
+        }, 200);
+      }, 1050);
     }
 
     function logout(fromGuard) {
@@ -25146,202 +24922,44 @@
       document.getElementById('welcome-progress').style.width = '0%';
       document.getElementById('pin-login-screen').classList.remove('hidden');
       closeMobileConfigDrawer();
-      initDailyQuote();
-      startLoginSlider();
+      startLoginClock();
     }
 
     // ========================================================
-    // FRASE DIARIA MOTIVADORA PARA EQUIPO Y OPERADORES ISP
+    // RELOJ LOCAL SOBRIO EN PANTALLA DE LOGIN
     // ========================================================
-    const DAILY_QUOTES = [
-      {
-        quote: "La velocidad y estabilidad de tu red es la fuerza invisible que conecta vidas y transforma futuros.",
-        author: "TurboNetwork Core",
-        tag: "Excelencia en Conectividad"
-      },
-      {
-        quote: "La innovación tecnológica no es cuestión de recursos, sino de la pasión y compromiso de quienes la construyen.",
-        author: "Steve Jobs",
-        tag: "Innovación & Liderazgo"
-      },
-      {
-        quote: "La mejor manera de predecir el futuro digital es crearlo con cada enlace y cada paquete transmitido.",
-        author: "Alan Kay",
-        tag: "Visión Tecnológica"
-      },
-      {
-        quote: "La excelencia no es un acto aislado, es el hábito constante de superar tus propios límites.",
-        author: "Aristóteles",
-        tag: "Compromiso Total"
-      },
-      {
-        quote: "Grandes logros nunca provinieron de zonas de confort; conectar al mundo exige audacia y perseverancia.",
-        author: "Roy T. Bennett",
-        tag: "Superación Continua"
-      },
-      {
-        quote: "El verdadero valor de la infraestructura tecnológica radica en unir comunidades y derribar fronteras.",
-        author: "Matt Mullenweg",
-        tag: "Impacto Global"
-      },
-      {
-        quote: "Cada incidente resuelto con rapidez y criterio fortalece la confianza de toda nuestra red.",
-        author: "Ingeniería de Operaciones",
-        tag: "Resiliencia de Red"
-      },
-      {
-        quote: "El secreto del cambio es enfocar toda tu energía, no en luchar contra lo viejo, sino en construir lo nuevo.",
-        author: "Sócrates",
-        tag: "Transformación Digital"
-      },
-      {
-        quote: "La perseverancia no es una carrera larga; son muchas victorias cortas construidas una tras otra.",
-        author: "Walter Elliot",
-        tag: "Disciplina Diaria"
-      },
-      {
-        quote: "La calidad de un servicio no se promete en palabras, se demuestra en cada milisegundo de disponibilidad.",
-        author: "Infraestructura Central",
-        tag: "Alta Disponibilidad"
-      },
-      {
-        quote: "Tu dedicación a los detalles es lo que convierte una buena conexión en una experiencia extraordinaria.",
-        author: "Redes & Comunicaciones",
-        tag: "Calidad de Servicio"
-      },
-      {
-        quote: "No busques los caminos fáciles; crea infraestructura sólida que soporte el crecimiento de mañana.",
-        author: "Arquitectura de Red",
-        tag: "Escalabilidad"
-      }
-    ];
+    let loginClockInterval = null;
 
-    function initDailyQuote() {
+    function updateLoginClock() {
       const now = new Date();
-      const start = new Date(now.getFullYear(), 0, 0);
-      const diff = now - start;
-      const oneDay = 1000 * 60 * 60 * 24;
-      const dayOfYear = Math.floor(diff / oneDay);
-      
-      const item = DAILY_QUOTES[dayOfYear % DAILY_QUOTES.length];
-      
-      const qText = document.getElementById('daily-quote-text');
-      const qAuthor = document.getElementById('daily-quote-author');
-      const qTag = document.getElementById('daily-quote-tag');
-      const qDate = document.getElementById('daily-quote-date');
-      
-      if (qText) qText.textContent = `"${item.quote}"`;
-      if (qAuthor) qAuthor.textContent = item.author;
-      if (qTag) qTag.textContent = item.tag;
-      
-      if (qDate) {
-        const options = { day: 'numeric', month: 'short' };
-        qDate.textContent = now.toLocaleDateString('es-ES', options).replace('.', '');
+      const timeEl = document.getElementById('login-clock-time');
+      const dateEl = document.getElementById('login-clock-date');
+      if (timeEl) {
+        timeEl.textContent = now.toLocaleTimeString('es-PE', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+      }
+      if (dateEl) {
+        dateEl.textContent = now.toLocaleDateString('es-PE', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long'
+        });
       }
     }
 
-    // ========================================================
-    // SLIDER DE FONDO CINEMÁTICO SIN GLITCH NI PARPADEOS
-    // ========================================================
-    let currentSlideIndex = 0;
-    const totalSlides = 3;
-    let slideInterval = null;
-    let slideTransitionTimeout = null;
-    const SLIDE_NAMES = ["Visión Óptica", "Seguridad Core", "Infraestructura"];
-
-    function preloadSliderImages() {
-      const urls = [
-        '/assets/login_bg/slide-1.jpg',
-        '/assets/login_bg/slide-2.jpg',
-        '/assets/login_bg/slide-3.png'
-      ];
-      urls.forEach(url => {
-        const img = new Image();
-        img.src = url;
-        if (img.decode) {
-          img.decode().catch(() => {});
-        }
-      });
+    function startLoginClock() {
+      stopLoginClock();
+      updateLoginClock();
+      loginClockInterval = setInterval(updateLoginClock, 15000);
     }
 
-    function setLoginSlide(index) {
-      const prevIndex = currentSlideIndex;
-      currentSlideIndex = (index + totalSlides) % totalSlides;
-      
-      const prevSlide = document.getElementById(`login-slide-${prevIndex}`);
-      const nextSlide = document.getElementById(`login-slide-${currentSlideIndex}`);
-
-      if (prevSlide && prevSlide !== nextSlide) {
-        prevSlide.classList.remove('active');
-        prevSlide.classList.add('prev-active');
-      }
-
-      if (nextSlide) {
-        nextSlide.classList.add('active');
-        nextSlide.classList.remove('prev-active');
-      }
-
-      // Quitar prev-active después de que la transición suave de 1.6s haya finalizado
-      if (slideTransitionTimeout) clearTimeout(slideTransitionTimeout);
-      slideTransitionTimeout = setTimeout(() => {
-        for (let i = 0; i < totalSlides; i++) {
-          if (i !== currentSlideIndex) {
-            const s = document.getElementById(`login-slide-${i}`);
-            if (s) {
-              s.classList.remove('active');
-              s.classList.remove('prev-active');
-            }
-          }
-        }
-      }, 1700);
-
-      // 1. Indicadores del dock principal (izquierda)
-      for (let i = 0; i < totalSlides; i++) {
-        const indicator = document.getElementById(`slide-indicator-${i}`);
-        if (indicator) {
-          if (i === currentSlideIndex) {
-            indicator.className = "h-2 rounded-full transition-all duration-500 w-8 dynamic-primary-bg shadow-sm cursor-pointer";
-          } else {
-            indicator.className = "h-2 rounded-full transition-all duration-500 w-2.5 bg-white/30 hover:bg-white/70 cursor-pointer";
-          }
-        }
-        // 2. Indicadores móviles si existen
-        const mobInd = document.getElementById(`mobile-indicator-${i}`);
-        if (mobInd) {
-          if (i === currentSlideIndex) {
-            mobInd.className = "mobile-slide-indicator h-1.5 rounded-full transition-all duration-500 w-6 dynamic-primary-bg cursor-pointer";
-          } else {
-            mobInd.className = "mobile-slide-indicator h-1.5 rounded-full transition-all duration-500 w-1.5 bg-white/30 hover:bg-white/60 cursor-pointer";
-          }
-        }
-      }
-
-      // 3. Contador y nombre de escena en el dock de la izquierda
-      const counterEl = document.getElementById('slider-counter');
-      if (counterEl) counterEl.textContent = String(currentSlideIndex + 1).padStart(2, '0');
-      const sceneEl = document.getElementById('slider-scene-name');
-      if (sceneEl) sceneEl.textContent = SLIDE_NAMES[currentSlideIndex] || "Red";
-    }
-
-    function startLoginSlider() {
-      if (slideInterval) clearInterval(slideInterval);
-      setLoginSlide(0);
-      slideInterval = setInterval(() => {
-        const loginScreen = document.getElementById('pin-login-screen');
-        if (loginScreen && !loginScreen.classList.contains('hidden') && !document.documentElement.classList.contains('has-session')) {
-          setLoginSlide(currentSlideIndex + 1);
-        }
-      }, 7000);
-    }
-
-    function stopLoginSlider() {
-      if (slideInterval) {
-        clearInterval(slideInterval);
-        slideInterval = null;
-      }
-      if (slideTransitionTimeout) {
-        clearTimeout(slideTransitionTimeout);
-        slideTransitionTimeout = null;
+    function stopLoginClock() {
+      if (loginClockInterval) {
+        clearInterval(loginClockInterval);
+        loginClockInterval = null;
       }
     }
 
@@ -32549,9 +32167,8 @@ Estamos atentos para brindarle asistencia inmediata.
 
     // INICIALIZACIÓN: CARGAR BRANDING Y RESTAURAR SESIÓN ACTIVA
     window.addEventListener('DOMContentLoaded', async () => {
-      // 0. Pre-carga de imágenes y frase motivadora diaria
-      preloadSliderImages();
-      initDailyQuote();
+      // 0. Inicializar reloj de la pantalla de acceso
+      updateLoginClock();
 
       // Restaurar estado colapsado del sidebar si fue recordado por el usuario
       try {
@@ -32592,6 +32209,14 @@ Estamos atentos para brindarle asistencia inmediata.
 
       // 2. Restaurar sesión activa de operador si existe en localStorage
       const sessionStr = localStorage.getItem('turbonetwork_session');
+      const pendingRedirectOnLoad = typeof getSafeRedirectTarget === 'function' ? getSafeRedirectTarget() : '';
+      if (!sessionStr && new URLSearchParams(window.location.search).get('expired') === '1') {
+        const fb = document.getElementById('login-feedback');
+        if (fb) {
+          fb.textContent = 'Tu sesión expiró. Ingresa tu PIN nuevamente.';
+          fb.className = 'text-xs min-h-[18px] text-amber-400 font-medium font-mono';
+        }
+      }
       if (sessionStr) {
         try {
           currentUser = JSON.parse(sessionStr);
@@ -32608,6 +32233,10 @@ Estamos atentos para brindarle asistencia inmediata.
                 try { localStorage.setItem('turbonetwork_active_tenant', targetTechTenant); } catch (_) {}
               }
               window.location.replace('/tech');
+              return;
+            }
+            if (pendingRedirectOnLoad) {
+              window.location.replace(pendingRedirectOnLoad);
               return;
             }
             // Sanitizar avatar corrupto o placeholder literal para prevenir bucles de red
@@ -32687,9 +32316,9 @@ Estamos atentos para brindarle asistencia inmediata.
         }
       }
 
-      // Si no hay sesión activa, iniciar el slider dinámico de fondo
+      // Si no hay sesión activa, mantener actualizado el reloj del login
       if (!currentUser) {
-        startLoginSlider();
+        startLoginClock();
       }
 
       // 3. Traer branding real persistido desde el servidor para el tenant activo

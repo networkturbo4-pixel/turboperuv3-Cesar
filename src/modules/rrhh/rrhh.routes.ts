@@ -830,6 +830,63 @@ function saveAttendanceToDisk(list: AttendanceRecord[]) {
 
 let employeesStore = loadEmployeesFromDisk();
 let attendanceStore = loadAttendanceFromDisk();
+// Registro en memoria de verificaciones TOTP realizadas en el login para evitar doble verificación por tardanza
+const recentLoginTotpByUser = new Map<number, { date: string; verifiedAt: number }>();
+
+export function hasRecentLoginTotpVerification(employeeId: number, dateStr?: string): boolean {
+  const entry = recentLoginTotpByUser.get(Number(employeeId));
+  if (!entry) return false;
+  const targetDate = dateStr || getPeruDateTime().peruDate;
+  if (entry.date !== targetDate) {
+    recentLoginTotpByUser.delete(Number(employeeId));
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Registra que el colaborador ya validó Google Authenticator en el login y desbloquea
+ * automáticamente cualquier registro de tardanza pendiente del día para evitar doble verificación.
+ */
+export function markLoginTotpVerifiedAndUnlockToday(employeeId: number, tenantId?: string): boolean {
+  const { peruDate: today } = getPeruDateTime();
+  recentLoginTotpByUser.set(Number(employeeId), { date: today, verifiedAt: Date.now() });
+
+  const activeTenant = (tenantId || "turbonetwork").toLowerCase();
+  const userOrEmp = resolveEmployeeOrUser(employeeId);
+  const resolvedNameLower = (userOrEmp?.name || "").trim().toLowerCase();
+
+  attendanceStore = loadAttendanceFromDisk();
+  const matchesEmp = (a: AttendanceRecord) =>
+    a.employeeId === employeeId ||
+    (resolvedNameLower && (a.employeeName || "").trim().toLowerCase() === resolvedNameLower);
+
+  let unlockedAny = false;
+  const nowIso = new Date().toISOString();
+  for (const r of attendanceStore) {
+    const sameTenantOrShared =
+      r.isShared === true ||
+      r.tenantId === activeTenant ||
+      (!r.tenantId && activeTenant === "turbonetwork");
+    if (
+      matchesEmp(r) &&
+      r.date === today &&
+      sameTenantOrShared &&
+      !r.unlockedByTotp &&
+      (r.status === "very_late_blocked" || r.status === "late" || (typeof r.minutesLate === "number" && r.minutesLate > 0))
+    ) {
+      r.status = "unlocked";
+      r.unlockedByTotp = true;
+      r.unlockedAt = nowIso;
+      unlockedAny = true;
+    }
+  }
+
+  if (unlockedAny) {
+    saveAttendanceToDisk(attendanceStore);
+  }
+  return unlockedAny;
+}
 // Ejecutar purga de 60 días al iniciar
 purgeOldAttendancePhotos(60);
 
@@ -3127,13 +3184,21 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     };
     applyUnifiedCheckInRules(newRecord, resolvedUser);
 
+    if (
+      !newRecord.unlockedByTotp &&
+      (newRecord.status === "very_late_blocked" || newRecord.status === "late" || newRecord.minutesLate > 0) &&
+      (hasRecentLoginTotpVerification(employeeId, today) || hasRecentLoginTotpVerification(resolvedUser.id, today))
+    ) {
+      newRecord.status = "unlocked";
+      newRecord.unlockedByTotp = true;
+      newRecord.unlockedAt = new Date().toISOString();
+    }
+
     attendanceStore.unshift(newRecord);
     saveAttendanceToDisk(attendanceStore);
     purgeOldAttendancePhotos(60);
 
-
-
-    const isBlocked = status === "very_late_blocked";
+    const isBlocked = newRecord.status === "very_late_blocked";
     const modalityLabel =
       modality === "fingerprint"
         ? "Huella Dactilar"
