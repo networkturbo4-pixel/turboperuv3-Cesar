@@ -77,8 +77,37 @@
     return true;
   }
 
+  function isStandaloneApartadoPath() {
+    var p = (window.location.pathname || "").toLowerCase();
+    return (
+      p === "/almacen" ||
+      p.indexOf("/almacen/") === 0 ||
+      p.indexOf("/almacen.html") === 0 ||
+      p === "/tech" ||
+      p.indexOf("/tech/") === 0 ||
+      p.indexOf("/tech.html") === 0 ||
+      p === "/chat" ||
+      p.indexOf("/chat/") === 0 ||
+      p.indexOf("/chat.html") === 0 ||
+      p === "/messages" ||
+      p.indexOf("/messages/") === 0
+    );
+  }
+
+  function buildUnifiedLoginUrl(expired) {
+    var target = (window.location.pathname || "/") + (window.location.search || "");
+    var qs = "?redirect=" + encodeURIComponent(target);
+    if (expired) qs += "&expired=1";
+    return "/" + qs;
+  }
+
   // Ejecutar validación inmediata al cargar el script en <head>
   validateStoredSessionSync();
+
+  // Login único: si se accede a cualquier apartado sin sesión válida, redirigir al login principal
+  if (isStandaloneApartadoPath() && !hasActiveUserInStorage()) {
+    window.location.replace(buildUnifiedLoginUrl(false));
+  }
 
   var origFetch = window.fetch;
 
@@ -221,20 +250,17 @@
         window.remoteScannerEventSource = null;
       }
 
-      // 1. Si estamos en index.html (tiene función logout() y #pin-login-screen)
+      // 1. Si estamos en index.html (login único principal)
       if (typeof window.logout === "function" && document.getElementById("pin-login-screen")) {
         window.logout(true);
         if (reasonMessage && typeof window.showToast === "function") {
           window.showToast(reasonMessage, "error");
         }
       }
-      // 2. Si estamos en tech.html (Apartado Móvil de Técnicos)
-      else if (typeof window.techLogout === "function" && document.getElementById("tech-login-overlay")) {
-        window.techLogout(true);
-      }
-      // 3. Si estamos en chat.html standalone -> redirigir al portal principal para autenticar PIN
-      else if (window.location.pathname.indexOf("chat") !== -1 || window.location.pathname.indexOf("messages") !== -1) {
-        window.location.href = "/?expired=1";
+      // 2. Si estamos en cualquier apartado (/almacen, /tech, /chat, /messages) -> redirigir al login único principal
+      else if (isStandaloneApartadoPath()) {
+        var isExpired = Boolean(reasonMessage && /expir|inactiv|caduc|jornada/i.test(reasonMessage));
+        window.location.replace(buildUnifiedLoginUrl(isExpired));
       }
     } finally {
       setTimeout(function () {
@@ -495,14 +521,9 @@
       })
       .catch(function () {});
 
-    // Si estamos en chat.html standalone y no hay sesión válida, redirigir al login principal
-    if (
-      (window.location.pathname.indexOf("/chat") === 0 ||
-        window.location.pathname.indexOf("/messages") === 0 ||
-        window.location.pathname.indexOf("/chat") !== -1) &&
-      !hasActiveUserInStorage()
-    ) {
-      window.location.href = "/";
+    // Respaldo: si estamos en cualquier apartado sin sesión válida, redirigir al login único
+    if (isStandaloneApartadoPath() && !hasActiveUserInStorage()) {
+      window.location.replace(buildUnifiedLoginUrl(false));
     }
   });
 
@@ -510,6 +531,9 @@
     validateStoredSessionSync: validateStoredSessionSync,
     logout: performSessionLogout,
     keepAlive: keepAliveExplicit,
+    redirectToUnifiedLogin: function (expired) {
+      window.location.replace(buildUnifiedLoginUrl(Boolean(expired)));
+    },
     getToken: function () {
       var m = readMeta();
       return m ? m.token : "";

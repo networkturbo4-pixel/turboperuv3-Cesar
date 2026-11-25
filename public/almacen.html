@@ -26,7 +26,7 @@
   <meta name="apple-mobile-web-app-title" content="TurboAlmacén">
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
 
-  <link rel="stylesheet" href="/assets/tailwind.min.css?v=almacen_v1">
+  <link rel="stylesheet" href="/assets/tailwind.min.css?v=almacen_v2">
   <script src="/js/session-guard.js"></script>
   <script src="/js/jsQR.min.js"></script>
   <script src="/js/qrcode.min.js"></script>
@@ -35,35 +35,453 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
+    :root {
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+      --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+      /* Light theme surface tokens */
+      --bg-canvas: #f4f6f9;
+      --bg-header: rgba(255, 255, 255, 0.88);
+      --bg-subbar: rgba(248, 250, 252, 0.92);
+      --bg-surface: #ffffff;
+      --bg-surface-2: #f8fafc;
+      --bg-input: #f1f5f9;
+      --border-subtle: rgba(15, 23, 42, 0.08);
+      --border-strong: rgba(15, 23, 42, 0.14);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --accent-soft: rgba(16, 185, 129, 0.12);
+      --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03);
+      --shadow-panel: 0 4px 20px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+      --card-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    html.dark {
+      /* Refined obsidian/graphite surface tokens */
+      --bg-canvas: #090c12;
+      --bg-header: rgba(13, 17, 25, 0.88);
+      --bg-subbar: rgba(11, 14, 21, 0.94);
+      --bg-surface: #111622;
+      --bg-surface-2: #161c2b;
+      --bg-input: #0c1019;
+      --border-subtle: rgba(255, 255, 255, 0.075);
+      --border-strong: rgba(255, 255, 255, 0.13);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #10b981;
+      --accent-hover: #34d399;
+      --accent-soft: rgba(16, 185, 129, 0.14);
+      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      --card-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
       -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
+
+    .font-mono,
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
     .font-mono {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
     }
+
+    /* Semantic surface & badge helpers (independent of Tailwind JIT) */
+    .alm-modal-surface {
+      background-color: #111622;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .alm-pin-key {
+      background-color: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .alm-pin-key:hover {
+      background-color: rgba(255, 255, 255, 0.11);
+    }
+
+    .alm-sticky-aside {
+      top: 116px;
+      max-height: calc(100vh - 8.25rem);
+    }
+
+    .alm-divider-b {
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .alm-divider-t {
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .alm-kpi-emerald { border-left: 3px solid #10b981; }
+    .alm-kpi-amber   { border-left: 3px solid #f59e0b; }
+    .alm-kpi-rose    { border-left: 3px solid #f43f5e; }
+    .alm-kpi-sky     { border-left: 3px solid #0ea5e9; }
+
+    .alm-badge-ok {
+      background-color: rgba(16, 185, 129, 0.12);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    html.dark .alm-badge-ok { color: #34d399; }
+
+    .alm-badge-warn {
+      background-color: rgba(245, 158, 11, 0.12);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.28);
+    }
+    html.dark .alm-badge-warn { color: #fbbf24; }
+
+    .alm-badge-crit {
+      background-color: rgba(244, 63, 94, 0.12);
+      color: #e11d48;
+      border: 1px solid rgba(244, 63, 94, 0.28);
+    }
+    html.dark .alm-badge-crit { color: #fb7185; }
+
+    .alm-badge-sky {
+      background-color: rgba(14, 165, 233, 0.12);
+      color: #0284c7;
+      border: 1px solid rgba(14, 165, 233, 0.25);
+    }
+    html.dark .alm-badge-sky { color: #38bdf8; }
+
+    .alm-icon-chip {
+      background-color: var(--bg-surface-2);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .alm-bulk-btn {
+      background-color: var(--bg-surface-2);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+    }
+    .alm-bulk-btn:hover {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .alm-toast-surface {
+      background-color: rgba(17, 22, 34, 0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .alm-banner-warn {
+      background-color: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.26);
+    }
+
+    .alm-banner-sky {
+      background-color: rgba(14, 165, 233, 0.08);
+    }
+
+    /* Unified surface primitives */
+    .alm-header {
+      background-color: var(--bg-header);
+      border-bottom: 1px solid var(--border-subtle);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .alm-subbar {
+      background-color: var(--bg-subbar);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .alm-surface {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-card);
+    }
+
+    .alm-panel-elevated {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-panel);
+    }
+
+    .alm-surface-inset {
+      background-color: var(--bg-surface-2);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .alm-input {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+    }
+
+    .alm-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+    }
+
+    .alm-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Scanner command input */
+    .alm-scanner-input {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      color: var(--text-primary);
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .alm-scanner-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+    }
+
+    .alm-scanner-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Tactile pressable system (Emil Kowalski principles) */
+    .pos-press {
+      transition: transform 140ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 160ms ease, opacity 150ms ease;
+    }
+
+    .pos-press:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .pos-icon-btn {
+      height: 36px;
+      min-width: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 10px;
+      background-color: var(--bg-surface-2);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      transition: transform 140ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    }
+
+    .pos-icon-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Product cards */
+    .pos-card {
+      position: relative;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-card);
+      transition: transform 160ms var(--ease-out), border-color 160ms ease, box-shadow 180ms ease, background-color 160ms ease;
+      user-select: none;
+    }
+
+    .pos-card:active {
+      transform: scale(0.975);
+    }
+
+    .pos-card.in-cart {
+      border-color: rgba(16, 185, 129, 0.55);
+      box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2), var(--shadow-card);
+    }
+
+    .pos-card-img {
+      transition: transform 240ms var(--ease-out);
+    }
+
+    /* Hover interactions strictly gated for fine pointers (no sticky touch hover) */
+    @media (hover: hover) and (pointer: fine) {
+      .pos-icon-btn:hover {
+        border-color: var(--border-strong);
+        color: var(--text-primary);
+      }
+
+      .pos-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(16, 185, 129, 0.45);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18), var(--card-highlight);
+      }
+
+      html:not(.dark) .pos-card:hover {
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      }
+
+      .pos-card:hover .pos-card-img {
+        transform: scale(1.03);
+      }
+
+      .pos-card:hover .pos-card-add {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .pos-card-add {
+      opacity: 0;
+      transform: translateX(-3px);
+      transition: opacity 160ms ease, transform 160ms var(--ease-out);
+    }
+
+    /* Tabs */
+    .alm-tab-btn {
+      position: relative;
+      border: 1px solid transparent;
+      transition: transform 140ms var(--ease-out), background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+    }
+
+    .alm-tab-btn:active {
+      transform: scale(0.97);
+    }
+
+    .alm-tab-btn.is-active {
+      background-color: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.28);
+    }
+
+    .alm-tab-btn:not(.is-active) {
+      color: var(--text-secondary);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .alm-tab-btn:not(.is-active):hover {
+        background-color: var(--bg-surface-2);
+        color: var(--text-primary);
+      }
+    }
+
+    /* Filter pills */
+    .dfilter-btn,
+    .eppfilter-btn {
+      transition: transform 140ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    }
+
+    .dfilter-btn:active,
+    .eppfilter-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* PIN dots */
+    .pin-dot {
+      transition: transform 160ms var(--ease-out), background-color 140ms ease, border-color 140ms ease, box-shadow 180ms ease;
+    }
+
     .pin-dot.active {
       background-color: #10b981;
       border-color: #34d399;
-      box-shadow: 0 0 12px rgba(16, 185, 129, 0.65);
-      transform: scale(1.15);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.55);
+      transform: scale(1.18);
     }
-    .pos-card {
-      transition: transform 0.14s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-    .pos-card:active {
-      transform: scale(0.98);
-    }
+
+    /* Scanner feedback pulse */
     .scanner-flash {
-      animation: scanFlash 0.45s ease;
+      animation: scanFlash 380ms var(--ease-out);
     }
+
     @keyframes scanFlash {
-      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
-      50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.25); }
-      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.65); border-radius: 12px; }
+      55% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.18); border-radius: 12px; }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); border-radius: 12px; }
     }
+
+    /* Modal entrance (never from scale(0); centered origin) */
+    .alm-modal-backdrop {
+      transition: opacity 200ms var(--ease-out);
+    }
+
+    .alm-modal-card {
+      transform-origin: center;
+      transition: transform 220ms var(--ease-out), opacity 180ms var(--ease-out);
+    }
+
+    @starting-style {
+      .alm-modal-backdrop:not(.hidden) {
+        opacity: 0;
+      }
+      .alm-modal-backdrop:not(.hidden) .alm-modal-card {
+        opacity: 0;
+        transform: scale(0.96) translateY(6px);
+      }
+    }
+
+    /* Sonner-inspired toast */
+    .alm-toast {
+      transition: transform 240ms var(--ease-out), opacity 200ms ease;
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    @starting-style {
+      .alm-toast {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.96);
+      }
+    }
+
+    /* Cart item entrance */
+    .alm-cart-row {
+      transition: transform 180ms var(--ease-out), opacity 160ms ease, border-color 150ms ease;
+    }
+
+    @starting-style {
+      .alm-cart-row {
+        opacity: 0;
+        transform: translateY(4px) scale(0.985);
+      }
+    }
+
+    /* Custom subtle scrollbars */
+    .alm-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .alm-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .alm-scroll::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.22);
+      border-radius: 999px;
+    }
+    .alm-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.38);
+    }
+
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Reduced motion accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .pos-card:hover,
+      .pos-card:active,
+      .pos-press:active,
+      .pos-icon-btn:active {
+        transform: none !important;
+      }
+    }
 
     /* Estilos dedicados para Impresora Térmica 80mm / 58mm */
     #thermal-print-area {
@@ -116,77 +534,34 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 dark:bg-[#080d18] text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
-
-  <!-- ===================================================================== -->
-  <!-- OVERLAY DE LOGIN PIN (8 DÍGITOS)                                      -->
-  <!-- ===================================================================== -->
-  <div id="alm-login-overlay" class="fixed inset-0 z-50 hidden bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="w-full max-w-sm rounded-3xl bg-slate-900 border border-emerald-500/30 p-6 shadow-2xl text-center">
-      <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 mb-3">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-        </svg>
-      </div>
-      <h1 class="text-xl font-extrabold text-white tracking-tight">TurboAlmacén POS</h1>
-      <p class="text-xs text-slate-400 mt-1 mb-5">Ingresa tu PIN de 8 dígitos para abrir caja de almacén</p>
-
-      <div class="flex items-center justify-center gap-2.5 mb-3">
-        <span id="adot-0" class="pin-dot w-3 h-3 rounded-full border border-slate-600 transition-all"></span>
-        <span id="adot-1" class="pin-dot w-3 h-3 rounded-full border border-slate-600 transition-all"></span>
-        <span id="adot-2" class="pin-dot w-3 h-3 rounded-full border border-slate-600 transition-all"></span>
-        <span id="adot-3" class="pin-dot w-3 h-3 rounded-full border border-slate-600 transition-all"></span>
-        <span id="adot-4" class="pin-dot w-3 h-3 rounded-full border border-slate-600 transition-all"></span>
-        <span id="adot-5" class="pin-dot w-3 h-3 rounded-full border border-slate-600 transition-all"></span>
-        <span id="adot-6" class="pin-dot w-3 h-3 rounded-full border border-slate-600 transition-all"></span>
-        <span id="adot-7" class="pin-dot w-3 h-3 rounded-full border border-slate-600 transition-all"></span>
-      </div>
-
-      <div id="alm-login-feedback" class="text-xs font-mono min-h-[20px] text-slate-400 mb-4"></div>
-
-      <div class="grid grid-cols-3 gap-2.5 max-w-[260px] mx-auto">
-        <button type="button" onclick="almPressPin('1')" class="h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold active:scale-95 transition">1</button>
-        <button type="button" onclick="almPressPin('2')" class="h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold active:scale-95 transition">2</button>
-        <button type="button" onclick="almPressPin('3')" class="h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold active:scale-95 transition">3</button>
-        <button type="button" onclick="almPressPin('4')" class="h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold active:scale-95 transition">4</button>
-        <button type="button" onclick="almPressPin('5')" class="h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold active:scale-95 transition">5</button>
-        <button type="button" onclick="almPressPin('6')" class="h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold active:scale-95 transition">6</button>
-        <button type="button" onclick="almPressPin('7')" class="h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold active:scale-95 transition">7</button>
-        <button type="button" onclick="almPressPin('8')" class="h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold active:scale-95 transition">8</button>
-        <button type="button" onclick="almPressPin('9')" class="h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold active:scale-95 transition">9</button>
-        <button type="button" onclick="almClearPin()" class="h-12 rounded-2xl bg-slate-800/70 hover:bg-rose-500/20 text-rose-400 text-xs font-bold uppercase">Borrar</button>
-        <button type="button" onclick="almPressPin('0')" class="h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold active:scale-95 transition">0</button>
-        <button type="button" onclick="almBackspacePin()" class="h-12 rounded-2xl bg-slate-800/70 hover:bg-slate-700 text-slate-300 text-base font-bold">⌫</button>
-      </div>
-    </div>
-  </div>
+<body class="min-h-screen flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
 
   <!-- ===================================================================== -->
   <!-- HEADER SUPERIOR FIJO + BARRA DE PISTOLA LÁSER                         -->
   <!-- ===================================================================== -->
-  <header class="sticky top-0 z-30 bg-white/95 dark:bg-[#0d1526]/95 backdrop-blur-md border-b border-slate-200 dark:border-white/10 shadow-sm">
-    <div class="max-w-[1600px] mx-auto px-3 sm:px-5 py-2.5 flex flex-wrap items-center gap-2.5 sm:gap-3">
+  <header class="alm-header sticky top-0 z-30">
+    <div class="max-w-[1600px] mx-auto px-3 sm:px-5 py-2.5 flex flex-wrap items-center gap-2.5 sm:gap-4">
       <!-- Marca -->
       <div class="flex items-center gap-2.5 mr-auto sm:mr-0">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/25 flex-shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+        <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
           </svg>
         </div>
         <div class="leading-tight">
           <div class="flex items-center gap-1.5">
-            <span class="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white">TurboAlmacén</span>
-            <span class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">POS</span>
+            <span class="font-extrabold text-sm sm:text-[15px] tracking-tight text-slate-900 dark:text-white">TurboAlmacén</span>
+            <span class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">POS</span>
           </div>
           <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[160px] sm:max-w-[220px]" id="alm-user-label">Cargando...</div>
         </div>
       </div>
 
       <!-- Barra de Escáner Láser / Buscador Instantáneo -->
-      <form onsubmit="handleGlobalScanSubmit(event)" class="order-3 sm:order-2 w-full sm:flex-1 sm:max-w-2xl flex items-center gap-1.5">
+      <form onsubmit="handleGlobalScanSubmit(event)" class="order-3 sm:order-2 w-full sm:flex-1 sm:max-w-2xl flex items-center gap-2">
         <div id="global-scanner-wrap" class="relative flex-1 flex items-center">
-          <span class="absolute left-3 text-emerald-500 pointer-events-none">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <span class="absolute left-3 text-emerald-500 pointer-events-none flex items-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 8v8m3-8v8m4-8v8m3-8v8"/>
             </svg>
           </span>
@@ -194,14 +569,19 @@
             id="global-scan-input"
             type="text"
             autocomplete="off"
-            placeholder="Escanea con pistola láser o busca SKU / Serie / Nombre..."
+            placeholder="Escanea con pistola láser o busca SKU, serie o nombre..."
             oninput="handleLiveSearchInput(this.value)"
-            class="w-full pl-10 pr-9 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900/90 border-2 border-emerald-500/35 focus:border-emerald-500 text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none transition"
+            class="alm-scanner-input w-full pl-9 pr-14 py-2 rounded-xl text-xs sm:text-[13px] font-medium"
           />
-          <button type="button" onclick="clearGlobalSearch()" id="btn-clear-scan" class="hidden absolute right-2.5 p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">✕</button>
+          <kbd class="hidden md:inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold text-slate-400 border border-slate-300/60 dark:border-white/10 absolute right-2.5 pointer-events-none">⏎</kbd>
+          <button type="button" onclick="clearGlobalSearch()" id="btn-clear-scan" aria-label="Limpiar búsqueda" class="hidden absolute right-2 p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
         </div>
-        <button type="button" onclick="openCameraScanner()" title="Escanear con cámara" class="px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-95 transition flex-shrink-0">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+        <button type="button" onclick="openCameraScanner()" title="Escanear con cámara" class="pos-press h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm flex-shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
@@ -212,25 +592,38 @@
       <!-- Controles rápidos -->
       <div class="order-2 sm:order-3 flex items-center gap-1.5">
         <!-- Selector papel térmico 80mm / 58mm -->
-        <button type="button" onclick="togglePaperWidth()" id="btn-paper-width" title="Ancho de impresora térmica" class="px-2.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 hover:border-emerald-500/50 transition">
-          🖨️ 80mm
+        <button type="button" onclick="togglePaperWidth()" id="btn-paper-width" title="Ancho de impresora térmica" class="pos-icon-btn px-2.5 text-[11px] font-mono font-bold">
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          <span id="paper-width-label">80mm</span>
         </button>
         <!-- Sonido Beep -->
-        <button type="button" onclick="toggleBeepSound()" id="btn-beep-toggle" title="Sonido Beep al escanear" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-emerald-500 hover:border-emerald-500/50 transition text-sm">
-          🔊
+        <button type="button" onclick="toggleBeepSound()" id="btn-beep-toggle" title="Sonido Beep al escanear" aria-label="Alternar sonido" class="pos-icon-btn text-emerald-500">
+          <svg id="beep-icon-on" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+          </svg>
+          <svg id="beep-icon-off" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+          </svg>
         </button>
         <!-- Recargar datos -->
-        <button type="button" onclick="refreshAllWarehouseData(true)" title="Sincronizar inventario" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition">
+        <button type="button" onclick="refreshAllWarehouseData(true)" title="Sincronizar inventario" aria-label="Sincronizar inventario" class="pos-icon-btn">
           <svg id="alm-refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
           </svg>
         </button>
         <!-- Tema Claro / Oscuro -->
-        <button type="button" onclick="toggleAlmacenTheme()" title="Cambiar tema" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-amber-400 transition">
-          🌓
+        <button type="button" onclick="toggleAlmacenTheme()" title="Cambiar tema" aria-label="Cambiar tema" class="pos-icon-btn">
+          <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
         </button>
         <!-- Cerrar sesión -->
-        <button type="button" onclick="almLogout(false)" title="Cerrar sesión" class="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-rose-500 transition">
+        <button type="button" onclick="almLogout(false)" title="Cerrar sesión" aria-label="Cerrar sesión" class="pos-press h-9 w-9 inline-flex items-center justify-center rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
           </svg>
@@ -239,27 +632,45 @@
     </div>
 
     <!-- Barra de pestañas POS (PC / Laptop / Tablet) -->
-    <div class="hidden sm:block border-t border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-[#0a101e]/90">
-      <div class="max-w-[1600px] mx-auto px-4 py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar" id="desktop-mode-tabs">
-        <button data-tab="dispatch" onclick="switchAlmacenTab('dispatch')" class="alm-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap">
-          <span>🛒</span> Despacho POS
-          <span id="badge-pending-requests" class="hidden px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-amber-500 text-slate-950 font-extrabold">0</span>
+    <div class="alm-subbar hidden sm:block">
+      <div class="max-w-[1600px] mx-auto px-5 py-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar" id="desktop-mode-tabs">
+        <button data-tab="dispatch" onclick="switchAlmacenTab('dispatch')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <span>Despacho POS</span>
+          <span id="badge-pending-requests" class="hidden px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-amber-400 text-slate-950 font-extrabold">0</span>
         </button>
-        <button data-tab="returns" onclick="switchAlmacenTab('returns')" class="alm-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap">
-          <span>↩️</span> Devoluciones
+        <button data-tab="returns" onclick="switchAlmacenTab('returns')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+          </svg>
+          <span>Devoluciones</span>
         </button>
-        <button data-tab="purchases" onclick="switchAlmacenTab('purchases')" class="alm-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap">
-          <span>📦</span> Ingreso Compras
+        <button data-tab="purchases" onclick="switchAlmacenTab('purchases')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+          </svg>
+          <span>Ingreso Compras</span>
         </button>
-        <button data-tab="transfers" onclick="switchAlmacenTab('transfers')" class="alm-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap">
-          <span>🔁</span> Transferencias
+        <button data-tab="transfers" onclick="switchAlmacenTab('transfers')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+          </svg>
+          <span>Transferencias</span>
         </button>
-        <button data-tab="epp" onclick="switchAlmacenTab('epp')" class="alm-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap">
-          <span>🦺</span> Control EPP
+        <button data-tab="epp" onclick="switchAlmacenTab('epp')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span>Control EPP</span>
           <span id="badge-epp-alerts" class="hidden px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-rose-500 text-white font-extrabold">0</span>
         </button>
-        <button data-tab="verify" onclick="switchAlmacenTab('verify')" class="alm-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap">
-          <span>🔍</span> Verificador & Etiquetas
+        <button data-tab="verify" onclick="switchAlmacenTab('verify')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <span>Verificador &amp; Etiquetas</span>
         </button>
       </div>
     </div>
@@ -268,86 +679,111 @@
   <!-- ===================================================================== -->
   <!-- TOAST / FEEDBACK RÁPIDO TIPO CAJA                                     -->
   <!-- ===================================================================== -->
-  <div id="alm-toast-container" class="fixed top-20 right-4 z-50 space-y-2 pointer-events-none max-w-sm"></div>
+  <div id="alm-toast-container" class="fixed top-16 right-4 z-50 space-y-2 pointer-events-none max-w-sm"></div>
 
   <!-- ===================================================================== -->
   <!-- CONTENIDO PRINCIPAL                                                   -->
   <!-- ===================================================================== -->
-  <main class="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-5 py-4 pb-24 sm:pb-6">
+  <main class="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-5 py-5 pb-24 sm:pb-8">
 
-    <!-- 1. MÓDULO DESPACHO POS (ESTILO PLAZA VEA / METRO) -->
+    <!-- 1. MÓDULO DESPACHO POS -->
     <section id="panel-dispatch" class="alm-panel">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
         <!-- IZQUIERDA: Pedidos de campo + Filtros + Grilla de Productos -->
-        <div class="lg:col-span-8 space-y-3.5">
+        <div class="lg:col-span-8 space-y-4">
           <!-- Bandeja rápida de pedidos de técnicos (TurboTech) -->
-          <div id="tech-requests-banner" class="hidden rounded-2xl bg-amber-500/10 border border-amber-500/35 p-3">
-            <div class="flex items-center justify-between gap-2 mb-2">
+          <div id="tech-requests-banner" class="hidden alm-banner-warn rounded-2xl p-3.5">
+            <div class="flex items-center justify-between gap-2 mb-2.5">
               <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                <span class="text-xs font-extrabold text-amber-600 dark:text-amber-300 uppercase tracking-wide">Pedidos en vivo desde TurboTech</span>
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span class="text-xs font-bold text-amber-600 dark:text-amber-300 uppercase tracking-wider">Pedidos en vivo desde TurboTech</span>
               </div>
-              <button type="button" onclick="toggleRequestsExpanded()" class="text-[11px] font-bold text-amber-600 dark:text-amber-300 hover:underline" id="btn-toggle-reqs">Ocultar</button>
+              <button type="button" onclick="toggleRequestsExpanded()" class="text-[11px] font-semibold text-amber-600 dark:text-amber-300 hover:underline" id="btn-toggle-reqs">Ocultar</button>
             </div>
             <div id="tech-requests-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
           </div>
 
-          <!-- KPIs rápidos y filtros de categoría -->
+          <!-- Barra de filtros y categoría -->
           <div class="flex flex-wrap items-center gap-2">
-            <button onclick="setDispatchFilter('all')" data-dfilter="all" class="dfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white">Todos</button>
-            <button onclick="setDispatchFilter('bulk')" data-dfilter="bulk" class="dfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300">⚡ A Granel</button>
-            <button onclick="setDispatchFilter('simple')" data-dfilter="simple" class="dfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300">📡 Equipos / Series</button>
-            <button onclick="setDispatchFilter('epp')" data-dfilter="epp" class="dfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300">🦺 EPP</button>
-            <button onclick="setDispatchFilter('low')" data-dfilter="low" class="dfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-rose-500">⚠️ Stock Bajo</button>
-            <select id="dispatch-category-select" onchange="renderDispatchCatalog()" class="ml-auto px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 focus:outline-none">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button onclick="setDispatchFilter('all')" data-dfilter="all" class="dfilter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm flex items-center gap-1.5">
+                <span>Todos</span>
+                <span id="dcount-all" class="text-[10px] font-mono opacity-80"></span>
+              </button>
+              <button onclick="setDispatchFilter('bulk')" data-dfilter="bulk" class="dfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>A Granel</span>
+              </button>
+              <button onclick="setDispatchFilter('simple')" data-dfilter="simple" class="dfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
+                <span>Equipos / Series</span>
+              </button>
+              <button onclick="setDispatchFilter('epp')" data-dfilter="epp" class="dfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span>EPP</span>
+              </button>
+              <button onclick="setDispatchFilter('low')" data-dfilter="low" class="dfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-500 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span>Stock Bajo</span>
+              </button>
+            </div>
+            <select id="dispatch-category-select" onchange="renderDispatchCatalog()" class="alm-input ml-auto px-3 py-1.5 rounded-lg text-xs font-semibold">
               <option value="">Todas las categorías</option>
             </select>
           </div>
 
           <!-- Grilla táctil de productos -->
-          <div id="dispatch-products-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+          <div id="dispatch-products-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
             <!-- Renderizado dinámico -->
           </div>
         </div>
 
         <!-- DERECHA: CANASTA / CAJA DE DESPACHO -->
-        <aside id="dispatch-cart-panel" class="lg:col-span-4 lg:sticky lg:top-32 rounded-3xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 shadow-xl overflow-hidden flex flex-col max-h-[calc(100vh-9rem)]">
-          <div class="p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-slate-900/60 flex items-center justify-between">
-            <div>
-              <h2 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                <span>🛒</span> Canasta de Despacho
-              </h2>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400" id="cart-summary-sub">Escanea o toca productos para agregar</p>
+        <aside id="dispatch-cart-panel" class="alm-panel-elevated alm-sticky-aside lg:col-span-4 lg:sticky rounded-2xl overflow-hidden flex flex-col">
+          <div class="alm-divider-b px-4 py-3.5 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="alm-badge-ok w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white leading-tight">Canasta de Despacho</h2>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate" id="cart-summary-sub">Escanea o toca productos para agregar</p>
+              </div>
             </div>
-            <button type="button" onclick="clearDispatchCart()" class="text-[11px] font-bold text-rose-500 hover:bg-rose-500/10 px-2.5 py-1 rounded-lg transition">Vaciar</button>
+            <button type="button" onclick="clearDispatchCart()" class="pos-press text-[11px] font-semibold text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 px-2.5 py-1 rounded-lg">Vaciar</button>
           </div>
 
           <!-- Selector de Técnico / Personal -->
-          <div class="p-3.5 border-b border-slate-200 dark:border-white/10 space-y-2.5">
+          <div class="alm-divider-b p-3.5 space-y-2.5">
             <div>
-              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Entregar a Técnico / Personal *</label>
-              <select id="dispatch-employee-select" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+              <label for="dispatch-employee-select" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Entregar a Técnico / Personal *</label>
+              <select id="dispatch-employee-select" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold">
                 <option value="">— Seleccionar técnico —</option>
               </select>
             </div>
-            <input id="dispatch-notes-input" type="text" placeholder="Nota opcional (ej: Cuadrilla Norte / Instalaciones hoy)" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-emerald-500" />
+            <input id="dispatch-notes-input" type="text" placeholder="Nota opcional (ej: Cuadrilla Norte / Instalaciones hoy)" class="alm-input w-full px-3 py-2 rounded-xl text-xs" />
           </div>
 
           <!-- Lista de ítems en canasta -->
-          <div id="dispatch-cart-items" class="flex-1 overflow-y-auto p-3 space-y-2 min-h-[180px]">
+          <div id="dispatch-cart-items" class="alm-scroll flex-1 overflow-y-auto p-3.5 space-y-2 min-h-[190px]">
             <!-- Renderizado dinámico -->
           </div>
 
           <!-- Footer de confirmación -->
-          <div class="p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-slate-900/60 space-y-2.5">
-            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
-              <input type="checkbox" id="dispatch-auto-print" checked class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500">
+          <div class="alm-divider-t p-4 bg-slate-50/70 dark:bg-black/20 space-y-3">
+            <label class="flex items-center gap-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+              <input type="checkbox" id="dispatch-auto-print" checked class="w-4 h-4 rounded accent-emerald-500">
               <span>Imprimir ticket térmico al confirmar</span>
             </label>
-            <button type="button" onclick="confirmDispatchCart()" id="btn-confirm-dispatch" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold text-sm shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 active:scale-[0.99] transition">
-              <span>✅ CONFIRMAR DESPACHO</span>
-              <span id="cart-total-badge" class="px-2 py-0.5 rounded-lg bg-black/20 font-mono text-xs">0</span>
+            <button type="button" onclick="confirmDispatchCart()" id="btn-confirm-dispatch" class="pos-press w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs tracking-wide uppercase shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Confirmar Despacho</span>
+              <span id="cart-total-badge" class="px-2 py-0.5 rounded-md bg-black/20 font-mono text-[11px] font-bold">0 ítems</span>
             </button>
           </div>
         </aside>
@@ -356,15 +792,18 @@
 
     <!-- 2. MÓDULO DEVOLUCIONES EXPRESS -->
     <section id="panel-returns" class="alm-panel hidden space-y-4">
-      <div class="rounded-2xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 p-4 flex flex-wrap items-center gap-3">
+      <div class="alm-surface rounded-2xl p-4 flex flex-wrap items-center gap-3">
         <div class="flex-1 min-w-[200px]">
-          <h2 class="text-base font-extrabold text-slate-900 dark:text-white">↩️ Devoluciones Express</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Escanea el código/serie del equipo que regresa o filtra por técnico para reingresar al stock.</p>
+          <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+            <span>Devoluciones Express</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Escanea el código o serie del equipo que regresa o filtra por técnico para reingresar al stock.</p>
         </div>
-        <select id="returns-employee-filter" onchange="renderReturnsList()" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-slate-100">
+        <select id="returns-employee-filter" onchange="renderReturnsList()" class="alm-input px-3 py-2 rounded-xl text-xs font-semibold">
           <option value="">Todos los técnicos</option>
         </select>
-        <input id="returns-search-input" type="text" oninput="renderReturnsList()" placeholder="Filtrar serie, SKU o material..." class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-slate-100 w-full sm:w-56" />
+        <input id="returns-search-input" type="text" oninput="renderReturnsList()" placeholder="Filtrar serie, SKU o material..." class="alm-input px-3 py-2 rounded-xl text-xs w-full sm:w-56" />
       </div>
 
       <div id="returns-list-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
@@ -372,58 +811,62 @@
 
     <!-- 3. MÓDULO INGRESO DE COMPRAS -->
     <section id="panel-purchases" class="alm-panel hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         <!-- Selector rápido de productos para ingresar -->
-        <div class="lg:col-span-7 space-y-3">
-          <div class="rounded-2xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 p-4">
-            <h2 class="text-base font-extrabold text-slate-900 dark:text-white">📦 Ingreso Rápido de Compras</h2>
+        <div class="lg:col-span-7 space-y-3.5">
+          <div class="alm-surface rounded-2xl p-4">
+            <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+              <span>Ingreso Rápido de Compras</span>
+            </h2>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Escanea o selecciona los productos de la factura para sumarlos al Kardex de almacén.</p>
-            <input id="purchase-product-search" type="text" oninput="renderPurchaseProductPicker()" placeholder="Buscar producto por nombre o SKU..." class="mt-3 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-white" />
+            <input id="purchase-product-search" type="text" oninput="renderPurchaseProductPicker()" placeholder="Buscar producto por nombre o SKU..." class="alm-input mt-3 w-full px-3.5 py-2 rounded-xl text-xs" />
           </div>
           <div id="purchase-products-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
         </div>
 
         <!-- Boleta / Factura de Ingreso -->
-        <div class="lg:col-span-5 lg:sticky lg:top-32 rounded-3xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 shadow-xl overflow-hidden">
-          <div class="p-4 border-b border-slate-200 dark:border-white/10 bg-blue-500/10">
-            <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">🧾 Recepción de Factura / Guía</h3>
+        <div class="alm-panel-elevated alm-sticky-aside lg:col-span-5 lg:sticky rounded-2xl overflow-hidden">
+          <div class="alm-divider-b alm-banner-sky px-4 py-3.5 flex items-center gap-2">
+            <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Recepción de Factura / Guía</h3>
           </div>
-          <div class="p-4 space-y-3 border-b border-slate-200 dark:border-white/10">
+          <div class="alm-divider-b p-4 space-y-3">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Proveedor *</label>
-                <input id="purch-supplier" type="text" placeholder="Ej: TP-Link Perú / FiberHome" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold" />
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Proveedor *</label>
+                <input id="purch-supplier" type="text" placeholder="Ej: TP-Link Perú / FiberHome" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold" />
               </div>
               <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">N° Factura / Guía *</label>
-                <input id="purch-invoice" type="text" placeholder="F001-004521" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-mono font-semibold" />
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">N° Factura / Guía *</label>
+                <input id="purch-invoice" type="text" placeholder="F001-004521" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-mono font-semibold" />
               </div>
             </div>
             <div class="grid grid-cols-2 gap-2.5">
               <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Fecha</label>
-                <input id="purch-date" type="date" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-mono" />
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fecha</label>
+                <input id="purch-date" type="date" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-mono" />
               </div>
               <div>
-                <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Observación</label>
-                <input id="purch-notes" type="text" placeholder="Lote / garantía" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs" />
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Observación</label>
+                <input id="purch-notes" type="text" placeholder="Lote / garantía" class="alm-input w-full px-3 py-2 rounded-xl text-xs" />
               </div>
             </div>
           </div>
 
-          <div id="purchase-cart-items" class="p-3 space-y-2 max-h-[300px] overflow-y-auto"></div>
+          <div id="purchase-cart-items" class="alm-scroll p-3.5 space-y-2 max-h-[300px] overflow-y-auto"></div>
 
-          <div class="p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-slate-900/60 space-y-3">
-            <div class="flex items-center justify-between text-sm font-extrabold">
-              <span class="text-slate-500">Total Compra:</span>
-              <span id="purchase-total-amount" class="font-mono text-blue-600 dark:text-blue-400">S/ 0.00</span>
+          <div class="alm-divider-t p-4 bg-slate-50/70 dark:bg-black/20 space-y-3">
+            <div class="flex items-center justify-between text-sm font-bold">
+              <span class="text-slate-500 dark:text-slate-400">Total Compra</span>
+              <span id="purchase-total-amount" class="font-mono text-sky-600 dark:text-sky-400">S/ 0.00</span>
             </div>
-            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
-              <input type="checkbox" id="purchase-auto-print" checked class="w-4 h-4 rounded text-blue-600">
+            <label class="flex items-center gap-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+              <input type="checkbox" id="purchase-auto-print" checked class="w-4 h-4 rounded accent-sky-500">
               <span>Imprimir comprobante térmico de ingreso</span>
             </label>
-            <button type="button" onclick="confirmPurchaseBatch()" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm shadow-lg shadow-blue-600/25 transition">
-              📥 INGRESAR COMPRA AL KARDEX
+            <button type="button" onclick="confirmPurchaseBatch()" class="pos-press w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs tracking-wide uppercase shadow-md shadow-sky-600/20">
+              Ingresar Compra al Kardex
             </button>
           </div>
         </div>
@@ -432,25 +875,28 @@
 
     <!-- 4. MÓDULO TRANSFERENCIAS (TÉCNICO ↔ TÉCNICO Y ALMACÉN ↔ NODOS) -->
     <section id="panel-transfers" class="alm-panel hidden space-y-4">
-      <div class="rounded-2xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 p-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="alm-surface rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 class="text-base font-extrabold text-slate-900 dark:text-white">🔁 Transferencias de Almacén</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Traspasa material entre técnicos o envía/retorna equipamiento hacia Nodos POP.</p>
+          <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            <span>Transferencias de Almacén</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Traspasa material entre técnicos o envía y retorna equipamiento hacia Nodos POP.</p>
         </div>
-        <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10">
-          <button type="button" onclick="switchTransferSubMode('tech')" id="btn-tr-tech" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white">👷 Técnico → Técnico</button>
-          <button type="button" onclick="switchTransferSubMode('node')" id="btn-tr-node" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300">📡 Almacén ↔ Nodos POP</button>
+        <div class="alm-surface-inset inline-flex p-1 rounded-xl">
+          <button type="button" onclick="switchTransferSubMode('tech')" id="btn-tr-tech" class="pos-press px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white">Técnico → Técnico</button>
+          <button type="button" onclick="switchTransferSubMode('node')" id="btn-tr-node" class="pos-press px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-300">Almacén ↔ Nodos POP</button>
         </div>
       </div>
 
       <!-- Sub-vista Técnico → Técnico -->
       <div id="transfer-sub-tech" class="space-y-3">
-        <div class="flex flex-wrap items-center gap-2.5 rounded-2xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 p-3.5">
-          <select id="tr-source-employee" onchange="renderTechTransferList()" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold">
+        <div class="alm-surface flex flex-wrap items-center gap-2.5 rounded-2xl p-3.5">
+          <select id="tr-source-employee" onchange="renderTechTransferList()" class="alm-input px-3 py-2 rounded-xl text-xs font-semibold">
             <option value="">Origen: Todos los técnicos</option>
           </select>
-          <span class="text-indigo-500 font-bold text-sm">➜</span>
-          <select id="tr-target-employee" class="px-3 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/40 text-xs font-bold text-indigo-700 dark:text-indigo-300">
+          <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          <select id="tr-target-employee" class="alm-input px-3 py-2 rounded-xl border-emerald-500/40 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
             <option value="">Destino: Seleccionar técnico receptor *</option>
           </select>
         </div>
@@ -459,36 +905,36 @@
 
       <!-- Sub-vista Almacén ↔ Nodos POP -->
       <div id="transfer-sub-node" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div class="lg:col-span-5 rounded-2xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 p-4 space-y-3">
-          <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Enviar Stock a Nodo POP</h3>
+        <div class="alm-surface lg:col-span-5 rounded-2xl p-4 space-y-3">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Enviar Stock a Nodo POP</h3>
           <div>
-            <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Nodo POP *</label>
-            <select id="tr-node-select" onchange="loadSelectedNodeStock()" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold"></select>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Nodo POP *</label>
+            <select id="tr-node-select" onchange="loadSelectedNodeStock()" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold"></select>
           </div>
           <div>
-            <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Producto de Almacén *</label>
-            <select id="tr-node-product" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold"></select>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Producto de Almacén *</label>
+            <select id="tr-node-product" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold"></select>
           </div>
           <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Cantidad *</label>
-              <input id="tr-node-qty" type="number" min="1" value="1" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-mono font-bold" />
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Cantidad *</label>
+              <input id="tr-node-qty" type="number" min="1" value="1" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-mono font-bold" />
             </div>
             <div>
-              <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Rack / Ubicación</label>
-              <input id="tr-node-rack" type="text" placeholder="Rack A - U4" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs" />
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Rack / Ubicación</label>
+              <input id="tr-node-rack" type="text" placeholder="Rack A - U4" class="alm-input w-full px-3 py-2 rounded-xl text-xs" />
             </div>
           </div>
-          <input id="tr-node-serial" type="text" placeholder="Serie / MAC (opcional)" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-mono" />
-          <input id="tr-node-notes" type="text" placeholder="Nota de traslado" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs" />
-          <button type="button" onclick="assignToSelectedNode()" class="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-600/20">
-            📡 ENVIAR A NODO POP
+          <input id="tr-node-serial" type="text" placeholder="Serie / MAC (opcional)" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-mono" />
+          <input id="tr-node-notes" type="text" placeholder="Nota de traslado" class="alm-input w-full px-3 py-2 rounded-xl text-xs" />
+          <button type="button" onclick="assignToSelectedNode()" class="pos-press w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wide shadow-md shadow-emerald-600/20">
+            Enviar a Nodo POP
           </button>
         </div>
 
-        <div class="lg:col-span-7 rounded-2xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 p-4 space-y-3">
+        <div class="alm-surface lg:col-span-7 rounded-2xl p-4 space-y-3">
           <div class="flex items-center justify-between">
-            <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Stock actual en el Nodo seleccionado</h3>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Stock actual en el Nodo seleccionado</h3>
             <span id="tr-node-stock-count" class="text-xs font-mono text-slate-400">0 ítems</span>
           </div>
           <div id="tr-node-stock-list" class="space-y-2"></div>
@@ -499,28 +945,28 @@
     <!-- 5. MÓDULO CONTROL DE EPP (SEMÁFORO DE VIGENCIAS E INSPECCIÓN) -->
     <section id="panel-epp" class="alm-panel hidden space-y-4">
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 p-3.5">
-          <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">🟢 Óptimos / Vigentes</div>
-          <div id="epp-kpi-ok" class="text-2xl font-extrabold font-mono text-emerald-600 dark:text-emerald-300 mt-1">0</div>
+        <div class="alm-surface alm-kpi-emerald rounded-2xl p-4">
+          <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Óptimos / Vigentes</div>
+          <div id="epp-kpi-ok" class="text-2xl font-extrabold font-mono text-emerald-500 mt-1">0</div>
         </div>
-        <div class="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3.5">
-          <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400">🟡 Por Vencer (&le;30d)</div>
-          <div id="epp-kpi-soon" class="text-2xl font-extrabold font-mono text-amber-600 dark:text-amber-300 mt-1">0</div>
+        <div class="alm-surface alm-kpi-amber rounded-2xl p-4">
+          <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Por Vencer (&le;30d)</div>
+          <div id="epp-kpi-soon" class="text-2xl font-extrabold font-mono text-amber-500 mt-1">0</div>
         </div>
-        <div class="rounded-2xl bg-rose-500/10 border border-rose-500/30 p-3.5">
-          <div class="text-[11px] font-bold text-rose-600 dark:text-rose-400">🔴 Vencidos / Cambio</div>
-          <div id="epp-kpi-expired" class="text-2xl font-extrabold font-mono text-rose-600 dark:text-rose-300 mt-1">0</div>
+        <div class="alm-surface alm-kpi-rose rounded-2xl p-4">
+          <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Vencidos / Cambio</div>
+          <div id="epp-kpi-expired" class="text-2xl font-extrabold font-mono text-rose-500 mt-1">0</div>
         </div>
-        <div class="rounded-2xl bg-blue-500/10 border border-blue-500/30 p-3.5">
-          <div class="text-[11px] font-bold text-blue-600 dark:text-blue-400">👷 EPPs Asignados</div>
-          <div id="epp-kpi-assigned" class="text-2xl font-extrabold font-mono text-blue-600 dark:text-blue-300 mt-1">0</div>
+        <div class="alm-surface alm-kpi-sky rounded-2xl p-4">
+          <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">EPPs Asignados</div>
+          <div id="epp-kpi-assigned" class="text-2xl font-extrabold font-mono text-sky-500 mt-1">0</div>
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <button onclick="setEppFilter('all')" data-eppfilter="all" class="eppfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-600 text-white">Todos los EPP</button>
-        <button onclick="setEppFilter('alerts')" data-eppfilter="alerts" class="eppfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-rose-500">🚨 Solo Alertas / Vencidos</button>
-        <button onclick="setEppFilter('assigned')" data-eppfilter="assigned" class="eppfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-blue-500">👷 Asignados a Personal</button>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button onclick="setEppFilter('all')" data-eppfilter="all" class="eppfilter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white">Todos los EPP</button>
+        <button onclick="setEppFilter('alerts')" data-eppfilter="alerts" class="eppfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-500">Solo Alertas / Vencidos</button>
+        <button onclick="setEppFilter('assigned')" data-eppfilter="assigned" class="eppfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-sky-500">Asignados a Personal</button>
       </div>
 
       <div id="epp-list-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
@@ -528,43 +974,54 @@
 
     <!-- 6. MÓDULO VERIFICADOR INSTANTÁNEO & IMPRESIÓN DE ETIQUETAS -->
     <section id="panel-verify" class="alm-panel hidden space-y-4">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        <!-- Verificador tipo supermercado -->
-        <div class="lg:col-span-7 rounded-3xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 p-5 space-y-4">
-          <div class="flex items-center justify-between">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <!-- Verificador -->
+        <div class="alm-surface lg:col-span-7 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between gap-3">
             <div>
-              <h2 class="text-base font-extrabold text-slate-900 dark:text-white">🔍 Verificador Instantáneo (Tipo Metro)</h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Escanea cualquier SKU, código de barras o serie arriba para ver ubicación, stock y trazabilidad 360°.</p>
+              <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <span>Verificador Instantáneo</span>
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Escanea cualquier SKU, código de barras o serie para ver ubicación, stock y trazabilidad.</p>
             </div>
-            <button type="button" onclick="openCameraScanner()" class="px-3 py-2 rounded-xl bg-cyan-600 text-white text-xs font-bold">📷 Escanear</button>
+            <button type="button" onclick="openCameraScanner()" class="pos-press px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 flex-shrink-0">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>Escanear</span>
+            </button>
           </div>
-          <div id="verify-result-box" class="rounded-2xl bg-slate-50 dark:bg-slate-900/70 border border-dashed border-slate-300 dark:border-white/15 p-8 text-center text-slate-400 text-xs">
+          <div id="verify-result-box" class="rounded-xl bg-slate-50 dark:bg-black/20 border border-dashed border-slate-300 dark:border-white/10 p-8 text-center text-slate-400 text-xs">
             Pasa un código por la pistola láser o escribe un SKU/serie en la barra superior y presiona Enter.
           </div>
         </div>
 
         <!-- Impresor de Etiquetas Térmicas -->
-        <div class="lg:col-span-5 rounded-3xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 p-5 space-y-3.5">
-          <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">🏷️ Impresor de Etiquetas Térmicas</h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Genera etiquetas con código QR + SKU + Ubicación listas para tu impresora térmica.</p>
+        <div class="alm-surface lg:col-span-5 rounded-2xl p-5 space-y-3.5">
           <div>
-            <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Producto</label>
-            <select id="label-product-select" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold"></select>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+              <span>Impresor de Etiquetas Térmicas</span>
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Genera etiquetas con código QR, SKU y ubicación listas para impresora térmica.</p>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Producto</label>
+            <select id="label-product-select" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold"></select>
           </div>
           <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Cantidad de Etiquetas</label>
-              <input id="label-copies-input" type="number" min="1" max="50" value="4" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-mono font-bold" />
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Cantidad de Etiquetas</label>
+              <input id="label-copies-input" type="number" min="1" max="50" value="4" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-mono font-bold" />
             </div>
             <div class="flex items-end">
-              <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 pb-2 cursor-pointer">
-                <input type="checkbox" id="label-use-units" checked class="w-4 h-4 rounded text-cyan-600">
+              <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 pb-2 cursor-pointer select-none">
+                <input type="checkbox" id="label-use-units" checked class="w-4 h-4 rounded accent-emerald-500">
                 <span>Usar SKUs de unidades</span>
               </label>
             </div>
           </div>
-          <button type="button" onclick="printThermalLabels()" class="w-full py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-extrabold text-xs shadow-lg shadow-cyan-600/25">
-            🖨️ IMPRIMIR ETIQUETAS TÉRMICAS
+          <button type="button" onclick="printThermalLabels()" class="pos-press w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-wide shadow-md shadow-sky-600/20">
+            Imprimir Etiquetas Térmicas
           </button>
         </div>
       </div>
@@ -574,46 +1031,55 @@
   <!-- ===================================================================== -->
   <!-- BOTÓN FLOTANTE DE CANASTA (SOLO MÓVIL EN DESPACHO)                    -->
   <!-- ===================================================================== -->
-  <button type="button" onclick="scrollToMobileCart()" id="mobile-cart-fab" class="sm:hidden fixed bottom-20 right-4 z-30 px-4 py-3 rounded-2xl bg-emerald-600 text-white font-extrabold text-xs shadow-xl shadow-emerald-600/35 flex items-center gap-2">
-    <span>🛒 Canasta</span>
-    <span id="mobile-cart-count" class="px-2 py-0.5 rounded-lg bg-black/25 font-mono">0</span>
+  <button type="button" onclick="scrollToMobileCart()" id="mobile-cart-fab" class="pos-press sm:hidden fixed bottom-20 right-4 z-30 px-4 py-3 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-xl shadow-emerald-600/30 flex items-center gap-2">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+    </svg>
+    <span>Canasta</span>
+    <span id="mobile-cart-count" class="px-2 py-0.5 rounded-md bg-black/25 font-mono">0</span>
   </button>
 
   <!-- ===================================================================== -->
   <!-- NAVEGACIÓN INFERIOR MÓVIL                                             -->
   <!-- ===================================================================== -->
-  <nav class="sm:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-[#0d1526]/95 backdrop-blur-md border-t border-slate-200 dark:border-white/10 px-1 py-1.5 grid grid-cols-6 gap-0.5">
-    <button data-mtab="dispatch" onclick="switchAlmacenTab('dispatch')" class="alm-mtab-btn flex flex-col items-center py-1 rounded-xl text-[10px] font-bold">
-      <span class="text-base">🛒</span><span>Despacho</span>
+  <nav class="alm-header sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-b-0 px-1.5 py-1.5 grid grid-cols-6 gap-1">
+    <button data-mtab="dispatch" onclick="switchAlmacenTab('dispatch')" class="alm-mtab-btn pos-press flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl text-[10px] font-semibold">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17"/></svg>
+      <span>Despacho</span>
     </button>
-    <button data-mtab="returns" onclick="switchAlmacenTab('returns')" class="alm-mtab-btn flex flex-col items-center py-1 rounded-xl text-[10px] font-bold">
-      <span class="text-base">↩️</span><span>Devol.</span>
+    <button data-mtab="returns" onclick="switchAlmacenTab('returns')" class="alm-mtab-btn pos-press flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl text-[10px] font-semibold">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+      <span>Devol.</span>
     </button>
-    <button data-mtab="purchases" onclick="switchAlmacenTab('purchases')" class="alm-mtab-btn flex flex-col items-center py-1 rounded-xl text-[10px] font-bold">
-      <span class="text-base">📦</span><span>Compras</span>
+    <button data-mtab="purchases" onclick="switchAlmacenTab('purchases')" class="alm-mtab-btn pos-press flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl text-[10px] font-semibold">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5"/></svg>
+      <span>Compras</span>
     </button>
-    <button data-mtab="transfers" onclick="switchAlmacenTab('transfers')" class="alm-mtab-btn flex flex-col items-center py-1 rounded-xl text-[10px] font-bold">
-      <span class="text-base">🔁</span><span>Trasl.</span>
+    <button data-mtab="transfers" onclick="switchAlmacenTab('transfers')" class="alm-mtab-btn pos-press flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl text-[10px] font-semibold">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+      <span>Trasl.</span>
     </button>
-    <button data-mtab="epp" onclick="switchAlmacenTab('epp')" class="alm-mtab-btn flex flex-col items-center py-1 rounded-xl text-[10px] font-bold">
-      <span class="text-base">🦺</span><span>EPP</span>
+    <button data-mtab="epp" onclick="switchAlmacenTab('epp')" class="alm-mtab-btn pos-press flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl text-[10px] font-semibold">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622"/></svg>
+      <span>EPP</span>
     </button>
-    <button data-mtab="verify" onclick="switchAlmacenTab('verify')" class="alm-mtab-btn flex flex-col items-center py-1 rounded-xl text-[10px] font-bold">
-      <span class="text-base">🔍</span><span>Verif.</span>
+    <button data-mtab="verify" onclick="switchAlmacenTab('verify')" class="alm-mtab-btn pos-press flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl text-[10px] font-semibold">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <span>Verif.</span>
     </button>
   </nav>
 
   <!-- ===================================================================== -->
   <!-- MODAL ESCÁNER POR CÁMARA (QR + CÓDIGOS DE BARRA)                      -->
   <!-- ===================================================================== -->
-  <div id="camera-scanner-modal" class="fixed inset-0 z-50 hidden bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="w-full max-w-md rounded-3xl bg-slate-900 border border-emerald-500/35 overflow-hidden shadow-2xl">
+  <div id="camera-scanner-modal" class="alm-modal-backdrop fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="alm-modal-card alm-modal-surface w-full max-w-md rounded-2xl overflow-hidden shadow-2xl">
       <div class="p-4 flex items-center justify-between border-b border-white/10">
         <div>
-          <h3 class="text-sm font-extrabold text-white">📷 Escáner Cámara QR / Barras</h3>
+          <h3 class="text-sm font-bold text-white">Escáner Cámara QR / Barras</h3>
           <p class="text-[11px] text-slate-400" id="camera-status-text">Apunta al código de barras o QR del equipo</p>
         </div>
-        <button type="button" onclick="closeCameraScanner()" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold">Cerrar</button>
+        <button type="button" onclick="closeCameraScanner()" class="pos-press px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-semibold">Cerrar</button>
       </div>
       <div class="relative bg-black aspect-[4/3] overflow-hidden">
         <video id="camera-video" class="w-full h-full object-cover" playsinline muted></video>
@@ -622,7 +1088,7 @@
           <div class="w-56 h-36 border-2 border-emerald-400 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"></div>
         </div>
       </div>
-      <div class="p-3 bg-slate-950 text-center text-[11px] text-slate-400">
+      <div class="p-3 bg-black/40 text-center text-[11px] text-slate-400">
         Soporta escaneo continuo. Cada código detectado emitirá un <b>BEEP</b> y se procesará en el módulo activo.
       </div>
     </div>
@@ -631,18 +1097,20 @@
   <!-- ===================================================================== -->
   <!-- MODAL VISTA PREVIA DE TICKET TÉRMICO                                  -->
   <!-- ===================================================================== -->
-  <div id="ticket-preview-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="w-full max-w-sm rounded-3xl bg-slate-900 border border-white/15 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+  <div id="ticket-preview-modal" class="alm-modal-backdrop fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="alm-modal-card alm-modal-surface w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
       <div class="p-4 border-b border-white/10 flex items-center justify-between">
-        <h3 class="text-sm font-extrabold text-white">🖨️ Ticket Térmico Listo</h3>
-        <button type="button" onclick="closeTicketPreview()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+        <h3 class="text-sm font-bold text-white">Ticket Térmico Listo</h3>
+        <button type="button" onclick="closeTicketPreview()" aria-label="Cerrar" class="pos-press p-1 rounded-lg text-slate-400 hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
-      <div class="p-4 overflow-y-auto bg-slate-200 dark:bg-slate-800 flex justify-center">
+      <div class="alm-scroll p-4 overflow-y-auto bg-slate-200 dark:bg-black/30 flex justify-center">
         <div id="ticket-preview-paper" class="bg-white text-black p-3 rounded-lg shadow font-mono text-[11px] leading-snug w-[290px]"></div>
       </div>
       <div class="p-4 border-t border-white/10 flex gap-2">
-        <button type="button" onclick="closeTicketPreview()" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">Cerrar</button>
-        <button type="button" onclick="triggerThermalPrint()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold">🖨️ Imprimir Ahora</button>
+        <button type="button" onclick="closeTicketPreview()" class="pos-press flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-semibold">Cerrar</button>
+        <button type="button" onclick="triggerThermalPrint()" class="pos-press flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Imprimir Ahora</button>
       </div>
     </div>
   </div>
@@ -650,11 +1118,13 @@
   <!-- ===================================================================== -->
   <!-- MODAL INSPECCIÓN / ACTUALIZACIÓN RÁPIDA DE EPP                        -->
   <!-- ===================================================================== -->
-  <div id="epp-inspect-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 p-5 shadow-2xl space-y-3.5">
+  <div id="epp-inspect-modal" class="alm-modal-backdrop fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="alm-modal-card alm-panel-elevated w-full max-w-md rounded-2xl p-5 space-y-3.5">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-extrabold text-slate-900 dark:text-white" id="epp-modal-title">Inspección de EPP</h3>
-        <button type="button" onclick="closeEppModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white font-bold">✕</button>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white" id="epp-modal-title">Inspección de EPP</h3>
+        <button type="button" onclick="closeEppModal()" aria-label="Cerrar" class="pos-press p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
       <div id="epp-modal-body" class="space-y-3"></div>
     </div>
@@ -665,6 +1135,6 @@
   <!-- ===================================================================== -->
   <div id="thermal-print-area"></div>
 
-  <script src="/js/almacen-pos.js?v=1"></script>
+  <script src="/js/almacen-pos.js?v=2"></script>
 </body>
 </html>

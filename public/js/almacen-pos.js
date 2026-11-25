@@ -90,19 +90,26 @@
   function showToast(msg, type) {
     const container = document.getElementById("alm-toast-container");
     if (!container) return;
-    const colors = {
-      success: "bg-emerald-600 text-white border-emerald-400/40",
-      error: "bg-rose-600 text-white border-rose-400/40",
-      warn: "bg-amber-500 text-slate-950 border-amber-300/60",
-      info: "bg-slate-900 text-white border-white/15",
+    const dotColors = {
+      success: "bg-emerald-400",
+      error: "bg-rose-400",
+      warn: "bg-amber-400",
+      info: "bg-sky-400",
     };
+    const borders = {
+      success: "border-emerald-500/35",
+      error: "border-rose-500/35",
+      warn: "border-amber-500/35",
+      info: "border-white/10",
+    };
+    const t = type || "info";
     const el = document.createElement("div");
-    el.className = `pointer-events-auto px-4 py-2.5 rounded-2xl border shadow-xl text-xs font-bold flex items-center gap-2 transition-all duration-200 ${colors[type || "info"]}`;
-    el.textContent = msg;
+    el.className = `alm-toast alm-toast-surface pointer-events-auto px-3.5 py-2.5 rounded-xl border ${borders[t]} text-slate-100 shadow-xl text-xs font-semibold flex items-center gap-2.5`;
+    el.innerHTML = `<span class="w-2 h-2 rounded-full flex-shrink-0 ${dotColors[t]}"></span><span class="leading-snug">${esc(msg)}</span>`;
     container.appendChild(el);
     setTimeout(() => {
       el.style.opacity = "0";
-      el.style.transform = "translateY(-6px)";
+      el.style.transform = "translateY(-6px) scale(0.97)";
       setTimeout(() => el.remove(), 220);
     }, 3000);
   }
@@ -124,11 +131,14 @@
   // CONTROLES DE HEADER (PAPEL, SONIDO, TEMA)
   // =========================================================================
   function syncHeaderControls() {
-    const btnPaper = document.getElementById("btn-paper-width");
-    if (btnPaper) btnPaper.textContent = `🖨️ ${paperWidth}mm`;
+    const lblPaper = document.getElementById("paper-width-label");
+    if (lblPaper) lblPaper.textContent = `${paperWidth}mm`;
     const btnBeep = document.getElementById("btn-beep-toggle");
+    const iconOn = document.getElementById("beep-icon-on");
+    const iconOff = document.getElementById("beep-icon-off");
+    if (iconOn) iconOn.classList.toggle("hidden", !beepEnabled);
+    if (iconOff) iconOff.classList.toggle("hidden", beepEnabled);
     if (btnBeep) {
-      btnBeep.textContent = beepEnabled ? "🔊" : "🔇";
       btnBeep.classList.toggle("text-emerald-500", beepEnabled);
       btnBeep.classList.toggle("text-slate-400", !beepEnabled);
     }
@@ -156,93 +166,15 @@
   };
 
   // =========================================================================
-  // LOGIN PIN (MISMO FLUJO QUE TURBOTECH)
+  // SESIÓN UNIFICADA (LOGIN ÚNICO EN /)
   // =========================================================================
-  function updateAlmPinDots() {
-    for (let i = 0; i < 8; i++) {
-      const d = document.getElementById("adot-" + i);
-      if (d) d.classList.toggle("active", i < almPinBuffer.length);
+  function redirectToUnifiedLogin(expired) {
+    if (window.TurboSessionGuard && typeof window.TurboSessionGuard.redirectToUnifiedLogin === "function") {
+      window.TurboSessionGuard.redirectToUnifiedLogin(expired);
+      return;
     }
-  }
-
-  window.almPressPin = function (digit) {
-    if (almPinBuffer.length >= 8) return;
-    almPinBuffer += digit;
-    updateAlmPinDots();
-    if (almPinBuffer.length === 8) submitAlmPinLogin();
-  };
-
-  window.almBackspacePin = function () {
-    almPinBuffer = almPinBuffer.slice(0, -1);
-    updateAlmPinDots();
-  };
-
-  window.almClearPin = function () {
-    almPinBuffer = "";
-    updateAlmPinDots();
-    const fb = document.getElementById("alm-login-feedback");
-    if (fb) fb.textContent = "";
-  };
-
-  async function submitAlmPinLogin() {
-    if (almPinSubmitting) return;
-    almPinSubmitting = true;
-    const fb = document.getElementById("alm-login-feedback");
-    if (fb) {
-      fb.textContent = "Verificando acceso de almacén...";
-      fb.className = "text-xs font-mono min-h-[20px] text-emerald-400 mb-4";
-    }
-    try {
-      const res = await fetch("/api/auth/pin-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin: almPinBuffer }),
-      });
-      const data = await res.json().catch(() => ({ success: false, message: `Error (${res.status})` }));
-      if (data.success && data.data?.user) {
-        if (data.data.token) {
-          const now = Date.now();
-          localStorage.setItem(
-            "turbonetwork_auth_meta",
-            JSON.stringify({
-              token: data.data.token,
-              expiresAt: data.data.expiresAt || now + 8 * 3600 * 1000,
-              lastActivityAt: now,
-              idleTimeoutMs: data.data.idleTimeoutMs || 15 * 60 * 1000,
-            })
-          );
-        }
-        almUser = data.data.user;
-        localStorage.setItem("turbonetwork_session", JSON.stringify(almUser));
-        const tenant =
-          almUser.assignedTenantId && almUser.assignedTenantId !== "*"
-            ? almUser.assignedTenantId
-            : Array.isArray(almUser.allowedTenants) && almUser.allowedTenants[0] && almUser.allowedTenants[0] !== "*"
-            ? almUser.allowedTenants[0]
-            : "turbonetwork";
-        localStorage.setItem("turbonetwork_active_tenant", tenant);
-        document.getElementById("alm-login-overlay").classList.add("hidden");
-        almPinBuffer = "";
-        updateAlmPinDots();
-        await bootstrapAlmacen();
-      } else {
-        if (fb) {
-          fb.textContent = data.message || "PIN inválido";
-          fb.className = "text-xs font-mono min-h-[20px] text-rose-400 mb-4";
-        }
-        almPinBuffer = "";
-        updateAlmPinDots();
-      }
-    } catch (_) {
-      if (fb) {
-        fb.textContent = "Error de conexión con el servidor";
-        fb.className = "text-xs font-mono min-h-[20px] text-rose-400 mb-4";
-      }
-      almPinBuffer = "";
-      updateAlmPinDots();
-    } finally {
-      almPinSubmitting = false;
-    }
+    const target = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.replace(`/?redirect=${target}${expired ? "&expired=1" : ""}`);
   }
 
   window.almLogout = function (fromGuard) {
@@ -255,9 +187,7 @@
       localStorage.removeItem("turbonetwork_auth_meta");
     } catch (_) {}
     almUser = null;
-    almPinBuffer = "";
-    updateAlmPinDots();
-    document.getElementById("alm-login-overlay").classList.remove("hidden");
+    redirectToUnifiedLogin(Boolean(fromGuard));
   };
 
   // =========================================================================
@@ -276,7 +206,7 @@
     } catch (_) {}
 
     if (!almUser) {
-      document.getElementById("alm-login-overlay").classList.remove("hidden");
+      redirectToUnifiedLogin(false);
       return;
     }
 
@@ -445,19 +375,17 @@
     // Desktop tabs styling
     document.querySelectorAll(".alm-tab-btn").forEach((btn) => {
       const isAct = btn.getAttribute("data-tab") === tab;
-      btn.className = `alm-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap ${
-        isAct
-          ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
-          : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-white/10"
-      }`;
+      btn.classList.toggle("is-active", isAct);
     });
 
     // Mobile tabs styling
     document.querySelectorAll(".alm-mtab-btn").forEach((btn) => {
       const isAct = btn.getAttribute("data-mtab") === tab;
-      btn.className = `alm-mtab-btn flex flex-col items-center py-1 rounded-xl text-[10px] font-bold transition ${
-        isAct ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"
-      }`;
+      btn.classList.toggle("bg-emerald-500/15", isAct);
+      btn.classList.toggle("text-emerald-600", isAct);
+      btn.classList.toggle("dark:text-emerald-400", isAct);
+      btn.classList.toggle("text-slate-500", !isAct);
+      btn.classList.toggle("dark:text-slate-400", !isAct);
     });
 
     // Botón flotante de canasta en móvil solo en Despacho
@@ -622,13 +550,6 @@
   let wedgeBuffer = "";
   let wedgeTimer = null;
   document.addEventListener("keydown", function (e) {
-    const loginOverlay = document.getElementById("alm-login-overlay");
-    if (loginOverlay && !loginOverlay.classList.contains("hidden")) {
-      if (/^[0-9]$/.test(e.key)) almPressPin(e.key);
-      else if (e.key === "Backspace") almBackspacePin();
-      return;
-    }
-
     const tag = (document.activeElement?.tagName || "").toUpperCase();
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
     if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -828,16 +749,37 @@
     dispatchFilter = f;
     document.querySelectorAll(".dfilter-btn").forEach((b) => {
       const act = b.getAttribute("data-dfilter") === f;
-      b.className = act
-        ? "dfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-sm"
-        : "dfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300";
+      const isLow = b.getAttribute("data-dfilter") === "low";
+      b.classList.toggle("bg-emerald-600", act);
+      b.classList.toggle("text-white", act);
+      b.classList.toggle("shadow-sm", act);
+      b.classList.toggle("alm-surface", !act);
+      if (isLow) {
+        b.classList.toggle("text-rose-500", !act);
+      } else {
+        b.classList.toggle("text-slate-600", !act);
+        b.classList.toggle("dark:text-slate-300", !act);
+      }
     });
     renderDispatchCatalog();
   };
 
+  function getProductTypeIcon(type) {
+    if (type === "bulk") {
+      return `<svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`;
+    }
+    if (type === "epp") {
+      return `<svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>`;
+    }
+    return `<svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`;
+  }
+
   window.renderDispatchCatalog = function () {
     const grid = document.getElementById("dispatch-products-grid");
     if (!grid) return;
+
+    const countAll = document.getElementById("dcount-all");
+    if (countAll) countAll.textContent = almProducts.length > 0 ? String(almProducts.length) : "";
 
     const catId = document.getElementById("dispatch-category-select")?.value || "";
     const q = liveSearchTerm.toLowerCase();
@@ -856,8 +798,14 @@
     });
 
     if (filtered.length === 0) {
-      grid.innerHTML = `<div class="col-span-full rounded-2xl bg-white dark:bg-[#0f182b] border border-dashed border-slate-300 dark:border-white/15 p-10 text-center text-xs text-slate-400">No hay productos que coincidan con el filtro actual.</div>`;
+      grid.innerHTML = `<div class="col-span-full alm-surface rounded-2xl border-dashed p-10 text-center text-xs text-slate-400">No hay productos que coincidan con el filtro actual.</div>`;
       return;
+    }
+
+    const cartQtyByProd = new Map();
+    for (const item of dispatchCart) {
+      const pid = Number(item.productId);
+      cartQtyByProd.set(pid, (cartQtyByProd.get(pid) || 0) + Number(item.quantity || 0));
     }
 
     grid.innerHTML = filtered
@@ -866,38 +814,48 @@
         const isCritical = stock <= Number(p.stockCritical || 2);
         const isLow = stock <= Number(p.stockMin || 5);
         const stockBadge = isCritical
-          ? "bg-rose-500/15 text-rose-500 border-rose-500/30"
+          ? "alm-badge-crit"
           : isLow
-          ? "bg-amber-500/15 text-amber-500 border-amber-500/30"
-          : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+          ? "alm-badge-warn"
+          : "alm-badge-ok";
         const img = Array.isArray(p.images) && p.images[0] ? p.images[0] : "";
         const unitLabel = p.type === "bulk" ? p.unitOfMeasure || "m" : "und";
+        const inCartQty = cartQtyByProd.get(Number(p.id)) || 0;
+        const typeTag = p.type === "bulk" ? "GRANEL" : p.type === "epp" ? "EPP" : "EQUIPO";
 
         const quickBulkBtns =
           p.type === "bulk"
-            ? `<div class="grid grid-cols-3 gap-1 mt-2">
-                <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 10)" class="py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white text-[10px] font-mono font-bold transition">+10</button>
-                <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 50)" class="py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white text-[10px] font-mono font-bold transition">+50</button>
-                <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 100)" class="py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white text-[10px] font-mono font-bold transition">+100</button>
+            ? `<div class="alm-divider-t grid grid-cols-3 gap-1.5 mt-3 pt-2.5">
+                <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 10)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+10</button>
+                <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 50)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+50</button>
+                <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 100)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+100</button>
               </div>`
             : "";
 
         return `
-        <div onclick="addToDispatchCart(${p.id}, 1)" class="pos-card cursor-pointer rounded-2xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 hover:border-emerald-500/60 p-3 flex flex-col justify-between shadow-sm">
+        <div onclick="addToDispatchCart(${p.id}, 1)" class="pos-card ${inCartQty > 0 ? "in-cart" : ""} cursor-pointer rounded-2xl p-3.5 flex flex-col justify-between min-h-[144px]">
           <div>
-            <div class="flex items-start justify-between gap-1.5 mb-2">
-              <span class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold border ${stockBadge}">${stock} ${esc(unitLabel)}</span>
-              <span class="text-[10px] font-mono text-slate-400 truncate">${esc(p.location || p.type.toUpperCase())}</span>
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-1.5">
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold ${stockBadge}">${stock} ${esc(unitLabel)}</span>
+                ${inCartQty > 0 ? `<span class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-extrabold bg-emerald-500 text-slate-950">+${inCartQty}</span>` : ""}
+              </div>
+              <span class="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-wide truncate">${esc(p.location || typeTag)}</span>
             </div>
             ${
               img
-                ? `<div class="w-full h-20 rounded-xl bg-slate-100 dark:bg-slate-900 mb-2 overflow-hidden flex items-center justify-center"><img src="${esc(img)}" class="w-full h-full object-cover" loading="lazy"></div>`
-                : `<div class="w-full h-14 rounded-xl bg-slate-100 dark:bg-slate-900/80 mb-2 flex items-center justify-center text-2xl">${p.type === "bulk" ? "🧵" : p.type === "epp" ? "🦺" : "📦"}</div>`
+                ? `<div class="w-full h-24 rounded-xl bg-slate-100 dark:bg-black/30 mb-3 overflow-hidden flex items-center justify-center"><img src="${esc(img)}" alt="${esc(p.name)}" class="pos-card-img w-full h-full object-cover" loading="lazy"></div>`
+                : `<div class="alm-icon-chip w-8 h-8 rounded-lg mb-2.5 flex items-center justify-center">${getProductTypeIcon(p.type)}</div>`
             }
-            <div class="text-xs font-extrabold text-slate-900 dark:text-white line-clamp-2 leading-snug">${esc(p.name)}</div>
-            <div class="text-[10px] font-mono text-slate-400 mt-0.5 truncate">${esc(p.sku)}</div>
+            <div class="text-xs font-bold text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug tracking-tight">${esc(p.name)}</div>
           </div>
-          ${quickBulkBtns}
+          <div>
+            <div class="alm-divider-t flex items-center justify-between gap-2 mt-3 pt-2.5">
+              <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate">${esc(p.sku)}</span>
+              <span class="pos-card-add text-[10px] font-bold text-emerald-500 flex-shrink-0">+ Agregar</span>
+            </div>
+            ${quickBulkBtns}
+          </div>
         </div>`;
       })
       .join("");
@@ -952,6 +910,7 @@
 
     playBeep("ok");
     renderDispatchCart();
+    renderDispatchCatalog();
   };
 
   window.updateCartQty = function (idx, delta) {
@@ -966,6 +925,7 @@
       showToast(`Stock disponible: ${it.maxStock}`, "warn");
     }
     renderDispatchCart();
+    renderDispatchCatalog();
   };
 
   window.setCartItemVariant = function (idx, variantName) {
@@ -986,11 +946,13 @@
   window.removeCartItem = function (idx) {
     dispatchCart.splice(idx, 1);
     renderDispatchCart();
+    renderDispatchCatalog();
   };
 
   window.clearDispatchCart = function () {
     dispatchCart = [];
     renderDispatchCart();
+    renderDispatchCatalog();
   };
 
   function renderDispatchCart() {
@@ -1008,10 +970,14 @@
 
     if (!box) return;
     if (dispatchCart.length === 0) {
-      box.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center py-10 text-slate-400 text-xs">
-        <div class="text-3xl mb-2">🛒</div>
-        <div class="font-bold">Canasta vacía</div>
-        <div class="text-[11px] mt-0.5">Pasa la pistola láser o toca un producto</div>
+      box.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center py-10 px-4">
+        <div class="alm-icon-chip w-11 h-11 rounded-2xl border-dashed flex items-center justify-center text-slate-400 mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <div class="text-xs font-bold text-slate-600 dark:text-slate-300">Canasta vacía</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">Pasa la pistola láser o toca un producto</div>
       </div>`;
       return;
     }
@@ -1019,27 +985,29 @@
     box.innerHTML = dispatchCart
       .map(
         (it, idx) => `
-      <div class="rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 p-2.5 space-y-2">
+      <div class="alm-cart-row alm-surface-inset rounded-xl p-2.5 space-y-2">
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0">
-            <div class="text-xs font-extrabold text-slate-900 dark:text-white truncate">${esc(it.name)}</div>
-            <div class="text-[10px] font-mono text-slate-400">${esc(it.unitSku || it.sku)}</div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${esc(it.name)}</div>
+            <div class="text-[10px] font-mono text-slate-400 mt-0.5">${esc(it.unitSku || it.sku)}</div>
           </div>
-          <button type="button" onclick="removeCartItem(${idx})" class="text-rose-500 hover:bg-rose-500/10 rounded-lg px-1.5 py-0.5 text-xs font-bold">✕</button>
+          <button type="button" onclick="removeCartItem(${idx})" aria-label="Quitar" class="pos-press p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
         <div class="flex items-center justify-between gap-2">
-          <div class="inline-flex items-center gap-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 p-0.5">
-            <button type="button" onclick="updateCartQty(${idx}, -1)" class="w-7 h-7 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 font-bold text-sm">−</button>
-            <span class="px-2 font-mono text-xs font-extrabold">${it.quantity}</span>
-            <button type="button" onclick="updateCartQty(${idx}, 1)" class="w-7 h-7 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 font-bold text-sm">+</button>
+          <div class="alm-input inline-flex items-center gap-0.5 rounded-lg p-0.5">
+            <button type="button" onclick="updateCartQty(${idx}, -1)" class="pos-press w-7 h-7 rounded-md hover:bg-slate-100 dark:hover:bg-white/10 font-bold text-sm">−</button>
+            <span class="px-2.5 font-mono text-xs font-bold tabular-nums">${it.quantity}</span>
+            <button type="button" onclick="updateCartQty(${idx}, 1)" class="pos-press w-7 h-7 rounded-md hover:bg-slate-100 dark:hover:bg-white/10 font-bold text-sm">+</button>
           </div>
           ${
             it.variants && it.variants.length > 0
-              ? `<select onchange="setCartItemVariant(${idx}, this.value)" class="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-[11px] font-semibold">
+              ? `<select onchange="setCartItemVariant(${idx}, this.value)" class="alm-input px-2 py-1 rounded-lg text-[11px] font-semibold">
                   ${it.variants.map((v) => `<option value="${esc(v.name)}" ${v.name === it.variantName ? "selected" : ""}>${esc(v.name)}</option>`).join("")}
                 </select>`
               : it.availableUnits && it.availableUnits.length > 0
-              ? `<select onchange="setCartItemUnit(${idx}, this.value)" class="max-w-[155px] px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-[10px] font-mono">
+              ? `<select onchange="setCartItemUnit(${idx}, this.value)" class="alm-input max-w-[155px] px-2 py-1 rounded-lg text-[10px] font-mono">
                   <option value="">Unidad genérica</option>
                   ${it.availableUnits.slice(0, 40).map((u) => `<option value="${esc(u.id)}" ${u.id === it.itemUnitId ? "selected" : ""}>${esc(u.sku)}${u.serialNumber ? " / " + esc(u.serialNumber) : ""}</option>`).join("")}
                 </select>`
@@ -1153,29 +1121,29 @@
     });
 
     if (active.length === 0) {
-      container.innerHTML = `<div class="col-span-full rounded-2xl bg-white dark:bg-[#0f182b] border border-dashed border-slate-300 dark:border-white/15 p-10 text-center text-xs text-slate-400">No hay asignaciones activas pendientes de devolución con este filtro.</div>`;
+      container.innerHTML = `<div class="col-span-full alm-surface rounded-2xl border-dashed p-10 text-center text-xs text-slate-400">No hay asignaciones activas pendientes de devolución con este filtro.</div>`;
       return;
     }
 
     container.innerHTML = active
       .map(
         (a) => `
-      <div class="rounded-2xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 p-4 space-y-3 shadow-sm">
+      <div class="alm-surface rounded-2xl p-4 space-y-3">
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0">
-            <div class="text-xs font-extrabold text-slate-900 dark:text-white truncate">${esc(a.productName || "Material")}</div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${esc(a.productName || "Material")}</div>
             <div class="text-[11px] font-mono text-emerald-500 mt-0.5">${esc(a.unitSku || a.productSku || "")} • Cant: ${a.quantity}</div>
-            <div class="text-[11px] text-slate-500 mt-0.5">👷 ${esc(a.employeeName || a.personnelName || "Técnico")}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">${esc(a.employeeName || a.personnelName || "Técnico")}</div>
           </div>
-          <span class="px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold bg-blue-500/15 text-blue-500">${esc(a.status)}</span>
+          <span class="alm-badge-sky px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">${esc(a.status)}</span>
         </div>
         <div class="flex items-center gap-1.5">
-          <select id="ret-cond-${esc(a.id)}" class="flex-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-[11px] font-semibold">
-            <option value="buen_estado">✅ Buen estado (reingresa)</option>
-            <option value="observacion">⚠️ Con observación</option>
-            <option value="danado">❌ Dañado / Baja</option>
+          <select id="ret-cond-${esc(a.id)}" class="alm-input flex-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold">
+            <option value="buen_estado">Buen estado (reingresa)</option>
+            <option value="observacion">Con observación</option>
+            <option value="danado">Dañado / Baja</option>
           </select>
-          <button type="button" onclick="processReturnAssignment('${esc(a.id)}')" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs">
+          <button type="button" onclick="processReturnAssignment('${esc(a.id)}')" class="pos-press px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs">
             Devolver
           </button>
         </div>
@@ -1232,12 +1200,12 @@
     grid.innerHTML = list
       .map(
         (p) => `
-      <div onclick="addProductToPurchaseCart(${p.id})" class="pos-card cursor-pointer rounded-2xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 hover:border-blue-500/60 p-3 flex items-center justify-between gap-2">
+      <div onclick="addProductToPurchaseCart(${p.id})" class="pos-card cursor-pointer rounded-xl p-3 flex items-center justify-between gap-2">
         <div class="min-w-0">
-          <div class="text-xs font-extrabold text-slate-900 dark:text-white truncate">${esc(p.name)}</div>
-          <div class="text-[10px] font-mono text-slate-400">${esc(p.sku)} • Stock actual: ${p.stock}</div>
+          <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${esc(p.name)}</div>
+          <div class="text-[10px] font-mono text-slate-400 mt-0.5">${esc(p.sku)} • Stock: ${p.stock}</div>
         </div>
-        <span class="px-2.5 py-1 rounded-xl bg-blue-500/15 text-blue-500 font-bold text-xs flex-shrink-0">+ Agregar</span>
+        <span class="alm-badge-sky px-2.5 py-1 rounded-lg font-semibold text-xs flex-shrink-0">+ Agregar</span>
       </div>`
       )
       .join("");
@@ -1384,8 +1352,8 @@
     document.getElementById("transfer-sub-node")?.classList.toggle("hidden", mode !== "node");
     const bTech = document.getElementById("btn-tr-tech");
     const bNode = document.getElementById("btn-tr-node");
-    if (bTech) bTech.className = mode === "tech" ? "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white" : "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300";
-    if (bNode) bNode.className = mode === "node" ? "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white" : "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300";
+    if (bTech) bTech.className = mode === "tech" ? "pos-press px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white" : "pos-press px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-300";
+    if (bNode) bNode.className = mode === "node" ? "pos-press px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white" : "pos-press px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-300";
     if (mode === "node") loadSelectedNodeStock();
   };
 
@@ -1398,21 +1366,21 @@
     );
 
     if (list.length === 0) {
-      box.innerHTML = `<div class="col-span-full rounded-2xl bg-white dark:bg-[#0f182b] border border-dashed border-slate-300 dark:border-white/15 p-8 text-center text-xs text-slate-400">No hay materiales asignados para transferir.</div>`;
+      box.innerHTML = `<div class="col-span-full alm-surface rounded-2xl border-dashed p-8 text-center text-xs text-slate-400">No hay materiales asignados para transferir.</div>`;
       return;
     }
 
     box.innerHTML = list
       .map(
         (a) => `
-      <div class="rounded-2xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 p-3.5 flex items-center justify-between gap-2">
+      <div class="alm-surface rounded-2xl p-3.5 flex items-center justify-between gap-2">
         <div class="min-w-0">
-          <div class="text-xs font-extrabold truncate">${esc(a.productName)}</div>
-          <div class="text-[11px] font-mono text-indigo-500">${esc(a.unitSku || a.productSku || "")} • Cant: ${a.quantity}</div>
-          <div class="text-[11px] text-slate-500 truncate">Actual: ${esc(a.employeeName || a.personnelName)}</div>
+          <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${esc(a.productName)}</div>
+          <div class="text-[11px] font-mono text-emerald-500 mt-0.5">${esc(a.unitSku || a.productSku || "")} • Cant: ${a.quantity}</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">Actual: ${esc(a.employeeName || a.personnelName)}</div>
         </div>
-        <button type="button" onclick="executeTechTransfer('${esc(a.id)}')" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex-shrink-0">
-          Transferir ➜
+        <button type="button" onclick="executeTechTransfer('${esc(a.id)}')" class="pos-press px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex-shrink-0">
+          Transferir
         </button>
       </div>`
       )
@@ -1568,8 +1536,8 @@
     document.querySelectorAll(".eppfilter-btn").forEach((b) => {
       const act = b.getAttribute("data-eppfilter") === f;
       b.className = act
-        ? "eppfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-600 text-white"
-        : "eppfilter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300";
+        ? "eppfilter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white"
+        : "eppfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300";
     });
     renderEppModule();
   };
@@ -1627,7 +1595,7 @@
     }
 
     if (cards.length === 0) {
-      box.innerHTML = `<div class="col-span-full rounded-2xl bg-white dark:bg-[#0f182b] border border-dashed border-slate-300 dark:border-white/15 p-10 text-center text-xs text-slate-400">No hay registros de EPP en esta vista.</div>`;
+      box.innerHTML = `<div class="col-span-full alm-surface rounded-2xl border-dashed p-10 text-center text-xs text-slate-400">No hay registros de EPP en esta vista.</div>`;
       return;
     }
 
@@ -1635,23 +1603,23 @@
       .slice(0, 60)
       .map(
         ({ product, unit, status }) => `
-      <div class="rounded-2xl bg-white dark:bg-[#0f182b] border border-slate-200 dark:border-white/10 p-4 space-y-2.5 shadow-sm">
+      <div class="alm-surface rounded-2xl p-4 space-y-3">
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0">
-            <div class="text-xs font-extrabold text-slate-900 dark:text-white truncate">🦺 ${esc(product.name)}</div>
-            <div class="text-[11px] font-mono text-slate-400">${esc(unit ? unit.sku : product.sku)} • Stock: ${product.stock}</div>
-            ${unit?.assignedTo ? `<div class="text-[11px] text-blue-500 mt-0.5">👷 Asignado a: ${esc(unit.assignedTo)}</div>` : ""}
+            <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${esc(product.name)}</div>
+            <div class="text-[11px] font-mono text-slate-400 mt-0.5">${esc(unit ? unit.sku : product.sku)} • Stock: ${product.stock}</div>
+            ${unit?.assignedTo ? `<div class="text-[11px] text-sky-500 mt-0.5">Asignado a: ${esc(unit.assignedTo)}</div>` : ""}
           </div>
-          <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold flex-shrink-0 ${status.badge}">${esc(status.label)}</span>
+          <span class="px-2 py-0.5 rounded-md text-[10px] font-bold flex-shrink-0 ${status.badge}">${esc(status.label)}</span>
         </div>
         <div class="flex items-center gap-2 pt-1">
-          <button type="button" onclick="addToDispatchCart(${product.id}, 1); switchAlmacenTab('dispatch');" class="flex-1 py-1.5 rounded-xl bg-emerald-600/15 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:text-emerald-400 text-[11px] font-bold transition">
-            🛒 Despachar
+          <button type="button" onclick="addToDispatchCart(${product.id}, 1); switchAlmacenTab('dispatch');" class="pos-press alm-badge-ok flex-1 py-1.5 rounded-lg text-[11px] font-semibold">
+            Despachar
           </button>
           ${
             unit
-              ? `<button type="button" onclick="openEppInspectModal(${product.id}, '${esc(unit.id)}')" class="flex-1 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-700 dark:text-slate-200 text-[11px] font-bold transition">
-                  🔎 Inspeccionar
+              ? `<button type="button" onclick="openEppInspectModal(${product.id}, '${esc(unit.id)}')" class="pos-press alm-bulk-btn flex-1 py-1.5 rounded-lg text-[11px] font-semibold">
+                  Inspeccionar
                 </button>`
               : ""
           }
@@ -1767,36 +1735,36 @@
       (a) => Number(a.productId) === Number(prod.id) && (a.status === "en_uso" || a.status === "entregado")
     );
 
-    box.className = "rounded-2xl bg-slate-50 dark:bg-slate-900/90 border-2 border-cyan-500/40 p-5 text-left space-y-4";
+    box.className = "alm-surface-inset rounded-xl border border-emerald-500/35 p-5 text-left space-y-4";
     box.innerHTML = `
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-cyan-500/15 text-cyan-500">${esc(prod.sku)}</span>
-          <h3 class="text-lg font-extrabold text-slate-900 dark:text-white mt-1">${esc(prod.name)}</h3>
-          <div class="text-xs text-slate-500 mt-0.5">📍 Estante / Ubicación: <strong class="text-slate-800 dark:text-slate-200">${esc(prod.location || "Almacén Central")}</strong></div>
+          <span class="alm-badge-ok px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">${esc(prod.sku)}</span>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white mt-1.5">${esc(prod.name)}</h3>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ubicación: <strong class="text-slate-800 dark:text-slate-200">${esc(prod.location || "Almacén Central")}</strong></div>
         </div>
         <div class="text-right">
-          <div class="text-[10px] uppercase font-bold text-slate-400">Stock Disponible</div>
-          <div class="text-3xl font-extrabold font-mono text-emerald-500">${prod.stock} <span class="text-xs">${esc(prod.type === "bulk" ? prod.unitOfMeasure || "m" : "und")}</span></div>
+          <div class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Stock Disponible</div>
+          <div class="text-3xl font-extrabold font-mono text-emerald-500">${prod.stock} <span class="text-xs font-semibold">${esc(prod.type === "bulk" ? prod.unitOfMeasure || "m" : "und")}</span></div>
         </div>
       </div>
       ${
         unit
-          ? `<div class="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-xs font-mono">
+          ? `<div class="p-3 rounded-xl bg-sky-500/10 border border-sky-500/25 text-xs font-mono">
               Unidad escaneada: <b>${esc(unit.sku)}</b> • Estado: <b>${esc(unit.status)}</b> ${unit.assignedTo ? `• Asignado a: <b>${esc(unit.assignedTo)}</b>` : ""}
             </div>`
           : ""
       }
       <div class="flex flex-wrap gap-2">
-        <button type="button" onclick="addToDispatchCart(${prod.id}, 1); switchAlmacenTab('dispatch');" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold">🛒 Enviar a Despacho</button>
-        <button type="button" onclick="document.getElementById('label-product-select').value='${prod.id}'; printThermalLabels();" class="px-4 py-2 rounded-xl bg-cyan-600 text-white text-xs font-extrabold">🏷️ Imprimir Etiquetas</button>
+        <button type="button" onclick="addToDispatchCart(${prod.id}, 1); switchAlmacenTab('dispatch');" class="pos-press px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Enviar a Despacho</button>
+        <button type="button" onclick="document.getElementById('label-product-select').value='${prod.id}'; printThermalLabels();" class="pos-press px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold">Imprimir Etiquetas</button>
       </div>
       ${
         activeAsg.length > 0
-          ? `<div class="pt-2 border-t border-slate-200 dark:border-white/10">
-              <div class="text-[11px] font-bold text-slate-400 uppercase mb-1.5">En manos de técnicos (${activeAsg.length})</div>
+          ? `<div class="pt-3 border-t border-slate-200/70 dark:border-white/10">
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">En manos de técnicos (${activeAsg.length})</div>
               <div class="space-y-1">
-                ${activeAsg.slice(0, 6).map((a) => `<div class="text-xs flex justify-between"><span>👷 ${esc(a.employeeName)}</span><span class="font-mono text-slate-400">${esc(a.unitSku || "x" + a.quantity)}</span></div>`).join("")}
+                ${activeAsg.slice(0, 6).map((a) => `<div class="text-xs flex justify-between"><span>${esc(a.employeeName)}</span><span class="font-mono text-slate-400">${esc(a.unitSku || "x" + a.quantity)}</span></div>`).join("")}
               </div>
             </div>`
           : ""
