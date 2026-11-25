@@ -344,6 +344,8 @@ export interface Employee {
   operatorTenantId?: string;
   operatorRoleId?: number;
   operatorRoleName?: string;
+  accessTarget?: "system" | "apartado";
+  assignedApartadoId?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -2413,6 +2415,11 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       operatorTenantId: operatorUser ? operatorUser.assignedTenantId : linkedExistingUser?.assignedTenantId,
       operatorRoleId: operatorUser ? operatorUser.roleId : linkedExistingUser?.roleId,
       operatorRoleName: operatorUser ? operatorUser.roleName : linkedExistingUser?.roleName,
+      accessTarget: (body as any).accessTarget === "apartado" ? "apartado" : "system",
+      assignedApartadoId:
+        (body as any).accessTarget === "apartado" && (body as any).assignedApartadoId
+          ? String((body as any).assignedApartadoId).trim()
+          : undefined,
       vacationDaysAccumulated: body.vacationDaysAccumulated,
       vacationDaysBaseTaken: body.vacationDaysBaseTaken,
       afpType: body.afpType || "AFP Integra",
@@ -2692,6 +2699,12 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
       operatorTenantId: operatorUser ? operatorUser.assignedTenantId : current.operatorTenantId,
       operatorRoleId: operatorUser ? operatorUser.roleId : current.operatorRoleId,
       operatorRoleName: operatorUser ? operatorUser.roleName : current.operatorRoleName,
+      accessTarget: bodyAny.accessTarget !== undefined
+        ? (bodyAny.accessTarget === "apartado" ? "apartado" : "system")
+        : (operatorUser?.accessTarget || (current as any).accessTarget || "system"),
+      assignedApartadoId: bodyAny.accessTarget !== undefined
+        ? (bodyAny.accessTarget === "apartado" && bodyAny.assignedApartadoId ? String(bodyAny.assignedApartadoId).trim() : undefined)
+        : (operatorUser?.assignedApartadoId || (current as any).assignedApartadoId),
       updatedAt: new Date().toISOString(),
     };
     delete updated.operatorPin;

@@ -347,6 +347,41 @@ export function resolveOperatorAvatarForEmployee(emp: any): string {
   return current;
 }
 
+export function resolveOperatorAccessForEmployee(emp: any): { accessTarget: "system" | "apartado"; assignedApartadoId?: string } {
+  const fallbackTarget = emp?.accessTarget === "apartado" ? "apartado" : "system";
+  const fallbackApartadoId = fallbackTarget === "apartado" && emp?.assignedApartadoId ? String(emp.assignedApartadoId).trim() : undefined;
+  try {
+    const usersFile = path.join(DATA_DIR, "users.json");
+    if (!fs.existsSync(usersFile)) {
+      return { accessTarget: fallbackTarget, assignedApartadoId: fallbackApartadoId };
+    }
+    const users = JSON.parse(fs.readFileSync(usersFile, "utf-8"));
+    if (!Array.isArray(users)) {
+      return { accessTarget: fallbackTarget, assignedApartadoId: fallbackApartadoId };
+    }
+    const empDni = String(emp?.dni || emp?.biometricPin || emp?.id || "").trim();
+    const empEmail = String(emp?.email || "").trim().toLowerCase();
+    const empOpId = emp?.operatorId || emp?.id;
+    const matched = users.find((u: any) => {
+      const uDni = String(u.dni || u.id || "").trim();
+      const uEmail = String(u.email || "").trim().toLowerCase();
+      return (
+        (empOpId && Number(u.id) === Number(empOpId)) ||
+        (empDni && uDni === empDni) ||
+        (empEmail && uEmail === empEmail)
+      );
+    });
+    if (matched && matched.accessTarget) {
+      const target = matched.accessTarget === "apartado" ? "apartado" : "system";
+      return {
+        accessTarget: target,
+        assignedApartadoId: target === "apartado" && matched.assignedApartadoId ? String(matched.assignedApartadoId).trim() : undefined,
+      };
+    }
+  } catch {}
+  return { accessTarget: fallbackTarget, assignedApartadoId: fallbackApartadoId };
+}
+
 export function enrichEmployeeExpediente(emp: any, approvedLeaves: LeaveRequest[], todayStr: string): any {
   // Calcular vacaciones acumuladas según fecha de ingreso (2.5 días por mes completo en Perú = 30 días/año)
   const hireDateStr = emp.hireDate || todayStr;
@@ -419,10 +454,13 @@ export function enrichEmployeeExpediente(emp: any, approvedLeaves: LeaveRequest[
   const resolvedIn = emp.expectedCheckInTime || (emp.workSchedule?.match(/(\d{1,2}:\d{2})/)?.[1]) || "08:00";
   const resolvedOut = emp.expectedCheckOutTime || (emp.workSchedule?.match(/(?:hasta|a|-)\s*(\d{1,2}:\d{2})/)?.[1]) || "17:00";
   const resolvedAvatar = resolveOperatorAvatarForEmployee(emp);
+  const resolvedAccess = resolveOperatorAccessForEmployee(emp);
 
   return {
     ...emp,
     avatar: resolvedAvatar || emp.avatar,
+    accessTarget: resolvedAccess.accessTarget,
+    assignedApartadoId: resolvedAccess.assignedApartadoId,
     expectedCheckInTime: resolvedIn,
     expectedCheckOutTime: resolvedOut,
     contractType,

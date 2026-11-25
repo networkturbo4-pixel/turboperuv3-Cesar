@@ -28340,7 +28340,7 @@ Estamos atentos para brindarle asistencia inmediata.
 
     let currentUsersFilterTenant = null;
 
-    function toggleUserAccessApartadoSwitch(prefix, isApartado) {
+    function toggleUserAccessApartadoSwitch(prefix, isApartado, skipAutoLoad = false) {
       const normPrefix = prefix === 'emodal' ? 'ue' : prefix;
       const box = document.getElementById(`${normPrefix}-apartado-box`);
       const label = document.getElementById(`${normPrefix}-access-rule-label`);
@@ -28352,8 +28352,12 @@ Estamos atentos para brindarle asistencia inmediata.
           ? 'Redirigir y conectar con Apartado Específico'
           : (normPrefix === 'rnu' ? 'Ingresa al Sistema General' : 'Llevar al Sistema General');
       }
-      if (isApartado) {
-        const tenantSelId = normPrefix === 'rnu' ? 'rnu-assigned-tenant' : (normPrefix === 'nmodal' ? 'nmodal-assigned-tenant' : 'emodal-assigned-tenant');
+      if (isApartado && !skipAutoLoad) {
+        const tenantSelId = normPrefix === 'rnu'
+          ? 'rnu-assigned-tenant'
+          : (normPrefix === 'nmodal'
+            ? 'nmodal-assigned-tenant'
+            : (normPrefix === 'emp-op' ? 'emp-op-tenant' : 'emodal-assigned-tenant'));
         const targetTenant = document.getElementById(tenantSelId)?.value || (typeof activeTenantId !== 'undefined' ? activeTenantId : 'turbonetwork');
         const sel = document.getElementById(`${normPrefix}-apartado-select`);
         if (sel && (!sel.value || sel.options.length === 0 || sel.options[0]?.value === '')) {
@@ -28367,6 +28371,9 @@ Estamos atentos para brindarle asistencia inmediata.
       const sel = document.getElementById(`${normPrefix}-apartado-select`);
       const tenant = (targetTenantId || (typeof activeTenantId !== 'undefined' ? activeTenantId : 'turbonetwork')).trim();
       if (!sel || !tenant) return;
+      if (selectedApartadoId !== null && selectedApartadoId !== undefined) {
+        sel.dataset.pendingApartadoId = String(selectedApartadoId);
+      }
       try {
         const res = await fetch(`/api/apartados?tenantId=${encodeURIComponent(tenant)}`, {
           headers: { 'x-tenant-id': tenant }
@@ -28377,11 +28384,12 @@ Estamos atentos para brindarle asistencia inmediata.
           sel.innerHTML = `<option value="">Sin apartados disponibles</option>`;
           return;
         }
-        const prev = selectedApartadoId || sel.value;
+        const prev = selectedApartadoId || sel.dataset.pendingApartadoId || sel.value;
         sel.innerHTML = list.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)} (${escapeHtml(a.routePath || '/tech')})</option>`).join('');
         if (prev && list.some(a => a.id === prev || a.slug === prev)) {
           const match = list.find(a => a.id === prev || a.slug === prev);
           sel.value = match.id;
+          delete sel.dataset.pendingApartadoId;
         }
       } catch (err) {
         console.warn("Aviso al cargar apartados para formulario de usuario:", err);
@@ -34114,7 +34122,12 @@ function copyRemoteScannerLink() {
       if (extraMailsList) extraMailsList.innerHTML = '';
       const empAptSwitch = document.getElementById('emp-op-access-apartado-switch');
       if (empAptSwitch) empAptSwitch.checked = false;
-      toggleUserAccessApartadoSwitch('emp-op', false);
+      const empAptSelCreate = document.getElementById('emp-op-apartado-select');
+      if (empAptSelCreate) {
+        delete empAptSelCreate.dataset.pendingApartadoId;
+        empAptSelCreate.innerHTML = '<option value="">Cargando apartados...</option>';
+      }
+      toggleUserAccessApartadoSwitch('emp-op', false, true);
       initEmployeeOpTenantAndRoles();
       populateAssignedTenantSelects(true).then(() => {
         const empTenSel = document.getElementById('emp-tenant');
@@ -34270,14 +34283,30 @@ function copyRemoteScannerLink() {
       if (extraMailsList) extraMailsList.innerHTML = '';
 
       const linkedOpUser = (typeof currentUsers !== 'undefined' && Array.isArray(currentUsers))
-        ? currentUsers.find(u => Number(u.id) === Number(emp.operatorId || emp.id))
+        ? currentUsers.find(u =>
+            Number(u.id) === Number(emp.operatorId || emp.id) ||
+            (emp.email && u.email && u.email.toLowerCase() === emp.email.toLowerCase())
+          )
         : null;
-      const empMailTenant = (emp.operatorTenantId || emp.tenantId || activeTenantId || 'turbonetwork').toLowerCase();
-      const isAptTarget = linkedOpUser?.accessTarget === 'apartado';
+      const effectiveAccessTarget = linkedOpUser?.accessTarget || emp.accessTarget || 'system';
+      const effectiveApartadoId = effectiveAccessTarget === 'apartado'
+        ? (linkedOpUser?.assignedApartadoId || emp.assignedApartadoId || null)
+        : null;
+      const empMailTenant = (linkedOpUser?.assignedTenantId || emp.operatorTenantId || emp.tenantId || activeTenantId || 'turbonetwork').toLowerCase();
+      const isAptTarget = effectiveAccessTarget === 'apartado';
       const empAptSwitch = document.getElementById('emp-op-access-apartado-switch');
       if (empAptSwitch) empAptSwitch.checked = isAptTarget;
-      toggleUserAccessApartadoSwitch('emp-op', isAptTarget);
-      loadApartadosForUserForm('emp-op', empMailTenant, linkedOpUser?.assignedApartadoId || null);
+      const empAptSel = document.getElementById('emp-op-apartado-select');
+      if (empAptSel) {
+        if (effectiveApartadoId) {
+          empAptSel.dataset.pendingApartadoId = String(effectiveApartadoId);
+        } else {
+          delete empAptSel.dataset.pendingApartadoId;
+        }
+        empAptSel.innerHTML = '<option value="">Cargando apartados...</option>';
+      }
+      toggleUserAccessApartadoSwitch('emp-op', isAptTarget, true);
+      loadApartadosForUserForm('emp-op', empMailTenant, effectiveApartadoId);
       renderEmployeeMailSharedTenants(empMailTenant);
 
       fetch('/api/mail/accounts', {
