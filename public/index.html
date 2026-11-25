@@ -34262,28 +34262,32 @@ function copyRemoteScannerLink() {
 
       switchEmployeeModalTab('hr');
 
-      // Comprobar si tiene operador vinculado en users por ID único canónico
+      // Comprobar si tiene operador vinculado en users por ID único canónico o en los campos del expediente
       const opUser = (typeof currentUsers !== 'undefined' ? currentUsers : []).find(u => 
-        u.id === emp.id ||
-        (emp.operatorId && u.id === emp.operatorId) ||
+        Number(u.id) === Number(emp.id) ||
+        (emp.operatorId && Number(u.id) === Number(emp.operatorId)) ||
         (emp.email && u.email && u.email.toLowerCase() === emp.email.toLowerCase())
       );
+      const hasLinkedOperator = Boolean(opUser || emp.operatorId || emp.operatorRoleId);
 
       const opSwitchEdit = document.getElementById('emp-op-create-switch');
-      if (opUser) {
+      if (hasLinkedOperator) {
         if (opSwitchEdit) opSwitchEdit.checked = true;
         toggleEmployeeOpFields(true);
         const opNameEl = document.getElementById('emp-op-name');
-        if (opNameEl) opNameEl.value = opUser.name || emp.name || '';
+        if (opNameEl) opNameEl.value = opUser?.name || emp.name || '';
         const opEmailEl = document.getElementById('emp-op-email');
-        if (opEmailEl) opEmailEl.value = opUser.email || emp.email || '';
+        if (opEmailEl) opEmailEl.value = opUser?.email || emp.email || '';
         const opDniPreview = document.getElementById('emp-op-dni-pin-preview');
         if (opDniPreview) opDniPreview.textContent = emp.dni ? `DNI: ${emp.dni}` : 'Según DNI del expediente';
-        initEmployeeOpTenantAndRoles(opUser.assignedTenantId, opUser.roleId);
+        initEmployeeOpTenantAndRoles(
+          opUser?.assignedTenantId || emp.operatorTenantId || emp.tenantId || activeTenantId,
+          opUser?.roleId || emp.operatorRoleId
+        );
         const opHireEl = document.getElementById('emp-op-hire-date');
-        if (opHireEl) opHireEl.value = opUser.hireDate || emp.hireDate || '';
+        if (opHireEl) opHireEl.value = opUser?.hireDate || emp.hireDate || '';
         const opBirthEl = document.getElementById('emp-op-birth-date');
-        if (opBirthEl) opBirthEl.value = opUser.birthDate || emp.birthDate || '';
+        if (opBirthEl) opBirthEl.value = opUser?.birthDate || emp.birthDate || '';
       } else {
         if (opSwitchEdit) opSwitchEdit.checked = false;
         toggleEmployeeOpFields(false);
