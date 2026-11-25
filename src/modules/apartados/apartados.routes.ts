@@ -314,7 +314,7 @@ function getDefaultAlmacenApartado(): ApartadoConfig {
     routePath: "/almacen",
     isActive: true,
     exclusiveAccess: true,
-    assignedRoleIds: [],
+    assignedRoleIds: [5],
     assignedUserIds: [],
     enabledApps: almacenApps.map((a) => a.id),
     enabledPermissions: almacenApps.flatMap((a) => a.permissions.map((p) => p.id)),

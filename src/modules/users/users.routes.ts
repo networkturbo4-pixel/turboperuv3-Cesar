@@ -186,9 +186,49 @@ export const DEFAULT_ROLES: Role[] = [
     ],
     allowedModules: ["dashboard", "customers", "inventory", "mochila", "network", "rrhh"],
   },
+  {
+    id: 5,
+    name: "Almacenero",
+    slug: "almacenero",
+    description: "Rol fijo de almacén con acceso exclusivo al Apartado Almacén POS (/almacen)",
+    permissions: [
+      "inventory:view",
+      "inventory:manage",
+      "backpack:view",
+      "backpack:manage",
+      "rrhh:attendance",
+    ],
+    allowedModules: ["inventory", "mochila"],
+  },
 ];
 
 let rolesStore: Role[] = [...DEFAULT_ROLES];
+
+function ensureAlmaceneroFixedRole(roles: Role[]): { roles: Role[]; changed: boolean } {
+  const hasAlmacenero = roles.some(
+    (r) =>
+      String(r.slug || "").toLowerCase() === "almacenero" ||
+      String(r.name || "").trim().toLowerCase() === "almacenero"
+  );
+  if (hasAlmacenero) return { roles, changed: false };
+  const id5Taken = roles.some((r) => Number(r.id) === 5);
+  const nextId = id5Taken ? Math.max(0, ...roles.map((r) => Number(r.id) || 0)) + 1 : 5;
+  const fixedRole: Role = {
+    id: nextId,
+    name: "Almacenero",
+    slug: "almacenero",
+    description: "Rol fijo de almacén con acceso exclusivo al Apartado Almacén POS (/almacen)",
+    permissions: [
+      "inventory:view",
+      "inventory:manage",
+      "backpack:view",
+      "backpack:manage",
+      "rrhh:attendance",
+    ],
+    allowedModules: ["inventory", "mochila"],
+  };
+  return { roles: [...roles, fixedRole], changed: true };
+}
 
 export function loadRolesForTenant(tenantId: string): Role[] {
   const safeTenant = tenantId.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase() || "turbonetwork";
@@ -198,13 +238,18 @@ export function loadRolesForTenant(tenantId: string): Role[] {
       const raw = fs.readFileSync(filePath, "utf-8");
       const list = JSON.parse(raw);
       if (Array.isArray(list) && list.length > 0) {
-        return list.map((r) => ({
+        const normalized = list.map((r) => ({
           ...r,
           allowedModules:
             Array.isArray(r.allowedModules) && r.allowedModules.length > 0
               ? r.allowedModules
               : [...ALL_MODULE_IDS],
         }));
+        const ensured = ensureAlmaceneroFixedRole(normalized);
+        if (ensured.changed) {
+          saveRolesForTenant(safeTenant, ensured.roles);
+        }
+        return ensured.roles;
       }
     }
   } catch {}
@@ -272,8 +317,9 @@ export function loadRolesForTenant(tenantId: string): Role[] {
     } catch {}
   }
 
-  saveRolesForTenant(safeTenant, initialRoles);
-  return initialRoles;
+  const ensuredInitial = ensureAlmaceneroFixedRole(initialRoles);
+  saveRolesForTenant(safeTenant, ensuredInitial.roles);
+  return ensuredInitial.roles;
 }
 
 export function saveRolesForTenant(tenantId: string, roles: Role[]): void {
@@ -1121,6 +1167,14 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     const index = roles.findIndex((r) => r.id === roleId);
     if (index === -1) {
       return reply.status(404).send({ success: false, message: "Rol no encontrado en esta empresa" });
+    }
+    if (
+      String(roles[index].slug || "").toLowerCase() === "almacenero" ||
+      String(roles[index].name || "").trim().toLowerCase() === "almacenero"
+    ) {
+      return reply
+        .status(403)
+        .send({ success: false, message: "No es posible eliminar el rol fijo Almacenero del sistema" });
     }
 
     usersStore = loadUsersFromDisk();
