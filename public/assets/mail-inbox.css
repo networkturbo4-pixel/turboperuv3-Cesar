@@ -1,4 +1,4 @@
-/* TurboMail - Cliente de Correos Multi-Tenant (Contraste y Tema Nativo del Sistema) */
+/* TurboMail — Interfaz de Correo Corporativo (Diseño Limpio & Táctil) */
 #mail-inbox-root {
   width: 100%;
   height: 100%;
@@ -9,39 +9,46 @@
 }
 
 .mail-shell {
-  --m-bg: var(--bg-light, #f8fafc);
+  --m-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --m-bg: #f7f8fa;
   --m-surface: #ffffff;
-  --m-surface-2: #f1f5f9;
-  --m-border: var(--border-light, rgba(15, 23, 42, 0.1));
-  --m-text: #0f172a;
-  --m-text-sec: #334155;
-  --m-text-muted: #64748b;
+  --m-surface-2: #f1f3f6;
+  --m-border: rgba(15, 23, 42, 0.08);
+  --m-border-strong: rgba(15, 23, 42, 0.14);
+  --m-text: #111827;
+  --m-text-sec: #374151;
+  --m-text-muted: #6b7280;
   --m-primary: var(--brand-primary, #2563eb);
-  --m-hover: rgba(15, 23, 42, 0.05);
-  --m-active-row: rgba(37, 99, 235, 0.09);
+  --m-primary-soft: rgba(var(--brand-primary-rgb, 37, 99, 235), 0.1);
+  --m-hover: rgba(15, 23, 42, 0.045);
+  --m-active-row: rgba(var(--brand-primary-rgb, 37, 99, 235), 0.08);
 
   display: grid;
-  grid-template-columns: 248px 360px minmax(0, 1fr);
+  grid-template-columns: 232px 348px minmax(0, 1fr);
   height: 100%;
-  min-height: 520px;
-  border-radius: 1rem;
+  min-height: 540px;
+  border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--m-border);
   background: var(--m-surface);
   color: var(--m-text);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 html.dark .mail-shell {
-  --m-bg: var(--bg-dark, #090a0f);
-  --m-surface: var(--surface-dark, #12141c);
-  --m-surface-2: var(--surface-dark-subtle, #1b1f2a);
-  --m-border: var(--border-dark, rgba(255, 255, 255, 0.1));
-  --m-text: #f8fafc;
-  --m-text-sec: #e2e8f0;
-  --m-text-muted: #94a3b8;
-  --m-primary: var(--brand-primary, #2563eb);
-  --m-hover: rgba(255, 255, 255, 0.06);
-  --m-active-row: rgba(59, 130, 246, 0.18);
+  --m-bg: #0e1017;
+  --m-surface: #12151f;
+  --m-surface-2: #191d2a;
+  --m-border: rgba(238, 240, 245, 0.08);
+  --m-border-strong: rgba(238, 240, 245, 0.15);
+  --m-text: #eef0f5;
+  --m-text-sec: #c8cedb;
+  --m-text-muted: #848d9f;
+  --m-primary: var(--brand-primary, #3b82f6);
+  --m-primary-soft: rgba(var(--brand-primary-rgb, 59, 130, 246), 0.14);
+  --m-hover: rgba(238, 240, 245, 0.05);
+  --m-active-row: rgba(var(--brand-primary-rgb, 59, 130, 246), 0.14);
+  box-shadow: none;
 }
 
 .mail-sidebar {
@@ -94,88 +101,193 @@ html.dark .mail-shell {
   color: var(--m-text-muted);
 }
 
+.mail-accent-link {
+  color: var(--m-primary);
+  transition: opacity 140ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .mail-accent-link:hover {
+    opacity: 0.8;
+  }
+}
+
+/* Botón primario táctil (solo acción principal) */
 .mail-btn-primary {
   background: var(--m-primary);
   color: #ffffff;
+  border: 1px solid transparent;
+  touch-action: manipulation;
+  transition: transform 120ms var(--m-ease), opacity 140ms ease, filter 140ms ease;
 }
-.mail-btn-primary:hover {
-  filter: brightness(1.08);
+@media (hover: hover) and (pointer: fine) {
+  .mail-btn-primary:hover {
+    filter: brightness(1.06);
+  }
+}
+.mail-btn-primary:active {
+  transform: scale(0.97);
 }
 
+/* Botón secundario sutil */
 .mail-btn-subtle {
   background: var(--m-surface-2);
   color: var(--m-text-sec);
   border: 1px solid var(--m-border);
+  touch-action: manipulation;
+  transition: transform 120ms var(--m-ease), background-color 140ms ease, border-color 140ms ease, color 140ms ease;
 }
-.mail-btn-subtle:hover {
-  background: var(--m-hover);
+@media (hover: hover) and (pointer: fine) {
+  .mail-btn-subtle:hover {
+    background: var(--m-hover);
+    border-color: var(--m-border-strong);
+    color: var(--m-text);
+  }
+}
+.mail-btn-subtle:active {
+  transform: scale(0.97);
 }
 
-.mail-folder-btn {
-  color: var(--m-text-sec);
+/* Botón fantasma de icono */
+.mail-icon-btn {
+  color: var(--m-text-muted);
+  border-radius: 8px;
+  touch-action: manipulation;
+  transition: transform 120ms var(--m-ease), background-color 140ms ease, color 140ms ease;
 }
-.mail-folder-btn:hover {
-  background: var(--m-hover);
-  color: var(--m-text);
+@media (hover: hover) and (pointer: fine) {
+  .mail-icon-btn:hover {
+    background: var(--m-hover);
+    color: var(--m-text);
+  }
+}
+.mail-icon-btn:active {
+  transform: scale(0.94);
+}
+
+/* Carpetas: activo sobrio con paso de superficie (sin bloque chillón) */
+.mail-folder-btn {
+  position: relative;
+  color: var(--m-text-sec);
+  border-radius: 9px;
+  touch-action: manipulation;
+  transition: background-color 140ms ease, color 140ms ease, transform 120ms var(--m-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .mail-folder-btn:hover {
+    background: var(--m-hover);
+    color: var(--m-text);
+  }
+}
+.mail-folder-btn:active {
+  transform: scale(0.985);
 }
 .mail-folder-btn.active {
-  background: var(--m-primary);
-  color: #ffffff;
-}
-
-.mail-account-btn {
-  color: var(--m-text-sec);
-}
-.mail-account-btn:hover {
-  background: var(--m-hover);
-}
-.mail-account-btn.active {
-  background: var(--m-surface-2);
+  background: var(--m-primary-soft);
   color: var(--m-text);
   font-weight: 600;
-  border: 1px solid var(--m-border);
+}
+.mail-folder-btn.active .mail-folder-icon {
+  color: var(--m-primary);
+}
+.mail-folder-icon {
+  color: var(--m-text-muted);
+  transition: color 140ms ease;
 }
 
+/* Selector de cuentas */
+.mail-account-btn {
+  color: var(--m-text-sec);
+  border-radius: 9px;
+  border: 1px solid transparent;
+  touch-action: manipulation;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .mail-account-btn:hover {
+    background: var(--m-hover);
+    color: var(--m-text);
+  }
+}
+.mail-account-btn.active {
+  background: var(--m-surface);
+  color: var(--m-text);
+  font-weight: 500;
+  border-color: var(--m-border);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+html.dark .mail-account-btn.active {
+  background: var(--m-surface-2);
+  box-shadow: none;
+}
+
+/* Campos de entrada */
 .mail-input {
   background: var(--m-surface-2);
   color: var(--m-text);
   border: 1px solid var(--m-border);
+  transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
 }
 .mail-input::placeholder {
   color: var(--m-text-muted);
 }
 .mail-input:focus {
+  background: var(--m-surface);
   border-color: var(--m-primary);
+  box-shadow: 0 0 0 3px var(--m-primary-soft);
   outline: none;
 }
 
+/* Filas de mensajes */
 .mail-msg-row {
+  position: relative;
   border-bottom: 1px solid var(--m-border);
+  transition: background-color 140ms ease;
 }
-.mail-msg-row:hover {
-  background: var(--m-hover);
+@media (hover: hover) and (pointer: fine) {
+  .mail-msg-row:hover {
+    background: var(--m-hover);
+  }
 }
 .mail-msg-row.active {
   background: var(--m-active-row);
 }
+.mail-msg-row.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2.5px;
+  border-radius: 0 3px 3px 0;
+  background: var(--m-primary);
+}
 
+/* Tarjeta de estado vacío / onboarding del lector */
+.mail-empty-card {
+  background: var(--m-bg);
+  border: 1px solid var(--m-border);
+  border-radius: 14px;
+}
+
+/* Modales */
 .mail-modal-card {
   background: #ffffff;
-  color: #0f172a;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: #111827;
+  border: 1px solid rgba(15, 23, 42, 0.1);
 }
 html.dark .mail-modal-card {
-  background: var(--surface-dark, #12141c);
-  color: #f8fafc;
-  border-color: var(--border-dark, rgba(255, 255, 255, 0.12));
+  background: #12151f;
+  color: #eef0f5;
+  border-color: rgba(238, 240, 245, 0.1);
 }
 
+/* Cuerpo HTML del correo */
 .mail-html-body {
   background: #ffffff;
-  color: #1e293b;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #1f2937;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid var(--m-border);
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -184,7 +296,7 @@ html.dark .mail-modal-card {
   overflow-wrap: anywhere;
   word-break: break-word;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 .mail-html-body table {
   max-width: 100%;
@@ -194,48 +306,49 @@ html.dark .mail-modal-card {
   height: auto;
 }
 .mail-html-body a {
-  color: #2563eb;
+  color: var(--m-primary);
   text-decoration: underline;
 }
 .mail-html-body blockquote {
-  border-left: 3px solid #cbd5e1;
-  padding-left: 0.75rem;
+  border-left: 2.5px solid #cbd5e1;
+  padding-left: 0.875rem;
   margin-left: 0.25rem;
-  color: #475569;
+  color: #4b5563;
 }
 
+/* Editor del compositor */
 .mail-editor-area {
-  min-height: 210px;
-  max-height: 360px;
+  min-height: 220px;
+  max-height: 380px;
   overflow-y: auto;
   outline: none;
-  padding: 0.875rem 1rem;
+  padding: 1rem;
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.6;
   background: var(--m-surface, #ffffff);
-  color: var(--m-text, #0f172a);
+  color: var(--m-text, #111827);
 }
 html.dark .mail-editor-area {
-  background: #0b0d13;
-  color: #f8fafc;
+  background: #0d1017;
+  color: #eef0f5;
 }
 .mail-editor-area:empty::before {
   content: attr(data-placeholder);
-  color: #94a3b8;
+  color: var(--m-text-muted, #6b7280);
   pointer-events: none;
 }
 
 dialog.mail-native-dialog {
   padding: 0;
   border: none;
-  border-radius: 1rem;
+  border-radius: 16px;
   width: min(760px, 95dvw);
   max-width: 95dvw;
   max-height: 92dvh;
   margin: auto;
   background: transparent;
   color: inherit;
-  box-shadow: 0 24px 64px rgba(2, 6, 23, 0.42);
+  box-shadow: 0 24px 64px rgba(2, 6, 23, 0.36);
 }
 dialog.mail-native-dialog.mail-composer-expanded {
   width: min(1040px, 96dvw);
@@ -247,20 +360,33 @@ dialog.mail-native-dialog:modal {
 dialog.mail-native-dialog::backdrop {
   overflow: hidden;
   overscroll-behavior: contain;
-  background: rgba(2, 6, 23, 0.62);
+  background: rgba(2, 6, 23, 0.56);
   backdrop-filter: blur(4px);
 }
+
 .mail-toolbar-btn {
-  padding: 0.3rem 0.5rem;
-  border-radius: 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 0.45rem;
+  border-radius: 6px;
   font-size: 12px;
-  line-height: 1.2;
-  color: inherit;
-  transition: background-color 0.15s ease;
+  line-height: 1;
+  color: var(--m-text-sec);
+  transition: background-color 140ms ease, color 140ms ease, transform 120ms var(--m-ease);
 }
-.mail-toolbar-btn:hover {
-  background: rgba(148, 163, 184, 0.2);
+@media (hover: hover) and (pointer: fine) {
+  .mail-toolbar-btn:hover {
+    background: var(--m-hover);
+    color: var(--m-text);
+  }
 }
+.mail-toolbar-btn:active {
+  transform: scale(0.94);
+}
+
 @media (max-width: 640px) {
   dialog.mail-native-dialog {
     width: 100dvw;
@@ -273,23 +399,23 @@ dialog.mail-native-dialog::backdrop {
 
 @media (max-width: 1180px) {
   .mail-shell {
-    grid-template-columns: 220px 300px minmax(0, 1fr);
+    grid-template-columns: 212px 300px minmax(0, 1fr);
   }
 }
 
 @media (max-width: 960px) {
   .mail-shell {
-    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-columns: 310px minmax(0, 1fr);
     position: relative;
   }
   .mail-sidebar {
     position: absolute;
     inset: 0 auto 0 0;
-    width: 260px;
+    width: 256px;
     z-index: 30;
     transform: translateX(-100%);
-    transition: transform 0.2s ease;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    transition: transform 220ms var(--m-ease);
+    box-shadow: 0 20px 44px rgba(0, 0, 0, 0.28);
   }
   .mail-shell.mail-drawer-open .mail-sidebar {
     transform: translateX(0);
@@ -299,8 +425,9 @@ dialog.mail-native-dialog::backdrop {
 @media (max-width: 720px) {
   .mail-shell {
     grid-template-columns: minmax(0, 1fr);
-    height: calc(100dvh - 132px);
+    height: calc(100dvh - 124px);
     min-height: 420px;
+    border-radius: 12px;
   }
   .mail-shell.mail-mobile-reading .mail-list-pane {
     display: none;

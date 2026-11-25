@@ -387,15 +387,15 @@ function renderFolderItem(role: string, label: string, iconSvg: string) {
   const unread = role === "inbox" || role === "spam" || role === "drafts" ? getFolderUnreadCount(role) : 0;
   return `
     <button type="button" data-mail-folder="${role}"
-      class="mail-folder-btn w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition ${
-        active ? "active shadow-sm" : ""
+      class="mail-folder-btn w-full h-9 flex items-center gap-2.5 px-2.5 text-[13px] font-medium ${
+        active ? "active" : ""
       }">
-      <span class="w-4 h-4 shrink-0">${iconSvg}</span>
+      <span class="mail-folder-icon w-4 h-4 shrink-0">${iconSvg}</span>
       <span class="truncate">${label}</span>
       ${
         unread > 0
-          ? `<span class="ml-auto px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold ${
-              active ? "bg-white/20 text-white" : "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+          ? `<span class="ml-auto text-[11px] font-mono tabular-nums font-semibold ${
+              active ? "mail-title" : "mail-text-muted"
             }">${unread}</span>`
           : ""
       }
@@ -405,39 +405,41 @@ function renderFolderItem(role: string, label: string, iconSvg: string) {
 
 function renderSidebar(): string {
   return `
-    <aside class="mail-sidebar p-3 gap-3">
+    <aside class="mail-sidebar p-3.5 gap-5">
       <div class="flex items-center gap-2">
         <button type="button" id="mail-btn-compose"
-          class="mail-btn-primary flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-          Redactar
+          class="mail-btn-primary flex-1 h-9 flex items-center justify-center gap-2 px-3.5 rounded-[10px] text-[13px] font-medium">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"/></svg>
+          <span>Redactar</span>
         </button>
-        <button type="button" id="mail-btn-drawer-close" class="lg:hidden p-2 rounded-xl mail-btn-subtle" title="Cerrar menú">✕</button>
+        <button type="button" id="mail-btn-drawer-close" class="lg:hidden w-9 h-9 flex items-center justify-center rounded-[10px] mail-btn-subtle" title="Cerrar menú" aria-label="Cerrar menú">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
 
-      <div class="space-y-1">
-        <div class="px-2 text-[10px] font-bold uppercase tracking-wider mail-text-muted">Carpetas</div>
-        ${renderFolderItem("inbox", "Recibidos", '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>')}
-        ${renderFolderItem("starred", "Destacados", '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>')}
-        ${renderFolderItem("sent", "Enviados", '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>')}
-        ${renderFolderItem("drafts", "Borradores", '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>')}
-        ${renderFolderItem("spam", "Spam", '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>')}
-        ${renderFolderItem("trash", "Papelera", '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>')}
+      <div class="space-y-0.5">
+        <div class="px-2.5 pb-1.5 text-[11.5px] font-medium mail-text-muted">Carpetas</div>
+        ${renderFolderItem("inbox", "Recibidos", '<svg fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>')}
+        ${renderFolderItem("starred", "Destacados", '<svg fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>')}
+        ${renderFolderItem("sent", "Enviados", '<svg fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>')}
+        ${renderFolderItem("drafts", "Borradores", '<svg fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>')}
+        ${renderFolderItem("spam", "Spam", '<svg fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>')}
+        ${renderFolderItem("trash", "Papelera", '<svg fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>')}
       </div>
 
-      <div class="pt-2 border-t mail-divider space-y-1 flex-1 min-h-0 overflow-y-auto">
-        <div class="px-2 flex items-center justify-between">
-          <span class="text-[10px] font-bold uppercase tracking-wider mail-text-muted">Cuentas del Tenant</span>
-          <button type="button" id="mail-btn-manage-accounts" class="text-[11px] font-semibold text-blue-500 hover:underline">
-            + Gestionar
+      <div class="pt-4 border-t mail-divider space-y-1 flex-1 min-h-0 overflow-y-auto">
+        <div class="px-2.5 pb-1 flex items-center justify-between">
+          <span class="text-[11.5px] font-medium mail-text-muted">Cuentas</span>
+          <button type="button" id="mail-btn-manage-accounts" class="text-[11.5px] font-medium mail-accent-link">
+            Gestionar
           </button>
         </div>
 
         <button type="button" data-mail-account="all"
-          class="mail-account-btn w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[12.5px] font-medium transition ${
+          class="mail-account-btn w-full h-9 flex items-center gap-2.5 px-2.5 text-[12.5px] ${
             state.selectedAccountId === null ? "active" : ""
           }">
-          <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500"></span>
+          <span class="w-2 h-2 rounded-full shrink-0" style="background:var(--m-primary)"></span>
           <span class="truncate">Todas las cuentas</span>
         </button>
 
@@ -445,20 +447,20 @@ function renderSidebar(): string {
           .map(
             (a) => `
           <button type="button" data-mail-account="${a.id}"
-            class="mail-account-btn w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[12px] transition ${
+            class="mail-account-btn w-full h-9 flex items-center gap-2.5 px-2.5 text-[12.5px] ${
               state.selectedAccountId === a.id ? "active" : ""
             }">
             ${
               a.avatarUrl
                 ? renderAvatarBadge(a.displayName, a.email, a.avatarUrl, a.color, "w-5 h-5 text-[9px]")
-                : `<span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${esc(a.color)}"></span>`
+                : `<span class="w-2 h-2 rounded-full shrink-0" style="background:${esc(a.color)}"></span>`
             }
             <span class="truncate flex-1 text-left">${esc(a.displayName || a.email)}</span>
             ${
               a.status === "error"
-                ? `<span class="text-[10px] text-rose-500" title="${esc(a.lastError)}">⚠</span>`
+                ? `<span class="text-rose-500 shrink-0" title="${esc(a.lastError)}"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></span>`
                 : Number(a.unreadCount || 0) > 0
-                  ? `<span class="text-[10px] font-mono mail-text-muted">${a.unreadCount}</span>`
+                  ? `<span class="text-[11px] font-mono tabular-nums mail-text-muted">${a.unreadCount}</span>`
                   : ""
             }
           </button>
@@ -482,32 +484,33 @@ function renderMessageList(): string {
 
   return `
     <div class="mail-list-pane">
-      <div class="p-3 mail-pane-header space-y-2.5">
+      <div class="px-3.5 py-3 mail-pane-header space-y-2.5">
         <div class="flex items-center gap-2">
-          <button type="button" id="mail-btn-drawer-open" class="lg:hidden p-2 rounded-xl mail-btn-subtle">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <button type="button" id="mail-btn-drawer-open" class="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg mail-btn-subtle" aria-label="Abrir carpetas">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
-          <h3 class="text-sm font-bold mail-title flex-1 truncate">
-            ${folderLabels[state.selectedFolderRole] || "Correos"}
-            <span class="ml-1 text-xs font-normal mail-text-muted">(${state.totalMessages})</span>
-          </h3>
-          <button type="button" id="mail-btn-sync" title="Sincronizar ahora"
-            class="p-2 rounded-xl mail-text-muted hover:opacity-80 transition ${state.syncing ? "animate-spin text-blue-500" : ""}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <div class="flex items-baseline gap-2 flex-1 min-w-0">
+            <h3 class="text-[15px] font-semibold tracking-[-0.01em] mail-title truncate">
+              ${folderLabels[state.selectedFolderRole] || "Correos"}
+            </h3>
+            <span class="text-xs font-mono tabular-nums mail-text-muted">${state.totalMessages}</span>
+          </div>
+          <button type="button" id="mail-btn-sync" title="Sincronizar ahora" aria-label="Sincronizar correos"
+            class="mail-icon-btn w-8 h-8 flex items-center justify-center ${state.syncing ? "animate-spin" : ""}"
+            style="${state.syncing ? "color:var(--m-primary)" : ""}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           </button>
         </div>
 
         <div class="flex items-center gap-1.5">
           <div class="relative flex-1">
-            <input type="search" id="mail-search-input" value="${esc(state.searchQuery)}" placeholder="Buscar asunto, remitente..."
-              class="mail-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs" />
-            <svg class="w-3.5 h-3.5 mail-text-muted absolute left-2.5 top-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="search" id="mail-search-input" value="${esc(state.searchQuery)}" placeholder="Buscar"
+              class="mail-input w-full h-8 pl-8 pr-3 rounded-[9px] text-xs" />
+            <svg class="w-3.5 h-3.5 mail-text-muted absolute left-2.5 top-[9px] pointer-events-none" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
           </div>
           <button type="button" id="mail-btn-unread-filter"
-            class="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition ${
-              state.onlyUnread
-                ? "mail-btn-primary"
-                : "mail-btn-subtle"
+            class="h-8 px-2.5 rounded-[9px] text-[11.5px] font-medium shrink-0 ${
+              state.onlyUnread ? "mail-btn-primary" : "mail-btn-subtle"
             }">
             No leídos
           </button>
@@ -517,48 +520,54 @@ function renderMessageList(): string {
       <div class="flex-1 overflow-y-auto">
         ${
           state.accounts.length === 0
-            ? `<div class="p-8 text-center space-y-3">
-                 <div class="w-12 h-12 mx-auto rounded-2xl bg-blue-500/15 text-blue-500 flex items-center justify-center">
-                   <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            ? `<div class="p-8 text-center flex flex-col items-center justify-center h-full min-h-[260px]">
+                 <div class="w-10 h-10 rounded-[10px] mail-btn-subtle flex items-center justify-center mb-3.5 mail-text-muted">
+                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                  </div>
-                 <p class="text-sm font-semibold mail-title">Sin cuentas conectadas</p>
-                 <p class="text-xs mail-text-muted">Conecta Gmail, Outlook o tu correo corporativo IMAP/SMTP en este tenant.</p>
-                 <button type="button" id="mail-empty-connect" class="mail-btn-primary px-4 py-2 rounded-xl text-xs font-semibold shadow-sm">Conectar correo</button>
+                 <p class="text-[13.5px] font-medium mail-title">Sin cuentas conectadas</p>
+                 <p class="text-xs mail-text-muted mt-1 max-w-[230px] leading-relaxed">Conecta tu buzón corporativo o Gmail para recibir y responder correos aquí</p>
+                 <button type="button" id="mail-empty-connect" class="mail-btn-primary mt-4 h-9 px-4 rounded-[9px] text-xs font-medium">Conectar cuenta</button>
                </div>`
             : state.loadingList && state.messages.length === 0
               ? `<div class="p-8 text-center text-xs mail-text-muted">Cargando correos...</div>`
               : state.messages.length === 0
-                ? `<div class="p-8 text-center text-xs mail-text-muted">No hay correos en esta carpeta.</div>`
+                ? `<div class="p-8 text-center text-xs mail-text-muted">No hay correos en esta carpeta</div>`
                 : state.messages
                     .map((m) => {
                       const active = state.selectedMessageId === m.id;
                       const sender = m.from_name || m.from_email || "(desconocido)";
                       return `
                         <div data-mail-open="${m.id}"
-                          class="mail-msg-row p-3 cursor-pointer transition flex gap-2.5 items-start ${
+                          class="mail-msg-row px-3.5 py-3 cursor-pointer flex gap-2.5 items-start ${
                             active ? "active" : ""
                           }">
                           ${renderAvatarBadge(m.from_name, m.from_email, m.sender_avatar_url, m.account_color, "w-8 h-8 text-[11px]")}
                           <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between gap-1">
-                              <span class="text-[12.5px] truncate ${
-                                !m.is_read ? "font-bold mail-title" : "font-medium mail-text-sec"
-                              }">${esc(sender)}</span>
-                              <span class="text-[10.5px] mail-text-muted shrink-0">${formatDateShort(m.date)}</span>
+                            <div class="flex items-center justify-between gap-2">
+                              <div class="flex items-center gap-1.5 min-w-0">
+                                ${!m.is_read ? `<span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:var(--m-primary)"></span>` : ""}
+                                <span class="text-[13px] truncate ${
+                                  !m.is_read ? "font-semibold mail-title" : "font-medium mail-text-sec"
+                                }">${esc(sender)}</span>
+                              </div>
+                              <span class="text-[11px] tabular-nums mail-text-muted shrink-0">${formatDateShort(m.date)}</span>
                             </div>
-                            <div class="flex items-center gap-1.5 mt-0.5">
-                              ${!m.is_read ? `<span class="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span>` : ""}
-                              <p class="text-xs truncate ${
-                                !m.is_read ? "font-semibold mail-title" : "mail-text-sec"
-                              }">${esc(m.subject)}</p>
-                            </div>
-                            <p class="text-[11px] mail-text-muted truncate mt-0.5">${esc(m.snippet)}</p>
-                            <div class="flex items-center justify-between mt-1">
-                              <span class="text-[10px] mail-text-muted truncate">${esc(m.account_email)}</span>
-                              <div class="flex items-center gap-1.5">
-                                ${m.has_attachments ? `<span class="text-[11px] mail-text-muted" title="Tiene adjuntos">📎</span>` : ""}
-                                <button type="button" data-mail-star="${m.id}" data-starred="${m.is_starred ? "1" : "0"}"
-                                  class="text-sm leading-none ${m.is_starred ? "text-amber-400" : "mail-text-muted hover:text-amber-400"}">★</button>
+                            <p class="text-xs truncate mt-0.5 ${
+                              !m.is_read ? "font-medium mail-title" : "mail-text-sec"
+                            }">${esc(m.subject)}</p>
+                            <p class="text-[11.5px] mail-text-muted truncate mt-0.5">${esc(m.snippet)}</p>
+                            <div class="flex items-center justify-between mt-1.5">
+                              <span class="text-[10.5px] mail-text-muted truncate">${esc(m.account_email)}</span>
+                              <div class="flex items-center gap-1.5 shrink-0">
+                                ${
+                                  m.has_attachments
+                                    ? `<span class="mail-text-muted" title="Tiene adjuntos"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></span>`
+                                    : ""
+                                }
+                                <button type="button" data-mail-star="${m.id}" data-starred="${m.is_starred ? "1" : "0"}" aria-label="Destacar"
+                                  class="${m.is_starred ? "text-amber-500" : "mail-text-muted hover:text-amber-500"} transition-colors">
+                                  <svg class="w-3.5 h-3.5" fill="${m.is_starred ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -574,12 +583,63 @@ function renderMessageList(): string {
 
 function renderReader(): string {
   if (!state.selectedMessageId) {
+    if (state.accounts.length === 0) {
+      return `
+        <div class="mail-reader-pane items-center justify-center p-8">
+          <div class="mail-empty-card w-full max-w-[440px] p-7 text-left space-y-5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-[10px] mail-btn-subtle flex items-center justify-center shrink-0" style="color:var(--m-primary)">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              </div>
+              <div>
+                <h3 class="text-[15px] font-semibold tracking-[-0.01em] mail-title">Bandeja de correo corporativo</h3>
+                <p class="text-xs mail-text-muted mt-0.5">Centraliza tus buzones IMAP/SMTP en un solo espacio</p>
+              </div>
+            </div>
+
+            <div class="space-y-3 pt-1 border-t mail-divider">
+              <div class="flex items-start gap-2.5 pt-2">
+                <svg class="w-4 h-4 mt-0.5 shrink-0 mail-text-muted" fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <div class="text-xs leading-relaxed">
+                  <span class="font-medium mail-title">Sincronización en tiempo real</span>
+                  <span class="mail-text-muted"> — compatible con Gmail, Outlook y servidores corporativos</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-2.5">
+                <svg class="w-4 h-4 mt-0.5 shrink-0 mail-text-muted" fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <div class="text-xs leading-relaxed">
+                  <span class="font-medium mail-title">Firmas y plantillas por cuenta</span>
+                  <span class="mail-text-muted"> — respuestas rápidas para soporte, cobranza y ventas</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-2.5">
+                <svg class="w-4 h-4 mt-0.5 shrink-0 mail-text-muted" fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <div class="text-xs leading-relaxed">
+                  <span class="font-medium mail-title">Aislamiento por empresa</span>
+                  <span class="mail-text-muted"> — credenciales cifradas y verificación SPF/DMARC integrada</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-1">
+              <button type="button" id="mail-reader-connect" class="mail-btn-primary h-9 px-4 rounded-[9px] text-xs font-medium inline-flex items-center gap-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"/></svg>
+                <span>Conectar primera cuenta</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     return `
       <div class="mail-reader-pane items-center justify-center text-center p-8">
-        <div class="max-w-xs space-y-2 mail-text-muted">
-          <svg class="w-12 h-12 mx-auto opacity-60" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-          <p class="text-sm font-semibold mail-title">Selecciona un correo para leerlo</p>
-          <p class="text-xs mail-text-muted">Puedes responder, reenviar, marcar como spam o gestionar firmas por cada cuenta.</p>
+        <div class="max-w-xs space-y-2">
+          <div class="w-11 h-11 mx-auto rounded-xl mail-btn-subtle flex items-center justify-center mail-text-muted mb-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <p class="text-[14px] font-medium mail-title">Selecciona un correo para leerlo</p>
+          <p class="text-xs mail-text-muted leading-relaxed">Responde, reenvía, adjunta archivos o gestiona firmas desde el panel lateral</p>
         </div>
       </div>
     `;
@@ -600,48 +660,53 @@ function renderReader(): string {
 
   return `
     <div class="mail-reader-pane">
-      <div class="p-3 border-b border-slate-200/80 dark:border-white/10 flex flex-wrap items-center gap-2">
-        <button type="button" id="mail-mobile-back" class="md:hidden px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-white/10 text-xs font-semibold">← Volver</button>
-        <button type="button" id="mail-btn-reply" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">Responder</button>
-        <button type="button" id="mail-btn-reply-all" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/15">Responder a todos</button>
-        <button type="button" id="mail-btn-forward" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/15">Reenviar</button>
-        <div class="ml-auto flex items-center gap-1.5">
-          <button type="button" id="mail-btn-toggle-unread" class="px-2.5 py-1.5 rounded-xl text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10" title="Marcar no leído">No leído</button>
+      <div class="px-4 py-2.5 mail-pane-header flex flex-wrap items-center gap-1.5">
+        <button type="button" id="mail-mobile-back" class="md:hidden h-8 px-2.5 rounded-lg mail-btn-subtle text-xs font-medium inline-flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          <span>Volver</span>
+        </button>
+        <button type="button" id="mail-btn-reply" class="mail-btn-primary h-8 px-3 rounded-[9px] text-xs font-medium">Responder</button>
+        <button type="button" id="mail-btn-reply-all" class="mail-btn-subtle h-8 px-3 rounded-[9px] text-xs font-medium">Responder a todos</button>
+        <button type="button" id="mail-btn-forward" class="mail-btn-subtle h-8 px-3 rounded-[9px] text-xs font-medium">Reenviar</button>
+        <div class="ml-auto flex items-center gap-1">
+          <button type="button" id="mail-btn-toggle-unread" class="mail-icon-btn h-8 px-2.5 text-xs font-medium" title="Marcar no leído">No leído</button>
           ${
             m.folder_role !== "spam"
-              ? `<button type="button" id="mail-btn-spam" class="px-2.5 py-1.5 rounded-xl text-xs text-amber-600 hover:bg-amber-500/10">Spam</button>`
-              : `<button type="button" id="mail-btn-not-spam" class="px-2.5 py-1.5 rounded-xl text-xs text-emerald-600 hover:bg-emerald-500/10">No es spam</button>`
+              ? `<button type="button" id="mail-btn-spam" class="h-8 px-2.5 rounded-lg text-xs font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors">Spam</button>`
+              : `<button type="button" id="mail-btn-not-spam" class="h-8 px-2.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors">No es spam</button>`
           }
-          <button type="button" id="mail-btn-delete" class="px-2.5 py-1.5 rounded-xl text-xs text-rose-600 hover:bg-rose-500/10">
+          <button type="button" id="mail-btn-delete" class="h-8 px-2.5 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors">
             ${m.folder_role === "trash" ? "Eliminar definitivo" : "Papelera"}
           </button>
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
-        <div>
-          <h2 class="text-lg font-bold text-slate-900 dark:text-white">${esc(m.subject)}</h2>
-          <div class="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs mail-text-muted">
-            <div class="flex items-center gap-2.5">
+      <div class="flex-1 overflow-y-auto p-5 md:p-6 space-y-5">
+        <div class="space-y-3">
+          <h2 class="text-[18px] leading-snug font-semibold tracking-[-0.015em] mail-title">${esc(m.subject)}</h2>
+          <div class="flex flex-wrap items-center justify-between gap-3 text-xs mail-text-muted">
+            <div class="flex items-center gap-3 min-w-0">
               ${renderAvatarBadge(m.from_name, m.from_email, m.sender_avatar_url, m.account_color, "w-9 h-9 text-xs")}
-              <div>
-                <span class="font-semibold mail-title">${esc(m.from_name || m.from_email)}</span>
-                ${m.from_name ? `<span class="ml-1">&lt;${esc(m.from_email)}&gt;</span>` : ""}
-                <div class="text-[11px] mt-0.5">Para: ${esc(toText || m.account_email)}</div>
+              <div class="min-w-0">
+                <div class="truncate">
+                  <span class="font-semibold mail-title">${esc(m.from_name || m.from_email)}</span>
+                  ${m.from_name ? `<span class="ml-1 mail-text-muted">&lt;${esc(m.from_email)}&gt;</span>` : ""}
+                </div>
+                <div class="text-[11.5px] mt-0.5 truncate">Para: ${esc(toText || m.account_email)}</div>
               </div>
             </div>
-            <div class="text-right">
-              <div>${new Date(m.date).toLocaleString()}</div>
-              <div class="text-[10.5px] text-slate-400">Cuenta: ${esc(m.account_email)}</div>
+            <div class="text-right shrink-0">
+              <div class="tabular-nums mail-text-sec">${new Date(m.date).toLocaleString()}</div>
+              <div class="text-[11px] mail-text-muted mt-0.5">${esc(m.account_email)}</div>
             </div>
           </div>
         </div>
 
         ${
           m.has_remote_images && !state.showRemoteImages
-            ? `<div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-2 text-xs text-amber-700 dark:text-amber-300">
-                 <span>Se bloquearon imágenes externas por privacidad.</span>
-                 <button type="button" id="mail-btn-show-images" class="px-2.5 py-1 rounded-lg bg-amber-500 text-white font-semibold">Mostrar imágenes</button>
+            ? `<div class="px-3.5 py-2.5 rounded-[10px] bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-3 text-xs text-amber-700 dark:text-amber-300">
+                 <span>Se bloquearon imágenes externas por privacidad</span>
+                 <button type="button" id="mail-btn-show-images" class="h-7 px-2.5 rounded-lg bg-amber-600 text-white font-medium shrink-0">Mostrar imágenes</button>
                </div>`
             : ""
         }
@@ -650,18 +715,18 @@ function renderReader(): string {
 
         ${
           atts.length > 0
-            ? `<div class="space-y-2">
-                 <div class="text-xs font-bold text-slate-600 dark:text-slate-300">Adjuntos (${atts.length})</div>
+            ? `<div class="space-y-2.5 pt-1">
+                 <div class="text-xs font-medium mail-text-muted">Adjuntos (${atts.length})</div>
                  <div class="flex flex-wrap gap-2">
                    ${atts
                      .map(
                        (a) => `
                      <a href="/api/mail/messages/${m.id}/attachments/${a.id}?token=${encodeURIComponent(getMailAuthToken())}"
                        target="_blank"
-                       class="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs hover:border-blue-500 transition">
-                       <span>📎</span>
-                       <span class="font-medium truncate max-w-[180px]">${esc(a.filename)}</span>
-                       <span class="text-slate-400">(${formatBytes(a.size_bytes)})</span>
+                       class="mail-btn-subtle flex items-center gap-2 px-3 py-2 rounded-[10px] text-xs">
+                       <svg class="w-3.5 h-3.5 shrink-0 mail-text-muted" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                       <span class="font-medium truncate max-w-[190px] mail-title">${esc(a.filename)}</span>
+                       <span class="tabular-nums mail-text-muted">${formatBytes(a.size_bytes)}</span>
                      </a>
                    `
                      )
@@ -771,22 +836,31 @@ function renderComposerModal(): string {
                 <input type="color" id="mail-comp-hilite" value="#fef08a" class="w-4 h-4 p-0 border-0 bg-transparent cursor-pointer">
               </label>
               <span class="w-px h-4 bg-slate-300 dark:bg-white/15 mx-0.5"></span>
-              <button type="button" data-cmd="justifyLeft" title="Alinear izquierda" class="mail-toolbar-btn">⬅</button>
-              <button type="button" data-cmd="justifyCenter" title="Centrar" class="mail-toolbar-btn">⬌</button>
-              <button type="button" data-cmd="justifyRight" title="Alinear derecha" class="mail-toolbar-btn">➡</button>
+              <button type="button" data-cmd="justifyLeft" title="Alinear izquierda" class="mail-toolbar-btn">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h10M4 18h14"/></svg>
+              </button>
+              <button type="button" data-cmd="justifyCenter" title="Centrar" class="mail-toolbar-btn">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M7 12h10M5 18h14"/></svg>
+              </button>
+              <button type="button" data-cmd="justifyRight" title="Alinear derecha" class="mail-toolbar-btn">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M10 12h10M6 18h14"/></svg>
+              </button>
               <span class="w-px h-4 bg-slate-300 dark:bg-white/15 mx-0.5"></span>
               <button type="button" data-cmd="insertUnorderedList" title="Lista con viñetas" class="mail-toolbar-btn">• Lista</button>
               <button type="button" data-cmd="insertOrderedList" title="Lista numerada" class="mail-toolbar-btn">1. Lista</button>
               <button type="button" data-cmd="insertHorizontalRule" title="Línea separadora" class="mail-toolbar-btn">—</button>
-              <button type="button" id="mail-comp-link" title="Insertar enlace" class="mail-toolbar-btn">🔗</button>
-              <button type="button" data-cmd="removeFormat" title="Limpiar formato" class="mail-toolbar-btn">✕Fmt</button>
+              <button type="button" id="mail-comp-link" title="Insertar enlace" class="mail-toolbar-btn">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+              </button>
+              <button type="button" data-cmd="removeFormat" title="Limpiar formato" class="mail-toolbar-btn">Limpiar</button>
             </div>
-            <div id="mail-comp-editor" contenteditable="true" data-placeholder="Escribe tu mensaje aquí... (también puedes arrastrar archivos)" class="mail-editor-area"></div>
+            <div id="mail-comp-editor" contenteditable="true" data-placeholder="Escribe tu mensaje aquí o arrastra archivos" class="mail-editor-area"></div>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <label class="cursor-pointer px-3 py-1.5 rounded-xl mail-btn-subtle text-xs font-medium">
-              📎 Adjuntar archivos
+            <label class="cursor-pointer h-8 px-3 rounded-[9px] mail-btn-subtle text-xs font-medium inline-flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 mail-text-muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+              <span>Adjuntar archivos</span>
               <input type="file" id="mail-comp-files" multiple class="hidden" />
             </label>
             <div id="mail-comp-att-chips" class="flex flex-wrap items-center gap-1.5">
@@ -930,8 +1004,9 @@ function renderAccountsModal(): string {
                     "w-11 h-11 text-sm"
                   )}
                 </div>
-                <label class="cursor-pointer px-3 py-1.5 rounded-xl mail-btn-subtle text-xs font-medium">
-                  📷 Subir foto
+                <label class="cursor-pointer h-8 px-3 rounded-[9px] mail-btn-subtle text-xs font-medium inline-flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 mail-text-muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <span>Subir foto</span>
                   <input type="file" id="mail-f-avatar-file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" />
                 </label>
                 ${
@@ -1013,6 +1088,7 @@ function bindEvents() {
   bindClick("mail-btn-unread-filter", () => { state.onlyUnread = !state.onlyUnread; loadMessages(); });
   bindClick("mail-btn-manage-accounts", () => { state.accountsModalOpen = true; state.editingAccountId = null; render(); });
   bindClick("mail-empty-connect", () => { state.accountsModalOpen = true; state.editingAccountId = null; render(); });
+  bindClick("mail-reader-connect", () => { state.accountsModalOpen = true; state.editingAccountId = null; render(); });
 
   const searchInput = document.getElementById("mail-search-input") as HTMLInputElement | null;
   if (searchInput) {
