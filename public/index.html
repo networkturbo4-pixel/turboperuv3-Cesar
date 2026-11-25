@@ -1412,7 +1412,6 @@
       background-color: rgba(17, 24, 39, 0.08) !important;
     }
     html:not(.dark) #login-logo-wrapper {
-      background-color: var(--brand-primary) !important;
       border-color: transparent !important;
     }
     html:not(.dark) #login-default-icon {
@@ -2540,14 +2539,14 @@
       <div class="flex flex-col items-center lg:items-start justify-between pt-4 pb-2 lg:p-10 text-center lg:text-left">
         <!-- Marca -->
         <div class="flex flex-col lg:flex-row items-center gap-3">
-          <div id="login-logo-wrapper" class="w-12 h-12 lg:w-10 lg:h-10 rounded-[14px] lg:rounded-[10px] flex items-center justify-center border border-white/10 overflow-hidden bg-white/[0.06] flex-shrink-0">
+          <div id="login-logo-wrapper" class="w-12 h-12 lg:w-10 lg:h-10 rounded-[14px] lg:rounded-[10px] flex items-center justify-center overflow-hidden flex-shrink-0">
             <svg id="login-default-icon" class="w-6 h-6 lg:w-5 lg:h-5 text-white" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
             </svg>
-            <img id="login-custom-img" class="w-full h-full object-contain p-1 hidden" alt="Logo">
+            <img id="login-custom-img" class="w-full h-full object-contain hidden" alt="Logo">
           </div>
           <div class="min-w-0">
-            <h1 id="login-system-title" class="text-[16px] lg:text-[15px] font-medium tracking-[-0.01em] text-[#eef0f5] leading-snug">TurboNetwork Enterprise</h1>
+            <h1 id="login-system-title" class="text-[16px] lg:text-[15px] font-medium tracking-[-0.01em] text-[#eef0f5] leading-snug">TurboNetwork</h1>
             <p id="login-system-tagline" class="text-xs text-[#9aa2b2] mt-0.5 lg:mt-0">Plataforma operativa ISP</p>
           </div>
         </div>
@@ -21279,7 +21278,9 @@
       if (tagEl) tagEl.textContent = activeTenant.tagline || 'ISP Enterprise Core';
 
       const loginTitle = document.getElementById('login-system-title');
-      if (loginTitle) loginTitle.textContent = activeTenant.name + " Enterprise";
+      if (loginTitle) loginTitle.textContent = activeTenant.name;
+      const loginTag = document.getElementById('login-system-tagline');
+      if (loginTag && activeTenant.tagline) loginTag.textContent = activeTenant.tagline;
 
       const pageTitle = document.getElementById('page-title');
       if (pageTitle) pageTitle.textContent = `${activeTenant.name} • ISP Enterprise Platform`;
@@ -22154,7 +22155,9 @@
       const brandNameEl = document.getElementById('brand-system-name');
       if (brandNameEl) brandNameEl.textContent = name;
       const loginTitleEl = document.getElementById('login-system-title');
-      if (loginTitleEl) loginTitleEl.textContent = name + " Enterprise";
+      if (loginTitleEl) loginTitleEl.textContent = name;
+      const loginTagEl = document.getElementById('login-system-tagline');
+      if (loginTagEl && settings.tagline) loginTagEl.textContent = settings.tagline;
       const breadcrumbEl = document.getElementById('breadcrumb-app');
       if (breadcrumbEl) breadcrumbEl.textContent = name;
       const pageTitleEl = document.getElementById('page-title');
@@ -22208,7 +22211,10 @@
           loginCustomImg.src = brandIconSrc;
           loginCustomImg.classList.remove('hidden');
         }
-        if (loginBox) loginBox.style.backgroundColor = "transparent";
+        if (loginBox) {
+          loginBox.style.backgroundColor = "transparent";
+          loginBox.style.border = "none";
+        }
       } else {
         if (sideDefIcon) sideDefIcon.classList.remove('hidden');
         if (sideCustomImg) sideCustomImg.classList.add('hidden');
@@ -22457,7 +22463,7 @@
       const brandEl = document.getElementById('brand-system-name');
       if (brandEl) brandEl.textContent = val;
       const loginEl = document.getElementById('login-system-title');
-      if (loginEl) loginEl.textContent = val + " Enterprise";
+      if (loginEl) loginEl.textContent = val;
       const breadEl = document.getElementById('breadcrumb-app');
       if (breadEl) breadEl.textContent = val;
     }
