@@ -796,6 +796,7 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     // Inicio de sesión directo con PIN de 8 dígitos (Google Authenticator queda exclusivo para desbloqueo de tardanzas/asistencias)
+    const tenantRequires2fa = false;
     const mustVerify2fa = false;
 
     if (mustVerify2fa) {
