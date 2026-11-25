@@ -24,7 +24,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS Compilado Estático de Alto Rendimiento (0ms de tiempo de compilación en runtime) -->
-  <link rel="stylesheet" href="/assets/tailwind.min.css?v=unslop_v7">
+  <link rel="stylesheet" href="/assets/tailwind.min.css?v=unslop_v8">
   <link rel="stylesheet" href="/assets/remixicon/remixicon.css">
   <link rel="stylesheet" href="/assets/omnichannel-inbox.css?v=12">
   <link rel="stylesheet" href="/assets/mail-inbox.css?v=3">
@@ -1103,12 +1103,19 @@
       transform: scale(1.15);
     }
 
-    .login-welcome-card {
-      background-color: #11141c;
-      border: 1px solid rgba(238, 240, 245, 0.08);
-      border-radius: 20px;
-      box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.7);
-      transition: transform 240ms var(--login-ease), opacity 220ms ease;
+    .welcome-fullscreen {
+      background-color: #0b0d12;
+      color: #eef0f5;
+      min-height: 100dvh;
+      transition: opacity 220ms ease;
+    }
+
+    .welcome-stage {
+      transition: transform 280ms var(--login-ease), opacity 240ms ease;
+    }
+
+    .welcome-progress-track {
+      background-color: rgba(238, 240, 245, 0.08);
     }
 
     @keyframes shake {
@@ -1456,16 +1463,21 @@
     html:not(.dark) .security-dot {
       border-color: rgba(17, 24, 39, 0.22) !important;
     }
-    html:not(.dark) .login-welcome-card {
+    html:not(.dark) .welcome-fullscreen {
       background-color: #ffffff !important;
-      border-color: rgba(17, 24, 39, 0.08) !important;
-      box-shadow: 0 16px 40px -12px rgba(15, 23, 42, 0.14) !important;
-    }
-    html:not(.dark) .login-welcome-card #welcome-title {
       color: #111827 !important;
     }
-    html:not(.dark) .login-welcome-card #welcome-saludo {
+    html:not(.dark) .welcome-fullscreen #welcome-title,
+    html:not(.dark) .welcome-fullscreen #welcome-brand-name {
+      color: #111827 !important;
+    }
+    html:not(.dark) .welcome-fullscreen #welcome-saludo,
+    html:not(.dark) .welcome-fullscreen #welcome-role,
+    html:not(.dark) .welcome-fullscreen #welcome-status-msg {
       color: #4b5565 !important;
+    }
+    html:not(.dark) .welcome-progress-track {
+      background-color: rgba(17, 24, 39, 0.08) !important;
     }
     html:not(.dark) #login-feedback {
       color: #dc2626 !important;
@@ -2683,38 +2695,55 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- 2. MODAL DE BIENVENIDA & AUTORIZACIÓN                    -->
+  <!-- 2. PANTALLA DE BIENVENIDA A ANCHO COMPLETO               -->
   <!-- ======================================================== -->
-  <div id="welcome-modal" class="fixed inset-0 z-[250] hidden flex items-center justify-center bg-black/70 backdrop-blur-md px-4 transition-opacity duration-200">
-    <div id="welcome-card" class="login-welcome-card relative max-w-[360px] w-full p-7 text-center flex flex-col items-center transform scale-95 opacity-0">
+  <div id="welcome-modal" class="welcome-fullscreen fixed inset-0 z-[250] hidden flex flex-col justify-between select-none">
+
+    <!-- Barra superior discreta de borde a borde -->
+    <div class="w-full px-6 sm:px-10 pt-[max(1.5rem,env(safe-area-inset-top))] pb-4 flex items-center justify-between">
+      <span id="welcome-brand-name" class="text-sm font-medium tracking-[-0.01em] text-[#eef0f5]">TurboNetwork</span>
+      <div class="flex items-center gap-2 text-xs text-[#6b7385]">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+        <span>Sesión cifrada</span>
+      </div>
+    </div>
+
+    <!-- Escenario central amplio (centro óptico) -->
+    <div id="welcome-card" class="welcome-stage flex-1 flex flex-col items-center justify-center px-6 pb-12 text-center transform translate-y-2 opacity-0">
 
       <!-- Avatar limpio -->
-      <div class="w-16 h-16 rounded-full border border-white/10 bg-white/[0.04] overflow-hidden mb-4">
+      <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-black/10 dark:border-white/10 overflow-hidden mb-6">
         <img id="welcome-avatar" class="w-full h-full object-cover" src="" alt="Avatar">
       </div>
 
-      <!-- Saludo y datos del operador -->
-      <p id="welcome-saludo" class="text-xs text-[#9aa2b2] mb-1">Iniciando sesión</p>
-      <h2 id="welcome-title" class="text-lg font-medium tracking-[-0.01em] text-[#eef0f5]"></h2>
+      <!-- Saludo y nombre en escala editorial -->
+      <p id="welcome-saludo" class="text-sm text-[#9aa2b2] mb-1.5">Iniciando sesión</p>
+      <h2 id="welcome-title" class="text-[28px] sm:text-[36px] font-medium tracking-[-0.025em] leading-[1.1] text-[#eef0f5]"></h2>
 
-      <div class="flex items-center gap-2 mt-1.5 mb-6 text-xs text-[#9aa2b2]">
+      <div class="flex items-center justify-center gap-2 mt-2.5 text-[13px] text-[#9aa2b2]">
         <span id="welcome-role" class="font-medium"></span>
         <span class="opacity-40">·</span>
         <span>Acceso autorizado</span>
       </div>
 
-      <!-- Barra de progreso minimalista -->
-      <div class="w-full space-y-2">
+      <!-- Progreso horizontal limpio -->
+      <div class="w-full max-w-[380px] mt-10 space-y-2.5">
         <div class="flex justify-between items-center text-xs">
           <span id="welcome-status-msg" class="text-[#9aa2b2]">Verificando permisos</span>
           <span id="welcome-percent" class="text-[#6b7385] tabular-nums font-medium">0%</span>
         </div>
-        <div class="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+        <div class="welcome-progress-track w-full rounded-full h-[3px] overflow-hidden">
           <div id="welcome-progress" class="dynamic-primary-bg h-full rounded-full transition-[width] duration-500 ease-out" style="width: 0%"></div>
         </div>
       </div>
 
     </div>
+
+    <!-- Pie equilibrado -->
+    <div class="w-full px-6 sm:px-10 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 text-center">
+      <span class="text-xs text-[#6b7385]">Preparando espacio de trabajo</span>
+    </div>
+
   </div>
 
   <!-- ======================================================== -->
@@ -24815,6 +24844,11 @@
       const percentEl = document.getElementById('welcome-percent');
       const statusMsg = document.getElementById('welcome-status-msg');
       const saludoEl = document.getElementById('welcome-saludo');
+      const welcomeBrandEl = document.getElementById('welcome-brand-name');
+      const loginTitleText = document.getElementById('login-system-title')?.textContent?.trim();
+      if (welcomeBrandEl) {
+        welcomeBrandEl.textContent = loginTitleText || (appSettings && appSettings.systemName) || 'TurboNetwork';
+      }
 
       // 1. Saludo sobrio con el nombre del operador
       const firstName = (user.name || "Operador").split(' ')[0];
@@ -24848,14 +24882,14 @@
       const mobRole = document.getElementById('drawer-user-role');
       if (mobRole) mobRole.textContent = user.roleName;
 
-      // 2. Entrada suave desde scale(0.95)
+      // 2. Entrada suave a pantalla completa
       modal.classList.remove('hidden', 'opacity-0');
       if (card) {
-        card.classList.remove('scale-100', 'opacity-100');
-        card.classList.add('scale-95', 'opacity-0');
+        card.classList.remove('translate-y-0', 'opacity-100');
+        card.classList.add('translate-y-2', 'opacity-0');
         requestAnimationFrame(() => {
-          card.classList.remove('scale-95', 'opacity-0');
-          card.classList.add('scale-100', 'opacity-100');
+          card.classList.remove('translate-y-2', 'opacity-0');
+          card.classList.add('translate-y-0', 'opacity-100');
         });
       }
 
@@ -24876,18 +24910,18 @@
         if (statusMsg) statusMsg.textContent = 'Listo';
       }, 720);
 
-      // 4. Salida rápida hacia el workspace
+      // 4. Salida fluida hacia el workspace
       setTimeout(() => {
         if (card) {
-          card.classList.remove('scale-100', 'opacity-100');
-          card.classList.add('scale-95', 'opacity-0');
+          card.classList.remove('translate-y-0', 'opacity-100');
+          card.classList.add('opacity-0');
         }
         modal.classList.add('opacity-0');
         setTimeout(() => {
           modal.classList.add('hidden');
           modal.classList.remove('opacity-0');
           init();
-        }, 200);
+        }, 220);
       }, 1050);
     }
 
