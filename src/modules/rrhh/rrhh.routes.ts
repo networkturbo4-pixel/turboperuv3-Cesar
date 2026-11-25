@@ -2318,7 +2318,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           workSchedule: opSched,
           expectedCheckInTime: opIn,
           expectedCheckOutTime: opOut,
-          isSuperAdmin: prev.isSuperAdmin || isSuperAdmin,
+          isSuperAdmin: prev.id === 1 ? true : isSuperAdmin,
           isActive: body.status === "active",
         };
         operatorUser = usersList[existingUserIdx];
@@ -2574,7 +2574,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
           workSchedule: opSched,
           expectedCheckInTime: opIn,
           expectedCheckOutTime: opOut,
-          isSuperAdmin: prev.isSuperAdmin || isSuperAdmin,
+          isSuperAdmin: prev.id === 1 ? true : isSuperAdmin,
           isActive: (body.status || current.status) === "active",
         };
         operatorUser = usersList[linkedIdx];

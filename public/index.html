@@ -24543,13 +24543,14 @@
     }
 
     function isDefaultAlmacenUser(u) {
-      if (!u || u.isSuperAdmin || Number(u.roleId) === 1) return false;
+      if (!u || Number(u.id) === 1 || Number(u.roleId) === 1) return false;
       const rName = String(u.roleName || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
         .trim();
       if (rName === 'almacenero' || /\balmacenero\b/.test(rName)) return true;
+      if (u.isSuperAdmin) return false;
       return Number(u.roleId) === 5 && (!rName || rName.includes('almacen'));
     }
 

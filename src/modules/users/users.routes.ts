@@ -513,25 +513,27 @@ function buildAuthenticatedUserResponse(user: SystemUser, requestedTenant?: stri
   const tenantRoles = loadRolesForTenant(assignedTenant);
   const role = tenantRoles.find((r) => r.id === user.roleId) || rolesStore.find((r) => r.id === user.roleId);
 
-  const userPermissions = user.isSuperAdmin ? ALL_PERMISSIONS.map((p) => p.id) : role?.permissions || [];
-  const userAllowedModules = user.isSuperAdmin
-    ? [...ALL_MODULE_IDS]
-    : role?.allowedModules || [...ALL_MODULE_IDS];
-  const allowedTenants = user.isSuperAdmin
-    ? ["*"]
-    : (user.allowedTenants || [assignedTenant]).filter(Boolean);
-
   const normalizedRoleName = String(role?.name || user.roleName || "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
   const isAlmacenRole =
-    !user.isSuperAdmin &&
+    user.id !== 1 &&
     Number(user.roleId) !== 1 &&
     (String(role?.slug || "").toLowerCase() === "almacenero" || /\balmacenero\b/.test(normalizedRoleName));
+  const effectiveIsSuperAdmin = isAlmacenRole ? false : !!user.isSuperAdmin;
+
+  const userPermissions = effectiveIsSuperAdmin ? ALL_PERMISSIONS.map((p) => p.id) : role?.permissions || [];
+  const userAllowedModules = effectiveIsSuperAdmin
+    ? [...ALL_MODULE_IDS]
+    : role?.allowedModules || [...ALL_MODULE_IDS];
+  const allowedTenants = effectiveIsSuperAdmin
+    ? ["*"]
+    : (user.allowedTenants || [assignedTenant]).filter(Boolean);
+
   const isTechRole =
-    !user.isSuperAdmin &&
+    !effectiveIsSuperAdmin &&
     Number(user.roleId) !== 1 &&
     (Number(user.roleId) === 4 || /tecnic|campo|instalador|cuadrilla/i.test(normalizedRoleName));
 
@@ -547,7 +549,7 @@ function buildAuthenticatedUserResponse(user: SystemUser, requestedTenant?: stri
       roleId: user.roleId,
       roleName: role?.name || user.roleName,
       avatar: user.avatar,
-      isSuperAdmin: !!user.isSuperAdmin,
+      isSuperAdmin: effectiveIsSuperAdmin,
       assignedTenantId: assignedTenant,
       allowedTenants,
       workSchedule: user.workSchedule || "08:00 - 17:00",
