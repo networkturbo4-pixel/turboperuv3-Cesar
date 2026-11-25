@@ -4733,8 +4733,10 @@
 
       if (remoteScannerEvtSource) remoteScannerEvtSource.close();
       if (session?.sessionId) {
+        let sseErrors = 0;
         remoteScannerEvtSource = new EventSource(`/api/scanner/session/${encodeURIComponent(session.sessionId)}/events`);
         remoteScannerEvtSource.onmessage = function (ev) {
+          sseErrors = 0;
           try {
             const payload = JSON.parse(ev.data);
             if (payload.type === "connected" && statusEl) {
@@ -4744,6 +4746,13 @@
               processScannedCode(payload.data.code);
             }
           } catch (_) {}
+        };
+        remoteScannerEvtSource.onerror = function () {
+          sseErrors++;
+          if (!remoteScannerEvtSource || remoteScannerEvtSource.readyState === EventSource.CLOSED || sseErrors >= 3) {
+            try { remoteScannerEvtSource?.close(); } catch (_) {}
+            remoteScannerEvtSource = null;
+          }
         };
       }
     } catch (err) {
@@ -4816,7 +4825,7 @@
 
     const ticketHtml = `
       <div style="text-align:center;margin-bottom:6px;">
-        <img src="/logo_thermal_turbo.png" alt="Logo" style="max-height:36px;margin:0 auto 4px;display:block;" onerror="this.style.display='none'" />
+        <img src="/assets/logo_thermal_turbo.png" alt="Logo" style="max-height:36px;margin:0 auto 4px;display:block;" onerror="this.style.display='none'" />
         <div style="font-weight:700;font-size:9px;">${esc(tenantHeader)}</div>
         <div style="font-weight:800;font-size:12px;">${esc(opts.title)}</div>
         <div style="font-size:10px;">OP: ${esc(opts.code)} • ${esc(nowStr)}</div>

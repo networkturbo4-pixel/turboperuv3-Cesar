@@ -162,9 +162,11 @@ export const scannerRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     // Configurar cabeceras SSE estándar
+    reply.hijack();
     reply.raw.setHeader("Content-Type", "text/event-stream");
     reply.raw.setHeader("Cache-Control", "no-cache, no-transform");
     reply.raw.setHeader("Connection", "keep-alive");
+    reply.raw.setHeader("X-Accel-Buffering", "no");
     reply.raw.setHeader("Access-Control-Allow-Origin", "*");
     reply.raw.flushHeaders?.();
 
