@@ -1258,7 +1258,7 @@
         countEl.textContent = "0";
         countEl.className = "px-2.5 py-1 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-mono text-xs font-extrabold";
       }
-      if (chevEl) chevEl.className = "w-4 h-4 text-slate-400";
+      if (chevEl) chevEl.setAttribute("class", "w-4 h-4 text-slate-400");
     } else {
       fab.classList.remove("is-empty");
       if (iconPill) iconPill.className = "w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center flex-shrink-0";
@@ -1274,7 +1274,7 @@
         countEl.textContent = String(lineCount);
         countEl.className = "px-2.5 py-1 rounded-xl bg-black/25 text-white font-mono text-xs font-extrabold";
       }
-      if (chevEl) chevEl.className = "w-4 h-4 text-white";
+      if (chevEl) chevEl.setAttribute("class", "w-4 h-4 text-white");
     }
   }
 
