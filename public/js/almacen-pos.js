@@ -1,6 +1,7 @@
 /* =========================================================================
  * TurboAlmacén POS • Terminal Rápida de Almacén (PC, Laptop y Móvil)
- * Estilo Caja Plaza Vea / Metro: Pistola láser, Cámara QR/Barras, Tickets 58/80mm
+ * Diseño fluido estilo Apple HIG: Bottom Sheet 1:1 en móvil, Spotlight Scan,
+ * Steppers directos en catálogo/canasta, Vista Cuadrícula/Lista y Tickets 58/80mm
  * ========================================================================= */
 (function () {
   "use strict";
@@ -22,6 +23,7 @@
   let eppFilter = "all";
   let liveSearchTerm = "";
   let requestsExpanded = true;
+  let mobileCartOpen = false;
 
   // Canastas POS
   let dispatchCart = []; // [{ key, productId, name, sku, type, unitOfMeasure, quantity, maxStock, itemUnitId, unitSku, variantName, image }]
@@ -30,10 +32,7 @@
   // Preferencias locales
   let beepEnabled = localStorage.getItem("turboalmacen_beep") !== "off";
   let paperWidth = localStorage.getItem("turboalmacen_paper") || "80"; // "80" | "58"
-
-  // PIN Login
-  let almPinBuffer = "";
-  let almPinSubmitting = false;
+  let catalogViewMode = localStorage.getItem("turboalmacen_view_mode") || "grid"; // "grid" | "list"
 
   // Cámara
   let camStream = null;
@@ -76,7 +75,6 @@
         osc.start();
         osc.stop(audioCtx.currentTime + 0.22);
       } else {
-        // Beep agudo estilo caja de supermercado
         osc.type = "sine";
         osc.frequency.setValueAtTime(1760, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
@@ -111,7 +109,7 @@
       el.style.opacity = "0";
       el.style.transform = "translateY(-6px) scale(0.97)";
       setTimeout(() => el.remove(), 220);
-    }, 3000);
+    }, 2800);
   }
 
   function flashScannerBar() {
@@ -128,7 +126,7 @@
   }
 
   // =========================================================================
-  // CONTROLES DE HEADER (PAPEL, SONIDO, TEMA)
+  // CONTROLES DE HEADER (PAPEL, SONIDO, TEMA, VISTA CATÁLOGO)
   // =========================================================================
   function syncHeaderControls() {
     const lblPaper = document.getElementById("paper-width-label");
@@ -142,7 +140,33 @@
       btnBeep.classList.toggle("text-emerald-500", beepEnabled);
       btnBeep.classList.toggle("text-slate-400", !beepEnabled);
     }
+    syncCatalogViewButtons();
   }
+
+  function syncCatalogViewButtons() {
+    const btnGrid = document.getElementById("btn-view-grid");
+    const btnList = document.getElementById("btn-view-list");
+    const isGrid = catalogViewMode === "grid";
+    if (btnGrid) {
+      btnGrid.className = isGrid
+        ? "pos-press px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white flex items-center gap-1"
+        : "pos-press px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1";
+    }
+    if (btnList) {
+      btnList.className = !isGrid
+        ? "pos-press px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white flex items-center gap-1"
+        : "pos-press px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1";
+    }
+  }
+
+  window.setCatalogViewMode = function (mode) {
+    catalogViewMode = mode === "list" ? "list" : "grid";
+    try {
+      localStorage.setItem("turboalmacen_view_mode", catalogViewMode);
+    } catch (_) {}
+    syncCatalogViewButtons();
+    renderDispatchCatalog();
+  };
 
   window.togglePaperWidth = function () {
     paperWidth = paperWidth === "80" ? "58" : "80";
@@ -191,10 +215,185 @@
   };
 
   // =========================================================================
+  // APPLE FLUID BOTTOM SHEET (CANASTA RESPONSIVE < 1024px CON GESTOS 1:1)
+  // =========================================================================
+  function isMobileSheetViewport() {
+    return window.innerWidth < 1024;
+  }
+
+  function syncMobileFabVisibility() {
+    const fabWrap = document.getElementById("mobile-cart-fab-wrap");
+    if (!fabWrap) return;
+    const shouldShow = activeTab === "dispatch" && !mobileCartOpen;
+    fabWrap.classList.toggle("hidden", !shouldShow);
+  }
+
+  window.openMobileCart = function () {
+    if (!isMobileSheetViewport()) {
+      const panel = document.getElementById("dispatch-cart-panel");
+      if (panel) panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+    mobileCartOpen = true;
+    const sheet = document.getElementById("dispatch-cart-panel");
+    const backdrop = document.getElementById("dispatch-cart-backdrop");
+    if (sheet) {
+      sheet.classList.remove("is-dragging");
+      sheet.style.transform = "";
+      sheet.classList.add("is-open");
+    }
+    if (backdrop) {
+      backdrop.style.opacity = "";
+      backdrop.classList.add("is-open");
+    }
+    document.body.style.overflow = "hidden";
+    syncMobileFabVisibility();
+  };
+
+  window.closeMobileCart = function () {
+    mobileCartOpen = false;
+    const sheet = document.getElementById("dispatch-cart-panel");
+    const backdrop = document.getElementById("dispatch-cart-backdrop");
+    if (sheet) {
+      sheet.classList.remove("is-dragging");
+      sheet.style.transform = "";
+      sheet.classList.remove("is-open");
+    }
+    if (backdrop) {
+      backdrop.style.opacity = "";
+      backdrop.classList.remove("is-open");
+    }
+    document.body.style.overflow = "";
+    syncMobileFabVisibility();
+  };
+
+  window.toggleMobileCart = function () {
+    if (mobileCartOpen) window.closeMobileCart();
+    else window.openMobileCart();
+  };
+
+  // Alias retrocompatible
+  window.scrollToMobileCart = function () {
+    window.openMobileCart();
+  };
+
+  // Apple WWDC 2018 rubber-band & momentum projection
+  function rubberband(overshoot, dimension, constant) {
+    const c = constant || 0.35;
+    return (overshoot * dimension * c) / (dimension + c * Math.abs(overshoot));
+  }
+
+  function projectMomentum(initialVelocityPxPerSec, decelerationRate) {
+    const d = decelerationRate || 0.998;
+    return ((initialVelocityPxPerSec / 1000) * d) / (1 - d);
+  }
+
+  function initCartSheetGestures() {
+    const sheet = document.getElementById("dispatch-cart-panel");
+    const backdrop = document.getElementById("dispatch-cart-backdrop");
+    const handle = document.getElementById("dispatch-cart-drag-handle");
+    const header = document.getElementById("dispatch-cart-header");
+    if (!sheet) return;
+
+    let dragging = false;
+    let pointerId = null;
+    let startY = 0;
+    let currentDeltaY = 0;
+    let sheetHeight = 400;
+    let samples = [];
+
+    function onPointerDown(e) {
+      if (!isMobileSheetViewport() || !mobileCartOpen) return;
+      if (e.target && e.target.closest("button, input, select, a, label")) return;
+
+      dragging = true;
+      pointerId = e.pointerId;
+      startY = e.clientY;
+      currentDeltaY = 0;
+      sheetHeight = Math.max(240, sheet.getBoundingClientRect().height);
+      samples = [{ y: e.clientY, t: performance.now() }];
+
+      sheet.classList.add("is-dragging");
+      try {
+        e.currentTarget.setPointerCapture(pointerId);
+      } catch (_) {}
+    }
+
+    function onPointerMove(e) {
+      if (!dragging || e.pointerId !== pointerId) return;
+      const rawDelta = e.clientY - startY;
+      const now = performance.now();
+      samples.push({ y: e.clientY, t: now });
+      if (samples.length > 6) samples.shift();
+
+      // 1:1 tracking hacia abajo; rubber-band suave si arrastra hacia arriba
+      if (rawDelta >= 0) {
+        currentDeltaY = rawDelta;
+      } else {
+        currentDeltaY = -rubberband(Math.abs(rawDelta), sheetHeight, 0.25);
+      }
+
+      sheet.style.transform = `translate3d(0, ${currentDeltaY}px, 0)`;
+      if (backdrop) {
+        const progress = Math.min(1, Math.max(0, currentDeltaY / sheetHeight));
+        backdrop.style.opacity = String(1 - progress * 0.85);
+      }
+    }
+
+    function onPointerEnd(e) {
+      if (!dragging || (pointerId !== null && e.pointerId !== pointerId)) return;
+      dragging = false;
+      pointerId = null;
+      sheet.classList.remove("is-dragging");
+
+      // Calcular velocidad de salida (px/s) desde las últimas muestras
+      let velocityY = 0;
+      if (samples.length >= 2) {
+        const first = samples[0];
+        const last = samples[samples.length - 1];
+        const dt = Math.max(1, last.t - first.t);
+        velocityY = ((last.y - first.y) / dt) * 1000;
+      }
+
+      const projectedY = currentDeltaY + projectMomentum(velocityY, 0.996);
+      const shouldDismiss = currentDeltaY > sheetHeight * 0.38 || projectedY > sheetHeight * 0.45 || velocityY > 520;
+
+      if (shouldDismiss) {
+        window.closeMobileCart();
+      } else {
+        sheet.style.transform = "";
+        if (backdrop) backdrop.style.opacity = "";
+      }
+    }
+
+    [handle, header].forEach((zone) => {
+      if (!zone) return;
+      zone.addEventListener("pointerdown", onPointerDown);
+      zone.addEventListener("pointermove", onPointerMove);
+      zone.addEventListener("pointerup", onPointerEnd);
+      zone.addEventListener("pointercancel", onPointerEnd);
+    });
+
+    window.addEventListener("resize", () => {
+      if (!isMobileSheetViewport() && mobileCartOpen) {
+        window.closeMobileCart();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && mobileCartOpen) {
+        window.closeMobileCart();
+      }
+    });
+  }
+
+  // =========================================================================
   // INICIALIZACIÓN Y CARGA DE DATOS
   // =========================================================================
   async function bootstrapAlmacen() {
     syncHeaderControls();
+    initCartSheetGestures();
+
     const dateInput = document.getElementById("purch-date");
     if (dateInput && !dateInput.value) {
       dateInput.value = new Date().toISOString().split("T")[0];
@@ -215,7 +414,6 @@
       userLabel.textContent = `${almUser.name || "Almacenero"} • ${localStorage.getItem("turbonetwork_active_tenant") || "turbonetwork"}`;
     }
 
-    // Consultar configuración del Apartado Almacén
     try {
       const accessRes = await fetch(
         `/api/apartados/my-access?userId=${encodeURIComponent(almUser.id || 0)}&roleId=${encodeURIComponent(almUser.roleId || 0)}&apartadoId=apt-almacen&slug=almacen`
@@ -298,7 +496,6 @@
   };
 
   function populateSelects() {
-    // Categorías
     const catSel = document.getElementById("dispatch-category-select");
     if (catSel) {
       const prev = catSel.value;
@@ -308,7 +505,6 @@
       catSel.value = prev;
     }
 
-    // Empleados / Técnicos
     const empOptions = almEmployees
       .map((e) => `<option value="${esc(e.id)}" data-name="${esc(getEmployeeDisplayName(e))}">${esc(getEmployeeDisplayName(e))}${e.position ? " • " + esc(e.position) : ""}</option>`)
       .join("");
@@ -318,6 +514,7 @@
       const prev = dispEmp.value;
       dispEmp.innerHTML = `<option value="">— Seleccionar técnico / personal —</option>${empOptions}`;
       dispEmp.value = prev;
+      handleDispatchTechChange();
     }
 
     const retEmp = document.getElementById("returns-employee-filter");
@@ -341,7 +538,6 @@
       trTgt.value = prev;
     }
 
-    // Nodos POP
     const nodeSel = document.getElementById("tr-node-select");
     if (nodeSel) {
       const prev = nodeSel.value;
@@ -352,7 +548,6 @@
       if (prev) nodeSel.value = prev;
     }
 
-    // Productos para nodos y etiquetas
     const prodOpts = almProducts
       .map((p) => `<option value="${esc(p.id)}">${esc(p.name)} [${esc(p.sku)}] — Stock: ${p.stock}</option>`)
       .join("");
@@ -363,22 +558,37 @@
     if (labelProd) labelProd.innerHTML = prodOpts || `<option value="">Sin productos</option>`;
   }
 
+  window.handleDispatchTechChange = function () {
+    const dispEmp = document.getElementById("dispatch-employee-select");
+    const statusEl = document.getElementById("dispatch-tech-status");
+    const hasTech = Boolean(dispEmp && dispEmp.value);
+    if (statusEl) {
+      statusEl.textContent = hasTech ? "✓ Listo" : "Requerido";
+      statusEl.className = hasTech
+        ? "text-[10px] font-bold text-emerald-500"
+        : "text-[10px] font-semibold text-amber-500";
+    }
+    syncMobileCartBarUI();
+  };
+
   // =========================================================================
   // NAVEGACIÓN ENTRE PESTAÑAS POS
   // =========================================================================
   window.switchAlmacenTab = function (tab) {
     activeTab = tab;
+    if (mobileCartOpen && tab !== "dispatch") {
+      window.closeMobileCart();
+    }
+
     document.querySelectorAll(".alm-panel").forEach((el) => el.classList.add("hidden"));
     const target = document.getElementById("panel-" + tab);
     if (target) target.classList.remove("hidden");
 
-    // Desktop tabs styling
     document.querySelectorAll(".alm-tab-btn").forEach((btn) => {
       const isAct = btn.getAttribute("data-tab") === tab;
       btn.classList.toggle("is-active", isAct);
     });
 
-    // Mobile tabs styling
     document.querySelectorAll(".alm-mtab-btn").forEach((btn) => {
       const isAct = btn.getAttribute("data-mtab") === tab;
       btn.classList.toggle("bg-emerald-500/15", isAct);
@@ -388,18 +598,11 @@
       btn.classList.toggle("dark:text-slate-400", !isAct);
     });
 
-    // Botón flotante de canasta en móvil solo en Despacho
-    const fab = document.getElementById("mobile-cart-fab");
-    if (fab) fab.classList.toggle("hidden", tab !== "dispatch");
+    syncMobileFabVisibility();
 
     if (tab === "transfers" && almNodes.length > 0) {
       loadSelectedNodeStock();
     }
-  };
-
-  window.scrollToMobileCart = function () {
-    const cart = document.getElementById("dispatch-cart-panel");
-    if (cart) cart.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   // =========================================================================
@@ -439,7 +642,6 @@
     const q = (code || "").trim().toLowerCase();
     if (!q) return null;
 
-    // 1. Buscar primero coincidencia exacta en unidades individuales (SKU, barcode o serial)
     for (const p of almProducts) {
       if (Array.isArray(p.itemUnits)) {
         const u = p.itemUnits.find(
@@ -452,13 +654,11 @@
       }
     }
 
-    // 2. Coincidencia exacta en producto (SKU o barcode)
     const exactProd = almProducts.find(
       (p) => (p.sku && p.sku.toLowerCase() === q) || (p.barcode && p.barcode.toLowerCase() === q)
     );
     if (exactProd) return { product: exactProd, unit: null };
 
-    // 3. Coincidencia parcial única por nombre/SKU
     const partials = almProducts.filter(
       (p) =>
         (p.name && p.name.toLowerCase().includes(q)) ||
@@ -479,6 +679,7 @@
       inp.value = "";
       liveSearchTerm = "";
       document.getElementById("btn-clear-scan")?.classList.add("hidden");
+      if (activeTab === "dispatch") renderDispatchCatalog();
     }
   };
 
@@ -540,13 +741,11 @@
       return;
     }
 
-    // Por defecto: abrir verificador
     playBeep("ok");
     switchAlmacenTab("verify");
     await runVerifierLookup(q);
   }
 
-  // Captura global de pistola láser incluso si el foco no está en el input
   let wedgeBuffer = "";
   let wedgeTimer = null;
   document.addEventListener("keydown", function (e) {
@@ -696,8 +895,8 @@
           <div class="text-[11px] text-slate-500 truncate">${esc(r.techName)} • ${esc(r.reason || "Sin nota")}</div>
         </div>
         <div class="flex items-center gap-1 flex-shrink-0">
-          <button type="button" onclick="loadRequestIntoCart('${esc(r.id)}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold">Atender</button>
-          <button type="button" onclick="resolveMaterialRequest('${esc(r.id)}', 'rechazado')" class="px-2 py-1.5 rounded-lg bg-rose-500/15 text-rose-500 text-[11px] font-bold">✕</button>
+          <button type="button" onclick="loadRequestIntoCart('${esc(r.id)}')" class="pos-press px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold">Atender</button>
+          <button type="button" onclick="resolveMaterialRequest('${esc(r.id)}', 'rechazado')" class="pos-press px-2 py-1.5 rounded-lg bg-rose-500/15 text-rose-500 text-[11px] font-bold">✕</button>
         </div>
       </div>`
       )
@@ -708,13 +907,12 @@
     const req = almRequests.find((r) => r.id === reqId);
     if (!req) return;
 
-    // Seleccionar técnico si existe
     const dispEmp = document.getElementById("dispatch-employee-select");
     if (dispEmp && req.techId) {
       dispEmp.value = String(req.techId);
+      handleDispatchTechChange();
     }
 
-    // Buscar producto
     const prod =
       almProducts.find((p) => String(p.id) === String(req.productId)) ||
       almProducts.find((p) => p.name.toLowerCase().includes((req.itemName || "").toLowerCase()));
@@ -797,6 +995,11 @@
       return true;
     });
 
+    const isList = catalogViewMode === "list";
+    grid.className = isList
+      ? "grid grid-cols-1 md:grid-cols-2 gap-2.5"
+      : "grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3";
+
     if (filtered.length === 0) {
       grid.innerHTML = `<div class="col-span-full alm-surface rounded-2xl border-dashed p-10 text-center text-xs text-slate-400">No hay productos que coincidan con el filtro actual.</div>`;
       return;
@@ -825,40 +1028,91 @@
 
         const quickBulkBtns =
           p.type === "bulk"
-            ? `<div class="alm-divider-t grid grid-cols-3 gap-1.5 mt-3 pt-2.5">
+            ? `<div class="grid grid-cols-3 gap-1 mt-2">
                 <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 10)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+10</button>
                 <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 50)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+50</button>
                 <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 100)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+100</button>
               </div>`
             : "";
 
-        return `
-        <div onclick="addToDispatchCart(${p.id}, 1)" class="pos-card ${inCartQty > 0 ? "in-cart" : ""} cursor-pointer rounded-2xl p-3.5 flex flex-col justify-between min-h-[144px]">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <div class="flex items-center gap-1.5">
-                <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold ${stockBadge}">${stock} ${esc(unitLabel)}</span>
-                ${inCartQty > 0 ? `<span class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-extrabold bg-emerald-500 text-slate-950">+${inCartQty}</span>` : ""}
+        // Control táctil directo en la tarjeta (Stepper si ya está en canasta, o botón + Agregar siempre visible)
+        const actionControl =
+          inCartQty > 0
+            ? `<div onclick="event.stopPropagation()" class="inline-flex items-center rounded-xl bg-emerald-600 text-white p-0.5 shadow-sm">
+                <button type="button" onclick="adjustProductCartQty(${p.id}, -1)" aria-label="Restar" class="pos-press w-6 h-6 rounded-lg hover:bg-black/15 font-extrabold text-xs flex items-center justify-center">−</button>
+                <span class="px-2 font-mono text-[11px] font-extrabold tabular-nums">${inCartQty}</span>
+                <button type="button" onclick="adjustProductCartQty(${p.id}, 1)" aria-label="Sumar" class="pos-press w-6 h-6 rounded-lg hover:bg-black/15 font-extrabold text-xs flex items-center justify-center">+</button>
+              </div>`
+            : `<button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 1)" class="pos-press px-2.5 py-1 rounded-xl bg-emerald-500/12 hover:bg-emerald-600 text-emerald-600 dark:text-emerald-400 hover:text-white border border-emerald-500/25 text-[11px] font-bold flex items-center gap-1 flex-shrink-0">
+                <span>+ Agregar</span>
+              </button>`;
+
+        if (isList) {
+          return `
+          <div onclick="addToDispatchCart(${p.id}, 1)" class="pos-card ${inCartQty > 0 ? "in-cart" : ""} cursor-pointer rounded-2xl p-3 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              ${
+                img
+                  ? `<div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-black/30 overflow-hidden flex-shrink-0 flex items-center justify-center"><img src="${esc(img)}" alt="${esc(p.name)}" class="w-full h-full object-cover" loading="lazy"></div>`
+                  : `<div class="alm-icon-chip w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center">${getProductTypeIcon(p.type)}</div>`
+              }
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold ${stockBadge}">${stock} ${esc(unitLabel)}</span>
+                  <span class="text-[10px] font-mono text-slate-400">${esc(p.sku)}</span>
+                  <span class="text-[10px] font-mono text-slate-400 uppercase">• ${esc(p.location || typeTag)}</span>
+                </div>
+                <div class="text-xs font-bold text-slate-900 dark:text-slate-100 leading-snug mt-1 line-clamp-2">${esc(p.name)}</div>
               </div>
+            </div>
+            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+              ${actionControl}
+              ${
+                p.type === "bulk"
+                  ? `<div class="flex items-center gap-1">
+                      <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 10)" class="pos-press alm-bulk-btn px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold">+10</button>
+                      <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 50)" class="pos-press alm-bulk-btn px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold">+50</button>
+                      <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 100)" class="pos-press alm-bulk-btn px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold">+100</button>
+                    </div>`
+                  : ""
+              }
+            </div>
+          </div>`;
+        }
+
+        return `
+        <div onclick="addToDispatchCart(${p.id}, 1)" class="pos-card ${inCartQty > 0 ? "in-cart" : ""} cursor-pointer rounded-2xl p-3 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-1.5 mb-2">
+              <span class="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-mono font-bold ${stockBadge}">${stock} ${esc(unitLabel)}</span>
               <span class="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-wide truncate">${esc(p.location || typeTag)}</span>
             </div>
             ${
               img
-                ? `<div class="w-full h-24 rounded-xl bg-slate-100 dark:bg-black/30 mb-3 overflow-hidden flex items-center justify-center"><img src="${esc(img)}" alt="${esc(p.name)}" class="pos-card-img w-full h-full object-cover" loading="lazy"></div>`
-                : `<div class="alm-icon-chip w-8 h-8 rounded-lg mb-2.5 flex items-center justify-center">${getProductTypeIcon(p.type)}</div>`
+                ? `<div class="w-full h-20 sm:h-24 rounded-xl bg-slate-100 dark:bg-black/30 mb-2.5 overflow-hidden flex items-center justify-center"><img src="${esc(img)}" alt="${esc(p.name)}" class="pos-card-img w-full h-full object-cover" loading="lazy"></div>`
+                : `<div class="alm-icon-chip w-9 h-9 rounded-xl mb-2.5 flex items-center justify-center">${getProductTypeIcon(p.type)}</div>`
             }
             <div class="text-xs font-bold text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug tracking-tight">${esc(p.name)}</div>
           </div>
-          <div>
-            <div class="alm-divider-t flex items-center justify-between gap-2 mt-3 pt-2.5">
+          <div class="mt-2.5">
+            <div class="alm-divider-t flex items-center justify-between gap-1.5 pt-2">
               <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate">${esc(p.sku)}</span>
-              <span class="pos-card-add text-[10px] font-bold text-emerald-500 flex-shrink-0">+ Agregar</span>
+              ${actionControl}
             </div>
             ${quickBulkBtns}
           </div>
         </div>`;
       })
       .join("");
+  };
+
+  window.adjustProductCartQty = function (productId, delta) {
+    const idx = dispatchCart.findIndex((it) => Number(it.productId) === Number(productId));
+    if (idx === -1) {
+      if (delta > 0) window.addToDispatchCart(productId, delta);
+      return;
+    }
+    window.updateCartQty(idx, delta);
   };
 
   window.addToDispatchCart = function (productId, qty, specificUnit) {
@@ -886,7 +1140,7 @@
       }
       existing.quantity += quantity;
     } else {
-      // Si es producto con unidades individuales y no se escaneó una específica, ofrecer/asignar disponible
+      const cappedQty = Math.min(quantity, Number(prod.stock || 0));
       const availableUnits = Array.isArray(prod.itemUnits) ? prod.itemUnits.filter((u) => u.status === "disponible") : [];
       const firstVariant = Array.isArray(prod.variants) && prod.variants.length > 0 ? prod.variants[0].name : "";
       dispatchCart.push({
@@ -896,7 +1150,7 @@
         sku: prod.sku,
         type: prod.type,
         unitOfMeasure: prod.unitOfMeasure || "und",
-        quantity,
+        quantity: cappedQty,
         maxStock: Number(prod.stock || 0),
         itemUnitId: specificUnit ? specificUnit.id : "",
         unitSku: specificUnit ? specificUnit.sku : "",
@@ -922,7 +1176,24 @@
     } else if (next <= it.maxStock) {
       it.quantity = next;
     } else {
-      showToast(`Stock disponible: ${it.maxStock}`, "warn");
+      it.quantity = it.maxStock;
+      showToast(`Stock máximo disponible: ${it.maxStock}`, "warn");
+    }
+    renderDispatchCart();
+    renderDispatchCatalog();
+  };
+
+  window.setCartQtyDirect = function (idx, rawValue) {
+    const it = dispatchCart[idx];
+    if (!it) return;
+    const parsed = Math.floor(Number(rawValue));
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      dispatchCart.splice(idx, 1);
+    } else if (parsed > it.maxStock) {
+      it.quantity = it.maxStock;
+      showToast(`Ajustado al stock máximo disponible (${it.maxStock})`, "warn");
+    } else {
+      it.quantity = parsed;
     }
     renderDispatchCart();
     renderDispatchCatalog();
@@ -955,23 +1226,75 @@
     renderDispatchCatalog();
   };
 
+  function syncMobileCartBarUI() {
+    const fab = document.getElementById("mobile-cart-fab");
+    const iconPill = document.getElementById("mobile-cart-icon-pill");
+    const titleEl = document.getElementById("mobile-cart-title");
+    const subEl = document.getElementById("mobile-cart-subtitle");
+    const countEl = document.getElementById("mobile-cart-count");
+    const chevEl = document.getElementById("mobile-cart-chevron");
+    if (!fab) return;
+
+    const lineCount = dispatchCart.length;
+    const totalUnits = dispatchCart.reduce((acc, i) => acc + Number(i.quantity || 0), 0);
+    const empSel = document.getElementById("dispatch-employee-select");
+    const techName =
+      empSel && empSel.value
+        ? empSel.options[empSel.selectedIndex]?.getAttribute("data-name") || "Técnico seleccionado"
+        : "";
+
+    if (lineCount === 0) {
+      fab.classList.add("is-empty");
+      if (iconPill) iconPill.className = "w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center flex-shrink-0";
+      if (titleEl) {
+        titleEl.textContent = "Canasta de Despacho";
+        titleEl.className = "text-xs font-extrabold text-slate-900 dark:text-white truncate";
+      }
+      if (subEl) {
+        subEl.textContent = techName ? `Para: ${techName}` : "Toca un producto para agregar";
+        subEl.className = "text-[11px] text-slate-500 dark:text-slate-400 truncate";
+      }
+      if (countEl) {
+        countEl.textContent = "0";
+        countEl.className = "px-2.5 py-1 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-mono text-xs font-extrabold";
+      }
+      if (chevEl) chevEl.className = "w-4 h-4 text-slate-400";
+    } else {
+      fab.classList.remove("is-empty");
+      if (iconPill) iconPill.className = "w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center flex-shrink-0";
+      if (titleEl) {
+        titleEl.textContent = `Ver Canasta • ${lineCount} ${lineCount === 1 ? "producto" : "productos"}`;
+        titleEl.className = "text-xs font-extrabold text-white truncate";
+      }
+      if (subEl) {
+        subEl.textContent = techName ? `Entregar a ${techName} (${totalUnits} uds)` : `${totalUnits} uds • Toca para despachar`;
+        subEl.className = "text-[11px] text-emerald-100 truncate";
+      }
+      if (countEl) {
+        countEl.textContent = String(lineCount);
+        countEl.className = "px-2.5 py-1 rounded-xl bg-black/25 text-white font-mono text-xs font-extrabold";
+      }
+      if (chevEl) chevEl.className = "w-4 h-4 text-white";
+    }
+  }
+
   function renderDispatchCart() {
     const box = document.getElementById("dispatch-cart-items");
     const totalBadge = document.getElementById("cart-total-badge");
-    const mobileCount = document.getElementById("mobile-cart-count");
     const sub = document.getElementById("cart-summary-sub");
     const btnConfirm = document.getElementById("btn-confirm-dispatch");
 
     const totalItems = dispatchCart.reduce((acc, i) => acc + Number(i.quantity || 0), 0);
     if (totalBadge) totalBadge.textContent = `${dispatchCart.length} ítems`;
-    if (mobileCount) mobileCount.textContent = dispatchCart.length;
     if (sub) sub.textContent = dispatchCart.length ? `${dispatchCart.length} líneas • ${totalItems} uds totales` : "Escanea o toca productos para agregar";
     if (btnConfirm) btnConfirm.disabled = dispatchCart.length === 0;
 
+    syncMobileCartBarUI();
+
     if (!box) return;
     if (dispatchCart.length === 0) {
-      box.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center py-10 px-4">
-        <div class="alm-icon-chip w-11 h-11 rounded-2xl border-dashed flex items-center justify-center text-slate-400 mb-3">
+      box.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center py-8 px-4">
+        <div class="alm-icon-chip w-11 h-11 rounded-2xl border-dashed flex items-center justify-center text-slate-400 mb-2.5">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
           </svg>
@@ -988,18 +1311,36 @@
       <div class="alm-cart-row alm-surface-inset rounded-xl p-2.5 space-y-2">
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0">
-            <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${esc(it.name)}</div>
-            <div class="text-[10px] font-mono text-slate-400 mt-0.5">${esc(it.unitSku || it.sku)}</div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white leading-snug line-clamp-2">${esc(it.name)}</div>
+            <div class="text-[10px] font-mono text-slate-400 mt-0.5">${esc(it.unitSku || it.sku)} • Máx: ${it.maxStock} ${esc(it.type === "bulk" ? it.unitOfMeasure : "und")}</div>
           </div>
-          <button type="button" onclick="removeCartItem(${idx})" aria-label="Quitar" class="pos-press p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10">
+          <button type="button" onclick="removeCartItem(${idx})" aria-label="Quitar" class="pos-press p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 flex-shrink-0">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div class="flex items-center justify-between gap-2">
-          <div class="alm-input inline-flex items-center gap-0.5 rounded-lg p-0.5">
-            <button type="button" onclick="updateCartQty(${idx}, -1)" class="pos-press w-7 h-7 rounded-md hover:bg-slate-100 dark:hover:bg-white/10 font-bold text-sm">−</button>
-            <span class="px-2.5 font-mono text-xs font-bold tabular-nums">${it.quantity}</span>
-            <button type="button" onclick="updateCartQty(${idx}, 1)" class="pos-press w-7 h-7 rounded-md hover:bg-slate-100 dark:hover:bg-white/10 font-bold text-sm">+</button>
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-1.5">
+            <div class="alm-input inline-flex items-center gap-0.5 rounded-xl p-0.5">
+              <button type="button" onclick="updateCartQty(${idx}, -1)" class="pos-press w-7 h-7 rounded-lg hover:bg-slate-200/60 dark:hover:bg-white/10 font-bold text-sm">−</button>
+              <input
+                type="number"
+                min="1"
+                max="${it.maxStock}"
+                value="${it.quantity}"
+                onchange="setCartQtyDirect(${idx}, this.value)"
+                aria-label="Cantidad"
+                class="w-12 text-center bg-transparent border-0 focus:outline-none font-mono text-xs font-extrabold tabular-nums text-slate-900 dark:text-white"
+              />
+              <button type="button" onclick="updateCartQty(${idx}, 1)" class="pos-press w-7 h-7 rounded-lg hover:bg-slate-200/60 dark:hover:bg-white/10 font-bold text-sm">+</button>
+            </div>
+            ${
+              it.type === "bulk"
+                ? `<div class="inline-flex items-center gap-1">
+                    <button type="button" onclick="updateCartQty(${idx}, 10)" class="pos-press alm-bulk-btn px-1.5 py-1 rounded-lg text-[10px] font-mono font-bold">+10</button>
+                    <button type="button" onclick="updateCartQty(${idx}, 50)" class="pos-press alm-bulk-btn px-1.5 py-1 rounded-lg text-[10px] font-mono font-bold">+50</button>
+                  </div>`
+                : ""
+            }
           </div>
           ${
             it.variants && it.variants.length > 0
@@ -1011,7 +1352,7 @@
                   <option value="">Unidad genérica</option>
                   ${it.availableUnits.slice(0, 40).map((u) => `<option value="${esc(u.id)}" ${u.id === it.itemUnitId ? "selected" : ""}>${esc(u.sku)}${u.serialNumber ? " / " + esc(u.serialNumber) : ""}</option>`).join("")}
                 </select>`
-              : `<span class="text-[10px] font-mono text-slate-400">Disp: ${it.maxStock}</span>`
+              : `<span class="text-[10px] font-mono text-slate-400">${esc(it.type === "bulk" ? it.unitOfMeasure : "und")}</span>`
           }
         </div>
       </div>`
@@ -1026,6 +1367,9 @@
     if (!employeeId) {
       playBeep("error");
       showToast("Selecciona el técnico/personal que recibe el material", "warn");
+      if (isMobileSheetViewport() && !mobileCartOpen) {
+        window.openMobileCart();
+      }
       empSel?.focus();
       return;
     }
@@ -1080,6 +1424,7 @@
 
       dispatchCart = [];
       if (document.getElementById("dispatch-notes-input")) document.getElementById("dispatch-notes-input").value = "";
+      if (mobileCartOpen) window.closeMobileCart();
       await refreshAllWarehouseData(false);
 
       if (autoPrint) {
@@ -1241,10 +1586,17 @@
     renderPurchaseCart();
   };
 
+  window.clearPurchaseCart = function () {
+    purchaseCart = [];
+    renderPurchaseCart();
+  };
+
   function updatePurchaseTotalUI() {
     const total = purchaseCart.reduce((acc, i) => acc + i.quantity * i.unitCost, 0);
     const el = document.getElementById("purchase-total-amount");
     if (el) el.textContent = `S/ ${total.toFixed(2)}`;
+    const mobCount = document.getElementById("purchase-mobile-count");
+    if (mobCount) mobCount.textContent = String(purchaseCart.length);
   }
 
   function renderPurchaseCart() {
@@ -1258,19 +1610,19 @@
     box.innerHTML = purchaseCart
       .map(
         (it, idx) => `
-      <div class="rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 p-2.5 space-y-2">
+      <div class="alm-surface-inset rounded-xl p-2.5 space-y-2">
         <div class="flex items-center justify-between gap-2">
           <div class="text-xs font-bold truncate">${esc(it.name)}</div>
-          <button type="button" onclick="removePurchaseLine(${idx})" class="text-rose-500 text-xs font-bold">✕</button>
+          <button type="button" onclick="removePurchaseLine(${idx})" class="text-rose-500 text-xs font-bold px-1">✕</button>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="text-[10px] text-slate-400">Cantidad</label>
-            <input type="number" min="1" value="${it.quantity}" oninput="updatePurchaseLine(${idx}, 'quantity', this.value)" class="w-full px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-mono font-bold" />
+            <input type="number" min="1" value="${it.quantity}" oninput="updatePurchaseLine(${idx}, 'quantity', this.value)" class="alm-input w-full px-2.5 py-1 rounded-lg text-xs font-mono font-bold" />
           </div>
           <div>
             <label class="text-[10px] text-slate-400">Costo Unit. (S/)</label>
-            <input type="number" min="0" step="0.01" value="${it.unitCost}" oninput="updatePurchaseLine(${idx}, 'unitCost', this.value)" class="w-full px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-mono font-bold" />
+            <input type="number" min="0" step="0.01" value="${it.unitCost}" oninput="updatePurchaseLine(${idx}, 'unitCost', this.value)" class="alm-input w-full px-2.5 py-1 rounded-lg text-xs font-mono font-bold" />
           </div>
         </div>
       </div>`
@@ -1452,14 +1804,14 @@
       listBox.innerHTML = almSelectedNodeStock
         .map(
           (item) => `
-        <div class="rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 p-3 flex items-center justify-between gap-2">
+        <div class="alm-surface-inset rounded-xl p-3 flex items-center justify-between gap-2">
           <div class="min-w-0">
             <div class="text-xs font-bold truncate">${esc(item.productName || "Equipo")} <span class="font-mono text-indigo-500">x${item.quantity}</span></div>
             <div class="text-[10px] font-mono text-slate-400">${esc(item.rackLocation || "Sin rack")} ${item.serialNumber ? "• SN: " + esc(item.serialNumber) : ""}</div>
           </div>
           ${
             item.status !== "retornado"
-              ? `<button type="button" onclick="returnFromSelectedNode('${esc(item.id)}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500 hover:text-slate-950 text-amber-500 text-[11px] font-bold transition">Retornar</button>`
+              ? `<button type="button" onclick="returnFromSelectedNode('${esc(item.id)}')" class="pos-press px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500 hover:text-slate-950 text-amber-500 text-[11px] font-bold transition">Retornar</button>`
               : `<span class="text-[10px] font-mono text-slate-400">Retornado</span>`
           }
         </div>`
@@ -1536,8 +1888,8 @@
     document.querySelectorAll(".eppfilter-btn").forEach((b) => {
       const act = b.getAttribute("data-eppfilter") === f;
       b.className = act
-        ? "eppfilter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white"
-        : "eppfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300";
+        ? "eppfilter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 text-white"
+        : "eppfilter-btn alm-surface px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300";
     });
     renderEppModule();
   };
@@ -1638,7 +1990,7 @@
     document.getElementById("epp-modal-body").innerHTML = `
       <div>
         <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Condición Física</label>
-        <select id="epp-cond-sel" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-bold">
+        <select id="epp-cond-sel" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-bold">
           <option value="optimo" ${unit.conditionStatus === "optimo" ? "selected" : ""}>🟢 Óptimo</option>
           <option value="bueno" ${unit.conditionStatus === "bueno" ? "selected" : ""}>🟢 Bueno</option>
           <option value="regular" ${unit.conditionStatus === "regular" ? "selected" : ""}>🟡 Regular</option>
@@ -1648,15 +2000,15 @@
       </div>
       <div>
         <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Fecha de Vencimiento</label>
-        <input id="epp-exp-input" type="date" value="${esc((unit.expirationDate || "").split("T")[0])}" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-mono" />
+        <input id="epp-exp-input" type="date" value="${esc((unit.expirationDate || "").split("T")[0])}" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-mono" />
       </div>
       <div>
         <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Observación de Inspección</label>
-        <input id="epp-note-input" type="text" value="${esc(unit.notes || "")}" placeholder="Ej: Revisado sin fisuras / correas OK" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs" />
+        <input id="epp-note-input" type="text" value="${esc(unit.notes || "")}" placeholder="Ej: Revisado sin fisuras / correas OK" class="alm-input w-full px-3 py-2 rounded-xl text-xs" />
       </div>
       <div class="flex gap-2 pt-2">
-        <button type="button" onclick="closeEppModal()" class="flex-1 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-bold">Cancelar</button>
-        <button type="button" onclick="saveEppInspection(${productId}, '${esc(unitId)}')" class="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-extrabold">Guardar Inspección</button>
+        <button type="button" onclick="closeEppModal()" class="pos-press flex-1 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-bold">Cancelar</button>
+        <button type="button" onclick="saveEppInspection(${productId}, '${esc(unitId)}')" class="pos-press flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-extrabold">Guardar Inspección</button>
       </div>
     `;
     document.getElementById("epp-inspect-modal").classList.remove("hidden");
@@ -1823,7 +2175,6 @@
       previewPaper.innerHTML = ticketHtml;
     }
 
-    // Generar QR en ambos contenedores si QRCode está disponible
     if (typeof window.QRCode === "function") {
       [printArea, previewPaper].forEach((root) => {
         const slot = root?.querySelector("#thermal-qr-slot");
@@ -1904,7 +2255,6 @@
       });
     }
 
-    // Marcar etiquetas como impresas en backend
     fetch("/api/inventory/products/mark-barcodes-printed", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1914,6 +2264,5 @@
     document.getElementById("ticket-preview-modal")?.classList.remove("hidden");
   };
 
-  // Arrancar al cargar DOM
   document.addEventListener("DOMContentLoaded", bootstrapAlmacen);
 })();

@@ -26,7 +26,7 @@
   <meta name="apple-mobile-web-app-title" content="TurboAlmacén">
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
 
-  <link rel="stylesheet" href="/assets/tailwind.min.css?v=almacen_v2">
+  <link rel="stylesheet" href="/assets/tailwind.min.css?v=almacen_v3">
   <script src="/js/session-guard.js"></script>
   <script src="/js/jsQR.min.js"></script>
   <script src="/js/qrcode.min.js"></script>
@@ -36,18 +36,20 @@
 
   <style>
     :root {
-      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-      --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-      --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+      /* Apple Fluid Interface curves (WWDC Designing Fluid Interfaces / Vaul) */
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
-      /* Light theme surface tokens */
-      --bg-canvas: #f4f6f9;
-      --bg-header: rgba(255, 255, 255, 0.88);
-      --bg-subbar: rgba(248, 250, 252, 0.92);
+      /* Light theme Apple-inspired surface tokens */
+      --bg-canvas: #f2f4f8;
+      --bg-header: rgba(255, 255, 255, 0.78);
+      --bg-subbar: rgba(248, 250, 252, 0.84);
       --bg-surface: #ffffff;
-      --bg-surface-2: #f8fafc;
+      --bg-surface-2: #f1f5f9;
+      --bg-surface-3: #e2e8f0;
       --bg-input: #f1f5f9;
-      --border-subtle: rgba(15, 23, 42, 0.08);
+      --border-subtle: rgba(15, 23, 42, 0.075);
       --border-strong: rgba(15, 23, 42, 0.14);
       --text-primary: #0f172a;
       --text-secondary: #475569;
@@ -55,30 +57,33 @@
       --accent: #10b981;
       --accent-hover: #059669;
       --accent-soft: rgba(16, 185, 129, 0.12);
-      --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03);
-      --shadow-panel: 0 4px 20px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
-      --card-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.035);
+      --shadow-panel: 0 10px 30px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.04);
+      --shadow-sheet: 0 -12px 44px rgba(15, 23, 42, 0.18), 0 -2px 10px rgba(15, 23, 42, 0.06);
+      --card-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.8);
     }
 
     html.dark {
-      /* Refined obsidian/graphite surface tokens */
+      /* Apple macOS / iPadOS dark materials */
       --bg-canvas: #090c12;
-      --bg-header: rgba(13, 17, 25, 0.88);
-      --bg-subbar: rgba(11, 14, 21, 0.94);
-      --bg-surface: #111622;
-      --bg-surface-2: #161c2b;
-      --bg-input: #0c1019;
-      --border-subtle: rgba(255, 255, 255, 0.075);
-      --border-strong: rgba(255, 255, 255, 0.13);
-      --text-primary: #f1f5f9;
+      --bg-header: rgba(14, 18, 27, 0.78);
+      --bg-subbar: rgba(12, 16, 24, 0.85);
+      --bg-surface: #121723;
+      --bg-surface-2: #181f2e;
+      --bg-surface-3: #222b3d;
+      --bg-input: #0d111a;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.15);
+      --text-primary: #f8fafc;
       --text-secondary: #94a3b8;
       --text-muted: #64748b;
       --accent: #10b981;
       --accent-hover: #34d399;
-      --accent-soft: rgba(16, 185, 129, 0.14);
-      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-      --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      --card-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+      --accent-soft: rgba(16, 185, 129, 0.15);
+      --shadow-card: 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+      --shadow-panel: 0 16px 38px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      --shadow-sheet: 0 -16px 52px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      --card-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
 
     * {
@@ -86,12 +91,14 @@
     }
 
     body {
-      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', system-ui, sans-serif;
       background-color: var(--bg-canvas);
       color: var(--text-primary);
       -webkit-tap-highlight-color: transparent;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
     }
 
     .font-mono,
@@ -103,107 +110,37 @@
       font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
     }
 
-    /* Semantic surface & badge helpers (independent of Tailwind JIT) */
-    .alm-modal-surface {
-      background-color: #111622;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Hide native number spinners for clean inline inputs */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
     }
 
-    .alm-pin-key {
-      background-color: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-    }
-    .alm-pin-key:hover {
-      background-color: rgba(255, 255, 255, 0.11);
-    }
-
-    .alm-sticky-aside {
-      top: 116px;
-      max-height: calc(100vh - 8.25rem);
-    }
-
-    .alm-divider-b {
-      border-bottom: 1px solid var(--border-subtle);
-    }
-    .alm-divider-t {
-      border-top: 1px solid var(--border-subtle);
-    }
-
-    .alm-kpi-emerald { border-left: 3px solid #10b981; }
-    .alm-kpi-amber   { border-left: 3px solid #f59e0b; }
-    .alm-kpi-rose    { border-left: 3px solid #f43f5e; }
-    .alm-kpi-sky     { border-left: 3px solid #0ea5e9; }
-
-    .alm-badge-ok {
-      background-color: rgba(16, 185, 129, 0.12);
-      color: #059669;
-      border: 1px solid rgba(16, 185, 129, 0.25);
-    }
-    html.dark .alm-badge-ok { color: #34d399; }
-
-    .alm-badge-warn {
-      background-color: rgba(245, 158, 11, 0.12);
-      color: #d97706;
-      border: 1px solid rgba(245, 158, 11, 0.28);
-    }
-    html.dark .alm-badge-warn { color: #fbbf24; }
-
-    .alm-badge-crit {
-      background-color: rgba(244, 63, 94, 0.12);
-      color: #e11d48;
-      border: 1px solid rgba(244, 63, 94, 0.28);
-    }
-    html.dark .alm-badge-crit { color: #fb7185; }
-
-    .alm-badge-sky {
-      background-color: rgba(14, 165, 233, 0.12);
-      color: #0284c7;
-      border: 1px solid rgba(14, 165, 233, 0.25);
-    }
-    html.dark .alm-badge-sky { color: #38bdf8; }
-
-    .alm-icon-chip {
-      background-color: var(--bg-surface-2);
-      border: 1px solid var(--border-subtle);
-    }
-
-    .alm-bulk-btn {
-      background-color: var(--bg-surface-2);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-secondary);
-    }
-    .alm-bulk-btn:hover {
-      background-color: var(--accent);
-      border-color: var(--accent);
-      color: #ffffff;
-    }
-
-    .alm-toast-surface {
-      background-color: rgba(17, 22, 34, 0.96);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-
-    .alm-banner-warn {
-      background-color: rgba(245, 158, 11, 0.08);
-      border: 1px solid rgba(245, 158, 11, 0.26);
-    }
-
-    .alm-banner-sky {
-      background-color: rgba(14, 165, 233, 0.08);
-    }
-
-    /* Unified surface primitives */
+    /* Translucent Apple Materials */
     .alm-header {
       background-color: var(--bg-header);
       border-bottom: 1px solid var(--border-subtle);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
     }
 
     .alm-subbar {
       background-color: var(--bg-subbar);
       border-top: 1px solid var(--border-subtle);
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+    }
+
+    .alm-bottom-nav {
+      background-color: var(--bg-header);
+      border-top: 1px solid var(--border-subtle);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
+      padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
     }
 
     .alm-surface {
@@ -223,66 +160,144 @@
       border: 1px solid var(--border-subtle);
     }
 
+    .alm-modal-surface {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+    }
+
+    .alm-divider-b {
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .alm-divider-t {
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    /* KPI accents */
+    .alm-kpi-emerald { border-left: 3px solid #10b981; }
+    .alm-kpi-amber   { border-left: 3px solid #f59e0b; }
+    .alm-kpi-rose    { border-left: 3px solid #f43f5e; }
+    .alm-kpi-sky     { border-left: 3px solid #0ea5e9; }
+
+    /* Semantic badges */
+    .alm-badge-ok {
+      background-color: rgba(16, 185, 129, 0.13);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    html.dark .alm-badge-ok { color: #34d399; }
+
+    .alm-badge-warn {
+      background-color: rgba(245, 158, 11, 0.13);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.28);
+    }
+    html.dark .alm-badge-warn { color: #fbbf24; }
+
+    .alm-badge-crit {
+      background-color: rgba(244, 63, 94, 0.13);
+      color: #e11d48;
+      border: 1px solid rgba(244, 63, 94, 0.28);
+    }
+    html.dark .alm-badge-crit { color: #fb7185; }
+
+    .alm-badge-sky {
+      background-color: rgba(14, 165, 233, 0.13);
+      color: #0284c7;
+      border: 1px solid rgba(14, 165, 233, 0.25);
+    }
+    html.dark .alm-badge-sky { color: #38bdf8; }
+
+    .alm-icon-chip {
+      background-color: var(--bg-surface-2);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .alm-bulk-btn {
+      background-color: var(--bg-surface-2);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      transition: transform 110ms var(--ease-out), background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+    }
+    .alm-bulk-btn:active {
+      transform: scale(0.94);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .alm-bulk-btn:hover {
+        background-color: var(--accent);
+        border-color: var(--accent);
+        color: #ffffff;
+      }
+    }
+
+    .alm-toast-surface {
+      background-color: rgba(15, 20, 32, 0.92);
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+    }
+
+    .alm-banner-warn {
+      background-color: rgba(245, 158, 11, 0.09);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+    }
+
+    .alm-banner-sky {
+      background-color: rgba(14, 165, 233, 0.09);
+    }
+
+    /* Inputs */
     .alm-input {
       background-color: var(--bg-input);
       border: 1px solid var(--border-subtle);
       color: var(--text-primary);
       transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
     }
-
     .alm-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
-    }
-
-    .alm-input::placeholder {
-      color: var(--text-muted);
-    }
-
-    /* Scanner command input */
-    .alm-scanner-input {
-      background-color: var(--bg-input);
-      border: 1px solid var(--border-strong);
-      color: var(--text-primary);
-      transition: border-color 160ms ease, box-shadow 160ms ease;
-    }
-
-    .alm-scanner-input:focus {
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
     }
-
-    .alm-scanner-input::placeholder {
+    .alm-input::placeholder {
       color: var(--text-muted);
     }
 
-    /* Tactile pressable system (Emil Kowalski principles) */
-    .pos-press {
-      transition: transform 140ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 160ms ease, opacity 150ms ease;
+    /* Spotlight-style Scanner Command Bar */
+    .alm-scanner-shell {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+      transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }
+    .alm-scanner-shell:focus-within {
+      border-color: var(--accent);
+      background-color: var(--bg-surface);
+      box-shadow: 0 0 0 3.5px rgba(16, 185, 129, 0.18);
     }
 
+    /* Tactile immediate press feedback (Apple §1 Response on pointer-down) */
+    .pos-press {
+      transition: transform 110ms var(--ease-out), background-color 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 150ms ease, opacity 140ms ease;
+      user-select: none;
+    }
     .pos-press:active:not(:disabled) {
-      transform: scale(0.97);
+      transform: scale(0.965);
     }
 
     .pos-icon-btn {
-      height: 36px;
-      min-width: 36px;
+      height: 34px;
+      min-width: 34px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 5px;
       border-radius: 10px;
       background-color: var(--bg-surface-2);
       border: 1px solid var(--border-subtle);
       color: var(--text-secondary);
-      transition: transform 140ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+      transition: transform 110ms var(--ease-out), background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+      user-select: none;
     }
-
     .pos-icon-btn:active {
-      transform: scale(0.95);
+      transform: scale(0.93);
     }
 
     /* Product cards */
@@ -291,77 +306,59 @@
       background-color: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       box-shadow: var(--shadow-card);
-      transition: transform 160ms var(--ease-out), border-color 160ms ease, box-shadow 180ms ease, background-color 160ms ease;
+      transition: transform 140ms var(--ease-out), border-color 150ms ease, box-shadow 180ms ease, background-color 150ms ease;
       user-select: none;
     }
-
     .pos-card:active {
-      transform: scale(0.975);
+      transform: scale(0.98);
     }
-
     .pos-card.in-cart {
-      border-color: rgba(16, 185, 129, 0.55);
-      box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2), var(--shadow-card);
+      border-color: rgba(16, 185, 129, 0.65);
+      box-shadow: 0 0 0 1.5px rgba(16, 185, 129, 0.25), var(--shadow-card);
+      background-image: linear-gradient(180deg, rgba(16, 185, 129, 0.04) 0%, transparent 60%);
     }
 
     .pos-card-img {
       transition: transform 240ms var(--ease-out);
     }
 
-    /* Hover interactions strictly gated for fine pointers (no sticky touch hover) */
     @media (hover: hover) and (pointer: fine) {
       .pos-icon-btn:hover {
         border-color: var(--border-strong);
         color: var(--text-primary);
+        background-color: var(--bg-surface);
       }
-
       .pos-card:hover {
         transform: translateY(-2px);
         border-color: rgba(16, 185, 129, 0.45);
-        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18), var(--card-highlight);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16), var(--card-highlight);
       }
-
       html:not(.dark) .pos-card:hover {
-        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
       }
-
       .pos-card:hover .pos-card-img {
         transform: scale(1.03);
       }
-
-      .pos-card:hover .pos-card-add {
-        opacity: 1;
-        transform: translateX(0);
-      }
     }
 
-    .pos-card-add {
-      opacity: 0;
-      transform: translateX(-3px);
-      transition: opacity 160ms ease, transform 160ms var(--ease-out);
-    }
-
-    /* Tabs */
+    /* Segmented Tabs (Desktop) */
     .alm-tab-btn {
       position: relative;
       border: 1px solid transparent;
-      transition: transform 140ms var(--ease-out), background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+      transition: transform 110ms var(--ease-out), background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+      user-select: none;
     }
-
     .alm-tab-btn:active {
       transform: scale(0.97);
     }
-
     .alm-tab-btn.is-active {
       background-color: var(--accent);
       color: #ffffff;
       box-shadow: 0 2px 10px rgba(16, 185, 129, 0.28);
     }
-
     .alm-tab-btn:not(.is-active) {
       color: var(--text-secondary);
     }
-
     @media (hover: hover) and (pointer: fine) {
       .alm-tab-btn:not(.is-active):hover {
         background-color: var(--bg-surface-2);
@@ -372,64 +369,117 @@
     /* Filter pills */
     .dfilter-btn,
     .eppfilter-btn {
-      transition: transform 140ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+      transition: transform 110ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+      user-select: none;
+      flex-shrink: 0;
     }
-
     .dfilter-btn:active,
     .eppfilter-btn:active {
-      transform: scale(0.96);
+      transform: scale(0.95);
     }
 
-    /* PIN dots */
-    .pin-dot {
-      transition: transform 160ms var(--ease-out), background-color 140ms ease, border-color 140ms ease, box-shadow 180ms ease;
+    /* =====================================================================
+     * RESPONSIVE CART: STICKY PANEL ON DESKTOP (>=1024px) &
+     * FLUID iOS BOTTOM SHEET DRAWER ON MOBILE/TABLET (<1024px)
+     * ===================================================================== */
+    @media (min-width: 1024px) {
+      .alm-cart-sheet {
+        position: sticky;
+        top: 112px;
+        max-height: calc(100vh - 7.75rem);
+        transform: none !important;
+      }
+      .alm-cart-backdrop {
+        display: none !important;
+      }
     }
 
-    .pin-dot.active {
-      background-color: #10b981;
-      border-color: #34d399;
-      box-shadow: 0 0 12px rgba(16, 185, 129, 0.55);
-      transform: scale(1.18);
+    @media (max-width: 1023px) {
+      .alm-cart-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 45;
+        background-color: rgba(2, 6, 23, 0.62);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 320ms var(--ease-spring);
+      }
+      .alm-cart-backdrop.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .alm-cart-sheet {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 50;
+        max-height: 86dvh;
+        height: auto;
+        border-radius: 24px 24px 0 0;
+        box-shadow: var(--shadow-sheet);
+        border-top: 1px solid var(--border-strong);
+        transform: translate3d(0, 105%, 0);
+        transition: transform 420ms var(--ease-spring);
+        padding-bottom: env(safe-area-inset-bottom);
+        will-change: transform;
+      }
+      .alm-cart-sheet.is-open {
+        transform: translate3d(0, 0, 0);
+      }
+      .alm-cart-sheet.is-dragging {
+        transition: none !important;
+      }
+    }
+
+    /* Floating bottom Cart Pill Bar on mobile/tablet (<1024px) */
+    .alm-mobile-cart-bar {
+      background: rgba(16, 185, 129, 0.96);
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+      box-shadow: 0 12px 32px rgba(16, 185, 129, 0.34), 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      transition: transform 280ms var(--ease-spring), opacity 220ms ease;
+    }
+    .alm-mobile-cart-bar.is-empty {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
     }
 
     /* Scanner feedback pulse */
     .scanner-flash {
       animation: scanFlash 380ms var(--ease-out);
     }
-
     @keyframes scanFlash {
-      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.65); border-radius: 12px; }
-      55% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.18); border-radius: 12px; }
-      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); border-radius: 12px; }
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.65); }
+      55% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.2); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
 
-    /* Modal entrance (never from scale(0); centered origin) */
+    /* Modals & Toasts */
     .alm-modal-backdrop {
       transition: opacity 200ms var(--ease-out);
     }
-
     .alm-modal-card {
       transform-origin: center;
-      transition: transform 220ms var(--ease-out), opacity 180ms var(--ease-out);
+      transition: transform 240ms var(--ease-spring), opacity 180ms var(--ease-out);
     }
-
     @starting-style {
-      .alm-modal-backdrop:not(.hidden) {
-        opacity: 0;
-      }
+      .alm-modal-backdrop:not(.hidden) { opacity: 0; }
       .alm-modal-backdrop:not(.hidden) .alm-modal-card {
         opacity: 0;
-        transform: scale(0.96) translateY(6px);
+        transform: scale(0.95) translateY(8px);
       }
     }
 
-    /* Sonner-inspired toast */
     .alm-toast {
-      transition: transform 240ms var(--ease-out), opacity 200ms ease;
+      transition: transform 240ms var(--ease-spring), opacity 200ms ease;
       transform: translateY(0) scale(1);
       opacity: 1;
     }
-
     @starting-style {
       .alm-toast {
         opacity: 0;
@@ -437,11 +487,9 @@
       }
     }
 
-    /* Cart item entrance */
     .alm-cart-row {
       transition: transform 180ms var(--ease-out), opacity 160ms ease, border-color 150ms ease;
     }
-
     @starting-style {
       .alm-cart-row {
         opacity: 0;
@@ -449,7 +497,7 @@
       }
     }
 
-    /* Custom subtle scrollbars */
+    /* Scrollbars */
     .alm-scroll::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -458,28 +506,37 @@
       background: transparent;
     }
     .alm-scroll::-webkit-scrollbar-thumb {
-      background: rgba(148, 163, 184, 0.22);
+      background: rgba(148, 163, 184, 0.24);
       border-radius: 999px;
     }
     .alm-scroll::-webkit-scrollbar-thumb:hover {
-      background: rgba(148, 163, 184, 0.38);
+      background: rgba(148, 163, 184, 0.4);
     }
 
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* Reduced motion accessibility */
+    /* Accessibility: Reduced motion & transparency (Apple §14) */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
+        transition-duration: 120ms !important;
       }
       .pos-card:hover,
       .pos-card:active,
       .pos-press:active,
       .pos-icon-btn:active {
         transform: none !important;
+      }
+    }
+    @media (prefers-reduced-transparency: reduce) {
+      .alm-header,
+      .alm-subbar,
+      .alm-bottom-nav {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background-color: var(--bg-surface) !important;
       }
     }
 
@@ -537,31 +594,31 @@
 <body class="min-h-screen flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
 
   <!-- ===================================================================== -->
-  <!-- HEADER SUPERIOR FIJO + BARRA DE PISTOLA LÁSER                         -->
+  <!-- HEADER SUPERIOR TRANSLÚCIDO + BARRA DE ESCÁNER ESTILO SPOTLIGHT       -->
   <!-- ===================================================================== -->
   <header class="alm-header sticky top-0 z-30">
-    <div class="max-w-[1600px] mx-auto px-3 sm:px-5 py-2.5 flex flex-wrap items-center gap-2.5 sm:gap-4">
-      <!-- Marca -->
-      <div class="flex items-center gap-2.5 mr-auto sm:mr-0">
-        <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm flex-shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <div class="max-w-[1600px] mx-auto px-3 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-2 sm:gap-3.5">
+      <!-- Marca (Izquierda) -->
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white shadow-sm flex-shrink-0">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
           </svg>
         </div>
-        <div class="leading-tight">
+        <div class="leading-tight min-w-0">
           <div class="flex items-center gap-1.5">
-            <span class="font-extrabold text-sm sm:text-[15px] tracking-tight text-slate-900 dark:text-white">TurboAlmacén</span>
-            <span class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">POS</span>
+            <span class="font-extrabold text-[14px] sm:text-[15px] tracking-tight text-slate-900 dark:text-white">TurboAlmacén</span>
+            <span class="px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">POS</span>
           </div>
-          <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[160px] sm:max-w-[220px]" id="alm-user-label">Cargando...</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[135px] sm:max-w-[220px]" id="alm-user-label">Cargando...</div>
         </div>
       </div>
 
-      <!-- Barra de Escáner Láser / Buscador Instantáneo -->
-      <form onsubmit="handleGlobalScanSubmit(event)" class="order-3 sm:order-2 w-full sm:flex-1 sm:max-w-2xl flex items-center gap-2">
-        <div id="global-scanner-wrap" class="relative flex-1 flex items-center">
-          <span class="absolute left-3 text-emerald-500 pointer-events-none flex items-center">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <!-- Barra de Escáner Láser / Buscador Instantáneo con Cámara Integrada -->
+      <form onsubmit="handleGlobalScanSubmit(event)" class="order-3 md:order-2 w-full md:flex-1 md:max-w-2xl">
+        <div id="global-scanner-wrap" class="alm-scanner-shell relative flex items-center rounded-xl p-1 pl-3 gap-1.5">
+          <span class="text-emerald-500 pointer-events-none flex items-center flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 8v8m3-8v8m4-8v8m3-8v8"/>
             </svg>
           </span>
@@ -569,30 +626,30 @@
             id="global-scan-input"
             type="text"
             autocomplete="off"
-            placeholder="Escanea con pistola láser o busca SKU, serie o nombre..."
+            placeholder="Escanea código o busca producto, SKU, serie..."
             oninput="handleLiveSearchInput(this.value)"
-            class="alm-scanner-input w-full pl-9 pr-14 py-2 rounded-xl text-xs sm:text-[13px] font-medium"
+            class="w-full bg-transparent border-0 focus:outline-none text-xs sm:text-[13px] font-medium text-slate-900 dark:text-white placeholder:text-slate-400 py-1.5"
           />
-          <kbd class="hidden md:inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold text-slate-400 border border-slate-300/60 dark:border-white/10 absolute right-2.5 pointer-events-none">⏎</kbd>
-          <button type="button" onclick="clearGlobalSearch()" id="btn-clear-scan" aria-label="Limpiar búsqueda" class="hidden absolute right-2 p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <button type="button" onclick="clearGlobalSearch()" id="btn-clear-scan" aria-label="Limpiar búsqueda" class="hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white flex-shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
+          <kbd class="hidden lg:inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold text-slate-400 border border-slate-300/60 dark:border-white/10 pointer-events-none flex-shrink-0">⏎</kbd>
+          <button type="button" onclick="openCameraScanner()" title="Escanear con cámara QR / Barras" class="pos-press h-7 sm:h-8 px-2.5 sm:px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center gap-1.5 shadow-sm flex-shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span class="hidden sm:inline">Cámara</span>
+          </button>
         </div>
-        <button type="button" onclick="openCameraScanner()" title="Escanear con cámara" class="pos-press h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm flex-shrink-0">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-          <span class="hidden md:inline">Cámara</span>
-        </button>
       </form>
 
-      <!-- Controles rápidos -->
-      <div class="order-2 sm:order-3 flex items-center gap-1.5">
+      <!-- Controles rápidos compactos (Derecha - siempre en la fila 1 junto al logo) -->
+      <div class="order-2 md:order-3 flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
         <!-- Selector papel térmico 80mm / 58mm -->
-        <button type="button" onclick="togglePaperWidth()" id="btn-paper-width" title="Ancho de impresora térmica" class="pos-icon-btn px-2.5 text-[11px] font-mono font-bold">
+        <button type="button" onclick="togglePaperWidth()" id="btn-paper-width" title="Ancho de impresora térmica" class="pos-icon-btn px-2 text-[10px] sm:text-[11px] font-mono font-bold">
           <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
           </svg>
@@ -623,7 +680,7 @@
           </svg>
         </button>
         <!-- Cerrar sesión -->
-        <button type="button" onclick="almLogout(false)" title="Cerrar sesión" aria-label="Cerrar sesión" class="pos-press h-9 w-9 inline-flex items-center justify-center rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500">
+        <button type="button" onclick="almLogout(false)" title="Cerrar sesión" aria-label="Cerrar sesión" class="pos-press h-[34px] w-[34px] inline-flex items-center justify-center rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
           </svg>
@@ -631,42 +688,42 @@
       </div>
     </div>
 
-    <!-- Barra de pestañas POS (PC / Laptop / Tablet) -->
+    <!-- Barra de pestañas POS (PC / Laptop / Tablet >= 640px) -->
     <div class="alm-subbar hidden sm:block">
-      <div class="max-w-[1600px] mx-auto px-5 py-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar" id="desktop-mode-tabs">
-        <button data-tab="dispatch" onclick="switchAlmacenTab('dispatch')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+      <div class="max-w-[1600px] mx-auto px-5 py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar" id="desktop-mode-tabs">
+        <button data-tab="dispatch" onclick="switchAlmacenTab('dispatch')" class="alm-tab-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
           </svg>
           <span>Despacho POS</span>
           <span id="badge-pending-requests" class="hidden px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-amber-400 text-slate-950 font-extrabold">0</span>
         </button>
-        <button data-tab="returns" onclick="switchAlmacenTab('returns')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+        <button data-tab="returns" onclick="switchAlmacenTab('returns')" class="alm-tab-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
           </svg>
           <span>Devoluciones</span>
         </button>
-        <button data-tab="purchases" onclick="switchAlmacenTab('purchases')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+        <button data-tab="purchases" onclick="switchAlmacenTab('purchases')" class="alm-tab-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
           </svg>
           <span>Ingreso Compras</span>
         </button>
-        <button data-tab="transfers" onclick="switchAlmacenTab('transfers')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+        <button data-tab="transfers" onclick="switchAlmacenTab('transfers')" class="alm-tab-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
           </svg>
           <span>Transferencias</span>
         </button>
-        <button data-tab="epp" onclick="switchAlmacenTab('epp')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+        <button data-tab="epp" onclick="switchAlmacenTab('epp')" class="alm-tab-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
           </svg>
           <span>Control EPP</span>
           <span id="badge-epp-alerts" class="hidden px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-rose-500 text-white font-extrabold">0</span>
         </button>
-        <button data-tab="verify" onclick="switchAlmacenTab('verify')" class="alm-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
+        <button data-tab="verify" onclick="switchAlmacenTab('verify')" class="alm-tab-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
@@ -679,24 +736,24 @@
   <!-- ===================================================================== -->
   <!-- TOAST / FEEDBACK RÁPIDO TIPO CAJA                                     -->
   <!-- ===================================================================== -->
-  <div id="alm-toast-container" class="fixed top-16 right-4 z-50 space-y-2 pointer-events-none max-w-sm"></div>
+  <div id="alm-toast-container" class="fixed top-16 right-4 z-[60] space-y-2 pointer-events-none max-w-sm"></div>
 
   <!-- ===================================================================== -->
   <!-- CONTENIDO PRINCIPAL                                                   -->
   <!-- ===================================================================== -->
-  <main class="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-5 py-5 pb-24 sm:pb-8">
+  <main class="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-5 py-3.5 sm:py-5 pb-36 lg:pb-8">
 
     <!-- 1. MÓDULO DESPACHO POS -->
     <section id="panel-dispatch" class="alm-panel">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
-        <!-- IZQUIERDA: Pedidos de campo + Filtros + Grilla de Productos -->
-        <div class="lg:col-span-8 space-y-4">
+        <!-- IZQUIERDA: Pedidos de campo + Barra de Filtros Compacta + Catálogo -->
+        <div class="lg:col-span-8 space-y-3.5">
           <!-- Bandeja rápida de pedidos de técnicos (TurboTech) -->
           <div id="tech-requests-banner" class="hidden alm-banner-warn rounded-2xl p-3.5">
             <div class="flex items-center justify-between gap-2 mb-2.5">
               <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
                 <span class="text-xs font-bold text-amber-600 dark:text-amber-300 uppercase tracking-wider">Pedidos en vivo desde TurboTech</span>
               </div>
               <button type="button" onclick="toggleRequestsExpanded()" class="text-[11px] font-semibold text-amber-600 dark:text-amber-300 hover:underline" id="btn-toggle-reqs">Ocultar</button>
@@ -704,46 +761,72 @@
             <div id="tech-requests-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
           </div>
 
-          <!-- Barra de filtros y categoría -->
-          <div class="flex flex-wrap items-center gap-2">
-            <div class="flex flex-wrap items-center gap-1.5">
-              <button onclick="setDispatchFilter('all')" data-dfilter="all" class="dfilter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-sm flex items-center gap-1.5">
+          <!-- Barra unificada de filtros (1 sola fila deslizable en móvil + Categoría + Selector de Vista) -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <!-- Tira de filtros horizontal sin salto de línea en móvil -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 -mx-1 px-1">
+              <button onclick="setDispatchFilter('all')" data-dfilter="all" class="dfilter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 text-white shadow-sm flex items-center gap-1.5 whitespace-nowrap">
                 <span>Todos</span>
-                <span id="dcount-all" class="text-[10px] font-mono opacity-80"></span>
+                <span id="dcount-all" class="text-[10px] font-mono opacity-85"></span>
               </button>
-              <button onclick="setDispatchFilter('bulk')" data-dfilter="bulk" class="dfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+              <button onclick="setDispatchFilter('bulk')" data-dfilter="bulk" class="dfilter-btn alm-surface px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5 whitespace-nowrap">
                 <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 <span>A Granel</span>
               </button>
-              <button onclick="setDispatchFilter('simple')" data-dfilter="simple" class="dfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+              <button onclick="setDispatchFilter('simple')" data-dfilter="simple" class="dfilter-btn alm-surface px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5 whitespace-nowrap">
                 <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
                 <span>Equipos / Series</span>
               </button>
-              <button onclick="setDispatchFilter('epp')" data-dfilter="epp" class="dfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+              <button onclick="setDispatchFilter('epp')" data-dfilter="epp" class="dfilter-btn alm-surface px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5 whitespace-nowrap">
                 <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                 <span>EPP</span>
               </button>
-              <button onclick="setDispatchFilter('low')" data-dfilter="low" class="dfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-500 flex items-center gap-1.5">
+              <button onclick="setDispatchFilter('low')" data-dfilter="low" class="dfilter-btn alm-surface px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-500 flex items-center gap-1.5 whitespace-nowrap">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 <span>Stock Bajo</span>
               </button>
             </div>
-            <select id="dispatch-category-select" onchange="renderDispatchCatalog()" class="alm-input ml-auto px-3 py-1.5 rounded-lg text-xs font-semibold">
-              <option value="">Todas las categorías</option>
-            </select>
+
+            <!-- Categoría + Selector de Vista (Tarjetas / Lista Compacta) -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <select id="dispatch-category-select" onchange="renderDispatchCatalog()" class="alm-input flex-1 sm:flex-initial px-3 py-1.5 rounded-xl text-xs font-semibold min-w-[165px]">
+                <option value="">Todas las categorías</option>
+              </select>
+              <div class="alm-surface-inset inline-flex p-0.5 rounded-xl flex-shrink-0" role="group" aria-label="Modo de vista">
+                <button type="button" onclick="setCatalogViewMode('grid')" id="btn-view-grid" title="Vista cuadrícula" class="pos-press px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                  </svg>
+                </button>
+                <button type="button" onclick="setCatalogViewMode('list')" id="btn-view-list" title="Vista lista rápida" class="pos-press px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- Grilla táctil de productos -->
+          <!-- Grilla / Lista táctil de productos -->
           <div id="dispatch-products-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
             <!-- Renderizado dinámico -->
           </div>
         </div>
 
-        <!-- DERECHA: CANASTA / CAJA DE DESPACHO -->
-        <aside id="dispatch-cart-panel" class="alm-panel-elevated alm-sticky-aside lg:col-span-4 lg:sticky rounded-2xl overflow-hidden flex flex-col">
-          <div class="alm-divider-b px-4 py-3.5 flex items-center justify-between gap-2">
+        <!-- BACKDROP DE CANASTA (Solo Móvil / Tablet < 1024px) -->
+        <div id="dispatch-cart-backdrop" onclick="closeMobileCart()" class="alm-cart-backdrop"></div>
+
+        <!-- DERECHA (PC) / BOTTOM SHEET FLUIDO (MÓVIL & TABLET < 1024px): CANASTA DE DESPACHO -->
+        <aside id="dispatch-cart-panel" class="alm-panel-elevated alm-cart-sheet lg:col-span-4 lg:rounded-2xl overflow-hidden flex flex-col">
+          <!-- Handle de arrastre estilo iOS Sheet (solo visible en móvil/tablet < 1024px) -->
+          <div id="dispatch-cart-drag-handle" class="lg:hidden pt-2.5 pb-1 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none touch-none">
+            <div class="w-10 h-1.5 rounded-full bg-slate-300 dark:bg-white/20"></div>
+          </div>
+
+          <!-- Cabecera de Canasta -->
+          <div id="dispatch-cart-header" class="alm-divider-b px-4 py-3 flex items-center justify-between gap-2 select-none">
             <div class="flex items-center gap-2.5 min-w-0">
-              <div class="alm-badge-ok w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div class="alm-badge-ok w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
@@ -753,27 +836,37 @@
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate" id="cart-summary-sub">Escanea o toca productos para agregar</p>
               </div>
             </div>
-            <button type="button" onclick="clearDispatchCart()" class="pos-press text-[11px] font-semibold text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 px-2.5 py-1 rounded-lg">Vaciar</button>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="clearDispatchCart()" class="pos-press text-[11px] font-semibold text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 px-2.5 py-1 rounded-lg">Vaciar</button>
+              <button type="button" onclick="closeMobileCart()" aria-label="Cerrar canasta" class="lg:hidden pos-press w-7 h-7 rounded-full bg-slate-200/70 dark:bg-white/10 text-slate-600 dark:text-slate-300 inline-flex items-center justify-center">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
-          <!-- Selector de Técnico / Personal -->
-          <div class="alm-divider-b p-3.5 space-y-2.5">
+          <!-- Paso 1: Selector de Técnico / Personal -->
+          <div class="alm-divider-b p-3.5 space-y-2 bg-slate-50/40 dark:bg-white/[0.015]">
             <div>
-              <label for="dispatch-employee-select" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Entregar a Técnico / Personal *</label>
-              <select id="dispatch-employee-select" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold">
-                <option value="">— Seleccionar técnico —</option>
+              <div class="flex items-center justify-between mb-1">
+                <label for="dispatch-employee-select" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">1. Entregar a Técnico / Personal *</label>
+                <span id="dispatch-tech-status" class="text-[10px] font-semibold text-amber-500">Requerido</span>
+              </div>
+              <select id="dispatch-employee-select" onchange="handleDispatchTechChange()" class="alm-input w-full px-3 py-2 rounded-xl text-xs font-semibold">
+                <option value="">— Seleccionar técnico / personal —</option>
               </select>
             </div>
-            <input id="dispatch-notes-input" type="text" placeholder="Nota opcional (ej: Cuadrilla Norte / Instalaciones hoy)" class="alm-input w-full px-3 py-2 rounded-xl text-xs" />
+            <input id="dispatch-notes-input" type="text" placeholder="Nota opcional (ej: Cuadrilla Norte / Instalaciones hoy)" class="alm-input w-full px-3 py-1.5 rounded-xl text-xs" />
           </div>
 
-          <!-- Lista de ítems en canasta -->
-          <div id="dispatch-cart-items" class="alm-scroll flex-1 overflow-y-auto p-3.5 space-y-2 min-h-[190px]">
+          <!-- Paso 2: Lista de ítems en canasta -->
+          <div id="dispatch-cart-items" class="alm-scroll flex-1 overflow-y-auto p-3.5 space-y-2 min-h-[180px] max-h-[42vh] lg:max-h-none">
             <!-- Renderizado dinámico -->
           </div>
 
-          <!-- Footer de confirmación -->
-          <div class="alm-divider-t p-4 bg-slate-50/70 dark:bg-black/20 space-y-3">
+          <!-- Paso 3: Footer de confirmación -->
+          <div class="alm-divider-t p-3.5 sm:p-4 bg-slate-50/80 dark:bg-black/25 space-y-3">
             <label class="flex items-center gap-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none">
               <input type="checkbox" id="dispatch-auto-print" checked class="w-4 h-4 rounded accent-emerald-500">
               <span>Imprimir ticket térmico al confirmar</span>
@@ -815,21 +908,31 @@
         <!-- Selector rápido de productos para ingresar -->
         <div class="lg:col-span-7 space-y-3.5">
           <div class="alm-surface rounded-2xl p-4">
-            <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-              <span>Ingreso Rápido de Compras</span>
-            </h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Escanea o selecciona los productos de la factura para sumarlos al Kardex de almacén.</p>
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                  <span>Ingreso Rápido de Compras</span>
+                </h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Escanea o selecciona los productos de la factura para sumarlos al Kardex de almacén.</p>
+              </div>
+              <button type="button" onclick="document.getElementById('purchase-invoice-panel')?.scrollIntoView({behavior:'smooth'})" class="lg:hidden pos-press px-3 py-1.5 rounded-xl bg-sky-500/15 text-sky-500 font-bold text-xs flex-shrink-0">
+                Ver Factura (<span id="purchase-mobile-count">0</span>)
+              </button>
+            </div>
             <input id="purchase-product-search" type="text" oninput="renderPurchaseProductPicker()" placeholder="Buscar producto por nombre o SKU..." class="alm-input mt-3 w-full px-3.5 py-2 rounded-xl text-xs" />
           </div>
           <div id="purchase-products-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
         </div>
 
         <!-- Boleta / Factura de Ingreso -->
-        <div class="alm-panel-elevated alm-sticky-aside lg:col-span-5 lg:sticky rounded-2xl overflow-hidden">
-          <div class="alm-divider-b alm-banner-sky px-4 py-3.5 flex items-center gap-2">
-            <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Recepción de Factura / Guía</h3>
+        <div id="purchase-invoice-panel" class="alm-panel-elevated lg:col-span-5 lg:sticky lg:top-28 rounded-2xl overflow-hidden">
+          <div class="alm-divider-b alm-banner-sky px-4 py-3.5 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Recepción de Factura / Guía</h3>
+            </div>
+            <button type="button" onclick="clearPurchaseCart()" class="pos-press text-[11px] font-semibold text-slate-400 hover:text-rose-500 px-2 py-1 rounded-lg">Limpiar</button>
           </div>
           <div class="alm-divider-b p-4 space-y-3">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -963,10 +1066,10 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-1.5">
-        <button onclick="setEppFilter('all')" data-eppfilter="all" class="eppfilter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white">Todos los EPP</button>
-        <button onclick="setEppFilter('alerts')" data-eppfilter="alerts" class="eppfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-500">Solo Alertas / Vencidos</button>
-        <button onclick="setEppFilter('assigned')" data-eppfilter="assigned" class="eppfilter-btn alm-surface px-3 py-1.5 rounded-lg text-xs font-semibold text-sky-500">Asignados a Personal</button>
+      <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+        <button onclick="setEppFilter('all')" data-eppfilter="all" class="eppfilter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 text-white">Todos los EPP</button>
+        <button onclick="setEppFilter('alerts')" data-eppfilter="alerts" class="eppfilter-btn alm-surface px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-500">Solo Alertas / Vencidos</button>
+        <button onclick="setEppFilter('assigned')" data-eppfilter="assigned" class="eppfilter-btn alm-surface px-3 py-1.5 rounded-xl text-xs font-semibold text-sky-500">Asignados a Personal</button>
       </div>
 
       <div id="epp-list-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
@@ -1029,20 +1132,39 @@
   </main>
 
   <!-- ===================================================================== -->
-  <!-- BOTÓN FLOTANTE DE CANASTA (SOLO MÓVIL EN DESPACHO)                    -->
+  <!-- BARRA FLOTANTE DE CANASTA ESTILO APPLE (MÓVIL Y TABLET < 1024px)      -->
   <!-- ===================================================================== -->
-  <button type="button" onclick="scrollToMobileCart()" id="mobile-cart-fab" class="pos-press sm:hidden fixed bottom-20 right-4 z-30 px-4 py-3 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-xl shadow-emerald-600/30 flex items-center gap-2">
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-    </svg>
-    <span>Canasta</span>
-    <span id="mobile-cart-count" class="px-2 py-0.5 rounded-md bg-black/25 font-mono">0</span>
-  </button>
+  <div id="mobile-cart-fab-wrap" class="lg:hidden fixed bottom-[68px] sm:bottom-5 inset-x-3 sm:inset-x-auto sm:right-5 sm:w-80 z-30 pointer-events-none">
+    <button
+      type="button"
+      onclick="openMobileCart()"
+      id="mobile-cart-fab"
+      class="alm-mobile-cart-bar is-empty pos-press pointer-events-auto w-full px-4 py-3 rounded-2xl flex items-center justify-between gap-3 text-left"
+    >
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div id="mobile-cart-icon-pill" class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <div id="mobile-cart-title" class="text-xs font-extrabold text-slate-900 dark:text-white truncate">Canasta de Despacho</div>
+          <div id="mobile-cart-subtitle" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">Toca un producto para agregar</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <span id="mobile-cart-count" class="px-2.5 py-1 rounded-xl bg-emerald-600 text-white font-mono text-xs font-extrabold">0</span>
+        <svg id="mobile-cart-chevron" class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
+        </svg>
+      </div>
+    </button>
+  </div>
 
   <!-- ===================================================================== -->
-  <!-- NAVEGACIÓN INFERIOR MÓVIL                                             -->
+  <!-- NAVEGACIÓN INFERIOR MÓVIL (< 640px) ESTILO iOS TAB BAR                -->
   <!-- ===================================================================== -->
-  <nav class="alm-header sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-b-0 px-1.5 py-1.5 grid grid-cols-6 gap-1">
+  <nav class="alm-bottom-nav sm:hidden fixed bottom-0 inset-x-0 z-30 px-1.5 pt-1.5 grid grid-cols-6 gap-1">
     <button data-mtab="dispatch" onclick="switchAlmacenTab('dispatch')" class="alm-mtab-btn pos-press flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl text-[10px] font-semibold">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17"/></svg>
       <span>Despacho</span>
@@ -1074,12 +1196,12 @@
   <!-- ===================================================================== -->
   <div id="camera-scanner-modal" class="alm-modal-backdrop fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="alm-modal-card alm-modal-surface w-full max-w-md rounded-2xl overflow-hidden shadow-2xl">
-      <div class="p-4 flex items-center justify-between border-b border-white/10">
+      <div class="p-4 flex items-center justify-between alm-divider-b">
         <div>
-          <h3 class="text-sm font-bold text-white">Escáner Cámara QR / Barras</h3>
-          <p class="text-[11px] text-slate-400" id="camera-status-text">Apunta al código de barras o QR del equipo</p>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Escáner Cámara QR / Barras</h3>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400" id="camera-status-text">Apunta al código de barras o QR del equipo</p>
         </div>
-        <button type="button" onclick="closeCameraScanner()" class="pos-press px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-semibold">Cerrar</button>
+        <button type="button" onclick="closeCameraScanner()" class="pos-press px-3 py-1.5 rounded-lg bg-slate-200/70 dark:bg-white/10 text-slate-800 dark:text-white text-xs font-semibold">Cerrar</button>
       </div>
       <div class="relative bg-black aspect-[4/3] overflow-hidden">
         <video id="camera-video" class="w-full h-full object-cover" playsinline muted></video>
@@ -1088,7 +1210,7 @@
           <div class="w-56 h-36 border-2 border-emerald-400 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"></div>
         </div>
       </div>
-      <div class="p-3 bg-black/40 text-center text-[11px] text-slate-400">
+      <div class="p-3 bg-slate-100 dark:bg-black/40 text-center text-[11px] text-slate-500 dark:text-slate-400">
         Soporta escaneo continuo. Cada código detectado emitirá un <b>BEEP</b> y se procesará en el módulo activo.
       </div>
     </div>
@@ -1099,17 +1221,17 @@
   <!-- ===================================================================== -->
   <div id="ticket-preview-modal" class="alm-modal-backdrop fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="alm-modal-card alm-modal-surface w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-      <div class="p-4 border-b border-white/10 flex items-center justify-between">
-        <h3 class="text-sm font-bold text-white">Ticket Térmico Listo</h3>
-        <button type="button" onclick="closeTicketPreview()" aria-label="Cerrar" class="pos-press p-1 rounded-lg text-slate-400 hover:text-white">
+      <div class="p-4 alm-divider-b flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Ticket Térmico Listo</h3>
+        <button type="button" onclick="closeTicketPreview()" aria-label="Cerrar" class="pos-press p-1 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="alm-scroll p-4 overflow-y-auto bg-slate-200 dark:bg-black/30 flex justify-center">
         <div id="ticket-preview-paper" class="bg-white text-black p-3 rounded-lg shadow font-mono text-[11px] leading-snug w-[290px]"></div>
       </div>
-      <div class="p-4 border-t border-white/10 flex gap-2">
-        <button type="button" onclick="closeTicketPreview()" class="pos-press flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-semibold">Cerrar</button>
+      <div class="p-4 alm-divider-t flex gap-2">
+        <button type="button" onclick="closeTicketPreview()" class="pos-press flex-1 py-2.5 rounded-xl bg-slate-200/70 dark:bg-white/10 text-slate-800 dark:text-slate-200 text-xs font-semibold">Cerrar</button>
         <button type="button" onclick="triggerThermalPrint()" class="pos-press flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Imprimir Ahora</button>
       </div>
     </div>
@@ -1135,6 +1257,6 @@
   <!-- ===================================================================== -->
   <div id="thermal-print-area"></div>
 
-  <script src="/js/almacen-pos.js?v=2"></script>
+  <script src="/js/almacen-pos.js?v=3"></script>
 </body>
 </html>
