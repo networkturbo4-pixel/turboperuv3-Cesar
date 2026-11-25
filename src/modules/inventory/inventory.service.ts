@@ -2016,28 +2016,57 @@ export function createPersonnelAssignmentsBatch(
   return created;
 }
 
-// DEVOLUCIÓN DE ASIGNACIÓN
+// DEVOLUCIÓN DE ASIGNACIÓN (TOTAL O PARCIAL)
 export function returnPersonnelAssignment(
   tenantId: string,
   assignmentId: string,
-  options?: { notes?: string; condition?: "buen_estado" | "danado" | "observacion" } | string
+  options?: {
+    notes?: string;
+    condition?: "buen_estado" | "danado" | "observacion";
+    quantity?: number;
+    failureReason?: string;
+  } | string
 ): PersonnelAssignment | null {
   const assignments = loadAssignments(tenantId);
   const asg = assignments.find((a) => a.id === assignmentId);
   if (!asg || asg.status === "devuelto") return null;
 
   const notes = typeof options === "string" ? options : options?.notes;
-  const condition = typeof options === "object" ? options?.condition : "buen_estado";
+  const condition = typeof options === "object" ? options?.condition || "buen_estado" : "buen_estado";
+  const failureReason = typeof options === "object" ? options?.failureReason : undefined;
+  const requestedQty = typeof options === "object" && options?.quantity ? Number(options.quantity) : asg.quantity;
+  const returnQty = Math.min(Math.max(1, requestedQty || asg.quantity), asg.quantity);
+  const isPartial = returnQty < asg.quantity;
+  const now = new Date().toISOString();
+  const fullNote = [notes, failureReason ? `Motivo: ${failureReason}` : ""].filter(Boolean).join(" • ");
 
-  asg.status = "devuelto";
-  asg.returnCondition = condition || "buen_estado";
-  asg.returnedAt = new Date().toISOString();
-  if (notes) asg.notes = (asg.notes ? asg.notes + " | " : "") + notes;
+  let targetRecord: PersonnelAssignment = asg;
+
+  if (isPartial) {
+    asg.quantity = Number((asg.quantity - returnQty).toFixed(2));
+    asg.notes = (asg.notes ? asg.notes + " | " : "") + `Devolución parcial (${returnQty}): ${fullNote || condition}`;
+    const partialRecord: PersonnelAssignment = {
+      ...asg,
+      id: "asg-ret-" + crypto.randomBytes(3).toString("hex"),
+      quantity: returnQty,
+      status: "devuelto",
+      returnCondition: condition,
+      returnedAt: now,
+      notes: `Devolución parcial (${returnQty}) de ${asg.id}${fullNote ? " | " + fullNote : ""}`,
+    };
+    assignments.unshift(partialRecord);
+    targetRecord = partialRecord;
+  } else {
+    asg.status = "devuelto";
+    asg.returnCondition = condition;
+    asg.returnedAt = now;
+    if (fullNote) asg.notes = (asg.notes ? asg.notes + " | " : "") + fullNote;
+  }
 
   saveAssignments(tenantId, assignments);
 
   // Actualizar estado de la unidad individual serializada si existía
-  if (asg.itemUnitId || asg.unitSku) {
+  if (!isPartial && (asg.itemUnitId || asg.unitSku)) {
     const products = loadProducts(tenantId);
     const product = products.find((p) => p.id === asg.productId);
     if (product && Array.isArray(product.itemUnits)) {
@@ -2047,37 +2076,40 @@ export function returnPersonnelAssignment(
         (u) => (asg.itemUnitId && u.id === asg.itemUnitId) || cleanUnitKey(u.sku) === targetKey
       );
       if (unit) {
-        if (asg.returnCondition === "buen_estado") {
+        if (condition === "buen_estado") {
           unit.status = "disponible";
           unit.assignedTo = undefined;
           unit.assignedAt = undefined;
-        } else if (asg.returnCondition === "danado") {
+        } else if (condition === "danado") {
           unit.status = "baja";
+          unit.conditionStatus = "baja";
+        } else {
+          unit.conditionStatus = "regular";
         }
+        if (fullNote) unit.notes = fullNote;
         saveProducts(tenantId, products);
       }
     }
   }
 
   // Reingresar stock al almacén principal solo si está en buen estado
-  if (asg.returnCondition === "buen_estado") {
+  if (condition === "buen_estado") {
     adjustStock(tenantId, asg.productId, {
       type: "in",
-      quantity: asg.quantity,
-      reason: `Devolución de material/EPP por ${asg.employeeName} (Buen estado)${asg.unitSku ? ` [Unidad ${asg.unitSku}]` : ""}`,
+      quantity: returnQty,
+      reason: `Devolución${isPartial ? " parcial" : ""} de material/EPP por ${asg.employeeName} (Buen estado)${asg.unitSku ? ` [Unidad ${asg.unitSku}]` : ""}`,
       operatorName: "Recepción Almacén",
     });
   } else {
-    // Si está dañado o en observación, registramos observación/merma
     adjustStock(tenantId, asg.productId, {
       type: "adjustment",
       quantity: 0,
-      reason: `Devolución de ${asg.employeeName} reportada como: ${asg.returnCondition} (Requiere reposición/taller)${asg.unitSku ? ` [Unidad ${asg.unitSku}]` : ""}`,
+      reason: `Devolución${isPartial ? " parcial" : ""} de ${asg.employeeName} reportada como: ${condition}${failureReason ? ` (${failureReason})` : ""} [Cant: ${returnQty}]${asg.unitSku ? ` [Unidad ${asg.unitSku}]` : ""}`,
       operatorName: "Recepción Almacén",
     });
   }
 
-  return asg;
+  return targetRecord;
 }
 
 // TRANSFERENCIA DIRECTA ENTRE TÉCNICOS EN CAMPO

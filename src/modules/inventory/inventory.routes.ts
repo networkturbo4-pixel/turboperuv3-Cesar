@@ -39,6 +39,8 @@ import {
   addVehicleChecklistItem,
   removeVehicleChecklistItem,
   getProductTraceability,
+  loadPurchases,
+  loadInstallations,
   createPurchase,
   createClientInstallation,
   createPersonnelAssignment,
@@ -1028,6 +1030,18 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
     return { success: true, data: summary };
   });
 
+  fastify.get("/inventory/purchases", async (request) => {
+    const tenantId = resolveTenantId(request);
+    const purchases = loadPurchases(tenantId);
+    return { success: true, count: purchases.length, data: purchases };
+  });
+
+  fastify.get("/inventory/client-installations", async (request) => {
+    const tenantId = resolveTenantId(request);
+    const installations = loadInstallations(tenantId);
+    return { success: true, count: installations.length, data: installations };
+  });
+
   fastify.post("/inventory/purchases", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const schema = z.object({
@@ -1210,9 +1224,15 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post("/inventory/personnel-assignments/:id/return", async (request, reply) => {
     const tenantId = resolveTenantId(request);
     const { id } = request.params as { id: string };
-    const { notes, condition } = (request.body as { notes?: string; condition?: "buen_estado" | "danado" | "observacion" }) || {};
+    const { notes, condition, quantity, failureReason } =
+      (request.body as {
+        notes?: string;
+        condition?: "buen_estado" | "danado" | "observacion";
+        quantity?: number;
+        failureReason?: string;
+      }) || {};
 
-    const returned = returnPersonnelAssignment(tenantId, id, { notes, condition });
+    const returned = returnPersonnelAssignment(tenantId, id, { notes, condition, quantity, failureReason });
     if (!returned) {
       return reply.status(404).send({ success: false, message: "Asignación no encontrada o ya devuelta" });
     }
@@ -1222,6 +1242,207 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       message: "Material/EPP retornado e ingresado nuevamente al stock disponible",
       data: returned,
     };
+  });
+
+  // ========================================================
+  // 8. SUB-BOBINAS (CORTE DE BOBINA MADRE) & TRASLADOS MULTI-SEDE EN TRÁNSITO
+  // ========================================================
+  fastify.post("/inventory/products/:id/split-spool", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return reply.status(400).send({ success: false, message: "ID de bobina inválido" });
+    }
+    const body = (request.body || {}) as {
+      cutMeters?: number;
+      childName?: string;
+      childSku?: string;
+      location?: string;
+      operatorName?: string;
+    };
+    const cutMeters = Number(body.cutMeters || 0);
+    const parent = getProductById(tenantId, numId);
+    if (!parent) {
+      return reply.status(404).send({ success: false, message: "Bobina madre no encontrada" });
+    }
+    if (cutMeters <= 0 || cutMeters >= parent.stock) {
+      return reply.status(400).send({
+        success: false,
+        message: `El metraje a cortar debe ser mayor a 0 y menor al stock actual (${parent.stock})`,
+      });
+    }
+
+    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const childSku = (body.childSku || `${parent.sku}-SUB-${suffix}`).trim();
+    const childName = (body.childName || `${parent.name} [SUB-BOBINA ${cutMeters}${parent.unitOfMeasure || "m"}]`).trim();
+
+    // 1. Descontar de bobina madre
+    adjustStock(tenantId, numId, {
+      type: "out",
+      quantity: cutMeters,
+      reason: `Corte y división hacia Sub-Bobina ${childSku} (${cutMeters} ${parent.unitOfMeasure || "m"})`,
+      operatorName: body.operatorName || "Almacén POS",
+    });
+
+    // 2. Crear nueva sub-bobina con su propio SKU/QR
+    const childProduct = createProduct(tenantId, {
+      type: "bulk",
+      name: childName,
+      alternativeNames: [`Sub-bobina de ${parent.sku}`],
+      categoryId: parent.categoryId,
+      sku: childSku,
+      barcode: childSku,
+      baseCost: parent.baseCost || 0,
+      salePrice: parent.salePrice || 0,
+      stock: cutMeters,
+      stockMin: Math.min(20, Math.floor(cutMeters * 0.2)),
+      stockCritical: Math.min(10, Math.floor(cutMeters * 0.1)),
+      images: parent.images || [],
+      description: `Sub-bobina derivada de ${parent.name} (${parent.sku})`,
+      location: body.location || parent.location || "Zona Bobinas",
+      unitOfMeasure: parent.unitOfMeasure || "m",
+      allowDecimals: true,
+    } as any);
+
+    return reply.status(201).send({
+      success: true,
+      message: `Sub-bobina ${childSku} creada con ${cutMeters} ${parent.unitOfMeasure || "m"}`,
+      data: { parentId: numId, childProduct },
+    });
+  });
+
+  const getInterTenantTransfersFile = () => {
+    const dir = path.join(process.cwd(), "data");
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    return path.join(dir, "inter_tenant_transfers.json");
+  };
+
+  const loadInterTenantTransfers = (): any[] => {
+    const file = getInterTenantTransfersFile();
+    if (!fs.existsSync(file)) return [];
+    try {
+      return JSON.parse(fs.readFileSync(file, "utf8")) || [];
+    } catch (_) {
+      return [];
+    }
+  };
+
+  const saveInterTenantTransfers = (list: any[]) => {
+    fs.writeFileSync(getInterTenantTransfersFile(), JSON.stringify(list, null, 2), "utf8");
+  };
+
+  fastify.get("/inventory/inter-tenant-transfers", async (request) => {
+    const tenantId = resolveTenantId(request);
+    const all = loadInterTenantTransfers();
+    const filtered = all.filter((t) => t.sourceTenantId === tenantId || t.targetTenantId === tenantId);
+    return { success: true, count: filtered.length, data: filtered };
+  });
+
+  fastify.post("/inventory/inter-tenant-transfers", async (request, reply) => {
+    const sourceTenantId = resolveTenantId(request);
+    const body = (request.body || {}) as {
+      targetTenantId?: string;
+      targetTenantName?: string;
+      sourceTenantName?: string;
+      productId?: number;
+      quantity?: number;
+      serialNumber?: string;
+      notes?: string;
+      operatorName?: string;
+    };
+    const targetTenantId = (body.targetTenantId || "").trim();
+    const productId = Number(body.productId || 0);
+    const quantity = Number(body.quantity || 0);
+    if (!targetTenantId || targetTenantId === sourceTenantId || !productId || quantity <= 0) {
+      return reply.status(400).send({ success: false, message: "Sede destino, producto y cantidad válidos son requeridos" });
+    }
+    const prod = getProductById(sourceTenantId, productId);
+    if (!prod || prod.stock < quantity) {
+      return reply.status(400).send({ success: false, message: "Stock insuficiente en sede origen para el traslado" });
+    }
+
+    adjustStock(sourceTenantId, productId, {
+      type: "out",
+      quantity,
+      reason: `Traslado en tránsito hacia sede ${body.targetTenantName || targetTenantId}${body.serialNumber ? ` [SN: ${body.serialNumber}]` : ""}`,
+      operatorName: body.operatorName || "Almacén POS",
+    });
+
+    const all = loadInterTenantTransfers();
+    const transfer = {
+      id: `TR-SEDE-${Date.now().toString().slice(-6)}`,
+      sourceTenantId,
+      sourceTenantName: body.sourceTenantName || sourceTenantId,
+      targetTenantId,
+      targetTenantName: body.targetTenantName || targetTenantId,
+      productId: prod.id,
+      productName: prod.name,
+      productSku: prod.sku,
+      productType: prod.type,
+      unitOfMeasure: prod.unitOfMeasure || "und",
+      baseCost: prod.baseCost || 0,
+      categoryId: prod.categoryId,
+      quantity,
+      serialNumber: body.serialNumber || "",
+      notes: body.notes || "",
+      status: "en_transito",
+      createdBy: body.operatorName || "Almacén",
+      createdAt: new Date().toISOString(),
+    };
+    all.unshift(transfer);
+    saveInterTenantTransfers(all);
+    return reply.status(201).send({ success: true, message: "Guía de traslado entre sedes enviada en tránsito", data: transfer });
+  });
+
+  fastify.post("/inventory/inter-tenant-transfers/:id/receive", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const { id } = request.params as { id: string };
+    const body = (request.body || {}) as { operatorName?: string };
+    const all = loadInterTenantTransfers();
+    const tr = all.find((t) => t.id === id);
+    if (!tr || tr.status !== "en_transito") {
+      return reply.status(404).send({ success: false, message: "Traslado no encontrado o ya recibido" });
+    }
+
+    const targetProducts = getInventoryProducts(tr.targetTenantId, {});
+    let targetProd = targetProducts.find(
+      (p) => (p.sku && p.sku.toLowerCase() === String(tr.productSku).toLowerCase()) || p.name.toLowerCase() === String(tr.productName).toLowerCase()
+    );
+
+    if (targetProd) {
+      adjustStock(tr.targetTenantId, targetProd.id, {
+        type: "in",
+        quantity: Number(tr.quantity),
+        reason: `Recepción de traslado ${tr.id} desde sede ${tr.sourceTenantName}`,
+        operatorName: body.operatorName || "Almacén Destino",
+      });
+    } else {
+      const cats = getCategories(tr.targetTenantId);
+      const fallbackCat = cats[0]?.id || "cat-general";
+      targetProd = createProduct(tr.targetTenantId, {
+        type: tr.productType || "simple",
+        name: tr.productName,
+        alternativeNames: [],
+        categoryId: fallbackCat,
+        sku: tr.productSku,
+        barcode: tr.productSku,
+        baseCost: Number(tr.baseCost || 0),
+        stock: Number(tr.quantity),
+        stockMin: 5,
+        stockCritical: 2,
+        images: [],
+        location: "Recepción Traslado",
+        unitOfMeasure: tr.unitOfMeasure || "und",
+      } as any);
+    }
+
+    tr.status = "recibido";
+    tr.receivedAt = new Date().toISOString();
+    tr.receivedBy = body.operatorName || tenantId;
+    saveInterTenantTransfers(all);
+
+    return { success: true, message: "Mercadería recibida e ingresada al stock de la sede destino", data: tr };
   });
 
   fastify.post("/inventory/personnel-assignments/:id/transfer", async (request, reply) => {
