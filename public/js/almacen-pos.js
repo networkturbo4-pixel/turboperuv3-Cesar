@@ -10,6 +10,8 @@
   let almUser = null;
   let almApartado = null;
   let almEnabledApps = [];
+  let almTenants = [];
+  let activeTenantId = localStorage.getItem("turbonetwork_active_tenant") || "turbonetwork";
   let almProducts = [];
   let almCategories = [];
   let almEmployees = [];
@@ -149,12 +151,12 @@
     const isGrid = catalogViewMode === "grid";
     if (btnGrid) {
       btnGrid.className = isGrid
-        ? "pos-press px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white flex items-center gap-1"
+        ? "pos-press alm-btn-primary px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1"
         : "pos-press px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1";
     }
     if (btnList) {
       btnList.className = !isGrid
-        ? "pos-press px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white flex items-center gap-1"
+        ? "pos-press alm-btn-primary px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1"
         : "pos-press px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1";
     }
   }
@@ -388,11 +390,183 @@
   }
 
   // =========================================================================
+  // TENANTS, LOGO Y COLORES DEL SISTEMA
+  // =========================================================================
+  function hexToRgbTuple(hex) {
+    const clean = String(hex || "").replace("#", "");
+    const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+    const num = parseInt(full, 16);
+    if (Number.isNaN(num)) return "37, 99, 235";
+    return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
+  }
+
+  function applyTenantBrandingUI() {
+    const tenant = almTenants.find((t) => t.id === activeTenantId) || almTenants[0] || null;
+    let userPrefs = {};
+    let savedBrand = {};
+    try {
+      if (almUser && almUser.preferences) userPrefs = almUser.preferences;
+      const rawBrand = localStorage.getItem("turbonetwork_branding");
+      if (rawBrand) savedBrand = JSON.parse(rawBrand) || {};
+    } catch (_) {}
+
+    const primaryColor =
+      userPrefs.primaryColor ||
+      (tenant && tenant.primaryColor) ||
+      savedBrand.primaryColor ||
+      "#2563eb";
+    const accentColor =
+      userPrefs.accentColor ||
+      (tenant && tenant.accentColor) ||
+      savedBrand.accentColor ||
+      "#059669";
+
+    document.documentElement.style.setProperty("--brand-primary", primaryColor);
+    document.documentElement.style.setProperty("--brand-primary-rgb", hexToRgbTuple(primaryColor));
+    document.documentElement.style.setProperty("--brand-accent", accentColor);
+    document.documentElement.style.setProperty("--brand-accent-rgb", hexToRgbTuple(accentColor));
+
+    const metaTheme = document.getElementById("alm-theme-color");
+    if (metaTheme) metaTheme.setAttribute("content", primaryColor);
+
+    const logoBox = document.getElementById("alm-brand-logo-box");
+    const logoImg = document.getElementById("alm-brand-logo-img");
+    const logoFallback = document.getElementById("alm-brand-logo-fallback");
+    const tenantLogo = (tenant && (tenant.faviconUrl || tenant.logoUrl)) || "";
+
+    if (logoBox) logoBox.style.backgroundColor = primaryColor;
+    if (logoImg && logoFallback) {
+      if (tenantLogo) {
+        logoImg.src = tenantLogo;
+        logoImg.classList.remove("hidden");
+        logoFallback.classList.add("hidden");
+      } else {
+        logoImg.src = "";
+        logoImg.classList.add("hidden");
+        logoFallback.classList.remove("hidden");
+      }
+    }
+
+    const favEl = document.getElementById("alm-favicon");
+    if (favEl && tenantLogo) favEl.href = tenantLogo;
+
+    const brandTitle = document.getElementById("alm-brand-title");
+    if (brandTitle) {
+      brandTitle.textContent = (tenant && tenant.name) || "TurboAlmacén";
+    }
+
+    const userLabel = document.getElementById("alm-user-label");
+    if (userLabel) {
+      const uName = (almUser && almUser.name) || "Almacenero";
+      const tLabel = (tenant && tenant.name) || activeTenantId;
+      userLabel.textContent = `${uName} • ${tLabel}`;
+    }
+
+    if (tenant && tenant.name) {
+      document.title = `${tenant.name} • Almacén POS`;
+    }
+  }
+
+  function renderTenantDropdown() {
+    const listEl = document.getElementById("alm-tenant-list");
+    const chev = document.getElementById("alm-tenant-chevron");
+    const accessible = almTenants.filter((t) => t.hasAccess !== false);
+    if (chev) chev.classList.toggle("hidden", accessible.length <= 1);
+    if (!listEl) return;
+
+    if (accessible.length === 0) {
+      listEl.innerHTML = `<div class="px-3 py-2 text-xs text-slate-400">Sin empresas disponibles</div>`;
+      return;
+    }
+
+    listEl.innerHTML = accessible
+      .map((t) => {
+        const isCurrent = t.id === activeTenantId;
+        const tLogo = t.faviconUrl || t.logoUrl || "";
+        const tColor = t.primaryColor || "#2563eb";
+        const initials = (t.name || t.id || "TN").slice(0, 2).toUpperCase();
+        return `
+        <button type="button" onclick="switchAlmacenTenant('${esc(t.id)}')" class="pos-press w-full px-2.5 py-2 rounded-xl flex items-center justify-between gap-2.5 text-left ${isCurrent ? "alm-brand-badge" : "hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200"}">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-extrabold flex-shrink-0 overflow-hidden" style="background-color:${esc(tColor)}">
+              ${tLogo ? `<img src="${esc(tLogo)}" alt="${esc(t.name)}" class="w-full h-full object-contain bg-white/95 p-0.5">` : esc(initials)}
+            </div>
+            <div class="min-w-0">
+              <div class="text-xs font-bold truncate">${esc(t.name)}</div>
+              <div class="text-[10px] opacity-70 truncate">${esc(t.tagline || t.id)}</div>
+            </div>
+          </div>
+          ${isCurrent ? `<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>` : ""}
+        </button>`;
+      })
+      .join("");
+  }
+
+  window.toggleTenantDropdown = function (e) {
+    if (e) e.stopPropagation();
+    const dd = document.getElementById("alm-tenant-dropdown");
+    const chev = document.getElementById("alm-tenant-chevron");
+    const accessible = almTenants.filter((t) => t.hasAccess !== false);
+    if (!dd || accessible.length <= 1) return;
+    const isHidden = dd.classList.toggle("hidden");
+    if (chev) chev.classList.toggle("rotate-180", !isHidden);
+  };
+
+  window.switchAlmacenTenant = async function (tenantId) {
+    const dd = document.getElementById("alm-tenant-dropdown");
+    const chev = document.getElementById("alm-tenant-chevron");
+    if (dd) dd.classList.add("hidden");
+    if (chev) chev.classList.remove("rotate-180");
+
+    if (!tenantId || tenantId === activeTenantId) return;
+    activeTenantId = tenantId;
+    try {
+      localStorage.setItem("turbonetwork_active_tenant", tenantId);
+    } catch (_) {}
+
+    dispatchCart = [];
+    purchaseCart = [];
+    if (mobileCartOpen) window.closeMobileCart();
+
+    applyTenantBrandingUI();
+    renderTenantDropdown();
+    await refreshAllWarehouseData(true);
+  };
+
+  async function loadTenantsAndBranding() {
+    try {
+      const res = await fetch("/api/tenants");
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.data)) {
+        almTenants = data.data;
+        const accessible = almTenants.filter((t) => t.hasAccess !== false);
+        if (accessible.length > 0 && !accessible.some((t) => t.id === activeTenantId)) {
+          activeTenantId = accessible[0].id;
+          try {
+            localStorage.setItem("turbonetwork_active_tenant", activeTenantId);
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+    applyTenantBrandingUI();
+    renderTenantDropdown();
+  }
+
+  // =========================================================================
   // INICIALIZACIÓN Y CARGA DE DATOS
   // =========================================================================
   async function bootstrapAlmacen() {
     syncHeaderControls();
     initCartSheetGestures();
+
+    document.addEventListener("click", (e) => {
+      const dd = document.getElementById("alm-tenant-dropdown");
+      const btn = document.getElementById("alm-tenant-switcher-btn");
+      if (dd && !dd.classList.contains("hidden") && !dd.contains(e.target) && (!btn || !btn.contains(e.target))) {
+        dd.classList.add("hidden");
+        document.getElementById("alm-tenant-chevron")?.classList.remove("rotate-180");
+      }
+    });
 
     const dateInput = document.getElementById("purch-date");
     if (dateInput && !dateInput.value) {
@@ -402,6 +576,7 @@
     try {
       const saved = localStorage.getItem("turbonetwork_session");
       if (saved) almUser = JSON.parse(saved);
+      activeTenantId = localStorage.getItem("turbonetwork_active_tenant") || activeTenantId;
     } catch (_) {}
 
     if (!almUser) {
@@ -409,10 +584,7 @@
       return;
     }
 
-    const userLabel = document.getElementById("alm-user-label");
-    if (userLabel) {
-      userLabel.textContent = `${almUser.name || "Almacenero"} • ${localStorage.getItem("turbonetwork_active_tenant") || "turbonetwork"}`;
-    }
+    await loadTenantsAndBranding();
 
     try {
       const accessRes = await fetch(
@@ -591,9 +763,7 @@
 
     document.querySelectorAll(".alm-mtab-btn").forEach((btn) => {
       const isAct = btn.getAttribute("data-mtab") === tab;
-      btn.classList.toggle("bg-emerald-500/15", isAct);
-      btn.classList.toggle("text-emerald-600", isAct);
-      btn.classList.toggle("dark:text-emerald-400", isAct);
+      btn.classList.toggle("alm-mtab-active", isAct);
       btn.classList.toggle("text-slate-500", !isAct);
       btn.classList.toggle("dark:text-slate-400", !isAct);
     });
@@ -948,9 +1118,7 @@
     document.querySelectorAll(".dfilter-btn").forEach((b) => {
       const act = b.getAttribute("data-dfilter") === f;
       const isLow = b.getAttribute("data-dfilter") === "low";
-      b.classList.toggle("bg-emerald-600", act);
-      b.classList.toggle("text-white", act);
-      b.classList.toggle("shadow-sm", act);
+      b.classList.toggle("alm-btn-primary", act);
       b.classList.toggle("alm-surface", !act);
       if (isLow) {
         b.classList.toggle("text-rose-500", !act);
@@ -1007,12 +1175,14 @@
 
     const cartQtyByProd = new Map();
     for (const item of dispatchCart) {
-      const pid = Number(item.productId);
+      const pid = String(item.productId);
       cartQtyByProd.set(pid, (cartQtyByProd.get(pid) || 0) + Number(item.quantity || 0));
     }
 
     grid.innerHTML = filtered
       .map((p) => {
+        const pidStr = String(p.id);
+        const pidAttr = esc(pidStr);
         const stock = Number(p.stock || 0);
         const isCritical = stock <= Number(p.stockCritical || 2);
         const isLow = stock <= Number(p.stockMin || 5);
@@ -1023,33 +1193,33 @@
           : "alm-badge-ok";
         const img = Array.isArray(p.images) && p.images[0] ? p.images[0] : "";
         const unitLabel = p.type === "bulk" ? p.unitOfMeasure || "m" : "und";
-        const inCartQty = cartQtyByProd.get(Number(p.id)) || 0;
+        const inCartQty = cartQtyByProd.get(pidStr) || 0;
         const typeTag = p.type === "bulk" ? "GRANEL" : p.type === "epp" ? "EPP" : "EQUIPO";
 
         const quickBulkBtns =
           p.type === "bulk"
             ? `<div class="grid grid-cols-3 gap-1 mt-2">
-                <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 10)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+10</button>
-                <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 50)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+50</button>
-                <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 100)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+100</button>
+                <button type="button" onclick="event.stopPropagation(); addToDispatchCart('${pidAttr}', 10)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+10</button>
+                <button type="button" onclick="event.stopPropagation(); addToDispatchCart('${pidAttr}', 50)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+50</button>
+                <button type="button" onclick="event.stopPropagation(); addToDispatchCart('${pidAttr}', 100)" class="pos-press alm-bulk-btn py-1 rounded-lg text-[10px] font-mono font-bold">+100</button>
               </div>`
             : "";
 
         // Control táctil directo en la tarjeta (Stepper si ya está en canasta, o botón + Agregar siempre visible)
         const actionControl =
           inCartQty > 0
-            ? `<div onclick="event.stopPropagation()" class="inline-flex items-center rounded-xl bg-emerald-600 text-white p-0.5 shadow-sm">
-                <button type="button" onclick="adjustProductCartQty(${p.id}, -1)" aria-label="Restar" class="pos-press w-6 h-6 rounded-lg hover:bg-black/15 font-extrabold text-xs flex items-center justify-center">−</button>
+            ? `<div onclick="event.stopPropagation()" class="alm-brand-bg inline-flex items-center rounded-xl p-0.5 shadow-sm">
+                <button type="button" onclick="adjustProductCartQty('${pidAttr}', -1)" aria-label="Restar" class="pos-press w-6 h-6 rounded-lg hover:bg-black/15 font-extrabold text-xs flex items-center justify-center">−</button>
                 <span class="px-2 font-mono text-[11px] font-extrabold tabular-nums">${inCartQty}</span>
-                <button type="button" onclick="adjustProductCartQty(${p.id}, 1)" aria-label="Sumar" class="pos-press w-6 h-6 rounded-lg hover:bg-black/15 font-extrabold text-xs flex items-center justify-center">+</button>
+                <button type="button" onclick="adjustProductCartQty('${pidAttr}', 1)" aria-label="Sumar" class="pos-press w-6 h-6 rounded-lg hover:bg-black/15 font-extrabold text-xs flex items-center justify-center">+</button>
               </div>`
-            : `<button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 1)" class="pos-press px-2.5 py-1 rounded-xl bg-emerald-500/12 hover:bg-emerald-600 text-emerald-600 dark:text-emerald-400 hover:text-white border border-emerald-500/25 text-[11px] font-bold flex items-center gap-1 flex-shrink-0">
+            : `<button type="button" onclick="event.stopPropagation(); addToDispatchCart('${pidAttr}', 1)" class="alm-btn-soft pos-press px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1 flex-shrink-0">
                 <span>+ Agregar</span>
               </button>`;
 
         if (isList) {
           return `
-          <div onclick="addToDispatchCart(${p.id}, 1)" class="pos-card ${inCartQty > 0 ? "in-cart" : ""} cursor-pointer rounded-2xl p-3 flex items-center justify-between gap-3">
+          <div onclick="addToDispatchCart('${pidAttr}', 1)" class="pos-card ${inCartQty > 0 ? "in-cart" : ""} cursor-pointer rounded-2xl p-3 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0 flex-1">
               ${
                 img
@@ -1070,9 +1240,9 @@
               ${
                 p.type === "bulk"
                   ? `<div class="flex items-center gap-1">
-                      <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 10)" class="pos-press alm-bulk-btn px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold">+10</button>
-                      <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 50)" class="pos-press alm-bulk-btn px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold">+50</button>
-                      <button type="button" onclick="event.stopPropagation(); addToDispatchCart(${p.id}, 100)" class="pos-press alm-bulk-btn px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold">+100</button>
+                      <button type="button" onclick="event.stopPropagation(); addToDispatchCart('${pidAttr}', 10)" class="pos-press alm-bulk-btn px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold">+10</button>
+                      <button type="button" onclick="event.stopPropagation(); addToDispatchCart('${pidAttr}', 50)" class="pos-press alm-bulk-btn px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold">+50</button>
+                      <button type="button" onclick="event.stopPropagation(); addToDispatchCart('${pidAttr}', 100)" class="pos-press alm-bulk-btn px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold">+100</button>
                     </div>`
                   : ""
               }
@@ -1081,7 +1251,7 @@
         }
 
         return `
-        <div onclick="addToDispatchCart(${p.id}, 1)" class="pos-card ${inCartQty > 0 ? "in-cart" : ""} cursor-pointer rounded-2xl p-3 flex flex-col justify-between">
+        <div onclick="addToDispatchCart('${pidAttr}', 1)" class="pos-card ${inCartQty > 0 ? "in-cart" : ""} cursor-pointer rounded-2xl p-3 flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between gap-1.5 mb-2">
               <span class="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-mono font-bold ${stockBadge}">${stock} ${esc(unitLabel)}</span>
@@ -1107,7 +1277,8 @@
   };
 
   window.adjustProductCartQty = function (productId, delta) {
-    const idx = dispatchCart.findIndex((it) => Number(it.productId) === Number(productId));
+    const pid = String(productId);
+    const idx = dispatchCart.findIndex((it) => String(it.productId) === pid);
     if (idx === -1) {
       if (delta > 0) window.addToDispatchCart(productId, delta);
       return;
@@ -1116,7 +1287,8 @@
   };
 
   window.addToDispatchCart = function (productId, qty, specificUnit) {
-    const prod = almProducts.find((p) => Number(p.id) === Number(productId));
+    const pid = String(productId);
+    const prod = almProducts.find((p) => String(p.id) === pid);
     if (!prod) return;
     if (Number(prod.stock || 0) <= 0) {
       playBeep("error");
@@ -1245,7 +1417,7 @@
 
     if (lineCount === 0) {
       fab.classList.add("is-empty");
-      if (iconPill) iconPill.className = "w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center flex-shrink-0";
+      if (iconPill) iconPill.className = "alm-brand-badge w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0";
       if (titleEl) {
         titleEl.textContent = "Canasta de Despacho";
         titleEl.className = "text-xs font-extrabold text-slate-900 dark:text-white truncate";
@@ -1268,7 +1440,7 @@
       }
       if (subEl) {
         subEl.textContent = techName ? `Entregar a ${techName} (${totalUnits} uds)` : `${totalUnits} uds • Toca para despachar`;
-        subEl.className = "text-[11px] text-emerald-100 truncate";
+        subEl.className = "text-[11px] text-white/85 truncate";
       }
       if (countEl) {
         countEl.textContent = String(lineCount);
@@ -1388,7 +1560,7 @@
         personnelName: employeeName,
         assignedAt: new Date().toISOString(),
         items: dispatchCart.map((it) => ({
-          productId: Number(it.productId),
+          productId: Number.isFinite(Number(it.productId)) ? Number(it.productId) : it.productId,
           productName: it.name,
           productSku: it.sku,
           productImage: it.image || undefined,
@@ -1545,7 +1717,7 @@
     grid.innerHTML = list
       .map(
         (p) => `
-      <div onclick="addProductToPurchaseCart(${p.id})" class="pos-card cursor-pointer rounded-xl p-3 flex items-center justify-between gap-2">
+      <div onclick="addProductToPurchaseCart('${esc(p.id)}')" class="pos-card cursor-pointer rounded-xl p-3 flex items-center justify-between gap-2">
         <div class="min-w-0">
           <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${esc(p.name)}</div>
           <div class="text-[10px] font-mono text-slate-400 mt-0.5">${esc(p.sku)} • Stock: ${p.stock}</div>
@@ -1557,9 +1729,10 @@
   };
 
   window.addProductToPurchaseCart = function (productId) {
-    const prod = almProducts.find((p) => Number(p.id) === Number(productId));
+    const pid = String(productId);
+    const prod = almProducts.find((p) => String(p.id) === pid);
     if (!prod) return;
-    const existing = purchaseCart.find((i) => Number(i.productId) === Number(productId));
+    const existing = purchaseCart.find((i) => String(i.productId) === pid);
     if (existing) {
       existing.quantity += 1;
     } else {
@@ -1704,8 +1877,8 @@
     document.getElementById("transfer-sub-node")?.classList.toggle("hidden", mode !== "node");
     const bTech = document.getElementById("btn-tr-tech");
     const bNode = document.getElementById("btn-tr-node");
-    if (bTech) bTech.className = mode === "tech" ? "pos-press px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white" : "pos-press px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-300";
-    if (bNode) bNode.className = mode === "node" ? "pos-press px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white" : "pos-press px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-300";
+    if (bTech) bTech.className = mode === "tech" ? "alm-btn-primary pos-press px-3 py-1.5 rounded-lg text-xs font-semibold" : "pos-press px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-300";
+    if (bNode) bNode.className = mode === "node" ? "alm-btn-primary pos-press px-3 py-1.5 rounded-lg text-xs font-semibold" : "pos-press px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-300";
     if (mode === "node") loadSelectedNodeStock();
   };
 
@@ -1888,7 +2061,7 @@
     document.querySelectorAll(".eppfilter-btn").forEach((b) => {
       const act = b.getAttribute("data-eppfilter") === f;
       b.className = act
-        ? "eppfilter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 text-white"
+        ? "eppfilter-btn alm-btn-primary px-3 py-1.5 rounded-xl text-xs font-semibold"
         : "eppfilter-btn alm-surface px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300";
     });
     renderEppModule();
@@ -1965,12 +2138,12 @@
           <span class="px-2 py-0.5 rounded-md text-[10px] font-bold flex-shrink-0 ${status.badge}">${esc(status.label)}</span>
         </div>
         <div class="flex items-center gap-2 pt-1">
-          <button type="button" onclick="addToDispatchCart(${product.id}, 1); switchAlmacenTab('dispatch');" class="pos-press alm-badge-ok flex-1 py-1.5 rounded-lg text-[11px] font-semibold">
+          <button type="button" onclick="addToDispatchCart('${esc(product.id)}', 1); switchAlmacenTab('dispatch');" class="pos-press alm-badge-ok flex-1 py-1.5 rounded-lg text-[11px] font-semibold">
             Despachar
           </button>
           ${
             unit
-              ? `<button type="button" onclick="openEppInspectModal(${product.id}, '${esc(unit.id)}')" class="pos-press alm-bulk-btn flex-1 py-1.5 rounded-lg text-[11px] font-semibold">
+              ? `<button type="button" onclick="openEppInspectModal('${esc(product.id)}', '${esc(unit.id)}')" class="pos-press alm-bulk-btn flex-1 py-1.5 rounded-lg text-[11px] font-semibold">
                   Inspeccionar
                 </button>`
               : ""
@@ -1982,7 +2155,7 @@
   }
 
   window.openEppInspectModal = function (productId, unitId) {
-    const prod = almProducts.find((p) => Number(p.id) === Number(productId));
+    const prod = almProducts.find((p) => String(p.id) === String(productId));
     const unit = prod?.itemUnits?.find((u) => u.id === unitId);
     if (!prod || !unit) return;
 
@@ -2008,7 +2181,7 @@
       </div>
       <div class="flex gap-2 pt-2">
         <button type="button" onclick="closeEppModal()" class="pos-press flex-1 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-bold">Cancelar</button>
-        <button type="button" onclick="saveEppInspection(${productId}, '${esc(unitId)}')" class="pos-press flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-extrabold">Guardar Inspección</button>
+        <button type="button" onclick="saveEppInspection('${esc(productId)}', '${esc(unitId)}')" class="pos-press alm-btn-primary flex-1 py-2.5 rounded-xl text-xs font-extrabold">Guardar Inspección</button>
       </div>
     `;
     document.getElementById("epp-inspect-modal").classList.remove("hidden");
@@ -2019,7 +2192,7 @@
   };
 
   window.saveEppInspection = async function (productId, unitId) {
-    const prod = almProducts.find((p) => Number(p.id) === Number(productId));
+    const prod = almProducts.find((p) => String(p.id) === String(productId));
     if (!prod || !Array.isArray(prod.itemUnits)) return;
 
     const conditionStatus = document.getElementById("epp-cond-sel")?.value || "optimo";
@@ -2084,7 +2257,7 @@
 
     const unit = localMatch?.unit;
     const activeAsg = almAssignments.filter(
-      (a) => Number(a.productId) === Number(prod.id) && (a.status === "en_uso" || a.status === "entregado")
+      (a) => String(a.productId) === String(prod.id) && (a.status === "en_uso" || a.status === "entregado")
     );
 
     box.className = "alm-surface-inset rounded-xl border border-emerald-500/35 p-5 text-left space-y-4";
@@ -2108,8 +2281,8 @@
           : ""
       }
       <div class="flex flex-wrap gap-2">
-        <button type="button" onclick="addToDispatchCart(${prod.id}, 1); switchAlmacenTab('dispatch');" class="pos-press px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Enviar a Despacho</button>
-        <button type="button" onclick="document.getElementById('label-product-select').value='${prod.id}'; printThermalLabels();" class="pos-press px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold">Imprimir Etiquetas</button>
+        <button type="button" onclick="addToDispatchCart('${esc(prod.id)}', 1); switchAlmacenTab('dispatch');" class="alm-btn-primary pos-press px-4 py-2 rounded-xl text-xs font-bold">Enviar a Despacho</button>
+        <button type="button" onclick="document.getElementById('label-product-select').value='${esc(prod.id)}'; printThermalLabels();" class="pos-press px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold">Imprimir Etiquetas</button>
       </div>
       ${
         activeAsg.length > 0
@@ -2199,10 +2372,10 @@
   };
 
   window.printThermalLabels = async function () {
-    const prodId = Number(document.getElementById("label-product-select")?.value || 0);
+    const prodId = String(document.getElementById("label-product-select")?.value || "");
     const copies = Math.min(50, Math.max(1, Number(document.getElementById("label-copies-input")?.value || 4)));
     const useUnits = document.getElementById("label-use-units")?.checked;
-    const prod = almProducts.find((p) => Number(p.id) === prodId);
+    const prod = almProducts.find((p) => String(p.id) === prodId);
     if (!prod) {
       showToast("Selecciona un producto para imprimir etiquetas", "warn");
       return;
