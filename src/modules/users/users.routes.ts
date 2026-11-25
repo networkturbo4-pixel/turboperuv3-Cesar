@@ -521,6 +521,20 @@ function buildAuthenticatedUserResponse(user: SystemUser, requestedTenant?: stri
     ? ["*"]
     : (user.allowedTenants || [assignedTenant]).filter(Boolean);
 
+  const normalizedRoleName = String(role?.name || user.roleName || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+  const isAlmacenRole =
+    !user.isSuperAdmin &&
+    Number(user.roleId) !== 1 &&
+    (String(role?.slug || "").toLowerCase() === "almacenero" || /\balmacenero\b/.test(normalizedRoleName));
+  const isTechRole =
+    !user.isSuperAdmin &&
+    Number(user.roleId) !== 1 &&
+    (Number(user.roleId) === 4 || /tecnic|campo|instalador|cuadrilla/i.test(normalizedRoleName));
+
   return {
     assignedTenant,
     userPermissions,
@@ -531,7 +545,7 @@ function buildAuthenticatedUserResponse(user: SystemUser, requestedTenant?: stri
       name: user.name,
       email: user.email,
       roleId: user.roleId,
-      roleName: user.roleName,
+      roleName: role?.name || user.roleName,
       avatar: user.avatar,
       isSuperAdmin: !!user.isSuperAdmin,
       assignedTenantId: assignedTenant,
@@ -548,19 +562,12 @@ function buildAuthenticatedUserResponse(user: SystemUser, requestedTenant?: stri
       preferences: user.preferences || {},
       permissions: userPermissions,
       allowedModules: userAllowedModules,
-      accessTarget:
-        user.accessTarget ||
-        (!user.isSuperAdmin &&
-        Number(user.roleId) !== 1 &&
-        (Number(user.roleId) === 4 ||
-          /tecnic|campo|instalador|cuadrilla/i.test(
-            String(user.roleName || "")
-              .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "")
-          ))
-          ? "apartado"
-          : "system"),
-      assignedApartadoId: user.assignedApartadoId || undefined,
+      accessTarget: isAlmacenRole
+        ? "apartado"
+        : user.accessTarget || (isTechRole ? "apartado" : "system"),
+      assignedApartadoId: isAlmacenRole
+        ? "apt-almacen"
+        : user.assignedApartadoId || undefined,
     },
   };
 }
@@ -788,9 +795,8 @@ export const usersRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    // Verificación estricta de 2FA (Google Authenticator) cuando esté activada por usuario o por empresa
-    const tenantRequires2fa = is2faRequiredForTenant(assignedTenant);
-    const mustVerify2fa = Boolean(matchedUser.requireTotp) || tenantRequires2fa;
+    // Inicio de sesión directo con PIN de 8 dígitos (Google Authenticator queda exclusivo para desbloqueo de tardanzas/asistencias)
+    const mustVerify2fa = false;
 
     if (mustVerify2fa) {
       const tenants = loadTenantsFromDisk();
