@@ -63330,9 +63330,22 @@ if (typeof window.__flushPendingEarlyCalls === 'function') {
       const current = getSelectedApartado();
       if (!current) return;
 
+      const resolveApartadoUrl = (apt) => {
+        if (!apt) return '/tech';
+        if (apt.routePath) return apt.routePath;
+        if (apt.slug === 'almacen') return '/almacen';
+        return apt.slug === 'tecnicos' ? '/tech' : `/tech?apartado=${encodeURIComponent(apt.slug)}`;
+      };
+      const scopedCatalog = apartadosCatalog.filter(app => {
+        const targetScope = current.slug === 'almacen' ? 'almacen' : 'tecnicos';
+        return !app.scope ? targetScope === 'tecnicos' : app.scope === targetScope;
+      });
+
       const liveLink = document.getElementById('apartados-open-live-link');
       if (liveLink) {
-        liveLink.href = current.slug === 'tecnicos' ? '/tech' : `/tech?apartado=${encodeURIComponent(current.slug)}`;
+        const targetHref = resolveApartadoUrl(current);
+        liveLink.href = targetHref;
+        liveLink.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg> Abrir App (${targetHref})`;
       }
 
       const kpiTotal = document.getElementById('apt-kpi-total');
@@ -63342,7 +63355,7 @@ if (typeof window.__flushPendingEarlyCalls === 'function') {
       const kpiReqs = document.getElementById('apt-kpi-requests');
 
       if (kpiTotal) kpiTotal.textContent = apartadosList.length;
-      if (kpiApps) kpiApps.textContent = `${(current.enabledApps || []).length} / ${apartadosCatalog.length}`;
+      if (kpiApps) kpiApps.textContent = `${(current.enabledApps || []).length} / ${scopedCatalog.length}`;
       if (kpiPerms) kpiPerms.textContent = `${(current.enabledPermissions || []).length} permisos activos`;
       if (kpiInst) kpiInst.textContent = apartadoInstallations.filter(i => i.status !== 'completada').length;
       if (kpiReqs) {
@@ -63371,7 +63384,7 @@ if (typeof window.__flushPendingEarlyCalls === 'function') {
                 </div>
                 <div class="text-[11px] text-slate-400 font-mono mt-0.5">Ruta: ${apt.routePath || '/tech'} • ${(apt.enabledApps || []).length} apps</div>
               </div>
-              <a href="${apt.slug === 'tecnicos' ? '/tech' : `/tech?apartado=${encodeURIComponent(apt.slug)}`}" target="_blank" onclick="event.stopPropagation()" class="px-2.5 py-1.5 rounded-xl bg-blue-600 text-white text-[11px] font-bold flex-shrink-0">
+              <a href="${resolveApartadoUrl(apt)}" target="_blank" onclick="event.stopPropagation()" class="px-2.5 py-1.5 rounded-xl bg-blue-600 text-white text-[11px] font-bold flex-shrink-0">
                 Abrir
               </a>
             </div>
@@ -63404,7 +63417,7 @@ if (typeof window.__flushPendingEarlyCalls === 'function') {
 
       const appsPanel = document.getElementById('apt-panel-apps');
       if (appsPanel) {
-        appsPanel.innerHTML = apartadosCatalog.map(app => {
+        appsPanel.innerHTML = scopedCatalog.map(app => {
           const appEnabled = Array.isArray(current.enabledApps) && current.enabledApps.includes(app.id);
           return `
             <div class="p-4 rounded-2xl border transition-colors ${
@@ -63654,9 +63667,9 @@ if (typeof window.__flushPendingEarlyCalls === 'function') {
 
     function copyApartadoLink() {
       const current = getSelectedApartado();
-      const pathUrl = current && current.slug !== 'tecnicos'
-        ? `${window.location.origin}/tech?apartado=${encodeURIComponent(current.slug)}`
-        : `${window.location.origin}/tech`;
+      const route = current?.routePath
+        || (current?.slug === 'almacen' ? '/almacen' : (current && current.slug !== 'tecnicos' ? `/tech?apartado=${encodeURIComponent(current.slug)}` : '/tech'));
+      const pathUrl = `${window.location.origin}${route}`;
       navigator.clipboard?.writeText(pathUrl);
       if (typeof showToast === 'function') showToast(`Enlace copiado: ${pathUrl}`, 'success');
     }

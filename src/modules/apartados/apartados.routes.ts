@@ -17,6 +17,7 @@ export interface ApartadoAppDefinition {
   icon: string;
   color: string;
   badge: string;
+  scope?: "tecnicos" | "almacen";
   permissions: ApartadoAppPermission[];
 }
 
@@ -205,17 +206,126 @@ export const APARTADO_APPS_CATALOG: ApartadoAppDefinition[] = [
     icon: "search-ciz",
     color: "sky",
     badge: "Diagnóstico",
+    scope: "tecnicos",
     permissions: [
       { id: "ciz:search", name: "Buscar por CIZ / DNI / Nombre", description: "Consultar ficha técnica, dirección GPS, NAP y plan del cliente" },
       { id: "ciz:diagnostics", name: "Test Ping y Potencia Óptica", description: "Ejecutar diagnóstico rápido de conectividad y estado PPPoE" },
       { id: "ciz:reactivate", name: "Reactivar / Refrescar Puerto", description: "Solicitar o ejecutar reconexión rápida de servicio en campo" },
     ],
   },
+  // =========================================================================
+  // APPS DEL APARTADO ALMACÉN POS (TurboAlmacén)
+  // =========================================================================
+  {
+    id: "almacen_dispatch",
+    name: "Despacho Rápido POS",
+    shortName: "Despacho",
+    description: "Caja rápida con pistola láser/cámara para armar canasta, despachar a técnicos y atender pedidos de TurboTech.",
+    icon: "dispatch-pos",
+    color: "emerald",
+    badge: "Caja POS",
+    scope: "almacen",
+    permissions: [
+      { id: "almacen:dispatch", name: "Despachar a Técnicos", description: "Escanear y asignar equipos/materiales en lote a la mochila del técnico" },
+      { id: "almacen:approve_requests", name: "Atender Pedidos de Campo", description: "Aprobar o rechazar solicitudes de material enviadas desde TurboTech" },
+      { id: "almacen:print_ticket", name: "Imprimir Ticket Térmico", description: "Emitir comprobante térmico 58mm/80mm al confirmar despacho" },
+    ],
+  },
+  {
+    id: "almacen_returns",
+    name: "Devoluciones Express",
+    shortName: "Devoluciones",
+    description: "Retorno inmediato de equipos y sobrantes desde técnicos escaneando serie/código o por asignación.",
+    icon: "returns-box",
+    color: "amber",
+    badge: "Retornos",
+    scope: "almacen",
+    permissions: [
+      { id: "almacen:return", name: "Registrar Devolución", description: "Reingresar equipos devueltos a stock disponible o marcarlos dañados" },
+    ],
+  },
+  {
+    id: "almacen_purchases",
+    name: "Ingreso de Compras",
+    shortName: "Compras",
+    description: "Recepción rápida de facturas y lotes al Kardex con actualización instantánea de stock y costos.",
+    icon: "purchase-in",
+    color: "blue",
+    badge: "Ingresos",
+    scope: "almacen",
+    permissions: [
+      { id: "almacen:purchase", name: "Registrar Compras / Stock", description: "Ingresar nuevas compras con proveedor, comprobante y costo unitario" },
+    ],
+  },
+  {
+    id: "almacen_transfers",
+    name: "Transferencias (Técnicos / Nodos)",
+    shortName: "Transferencias",
+    description: "Traspaso ágil de equipos entre técnicos o asignación y retorno de stock hacia nodos POP.",
+    icon: "arrows-exchange",
+    color: "indigo",
+    badge: "Traslados",
+    scope: "almacen",
+    permissions: [
+      { id: "almacen:transfer_tech", name: "Transferir entre Técnicos", description: "Reasignar material de un técnico a otro con trazabilidad" },
+      { id: "almacen:transfer_node", name: "Asignar / Retornar en Nodos", description: "Enviar o retirar stock desde nodos POP de infraestructura" },
+    ],
+  },
+  {
+    id: "almacen_epp",
+    name: "Control de EPP & Vigencias",
+    shortName: "Control EPP",
+    description: "Semáforo de equipos de protección personal: vencimientos, inspecciones, recambios y entregas por talla.",
+    icon: "shield-epp",
+    color: "rose",
+    badge: "Seguridad",
+    scope: "almacen",
+    permissions: [
+      { id: "almacen:epp_view", name: "Monitorear Semáforo EPP", description: "Ver estado, caducidad y alertas de EPPs asignados y en almacén" },
+      { id: "almacen:epp_inspect", name: "Registrar Inspección / Recambio", description: "Actualizar condición y fecha de inspección de unidades EPP" },
+    ],
+  },
+  {
+    id: "almacen_verify_labels",
+    name: "Verificador y Etiquetas",
+    shortName: "Verificador",
+    description: "Consulta instantánea de stock/ubicación/trazabilidad por código e impresión de etiquetas térmicas.",
+    icon: "qr-code",
+    color: "cyan",
+    badge: "Escáner",
+    scope: "almacen",
+    permissions: [
+      { id: "almacen:verify", name: "Verificar Producto / Trazabilidad", description: "Consultar ubicación, stock y asignaciones escaneando código" },
+      { id: "almacen:print_labels", name: "Imprimir Etiquetas de Barras", description: "Generar etiquetas térmicas de SKU/código de barras para estantes y unidades" },
+    ],
+  },
 ];
 
+function getDefaultAlmacenApartado(): ApartadoConfig {
+  const almacenApps = APARTADO_APPS_CATALOG.filter((a) => a.scope === "almacen");
+  return {
+    id: "apt-almacen",
+    slug: "almacen",
+    name: "Apartado Almacén POS (TurboAlmacén)",
+    subtitle: "Terminal Rápida de Almacén, Pistola & Tickets",
+    description: "Interfaz ágil tipo caja/supermercado para PC, laptop y móvil con lector láser/cámara, despacho a técnicos, devoluciones, compras, transferencias, control de EPP e impresión térmica.",
+    icon: "warehouse",
+    themeColor: "#10b981",
+    routePath: "/almacen",
+    isActive: true,
+    exclusiveAccess: true,
+    assignedRoleIds: [],
+    assignedUserIds: [],
+    enabledApps: almacenApps.map((a) => a.id),
+    enabledPermissions: almacenApps.flatMap((a) => a.permissions.map((p) => p.id)),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 function getDefaultApartados(): ApartadoConfig[] {
-  const allAppIds = APARTADO_APPS_CATALOG.map((a) => a.id);
-  const allPermIds = APARTADO_APPS_CATALOG.flatMap((a) => a.permissions.map((p) => p.id));
+  const techApps = APARTADO_APPS_CATALOG.filter((a) => a.scope !== "almacen");
+  const allAppIds = techApps.map((a) => a.id);
+  const allPermIds = techApps.flatMap((a) => a.permissions.map((p) => p.id));
 
   return [
     {
@@ -235,6 +345,7 @@ function getDefaultApartados(): ApartadoConfig[] {
       enabledPermissions: allPermIds,
       updatedAt: new Date().toISOString(),
     },
+    getDefaultAlmacenApartado(),
   ];
 }
 
@@ -244,6 +355,12 @@ export function loadApartadosForTenant(tenantId: string): ApartadoConfig[] {
     if (fs.existsSync(filePath)) {
       const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8"));
       if (Array.isArray(parsed) && parsed.length > 0) {
+        // Garantizar que los tenants existentes reciban automáticamente el nuevo Apartado Almacén POS
+        const hasAlmacen = parsed.some((a: ApartadoConfig) => a.id === "apt-almacen" || a.slug === "almacen");
+        if (!hasAlmacen) {
+          parsed.push(getDefaultAlmacenApartado());
+          saveApartadosForTenant(tenantId, parsed);
+        }
         return parsed;
       }
     }
@@ -631,10 +748,10 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
     const tenantId = resolveTenantId(request);
     const { id } = request.params as { id: string };
     const apartados = loadApartadosForTenant(tenantId);
-    if (id === "apt-tecnicos") {
+    if (id === "apt-tecnicos" || id === "apt-almacen") {
       return reply.status(400).send({
         success: false,
-        message: "El Apartado Técnico principal no puede eliminarse, pero puedes configurar o desactivar sus aplicaciones.",
+        message: "Los Apartados principales del sistema no pueden eliminarse, pero puedes configurar o desactivar sus aplicaciones.",
       });
     }
     const filtered = apartados.filter((a) => a.id !== id);

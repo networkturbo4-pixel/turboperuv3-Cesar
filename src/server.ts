@@ -253,7 +253,35 @@ export async function buildApp() {
       return serveDynamicTechHtml(req, reply);
     });
 
+    // 1.1b2 Rutas de Apartado Almacén POS (TurboAlmacén Standalone App)
+    const serveDynamicAlmacenHtml = (req: any, reply: any, tenantSlug?: string) => {
+      const rawHtml = readPublicHtmlCached("almacen.html");
+      if (!rawHtml) {
+        return reply.status(404).send("almacen.html not found");
+      }
+      const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
+      const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
+      const baseUrl = `${proto}://${host}`;
+      const currentUrl = `${baseUrl}${req.url}`;
+      const tenant = resolveTenantFromRequest(req, tenantSlug);
+      const processedHtml = injectOpenGraphHtml(rawHtml, tenant, currentUrl, baseUrl);
+      return reply.type("text/html; charset=utf-8").send(processedHtml);
+    };
+
+    fastify.get("/almacen", async (req, reply) => {
+      return serveDynamicAlmacenHtml(req, reply);
+    });
+
+    fastify.get("/t/:tenantSlug/almacen", async (req, reply) => {
+      const { tenantSlug } = req.params as { tenantSlug: string };
+      return serveDynamicAlmacenHtml(req, reply, tenantSlug);
+    });
+
     fastify.get("/apartado/:slug", async (req, reply) => {
+      const { slug } = req.params as { slug: string };
+      if ((slug || "").toLowerCase() === "almacen") {
+        return serveDynamicAlmacenHtml(req, reply);
+      }
       return serveDynamicTechHtml(req, reply);
     });
 
