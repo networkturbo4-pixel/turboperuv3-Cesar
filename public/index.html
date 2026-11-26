@@ -9199,50 +9199,160 @@
         <!-- ======================================================== -->
         <!-- TAB ACTAS: ACTAS DE INSTALACIÓN                          -->
         <!-- ======================================================== -->
+        <style>
+          #tab-actas {
+            --acta-ease: cubic-bezier(0.23, 1, 0.32, 1);
+          }
+          #tab-actas button,
+          #tab-actas label,
+          #tab-actas select {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+          }
+          #tab-actas button:active {
+            transform: scale(0.97);
+            transition: transform 90ms var(--acta-ease);
+          }
+          #tab-actas .acta-card {
+            background-color: var(--surface-light, #ffffff);
+            border: 1px solid var(--border-light, rgba(0, 0, 0, 0.08));
+            border-radius: 16px;
+            box-shadow: var(--card-shadow-light);
+            color: #0f172a;
+          }
+          html.dark #tab-actas .acta-card {
+            background-color: var(--surface-dark, #0e121b);
+            border: 1px solid var(--border-dark, rgba(255, 255, 255, 0.08));
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+            color: #f8fafc;
+          }
+          #tab-actas .acta-step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 7px;
+            font-size: 11px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            background: rgba(var(--brand-primary-rgb, 37, 99, 235), 0.14);
+            color: var(--brand-primary, #3b82f6);
+          }
+          #tab-actas input:not([type="checkbox"]):not([type="file"]),
+          #tab-actas select,
+          #tab-actas textarea {
+            border-radius: 10px;
+            transition: border-color 150ms var(--acta-ease), box-shadow 150ms var(--acta-ease), background-color 150ms var(--acta-ease);
+          }
+          html:not(.dark) #tab-actas input:not([type="checkbox"]):not([type="file"]),
+          html:not(.dark) #tab-actas select,
+          html:not(.dark) #tab-actas textarea {
+            background-color: var(--surface-light-subtle, #f1f5f9) !important;
+            border: 1px solid var(--border-light, rgba(0, 0, 0, 0.12)) !important;
+            color: #0f172a !important;
+          }
+          html.dark #tab-actas input:not([type="checkbox"]):not([type="file"]),
+          html.dark #tab-actas select,
+          html.dark #tab-actas textarea {
+            background-color: var(--surface-dark-subtle, #141925) !important;
+            border: 1px solid var(--border-dark, rgba(255, 255, 255, 0.10)) !important;
+            color: #f8fafc !important;
+          }
+          #tab-actas input::placeholder,
+          #tab-actas textarea::placeholder {
+            color: #64748b;
+          }
+          #tab-actas input:not([type="checkbox"]):not([type="file"]):focus,
+          #tab-actas select:focus,
+          #tab-actas textarea:focus {
+            outline: none;
+            border-color: var(--brand-primary, #2563eb) !important;
+            box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb, 37, 99, 235), 0.16);
+          }
+          #tab-actas .acta-chip-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 9px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--surface-light-subtle, #f1f5f9);
+            color: #334155;
+            border: 1px solid var(--border-light, rgba(0, 0, 0, 0.08));
+            transition: background-color 150ms var(--acta-ease), color 150ms var(--acta-ease), border-color 150ms var(--acta-ease), transform 90ms var(--acta-ease);
+          }
+          html.dark #tab-actas .acta-chip-btn {
+            background: var(--surface-dark-subtle, #141925);
+            color: #cbd5e1;
+            border-color: var(--border-dark, rgba(255, 255, 255, 0.08));
+          }
+          #tab-actas .acta-chip-btn:hover {
+            background: rgba(var(--brand-primary-rgb, 37, 99, 235), 0.14);
+            border-color: rgba(var(--brand-primary-rgb, 37, 99, 235), 0.35);
+            color: var(--brand-primary, #60a5fa);
+          }
+          #tab-actas .acta-sticky-bar {
+            background: var(--header-light, rgba(248, 250, 252, 0.92));
+            backdrop-filter: blur(22px) saturate(180%);
+            -webkit-backdrop-filter: blur(22px) saturate(180%);
+            border: 1px solid var(--border-light, rgba(0, 0, 0, 0.08));
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.10);
+          }
+          html.dark #tab-actas .acta-sticky-bar {
+            background: var(--header-dark, rgba(9, 10, 15, 0.90));
+            border: 1px solid var(--border-dark, rgba(255, 255, 255, 0.08));
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+          }
+          #tab-actas .tabular-nums {
+            font-variant-numeric: tabular-nums;
+          }
+        </style>
         <section id="tab-actas" class="space-y-5 hidden">
 
           <!-- VISTA 1: LISTADO EN CARDS -->
-          <div id="actas-list-view" class="space-y-5">
-            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div class="flex items-center gap-3 flex-wrap">
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center shrink-0">
+          <div id="actas-list-view" class="space-y-4">
+            <div class="acta-card p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div class="flex items-center gap-3.5 flex-wrap">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background: rgba(var(--brand-primary-rgb, 37, 99, 235), 0.12); color: var(--brand-primary, #3b82f6);">
                   <i class="ri-file-text-line text-xl"></i>
                 </div>
-                <div>
+                <div class="space-y-0.5">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Actas de Instalación</h2>
-                    <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200">
-                      Total: <span id="actas-kpi-total">0</span>
+                    <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Actas de Instalación</h2>
+                    <span class="px-2 py-0.5 rounded-lg text-[11px] font-mono font-medium tabular-nums bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-white/10">
+                      Total <span id="actas-kpi-total">0</span>
                     </span>
-                    <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-500/15 text-emerald-500">
-                      Finalizadas: <span id="actas-kpi-finalizadas">0</span>
+                    <span class="px-2 py-0.5 rounded-lg text-[11px] font-mono font-medium tabular-nums bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      Finalizadas <span id="actas-kpi-finalizadas">0</span>
                     </span>
-                    <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-blue-500/15 text-blue-400">
-                      En Proceso: <span id="actas-kpi-proceso">0</span>
+                    <span class="px-2 py-0.5 rounded-lg text-[11px] font-mono font-medium tabular-nums bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                      En proceso <span id="actas-kpi-proceso">0</span>
                     </span>
                   </div>
-                  <p class="text-xs text-slate-500 dark:text-slate-400">Registro digital de instalaciones FTTH, equipos de mochila, evidencias fotográficas y firma móvil.</p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Registro digital de instalaciones FTTH, equipos de mochila, evidencias y firma móvil.</p>
                 </div>
               </div>
 
               <div class="flex items-center gap-2 flex-wrap">
-                <button type="button" onclick="exportActasToExcel()" title="Exportar a Excel" class="px-3 py-2 rounded-xl text-xs font-bold border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 inline-flex items-center gap-1.5 transition">
-                  <i class="ri-file-excel-2-line text-sm"></i> Excel
+                <button type="button" onclick="exportActasToExcel()" title="Exportar a Excel" class="px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 transition-colors">
+                  <i class="ri-file-excel-2-line text-sm text-emerald-500"></i> Excel
                 </button>
-                <button type="button" onclick="openActaFromOrderModal()" title="Iniciar desde Orden de Apartados" class="px-3 py-2 rounded-xl text-xs font-bold border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 inline-flex items-center gap-1.5 transition">
+                <button type="button" onclick="openActaFromOrderModal()" title="Iniciar desde Orden de Apartados" class="px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 transition-colors">
                   <i class="ri-smartphone-line text-sm"></i> Desde Orden
                 </button>
-                <button type="button" onclick="loadActasList()" title="Actualizar" class="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition">
+                <button type="button" onclick="loadActasList()" title="Actualizar" class="w-9 h-9 rounded-xl text-xs font-semibold border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 inline-flex items-center justify-center transition-colors">
                   <i class="ri-refresh-line"></i>
                 </button>
-                <button type="button" onclick="openNewActaForm()" class="btn-brand-primary px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-sm">
+                <button type="button" onclick="openNewActaForm()" class="btn-brand-primary px-4 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm">
                   <i class="ri-add-line text-sm"></i> Nueva Acta
                 </button>
               </div>
             </div>
 
             <!-- Filtros en una sola fila compacta -->
-            <div class="glass-panel rounded-2xl p-3 border border-slate-200/70 dark:border-white/10 flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+            <div class="acta-card p-3 flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
               <div class="relative flex-1 min-w-0">
                 <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 <input id="actas-search-input" type="text" placeholder="Buscar por folio, cliente, DNI, distrito, NAP o técnico..."
@@ -9271,15 +9381,15 @@
           </div>
 
           <!-- VISTA 2: FORMULARIO CREAR / EDITAR ACTA -->
-          <div id="actas-form-view" class="hidden space-y-5 pb-20">
+          <div id="actas-form-view" class="hidden max-w-5xl mx-auto space-y-4 pb-24">
             <!-- Header del Formulario -->
-            <div class="glass-panel rounded-2xl p-3.5 sm:p-4 border border-slate-200/70 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
-              <button type="button" onclick="showActasListView()" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-500 transition">
+            <div class="acta-card p-3.5 sm:px-5 flex flex-wrap items-center justify-between gap-3">
+              <button type="button" onclick="showActasListView()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors">
                 <i class="ri-arrow-left-line text-base"></i> Volver
               </button>
-              <div class="flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-mono text-xs font-extrabold">
-                <span class="text-orange-500">PREFIJO: <span id="acta-prefijo-display">LIM-</span></span>
-                <span class="text-rose-500">FOLIO: <span id="acta-folio-display">000001</span></span>
+              <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/10 font-mono text-xs font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+                <span class="text-slate-400">Folio</span>
+                <span><span id="acta-prefijo-display">LIM-</span><span id="acta-folio-display">000001</span></span>
               </div>
               <input type="hidden" id="acta-prefijo-input" value="LIM-" />
               <input type="hidden" id="acta-folio-input" value="000001" />
@@ -9304,10 +9414,13 @@
             </div>
 
             <!-- 1. DATOS DEL CLIENTE -->
-            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
-              <div class="flex items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/10 pb-3">
-                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">1. DATOS DEL CLIENTE</h3>
-                <button type="button" onclick="runActaOcrScan('dni')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200/70 dark:bg-white/5 hover:bg-blue-500/15 text-slate-700 dark:text-slate-200 border border-slate-300/70 dark:border-white/10 inline-flex items-center gap-1.5 transition">
+            <div class="acta-card p-4 sm:p-5 space-y-4">
+              <div class="flex items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/[0.08] pb-3">
+                <div class="flex items-center gap-2.5">
+                  <span class="acta-step-num">01</span>
+                  <h3 class="text-sm font-semibold tracking-tight text-slate-900 dark:text-white">Datos del cliente</h3>
+                </div>
+                <button type="button" onclick="runActaOcrScan('dni')" class="acta-chip-btn">
                   <i class="ri-camera-line"></i> Escanear DNI
                 </button>
               </div>
@@ -9329,8 +9442,8 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <div class="flex items-center justify-between mb-1">
-                    <label class="text-xs font-bold text-slate-600 dark:text-slate-300">DNI / RUC</label>
-                    <button type="button" onclick="lookupActaSunatReniec()" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 inline-flex items-center gap-1">
+                    <label class="text-xs font-medium text-slate-600 dark:text-slate-300">DNI / RUC</label>
+                    <button type="button" onclick="lookupActaSunatReniec()" class="acta-chip-btn">
                       <i class="ri-search-line"></i> Sunat/Reniec
                     </button>
                   </div>
@@ -9339,12 +9452,12 @@
                 </div>
                 <div>
                   <div class="flex items-center justify-between mb-1">
-                    <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Rotulado (QR)</label>
-                    <div class="flex items-center gap-1">
-                      <button type="button" onclick="openActaQrScanner((code) => { document.getElementById('acta-cliente-qr').value = code; })" title="Escanear QR con cámara" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25">
+                    <label class="text-xs font-medium text-slate-600 dark:text-slate-300">Rotulado (QR)</label>
+                    <div class="flex items-center gap-1.5">
+                      <button type="button" onclick="openActaQrScanner((code) => { document.getElementById('acta-cliente-qr').value = code; })" title="Escanear QR con cámara" class="acta-chip-btn">
                         <i class="ri-qr-scan-2-line"></i> Escanear
                       </button>
-                      <button type="button" onclick="generateActaRotuladoQr()" title="Generar código QR" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200 hover:bg-blue-500/20">
+                      <button type="button" onclick="generateActaRotuladoQr()" title="Generar código QR" class="acta-chip-btn">
                         <i class="ri-qr-code-line"></i> Generar
                       </button>
                     </div>
@@ -9389,12 +9502,12 @@
 
               <div>
                 <div class="flex items-center justify-between mb-1">
-                  <label class="text-xs font-bold text-slate-600 dark:text-slate-300">Geolocalización GPS</label>
-                  <div class="flex items-center gap-2">
-                    <button type="button" onclick="suggestNearestNapsFromMaps()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 inline-flex items-center gap-1">
+                  <label class="text-xs font-medium text-slate-600 dark:text-slate-300">Geolocalización GPS</label>
+                  <div class="flex items-center gap-1.5">
+                    <button type="button" onclick="suggestNearestNapsFromMaps()" class="acta-chip-btn">
                       <i class="ri-node-tree"></i> Sugerir NAP cercana
                     </button>
-                    <button type="button" onclick="captureActaGps()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 inline-flex items-center gap-1">
+                    <button type="button" onclick="captureActaGps()" class="acta-chip-btn">
                       <i class="ri-map-pin-user-line"></i> Capturar GPS
                     </button>
                   </div>
@@ -9414,10 +9527,13 @@
             </div>
 
             <!-- 2. PLANTA EXTERNA -->
-            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
-              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/10 pb-3">
-                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">2. PLANTA EXTERNA</h3>
-                <button type="button" onclick="suggestNearestNapsFromMaps()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 inline-flex items-center gap-1">
+            <div class="acta-card p-4 sm:p-5 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/[0.08] pb-3">
+                <div class="flex items-center gap-2.5">
+                  <span class="acta-step-num">02</span>
+                  <h3 class="text-sm font-semibold tracking-tight text-slate-900 dark:text-white">Planta externa</h3>
+                </div>
+                <button type="button" onclick="suggestNearestNapsFromMaps()" class="acta-chip-btn">
                   <i class="ri-radar-line"></i> Buscar NAP en Mapas FTTH
                 </button>
               </div>
@@ -9468,8 +9584,11 @@
             </div>
 
             <!-- 3. DETALLES DEL SERVICIO -->
-            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
-              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white border-b border-slate-200/60 dark:border-white/10 pb-3">3. DETALLES DEL SERVICIO</h3>
+            <div class="acta-card p-4 sm:p-5 space-y-4">
+              <div class="flex items-center gap-2.5 border-b border-slate-200/60 dark:border-white/[0.08] pb-3">
+                <span class="acta-step-num">03</span>
+                <h3 class="text-sm font-semibold tracking-tight text-slate-900 dark:text-white">Detalles del servicio</h3>
+              </div>
 
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -9597,11 +9716,14 @@
             </div>
 
             <!-- 4. EQUIPOS INSTALADOS Y RETIRADOS (MOCHILA TÉCNICA) -->
-            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
-              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/10 pb-3">
-                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">4. EQUIPOS INSTALADOS Y RETIRADOS</h3>
-                <button type="button" onclick="addManualEquipoRow()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-white/10 hover:bg-blue-500/15 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 transition">
-                  + Agregar Equipo
+            <div class="acta-card p-4 sm:p-5 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/[0.08] pb-3">
+                <div class="flex items-center gap-2.5">
+                  <span class="acta-step-num">04</span>
+                  <h3 class="text-sm font-semibold tracking-tight text-slate-900 dark:text-white">Equipos instalados y retirados</h3>
+                </div>
+                <button type="button" onclick="addManualEquipoRow()" class="acta-chip-btn">
+                  <i class="ri-add-line"></i> Agregar equipo
                 </button>
               </div>
 
@@ -9616,11 +9738,14 @@
             </div>
 
             <!-- 5. MATERIALES (MOCHILA TÉCNICA) -->
-            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
-              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/10 pb-3">
-                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">5. MATERIALES</h3>
-                <button type="button" onclick="addManualMaterialRow()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-white/10 hover:bg-blue-500/15 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 transition">
-                  + Agregar Material
+            <div class="acta-card p-4 sm:p-5 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-white/[0.08] pb-3">
+                <div class="flex items-center gap-2.5">
+                  <span class="acta-step-num">05</span>
+                  <h3 class="text-sm font-semibold tracking-tight text-slate-900 dark:text-white">Materiales</h3>
+                </div>
+                <button type="button" onclick="addManualMaterialRow()" class="acta-chip-btn">
+                  <i class="ri-add-line"></i> Agregar material
                 </button>
               </div>
 
@@ -9635,8 +9760,11 @@
             </div>
 
             <!-- 6. EVIDENCIAS Y OBSERVACIONES -->
-            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
-              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white border-b border-slate-200/60 dark:border-white/10 pb-3">6. EVIDENCIAS Y OBSERVACIONES</h3>
+            <div class="acta-card p-4 sm:p-5 space-y-4">
+              <div class="flex items-center gap-2.5 border-b border-slate-200/60 dark:border-white/[0.08] pb-3">
+                <span class="acta-step-num">06</span>
+                <h3 class="text-sm font-semibold tracking-tight text-slate-900 dark:text-white">Evidencias y observaciones</h3>
+              </div>
 
               <!-- Checklist rápido de 4 fotos recomendadas -->
               <div id="acta-evidence-checklist" class="flex flex-wrap gap-2"></div>
@@ -9670,8 +9798,11 @@
             </div>
 
             <!-- 7. FIRMAS DIGITALES (CELULAR / TABLET / PC) -->
-            <div class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-200/70 dark:border-white/10 space-y-4">
-              <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white border-b border-slate-200/60 dark:border-white/10 pb-3">7. FIRMAS DIGITALES (CELULAR / TABLET / PC)</h3>
+            <div class="acta-card p-4 sm:p-5 space-y-4">
+              <div class="flex items-center gap-2.5 border-b border-slate-200/60 dark:border-white/[0.08] pb-3">
+                <span class="acta-step-num">07</span>
+                <h3 class="text-sm font-semibold tracking-tight text-slate-900 dark:text-white">Firmas digitales</h3>
+              </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div class="space-y-2">
                   <div class="flex items-center justify-between">
@@ -9701,20 +9832,20 @@
             </div>
 
             <!-- Barra Inferior de Guardado -->
-            <div class="sticky bottom-3 z-20 glass-panel rounded-2xl p-3 border border-slate-200/70 dark:border-white/10 flex flex-wrap items-center justify-between gap-3 shadow-xl">
-              <label class="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 cursor-pointer">
+            <div class="sticky bottom-3 z-20 acta-sticky-bar rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3">
+              <label class="inline-flex items-center gap-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 cursor-pointer">
                 <input id="acta-auto-whatsapp-check" type="checkbox" class="rounded border-emerald-500 text-emerald-600" />
                 <span><i class="ri-whatsapp-line"></i> Enviar enlace por WhatsApp al finalizar</span>
               </label>
-              <div class="flex flex-wrap items-center gap-2.5 ml-auto">
-                <button type="button" onclick="saveActaForm('En Proceso')" class="px-4 py-2.5 rounded-xl text-xs font-bold border border-orange-500/60 text-orange-400 hover:bg-orange-500/10 inline-flex items-center gap-1.5 transition">
-                  <i class="ri-play-line"></i> Iniciar / En Proceso
+              <div class="flex flex-wrap items-center gap-2 ml-auto">
+                <button type="button" onclick="saveActaForm('En Proceso')" class="px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.09] inline-flex items-center gap-1.5 transition-colors">
+                  <i class="ri-play-line text-amber-500"></i> En proceso
                 </button>
-                <button type="button" onclick="saveActaForm('Finalizada (Éxito)')" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white inline-flex items-center gap-1.5 transition">
-                  <i class="ri-checkbox-circle-line"></i> Finalizar Acta
+                <button type="button" onclick="saveActaForm('Finalizada (Éxito)')" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white inline-flex items-center gap-1.5 transition-colors">
+                  <i class="ri-checkbox-circle-line"></i> Finalizar acta
                 </button>
-                <button type="button" onclick="saveActaForm()" class="btn-brand-primary px-5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow">
-                  <i class="ri-save-line"></i> Guardar Cambios
+                <button type="button" onclick="saveActaForm()" class="btn-brand-primary px-4 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm">
+                  <i class="ri-save-line"></i> Guardar cambios
                 </button>
               </div>
             </div>
@@ -24532,7 +24663,7 @@
 
     function isDefaultTechnicianUser(u) {
       if (!u || u.isSuperAdmin || Number(u.roleId) === 1) return false;
-      if (isDefaultAlmacenUser(u)) return false;
+      if (isDefaultAlmacenUser(u) || isDefaultOperacionesUser(u)) return false;
       if (u.accessTarget === 'apartado') return true;
       if (Number(u.roleId) === 4) return true;
       const rName = String(u.roleName || '')
@@ -24554,6 +24685,18 @@
       return Number(u.roleId) === 5 && (!rName || rName.includes('almacen'));
     }
 
+    function isDefaultOperacionesUser(u) {
+      if (!u || Number(u.id) === 1 || Number(u.roleId) === 1) return false;
+      const rName = String(u.roleName || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+      if (rName.includes('operacion')) return true;
+      if (u.isSuperAdmin) return false;
+      return Number(u.roleId) === 6 && (!rName || rName.includes('operacion'));
+    }
+
     async function completeLoginSuccess(data) {
       if (data?.data?.token) {
         try {
@@ -24569,10 +24712,11 @@
       const loggedUser = data?.data?.user;
       const requestedRedirect = getSafeRedirectTarget();
       const isAlmacenDefault = isDefaultAlmacenUser(loggedUser);
+      const isOperacionesDefault = isDefaultOperacionesUser(loggedUser);
       const isTechDefault = isDefaultTechnicianUser(loggedUser);
       if (
         loggedUser &&
-        (isAlmacenDefault || isTechDefault || (loggedUser.accessTarget !== 'system' && !loggedUser.isSuperAdmin && loggedUser.roleId !== 1))
+        (isAlmacenDefault || isOperacionesDefault || isTechDefault || (loggedUser.accessTarget !== 'system' && !loggedUser.isSuperAdmin && loggedUser.roleId !== 1))
       ) {
         const targetAptTenant = (loggedUser.assignedTenantId && loggedUser.assignedTenantId !== '*')
           ? loggedUser.assignedTenantId
@@ -24584,10 +24728,12 @@
           if (targetAptTenant) localStorage.setItem('turbonetwork_active_tenant', targetAptTenant);
         } catch (e) {}
 
-        let destRoute = isAlmacenDefault ? '/almacen' : (isTechDefault ? '/tech' : '');
+        let destRoute = isAlmacenDefault ? '/almacen' : (isOperacionesDefault ? '/operaciones' : (isTechDefault ? '/tech' : ''));
         try {
           const aptUrl = isAlmacenDefault
             ? `/api/apartados/my-access?userId=${encodeURIComponent(loggedUser.id || 0)}&roleId=${encodeURIComponent(loggedUser.roleId || 0)}&tenantId=${encodeURIComponent(targetAptTenant)}&apartadoId=apt-almacen&slug=almacen`
+            : isOperacionesDefault
+            ? `/api/apartados/my-access?userId=${encodeURIComponent(loggedUser.id || 0)}&roleId=${encodeURIComponent(loggedUser.roleId || 0)}&tenantId=${encodeURIComponent(targetAptTenant)}&apartadoId=apt-operaciones&slug=operaciones`
             : `/api/apartados/my-access?userId=${encodeURIComponent(loggedUser.id || 0)}&roleId=${encodeURIComponent(loggedUser.roleId || 0)}&tenantId=${encodeURIComponent(targetAptTenant)}${loggedUser.assignedApartadoId ? `&apartadoId=${encodeURIComponent(loggedUser.assignedApartadoId)}` : ''}`;
           const aptRes = await fetch(aptUrl);
           if (aptRes.ok) {
@@ -24601,6 +24747,8 @@
             );
             if (isAlmacenDefault) {
               destRoute = aptCheck?.apartado?.routePath || '/almacen';
+            } else if (isOperacionesDefault) {
+              destRoute = aptCheck?.apartado?.routePath || '/operaciones';
             } else if ((isTechDefault || isExplicitApartado || isExclusiveMatch) && aptCheck?.apartado) {
               destRoute = aptCheck.apartado.routePath || (aptCheck.apartado.slug ? `/tech?apartado=${encodeURIComponent(aptCheck.apartado.slug)}` : '/tech');
             }
@@ -32287,7 +32435,7 @@ Estamos atentos para brindarle asistencia inmediata.
         try {
           currentUser = JSON.parse(sessionStr);
           if (currentUser) {
-            // Si es almacenero o técnico, redirigir directamente a su apartado exclusivo
+            // Si es almacenero, operaciones o técnico, redirigir directamente a su apartado exclusivo
             if (typeof isDefaultAlmacenUser === 'function' && isDefaultAlmacenUser(currentUser)) {
               const targetAlmTenant = (currentUser.assignedTenantId && currentUser.assignedTenantId !== '*')
                 ? currentUser.assignedTenantId
@@ -32298,6 +32446,18 @@ Estamos atentos para brindarle asistencia inmediata.
                 try { localStorage.setItem('turbonetwork_active_tenant', targetAlmTenant); } catch (_) {}
               }
               window.location.replace('/almacen');
+              return;
+            }
+            if (typeof isDefaultOperacionesUser === 'function' && isDefaultOperacionesUser(currentUser)) {
+              const targetOpsTenant = (currentUser.assignedTenantId && currentUser.assignedTenantId !== '*')
+                ? currentUser.assignedTenantId
+                : (Array.isArray(currentUser.allowedTenants) && currentUser.allowedTenants[0] && currentUser.allowedTenants[0] !== '*'
+                    ? currentUser.allowedTenants[0]
+                    : '');
+              if (targetOpsTenant) {
+                try { localStorage.setItem('turbonetwork_active_tenant', targetOpsTenant); } catch (_) {}
+              }
+              window.location.replace('/operaciones');
               return;
             }
             const stayInPanel = new URLSearchParams(window.location.search).get('stay') === '1';
@@ -63066,10 +63226,11 @@ if (typeof window.__flushPendingEarlyCalls === 'function') {
         if (!apt) return '/tech';
         if (apt.routePath) return apt.routePath;
         if (apt.slug === 'almacen') return '/almacen';
+        if (apt.slug === 'operaciones') return '/operaciones';
         return apt.slug === 'tecnicos' ? '/tech' : `/tech?apartado=${encodeURIComponent(apt.slug)}`;
       };
       const scopedCatalog = apartadosCatalog.filter(app => {
-        const targetScope = current.slug === 'almacen' ? 'almacen' : 'tecnicos';
+        const targetScope = current.slug === 'operaciones' ? 'operaciones' : (current.slug === 'almacen' ? 'almacen' : 'tecnicos');
         return !app.scope ? targetScope === 'tecnicos' : app.scope === targetScope;
       });
 
@@ -63400,7 +63561,7 @@ if (typeof window.__flushPendingEarlyCalls === 'function') {
     function copyApartadoLink() {
       const current = getSelectedApartado();
       const route = current?.routePath
-        || (current?.slug === 'almacen' ? '/almacen' : (current && current.slug !== 'tecnicos' ? `/tech?apartado=${encodeURIComponent(current.slug)}` : '/tech'));
+        || (current?.slug === 'almacen' ? '/almacen' : (current?.slug === 'operaciones' ? '/operaciones' : (current && current.slug !== 'tecnicos' ? `/tech?apartado=${encodeURIComponent(current.slug)}` : '/tech')));
       const pathUrl = `${window.location.origin}${route}`;
       navigator.clipboard?.writeText(pathUrl);
       if (typeof showToast === 'function') showToast(`Enlace copiado: ${pathUrl}`, 'success');

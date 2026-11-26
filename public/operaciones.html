@@ -1,0 +1,2049 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Turbo • Centro de Control de Operaciones</title>
+
+  <script>
+    (function() {
+      try {
+        var explicitTheme = localStorage.getItem('turbonetwork_theme');
+        var savedBrand = localStorage.getItem('turbonetwork_branding');
+        var bObj = savedBrand ? JSON.parse(savedBrand) : {};
+        var userPrefs = null;
+        try {
+          var sess = localStorage.getItem('turbonetwork_session');
+          if (sess) {
+            var uObj = JSON.parse(sess);
+            if (uObj && uObj.preferences) userPrefs = uObj.preferences;
+          }
+        } catch (e) {}
+
+        var activeTheme = explicitTheme || (userPrefs && userPrefs.themeMode) || bObj.themeMode || 'dark';
+        if (activeTheme === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+        }
+
+        var activePri = (userPrefs && userPrefs.primaryColor) || bObj.primaryColor || '#2563eb';
+        var activeAcc = (userPrefs && userPrefs.accentColor) || bObj.accentColor || '#059669';
+        function hexToRgb(hex) {
+          var h = String(hex || '').replace('#', '');
+          if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+          var n = parseInt(h, 16);
+          if (isNaN(n)) return '37, 99, 235';
+          return ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255);
+        }
+        document.documentElement.style.setProperty('--brand-primary', activePri);
+        document.documentElement.style.setProperty('--brand-primary-rgb', hexToRgb(activePri));
+        document.documentElement.style.setProperty('--brand-accent', activeAcc);
+        document.documentElement.style.setProperty('--brand-accent-rgb', hexToRgb(activeAcc));
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Turbo">
+  <link id="ops-favicon" rel="icon" type="image/png" href="/icons/icon-192.png">
+
+  <link rel="stylesheet" href="/assets/tailwind.min.css?v=ops_v2">
+  <link rel="stylesheet" href="/assets/remixicon/remixicon.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script src="/js/session-guard.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+      --brand-primary: #2563eb;
+      --brand-primary-rgb: 37, 99, 235;
+      --brand-accent: #059669;
+      --brand-accent-rgb: 5, 150, 105;
+
+      --bg-glass: rgba(255, 255, 255, 0.86);
+      --bg-surface: #ffffff;
+      --bg-surface-2: #f1f5f9;
+      --bg-input: #f1f5f9;
+      --border-subtle: rgba(15, 23, 42, 0.08);
+      --border-strong: rgba(15, 23, 42, 0.14);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.035);
+      --shadow-panel: 0 10px 30px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+
+    html.dark {
+      --bg-glass: rgba(14, 18, 27, 0.84);
+      --bg-surface: #121723;
+      --bg-surface-2: #181f2e;
+      --bg-input: #0d111a;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.15);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --shadow-card: 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+      --shadow-panel: 0 16px 38px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    button, a, select, input, [onclick] {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      overscroll-behavior: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', system-ui, sans-serif;
+      letter-spacing: -0.01em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      color: var(--text-primary);
+      background: #090c12;
+    }
+
+    h1, h2, h3, .ops-display {
+      font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', system-ui, sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    .font-mono, .tabular-nums {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ops-glass {
+      background: var(--bg-glass);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-panel);
+    }
+
+    .ops-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0.9rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .ops-input {
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      color: var(--text-primary);
+      border-radius: 0.7rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .ops-input:focus {
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb), 0.16);
+    }
+
+    .ops-btn-primary {
+      background: var(--brand-primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px -2px rgba(var(--brand-primary-rgb), 0.42);
+      transition: filter 0.15s ease, transform 0.15s var(--ease-out);
+    }
+    .ops-btn-primary:hover { filter: brightness(1.08); }
+    .ops-btn-primary:active { transform: scale(0.98); }
+
+    .ops-btn-accent {
+      background: var(--brand-accent);
+      color: #ffffff;
+      box-shadow: 0 4px 12px -2px rgba(var(--brand-accent-rgb), 0.4);
+      transition: filter 0.15s ease, transform 0.15s var(--ease-out);
+    }
+    .ops-btn-accent:hover { filter: brightness(1.08); }
+    .ops-btn-accent:active { transform: scale(0.98); }
+
+    .ops-badge-brand {
+      background: rgba(var(--brand-primary-rgb), 0.14);
+      color: var(--brand-primary);
+      border: 1px solid rgba(var(--brand-primary-rgb), 0.28);
+    }
+
+    .ops-dock-btn {
+      transition: background-color 150ms var(--ease-out), border-color 150ms var(--ease-out), color 150ms var(--ease-out), transform 90ms var(--ease-out);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+    }
+
+    .ops-dock-btn:hover {
+      border-color: rgba(var(--brand-primary-rgb), 0.45);
+      color: var(--text-primary);
+    }
+
+    .ops-dock-btn:active,
+    .ops-press:active {
+      transform: scale(0.96);
+    }
+
+    .ops-dock-btn.active {
+      background: var(--brand-primary);
+      border-color: transparent;
+      color: #ffffff;
+      box-shadow: 0 4px 12px -2px rgba(var(--brand-primary-rgb), 0.42);
+    }
+
+    .ops-no-scrollbar {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+    }
+    .ops-no-scrollbar::-webkit-scrollbar { display: none; }
+
+    /* Apple-fluid responsive sheet (bottom sheet on mobile, floating drawer on desktop) */
+    #ops-drawer {
+      transition: transform 380ms var(--ease-spring);
+      will-change: transform;
+    }
+    #ops-drawer.is-dragging {
+      transition: none !important;
+    }
+    @media (max-width: 639px) {
+      #ops-drawer {
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-height: 84dvh;
+        border-radius: 20px 20px 0 0;
+        padding-bottom: env(safe-area-inset-bottom);
+        transform: translate3d(0, 105%, 0);
+      }
+      #ops-drawer.is-open {
+        transform: translate3d(0, 0, 0);
+      }
+      #ops-drawer-header {
+        touch-action: none;
+        cursor: grab;
+      }
+      #ops-drawer-header:active {
+        cursor: grabbing;
+      }
+    }
+    @media (min-width: 640px) {
+      #ops-drawer {
+        top: 74px;
+        bottom: 12px;
+        left: 12px;
+        transform: translate3d(-115%, 0, 0);
+      }
+      #ops-drawer.is-open {
+        transform: translate3d(0, 0, 0);
+      }
+    }
+
+    .ops-scroll-body {
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #ops-drawer, .ops-dock-btn, .ops-btn-primary, .ops-btn-accent {
+        transition: opacity 150ms ease !important;
+        transform: none !important;
+      }
+      .ops-gps-pulse { animation: none !important; }
+    }
+    @media (prefers-reduced-transparency: reduce) {
+      .ops-glass {
+        background: var(--bg-surface) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+    }
+
+    /* Leaflet popup dark-friendly styling */
+    .leaflet-popup-content-wrapper {
+      border-radius: 0.85rem !important;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    .ops-dark-tiles .leaflet-tile-pane {
+      filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(90%) saturate(85%);
+    }
+
+    @keyframes opsPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
+      50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    }
+    .ops-gps-pulse {
+      animation: opsPulse 2s infinite;
+    }
+  </style>
+</head>
+<body class="antialiased select-none">
+
+  <!-- FULL-SCREEN LEAFLET MAP CANVAS -->
+  <div id="ops-leaflet-map" class="fixed inset-0 z-0"></div>
+
+  <!-- FLOATING TOP COMMAND BAR -->
+  <header class="fixed top-2.5 sm:top-3 left-2.5 right-2.5 sm:left-3 sm:right-3 z-30 pointer-events-none" style="padding-top: env(safe-area-inset-top)">
+    <div class="ops-glass rounded-2xl px-2.5 sm:px-3 py-2 flex flex-wrap items-center justify-between gap-2 pointer-events-auto">
+      <!-- Brand -->
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-xl ops-badge-brand flex items-center justify-center flex-shrink-0">
+          <i class="ri-radar-line text-lg"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-xs sm:text-sm font-extrabold tracking-tight truncate">Turbo</h1>
+            <span id="ops-tenant-badge" class="hidden sm:inline-flex px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ops-badge-brand uppercase"></span>
+          </div>
+          <p class="hidden xl:block text-[10px] text-slate-500 dark:text-slate-400 truncate">Control Operativo &amp; Mapa FTTH</p>
+        </div>
+      </div>
+
+      <!-- Collapsible Module Dock -->
+      <nav id="ops-dock-bar" class="ops-no-scrollbar flex items-center gap-1.5 overflow-x-auto py-0.5 max-w-full order-3 sm:order-none w-full sm:w-auto">
+        <button data-app="ops_dispatch" onclick="toggleOpsDrawer('dispatch')" id="dock-btn-dispatch" class="ops-dock-btn px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap">
+          <i class="ri-clipboard-line"></i>
+          <span>Despacho</span>
+          <span id="badge-pending-orders" class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-amber-500/20 text-amber-500">0</span>
+        </button>
+
+        <button data-app="ops_crews" onclick="toggleOpsDrawer('crews')" id="dock-btn-crews" class="ops-dock-btn px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap">
+          <i class="ri-team-line"></i>
+          <span>Cuadrillas</span>
+          <span id="badge-crews-today" class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-500">0</span>
+        </button>
+
+        <button data-app="ops_noc_network" onclick="toggleOpsDrawer('noc')" id="dock-btn-noc" class="ops-dock-btn px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap">
+          <i class="ri-server-line"></i>
+          <span>Red &amp; NOC</span>
+        </button>
+
+        <button data-app="ops_actas_qa" onclick="toggleOpsDrawer('actas')" id="dock-btn-actas" class="ops-dock-btn px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap">
+          <i class="ri-file-shield-2-line"></i>
+          <span>Actas</span>
+        </button>
+
+        <button data-app="ops_sla_reports" onclick="toggleOpsDrawer('overview')" id="dock-btn-overview" class="ops-dock-btn px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap">
+          <i class="ri-bar-chart-box-line"></i>
+          <span>SLA</span>
+        </button>
+      </nav>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        <button id="btn-new-order-top" onclick="openNewOrderModal()" class="px-3 py-1.5 rounded-xl ops-btn-primary text-xs font-extrabold flex items-center gap-1">
+          <i class="ri-add-line text-sm"></i>
+          <span class="hidden md:inline">Nueva Orden</span>
+        </button>
+
+        <span id="ops-clock" class="hidden 2xl:inline-flex px-2 py-1 rounded-lg text-[11px] font-mono font-semibold bg-slate-500/10 text-slate-500 dark:text-slate-300">--:--:--</span>
+
+        <button onclick="refreshOperationsData()" title="Actualizar datos" class="w-8 h-8 rounded-xl ops-card flex items-center justify-center hover:opacity-80 transition">
+          <i id="ops-refresh-icon" class="ri-refresh-line text-sm"></i>
+        </button>
+
+        <button onclick="toggleTheme()" title="Cambiar tema" class="w-8 h-8 rounded-xl ops-card flex items-center justify-center hover:opacity-80 transition">
+          <i id="ops-theme-icon" class="ri-sun-line text-sm"></i>
+        </button>
+
+        <div class="hidden md:flex items-center gap-1.5 px-2 py-1 rounded-xl ops-card">
+          <div class="w-5 h-5 rounded-md ops-btn-primary text-[10px] font-extrabold flex items-center justify-center" id="ops-user-initials">OP</div>
+          <span id="ops-user-name" class="text-[11px] font-bold truncate max-w-[90px]">Operador</span>
+        </div>
+
+        <button onclick="logoutOperations()" title="Cerrar sesión" class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center hover:bg-rose-500 hover:text-white transition">
+          <i class="ri-logout-box-r-line text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MOBILE SHEET BACKDROP -->
+  <div id="ops-drawer-backdrop" onclick="closeOpsDrawer()" class="fixed inset-0 z-10 bg-black/45 opacity-0 pointer-events-none transition-opacity duration-300 sm:hidden"></div>
+
+  <!-- COLLAPSIBLE SIDE DRAWER / MOBILE BOTTOM SHEET -->
+  <aside id="ops-drawer" class="fixed z-20 sm:w-[440px] lg:w-[480px] ops-glass sm:rounded-2xl flex flex-col overflow-hidden select-text">
+    <!-- Mobile Drag Handle & Drawer Header -->
+    <div id="ops-drawer-header" class="px-4 pt-2 pb-3 sm:py-3 border-b border-slate-500/15 flex flex-col gap-2 flex-shrink-0">
+      <div class="w-9 h-1 rounded-full bg-slate-400/40 mx-auto sm:hidden" aria-hidden="true"></div>
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <i id="ops-drawer-icon" class="ri-clipboard-line text-lg" style="color: var(--brand-primary)"></i>
+          <h2 id="ops-drawer-title" class="text-sm font-bold truncate">Despacho &amp; Órdenes</h2>
+        </div>
+        <button onclick="closeOpsDrawer()" title="Cerrar panel (Esc)" class="ops-press w-8 h-8 sm:w-7 sm:h-7 rounded-lg hover:bg-slate-500/15 flex items-center justify-center transition-colors">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Drawer Scrollable Body -->
+    <div class="ops-scroll-body flex-1 overflow-y-auto p-4 space-y-4">
+
+      <!-- PANEL: DESPACHO Y ÓRDENES -->
+      <section id="ops-panel-dispatch" class="hidden space-y-3">
+        <!-- Detalle del punto tocado en el mapa -->
+        <div id="dispatch-selected-point" class="hidden ops-card p-3.5 border-amber-500/40 bg-amber-500/5 space-y-2.5"></div>
+
+        <div class="flex flex-col gap-2">
+          <input id="dispatch-search" oninput="renderDispatchList()" type="text" placeholder="Buscar cliente, código, NAP o técnico..." class="ops-input px-3 py-2 text-xs w-full outline-none">
+          <div class="grid grid-cols-2 gap-2">
+            <select id="dispatch-filter-status" onchange="renderDispatchList()" class="ops-input px-2.5 py-2 text-xs outline-none">
+              <option value="">Todos los estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="en_camino">En Camino</option>
+              <option value="en_progreso">En Progreso</option>
+              <option value="completada">Completada</option>
+            </select>
+            <select id="dispatch-filter-type" onchange="renderDispatchList()" class="ops-input px-2.5 py-2 text-xs outline-none">
+              <option value="">Todos los tipos</option>
+              <option value="instalacion">Instalación</option>
+              <option value="averia">Avería</option>
+              <option value="migracion">Migración</option>
+              <option value="retiro">Retiro</option>
+            </select>
+          </div>
+        </div>
+        <div id="dispatch-orders-grid" class="space-y-3"></div>
+      </section>
+
+      <!-- PANEL: CUADRILLAS & GPS -->
+      <section id="ops-panel-crews" class="hidden space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cuadrillas Formadas</h3>
+          <button id="btn-create-crew" onclick="openCrewBuilderModal()" class="px-3 py-1.5 rounded-xl ops-btn-primary text-xs font-extrabold flex items-center gap-1.5">
+            <i class="ri-add-line text-sm"></i>
+            <span>Crear Cuadrilla</span>
+          </button>
+        </div>
+        <div id="crews-builder-list" class="space-y-2"></div>
+
+        <div class="pt-2 border-t border-slate-500/15 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Marcaciones GPS del Día</span>
+            <span id="crews-date-label" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-500"></span>
+          </div>
+          <div id="crews-attendance-list" class="space-y-2.5"></div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-500/15 space-y-2.5">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Carga Operativa por Técnico</h3>
+          <div id="crews-workload-list" class="space-y-2"></div>
+        </div>
+      </section>
+
+      <!-- PANEL: RED & NOC -->
+      <section id="ops-panel-noc" class="hidden space-y-4">
+        <div class="space-y-2.5">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Routers MikroTik / OLTs</h3>
+          <div id="noc-devices-list" class="space-y-2"></div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-500/15 space-y-2.5">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Diagnóstico Rápido CIZ</h3>
+          <div class="flex gap-2">
+            <input id="noc-ciz-input" onkeydown="if(event.key==='Enter') searchCizDiagnostic()" type="text" placeholder="CIZ, DNI, nombre, PPPoE o IP..." class="ops-input px-3 py-2 text-xs flex-1 outline-none">
+            <button onclick="searchCizDiagnostic()" class="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold transition">Buscar</button>
+          </div>
+          <div id="noc-ciz-results" class="space-y-2"></div>
+        </div>
+      </section>
+
+      <!-- PANEL: ACTAS & QA -->
+      <section id="ops-panel-actas" class="hidden space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-slate-500 dark:text-slate-400">Auditoría de folios y firmas</span>
+          <span id="actas-total-badge" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-500">0 actas</span>
+        </div>
+        <div id="actas-qa-list" class="space-y-2.5"></div>
+      </section>
+
+      <!-- PANEL: OVERVIEW & SLA -->
+      <section id="ops-panel-overview" class="hidden space-y-4">
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="ops-card p-3">
+            <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Pendientes</div>
+            <div id="kpi-pending" class="text-xl font-extrabold font-mono text-amber-500">0</div>
+          </div>
+          <div class="ops-card p-3">
+            <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">En Campo</div>
+            <div id="kpi-inprogress" class="text-xl font-extrabold font-mono text-blue-500">0</div>
+          </div>
+          <div class="ops-card p-3">
+            <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Completadas Hoy</div>
+            <div id="kpi-completed-today" class="text-xl font-extrabold font-mono text-emerald-500">0</div>
+          </div>
+          <div class="ops-card p-3">
+            <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Urgentes / Alta</div>
+            <div id="kpi-urgent" class="text-xl font-extrabold font-mono text-rose-500">0</div>
+          </div>
+        </div>
+
+        <div class="ops-card p-3.5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold">Distribución &amp; SLA</span>
+            <button id="btn-export-csv" onclick="exportOperationsCsv()" class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold flex items-center gap-1 transition">
+              <i class="ri-download-2-line"></i> CSV
+            </button>
+          </div>
+          <div class="space-y-2.5" id="sla-breakdown-bars"></div>
+        </div>
+
+        <div class="ops-card p-3.5 space-y-2">
+          <span class="text-xs font-extrabold">Alertas Operativas</span>
+          <div id="ops-alerts-list" class="space-y-2 text-xs"></div>
+        </div>
+      </section>
+
+    </div>
+  </aside>
+
+  <!-- FLOATING MAP LAYERS & PROJECT CONTROL -->
+  <div class="fixed left-3 z-20 flex flex-col items-start gap-2 pointer-events-none" style="bottom: max(14px, env(safe-area-inset-bottom))">
+    <div id="ops-layers-popover" class="hidden ops-glass rounded-2xl p-3.5 w-72 space-y-3 pointer-events-auto text-xs" style="transform-origin: bottom left;">
+      <div class="flex items-center justify-between">
+        <span class="font-extrabold">Capas &amp; Mapa Base</span>
+        <button onclick="fitOpsMapBounds()" class="px-2 py-1 rounded-lg bg-amber-500/15 text-amber-500 hover:bg-amber-500 hover:text-white text-[11px] font-bold transition">
+          <i class="ri-focus-3-line"></i> Centrar
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <select id="ops-map-project" onchange="loadOpsMapData(this.value)" class="ops-input w-full px-2.5 py-1.5 text-xs outline-none">
+          <option value="">Mapa Principal</option>
+        </select>
+        <select id="ops-map-style" onchange="changeOpsMapStyle(this.value)" class="ops-input w-full px-2.5 py-1.5 text-xs outline-none">
+          <option value="dark">Oscuro (Mapa Nocturno)</option>
+          <option value="satellite">Satélite (Híbrido)</option>
+          <option value="streets">Calles (Estándar)</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-500/15 font-semibold text-[11px]">
+        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" checked onchange="toggleOpsMapLayer('nodes', this.checked)" class="rounded text-amber-500">
+          <span>Nodos (<span id="map-count-nodes">0</span>)</span>
+        </label>
+        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" checked onchange="toggleOpsMapLayer('lines', this.checked)" class="rounded text-blue-500">
+          <span>Fibra (<span id="map-count-lines">0</span>)</span>
+        </label>
+        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" checked onchange="toggleOpsMapLayer('orders', this.checked)" class="rounded text-rose-500">
+          <span>Órdenes (<span id="map-count-orders">0</span>)</span>
+        </label>
+        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" checked onchange="toggleOpsMapLayer('crews', this.checked)" class="rounded text-emerald-500">
+          <span>GPS (<span id="map-count-crews">0</span>)</span>
+        </label>
+        <label class="inline-flex items-center gap-1.5 cursor-pointer col-span-2">
+          <input type="checkbox" onchange="toggleOpsMapLayer('customers', this.checked)" class="rounded text-cyan-500">
+          <span>Clientes Abonados (<span id="map-count-customers">0</span>)</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 pointer-events-auto">
+      <button onclick="toggleLayersPopover()" class="ops-glass px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 hover:border-amber-500/50 transition">
+        <i class="ri-stack-line text-amber-500 text-sm"></i>
+        <span>Capas del Mapa</span>
+      </button>
+      <button onclick="fitOpsMapBounds()" title="Centrar todo en el mapa" class="ops-glass w-9 h-9 rounded-xl flex items-center justify-center hover:border-amber-500/50 transition">
+        <i class="ri-focus-3-line text-sm"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: NUEVA ORDEN OPERATIVA -->
+  <div id="modal-new-order" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 select-text">
+    <div class="ops-card w-full max-w-xl p-5 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-500/10 pb-3">
+        <div>
+          <h3 class="text-base font-extrabold">Nueva Orden de Campo</h3>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">Asigna instalaciones, averías o migraciones a tu equipo técnico</p>
+        </div>
+        <button onclick="closeNewOrderModal()" class="w-8 h-8 rounded-lg hover:bg-slate-500/10 flex items-center justify-center">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Autocompletado rápido de abonado -->
+      <div class="relative text-xs">
+        <label class="block font-semibold mb-1 text-amber-500"><i class="ri-search-line"></i> Buscar Cliente Registrado (opcional)</label>
+        <input id="no-customer-search" oninput="searchOrderCustomer(this.value)" type="text" placeholder="Buscar por CIZ, DNI o nombre para autocompletar..." class="ops-input w-full px-3 py-2 outline-none">
+        <div id="no-customer-results" class="hidden absolute left-0 right-0 mt-1 ops-card shadow-xl max-h-44 overflow-y-auto z-20 divide-y divide-slate-500/10"></div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="block font-semibold mb-1">Tipo de Orden</label>
+          <select id="no-type" class="ops-input w-full px-3 py-2 outline-none">
+            <option value="instalacion">Instalación FTTH</option>
+            <option value="averia">Avería / Soporte</option>
+            <option value="migracion">Migración / Upgrade</option>
+            <option value="retiro">Retiro de Equipo</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Prioridad</label>
+          <select id="no-priority" class="ops-input w-full px-3 py-2 outline-none">
+            <option value="normal">Normal</option>
+            <option value="alta">Alta</option>
+            <option value="urgente">Urgente</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block font-semibold mb-1">Nombre del Cliente *</label>
+          <input id="no-customer" type="text" placeholder="Ej. Carlos Mendoza" class="ops-input w-full px-3 py-2 outline-none">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block font-semibold mb-1">Dirección *</label>
+          <input id="no-address" type="text" placeholder="Ej. Av. Los Pinos 234" class="ops-input w-full px-3 py-2 outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Teléfono</label>
+          <input id="no-phone" type="text" placeholder="+51 999 888 777" class="ops-input w-full px-3 py-2 outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Caja NAP / Puerto</label>
+          <input id="no-nap" type="text" placeholder="NAP-01 / Puerto 4" class="ops-input w-full px-3 py-2 outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Plan / Servicio</label>
+          <input id="no-plan" type="text" placeholder="Ej. Fibra Hogar 200 Mbps" class="ops-input w-full px-3 py-2 outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Referencia</label>
+          <input id="no-reference" type="text" placeholder="Ej. Frente al parque" class="ops-input w-full px-3 py-2 outline-none">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block font-semibold mb-1">Técnico / Cuadrilla Asignada</label>
+          <select id="no-tech" onchange="toggleCustomTechInput(this.value)" class="ops-input w-full px-3 py-2 outline-none"></select>
+          <input id="no-tech-custom" type="text" placeholder="Escribe el nombre de la cuadrilla o técnico..." class="hidden ops-input w-full px-3 py-2 outline-none mt-2">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Fecha Programada</label>
+          <input id="no-date" type="date" class="ops-input w-full px-3 py-2 outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Horario Programado</label>
+          <input id="no-time" type="text" value="10:00 AM" class="ops-input w-full px-3 py-2 outline-none">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block font-semibold mb-1">Notas Operativas</label>
+          <textarea id="no-notes" rows="2" placeholder="Indicaciones para la cuadrilla..." class="ops-input w-full px-3 py-2 outline-none"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-500/10">
+        <button onclick="closeNewOrderModal()" class="px-4 py-2 rounded-xl text-xs font-bold ops-card">Cancelar</button>
+        <button onclick="submitNewOrder()" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-amber-500 hover:bg-amber-600 text-white transition">Crear y Asignar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REASIGNAR TÉCNICO -->
+  <div id="modal-reassign-order" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 select-text">
+    <div class="ops-card w-full max-w-sm p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-extrabold">Reasignar Técnico</h3>
+        <button onclick="closeReassignModal()" class="w-7 h-7 rounded-lg hover:bg-slate-500/10 flex items-center justify-center">
+          <i class="ri-close-line text-base"></i>
+        </button>
+      </div>
+      <div class="text-xs space-y-2">
+        <label class="block font-semibold">Selecciona el técnico o cuadrilla:</label>
+        <select id="reassign-tech-select" class="ops-input w-full px-3 py-2 outline-none"></select>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeReassignModal()" class="px-3.5 py-2 rounded-xl text-xs font-bold ops-card">Cancelar</button>
+        <button onclick="confirmReassignOrder()" class="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-amber-500 hover:bg-amber-600 text-white transition">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONSTRUCTOR DE CUADRILLAS -->
+  <div id="modal-crew-builder" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 select-text">
+    <div class="ops-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-500/10 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="ri-team-line text-lg" style="color: var(--brand-primary)"></i>
+          <h3 id="cb-modal-title" class="text-sm font-extrabold">Constructor de Cuadrillas</h3>
+        </div>
+        <button onclick="closeCrewBuilderModal()" class="w-8 h-8 rounded-lg hover:bg-slate-500/10 flex items-center justify-center">
+          <i class="ri-close-line text-lg"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="block font-semibold mb-1">Nombre de la Cuadrilla *</label>
+          <input id="cb-name" type="text" placeholder="Ej. Cuadrilla FTTH Norte" class="ops-input w-full px-3 py-2 outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Carro Asignado (opcional)</label>
+          <select id="cb-vehicle" class="ops-input w-full px-3 py-2 outline-none"></select>
+        </div>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <div class="flex items-center justify-between gap-2">
+          <label class="font-semibold">Seleccionar Técnicos</label>
+          <span id="cb-selected-count" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded ops-badge-brand">0 seleccionados</span>
+        </div>
+        <input id="cb-tech-search" oninput="renderCrewBuilderTechList()" type="text" placeholder="Buscar técnico por nombre o cargo..." class="ops-input w-full px-3 py-2 outline-none">
+        <div id="cb-tech-list" class="max-h-60 overflow-y-auto space-y-1.5 pr-1"></div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-500/10">
+        <button onclick="closeCrewBuilderModal()" class="px-4 py-2 rounded-xl text-xs font-bold ops-card">Cancelar</button>
+        <button id="cb-submit-btn" onclick="submitCrewBuilder()" class="px-4 py-2 rounded-xl text-xs font-extrabold ops-btn-primary">Crear Cuadrilla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="ops-toast" class="hidden fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shadow-xl"></div>
+
+  <script>
+    let opsData = null;
+    let opsAccess = null;
+    let activeDrawerTab = null;
+
+    const DRAWER_META = {
+      dispatch: { title: 'Despacho & Órdenes de Campo', icon: 'ri-clipboard-line' },
+      crews: { title: 'Cuadrillas & Asistencia GPS', icon: 'ri-team-line' },
+      noc: { title: 'Supervisión Red & NOC', icon: 'ri-server-line' },
+      actas: { title: 'Actas & Control de Calidad', icon: 'ri-file-shield-2-line' },
+      overview: { title: 'Tablero SLA & Métricas', icon: 'ri-bar-chart-box-line' },
+    };
+
+    function showToast(msg) {
+      const el = document.getElementById('ops-toast');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(window.__opsToastTimer);
+      window.__opsToastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function updateClock() {
+      const el = document.getElementById('ops-clock');
+      if (!el) return;
+      el.textContent = new Intl.DateTimeFormat('es-PE', {
+        timeZone: 'America/Lima',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(new Date());
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('turbonetwork_theme', isDark ? 'dark' : 'light');
+      const icon = document.getElementById('ops-theme-icon');
+      if (icon) icon.className = isDark ? 'ri-sun-line text-sm' : 'ri-moon-line text-sm';
+      const styleSel = document.getElementById('ops-map-style');
+      if (styleSel && styleSel.value !== 'satellite') {
+        const nextStyle = isDark ? 'dark' : 'streets';
+        styleSel.value = nextStyle;
+        changeOpsMapStyle(nextStyle);
+      }
+    }
+
+    function logoutOperations() {
+      if (window.TurboSessionGuard && typeof window.TurboSessionGuard.logout === 'function') {
+        window.TurboSessionGuard.logout();
+      } else {
+        localStorage.removeItem('turbonetwork_session');
+        localStorage.removeItem('turbonetwork_auth_meta');
+        window.location.replace('/');
+      }
+    }
+
+    function hasOpsPerm(permId) {
+      if (!opsAccess || !opsAccess.apartado) return true;
+      const perms = opsAccess.apartado.enabledPermissions;
+      if (!Array.isArray(perms)) return true;
+      return perms.includes(permId);
+    }
+
+    // Drawer / Mobile Sheet open / close toggle
+    function toggleOpsDrawer(tab) {
+      const drawer = document.getElementById('ops-drawer');
+      const backdrop = document.getElementById('ops-drawer-backdrop');
+      if (activeDrawerTab === tab) {
+        closeOpsDrawer();
+        return;
+      }
+      activeDrawerTab = tab;
+      const meta = DRAWER_META[tab] || { title: 'Operaciones', icon: 'ri-radar-line' };
+      document.getElementById('ops-drawer-title').textContent = meta.title;
+      document.getElementById('ops-drawer-icon').className = `${meta.icon} text-lg`;
+      document.getElementById('ops-drawer-icon').style.color = 'var(--brand-primary)';
+
+      Object.keys(DRAWER_META).forEach(k => {
+        document.getElementById('ops-panel-' + k)?.classList.toggle('hidden', k !== tab);
+        document.getElementById('dock-btn-' + k)?.classList.toggle('active', k === tab);
+      });
+
+      if (drawer) {
+        drawer.style.transform = '';
+        drawer.classList.remove('is-dragging');
+        drawer.classList.add('is-open');
+      }
+      if (backdrop) {
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+      }
+    }
+
+    function closeOpsDrawer() {
+      activeDrawerTab = null;
+      const drawer = document.getElementById('ops-drawer');
+      const backdrop = document.getElementById('ops-drawer-backdrop');
+      if (drawer) {
+        drawer.style.transform = '';
+        drawer.classList.remove('is-dragging', 'is-open');
+      }
+      if (backdrop) {
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+      }
+      Object.keys(DRAWER_META).forEach(k => {
+        document.getElementById('dock-btn-' + k)?.classList.remove('active');
+      });
+    }
+
+    // Apple-style 1:1 mobile sheet drag-to-dismiss with rubber-banding & velocity projection
+    function initMobileSheetGestures() {
+      const drawer = document.getElementById('ops-drawer');
+      const header = document.getElementById('ops-drawer-header');
+      const backdrop = document.getElementById('ops-drawer-backdrop');
+      if (!drawer || !header) return;
+
+      let active = false;
+      let startY = 0;
+      let baseOffset = 0;
+      let currentY = 0;
+      let samples = [];
+
+      const rubberband = (overshoot, dim, c = 0.55) => (overshoot * dim * c) / (dim + c * Math.abs(overshoot));
+      const project = (v, decel = 0.992) => (v / 1000) * decel / (1 - decel);
+
+      header.addEventListener('pointerdown', (e) => {
+        if (window.innerWidth >= 640 || !activeDrawerTab) return;
+        if (e.target.closest('button')) return;
+        active = true;
+        header.setPointerCapture(e.pointerId);
+
+        // Interruptible: read live presentation transform if mid-flight
+        const matrix = new DOMMatrixReadOnly(getComputedStyle(drawer).transform);
+        baseOffset = Number.isFinite(matrix.m42) ? matrix.m42 : 0;
+        startY = e.clientY;
+        currentY = baseOffset;
+        samples = [{ y: e.clientY, t: performance.now() }];
+        drawer.classList.add('is-dragging');
+      });
+
+      header.addEventListener('pointermove', (e) => {
+        if (!active) return;
+        const now = performance.now();
+        samples.push({ y: e.clientY, t: now });
+        samples = samples.filter(s => now - s.t <= 100);
+
+        const raw = baseOffset + (e.clientY - startY);
+        const h = drawer.offsetHeight || 400;
+        currentY = raw < 0 ? -rubberband(-raw, h, 0.45) : raw;
+        drawer.style.transform = `translate3d(0, ${currentY}px, 0)`;
+
+        if (backdrop && currentY >= 0) {
+          const progress = Math.max(0, 1 - currentY / h);
+          backdrop.style.opacity = String(progress);
+        }
+      });
+
+      const endGesture = () => {
+        if (!active) return;
+        active = false;
+        drawer.classList.remove('is-dragging');
+        if (backdrop) backdrop.style.opacity = '';
+
+        let vy = 0;
+        if (samples.length >= 2) {
+          const first = samples[0];
+          const last = samples[samples.length - 1];
+          const dt = (last.t - first.t) / 1000;
+          if (dt > 0.005) vy = (last.y - first.y) / dt;
+        }
+
+        const h = drawer.offsetHeight || 400;
+        const projected = currentY + project(vy, 0.992);
+        if (projected > h * 0.35 || vy > 620) {
+          closeOpsDrawer();
+        } else {
+          drawer.style.transform = '';
+          drawer.classList.add('is-open');
+        }
+      };
+
+      header.addEventListener('pointerup', endGesture);
+      header.addEventListener('pointercancel', endGesture);
+    }
+    initMobileSheetGestures();
+
+    function toggleLayersPopover() {
+      document.getElementById('ops-layers-popover')?.classList.toggle('hidden');
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeOpsDrawer();
+        closeCrewBuilderModal();
+        document.getElementById('ops-layers-popover')?.classList.add('hidden');
+      }
+    });
+
+    async function initOperationsApp() {
+      try {
+        const sessRaw = localStorage.getItem('turbonetwork_session');
+        const user = sessRaw ? JSON.parse(sessRaw) : null;
+        const activeTenant = localStorage.getItem('turbonetwork_active_tenant') || (user && user.assignedTenantId !== '*' ? user.assignedTenantId : 'turbonetwork');
+
+        if (user) {
+          const nameEl = document.getElementById('ops-user-name');
+          const initEl = document.getElementById('ops-user-initials');
+          if (nameEl) nameEl.textContent = user.name || user.username || 'Operador';
+          if (initEl) {
+            const parts = String(user.name || 'OP').trim().split(/\s+/);
+            initEl.textContent = ((parts[0]?.[0] || 'O') + (parts[1]?.[0] || parts[0]?.[1] || 'P')).toUpperCase();
+          }
+        }
+
+        const tenantBadge = document.getElementById('ops-tenant-badge');
+        if (tenantBadge && activeTenant) tenantBadge.textContent = activeTenant;
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const themeIcon = document.getElementById('ops-theme-icon');
+        if (themeIcon) themeIcon.className = isDark ? 'ri-sun-line text-sm' : 'ri-moon-line text-sm';
+        const styleSel = document.getElementById('ops-map-style');
+        if (styleSel) styleSel.value = isDark ? 'dark' : 'streets';
+
+        const userId = user?.id || 0;
+        const roleId = user?.roleId || 0;
+        const accessRes = await fetch(`/api/apartados/my-access?userId=${encodeURIComponent(userId)}&roleId=${encodeURIComponent(roleId)}&tenantId=${encodeURIComponent(activeTenant)}&apartadoId=apt-operaciones&slug=operaciones`);
+        if (accessRes.ok) {
+          opsAccess = await accessRes.json();
+          const enabledApps = new Set(opsAccess?.apartado?.enabledApps || []);
+          document.querySelectorAll('#ops-dock-bar [data-app]').forEach(btn => {
+            const appId = btn.getAttribute('data-app');
+            if (enabledApps.size > 0 && !enabledApps.has(appId)) {
+              btn.classList.add('hidden');
+            }
+          });
+        }
+
+        initLeafletMap();
+        await Promise.all([refreshOperationsData(), loadOpsMapData()]);
+        searchCizDiagnostic();
+      } catch (err) {
+        console.error('Error iniciando TurboOps:', err);
+      }
+    }
+
+    async function refreshOperationsData() {
+      const icon = document.getElementById('ops-refresh-icon');
+      if (icon) icon.classList.add('animate-spin');
+      try {
+        const res = await fetch('/api/apartados/operaciones/overview');
+        const json = await res.json();
+        if (json.success) {
+          opsData = json;
+          renderAllOperations();
+          renderOpsMapLayers();
+        }
+      } catch {
+        showToast('Error al actualizar datos operativos');
+      } finally {
+        if (icon) icon.classList.remove('animate-spin');
+      }
+    }
+
+    function renderAllOperations() {
+      if (!opsData) return;
+      const k = opsData.kpis || {};
+      document.getElementById('kpi-pending').textContent = k.pendingOrders ?? 0;
+      document.getElementById('kpi-inprogress').textContent = k.inProgressOrders ?? 0;
+      document.getElementById('kpi-completed-today').textContent = k.completedToday ?? 0;
+      document.getElementById('kpi-urgent').textContent = k.urgentOrders ?? 0;
+
+      document.getElementById('badge-pending-orders').textContent = k.pendingOrders ?? 0;
+      document.getElementById('badge-crews-today').textContent = k.activeCrewsToday ?? 0;
+
+      document.getElementById('btn-export-csv')?.classList.toggle('hidden', !hasOpsPerm('ops:sla_export'));
+      document.getElementById('btn-new-order-top')?.classList.toggle('hidden', !hasOpsPerm('ops:orders_create'));
+
+      renderOverviewSla();
+      renderDispatchList();
+      renderCrews();
+      renderNocDevices();
+      renderActasQa();
+    }
+
+    function renderOverviewSla() {
+      const orders = opsData.installations || [];
+      const total = orders.length || 1;
+      const byType = [
+        { label: 'Instalaciones FTTH', count: orders.filter(o => o.type === 'instalacion').length, color: 'bg-blue-500' },
+        { label: 'Averías / Soporte', count: orders.filter(o => o.type === 'averia').length, color: 'bg-rose-500' },
+        { label: 'Migraciones', count: orders.filter(o => o.type === 'migracion').length, color: 'bg-amber-500' },
+        { label: 'Completadas (SLA)', count: orders.filter(o => o.status === 'completada').length, color: 'bg-emerald-500' },
+      ];
+      document.getElementById('sla-breakdown-bars').innerHTML = byType.map(item => {
+        const pct = Math.round((item.count / total) * 100);
+        return `
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>${item.label}</span>
+              <span class="font-mono">${item.count} (${pct}%)</span>
+            </div>
+            <div class="h-2 rounded-full bg-slate-500/15 overflow-hidden">
+              <div class="h-full ${item.color} rounded-full transition-all duration-500" style="width:${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const alerts = [];
+      const urgent = orders.filter(o => o.status !== 'completada' && (o.priority === 'urgente' || o.priority === 'alta'));
+      if (urgent.length > 0) alerts.push({ icon: 'ri-alarm-warning-line text-rose-500', text: `${urgent.length} orden(es) de prioridad Alta/Urgente activas.` });
+      const pendMat = (opsData.materialRequests || []).filter(m => m.status === 'pendiente').length;
+      if (pendMat > 0) alerts.push({ icon: 'ri-box-3-line text-blue-500', text: `${pendMat} solicitud(es) de material por aprobar.` });
+      const pendAdv = (opsData.advances || []).filter(a => a.status === 'pendiente').length;
+      if (pendAdv > 0) alerts.push({ icon: 'ri-wallet-3-line text-amber-500', text: `${pendAdv} solicitud(es) de viáticos pendientes.` });
+      if (alerts.length === 0) alerts.push({ icon: 'ri-checkbox-circle-line text-emerald-500', text: 'Operación estable: sin alertas críticas.' });
+
+      document.getElementById('ops-alerts-list').innerHTML = alerts.map(a => `
+        <div class="p-2.5 rounded-xl bg-slate-500/5 border border-slate-500/10 flex items-start gap-2">
+          <i class="${a.icon} text-base"></i>
+          <span>${escapeHtml(a.text)}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderDispatchList() {
+      const q = (document.getElementById('dispatch-search')?.value || '').trim().toLowerCase();
+      const st = document.getElementById('dispatch-filter-status')?.value || '';
+      const tp = document.getElementById('dispatch-filter-type')?.value || '';
+      const canAssign = hasOpsPerm('ops:orders_assign');
+
+      const orders = (opsData.installations || []).filter(o => {
+        if (st && o.status !== st) return false;
+        if (tp && o.type !== tp) return false;
+        if (q) {
+          const hay = `${o.code} ${o.customerName} ${o.customerCiz} ${o.napCode || ''} ${o.assignedTechName || ''} ${o.address}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      const container = document.getElementById('dispatch-orders-grid');
+      if (orders.length === 0) {
+        container.innerHTML = `<div class="ops-card p-6 text-center text-xs text-slate-500">No se encontraron órdenes con los filtros actuales.</div>`;
+        return;
+      }
+
+      const prioColors = {
+        urgente: 'bg-rose-500/15 text-rose-500',
+        alta: 'bg-amber-500/15 text-amber-500',
+        normal: 'bg-slate-500/15 text-slate-400',
+      };
+
+      container.innerHTML = orders.map(o => `
+        <div class="ops-card p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-mono text-xs font-bold text-amber-500">${escapeHtml(o.code)}</span>
+            <div class="flex items-center gap-1">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${prioColors[o.priority] || prioColors.normal}">${escapeHtml(o.priority)}</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-500/15 text-blue-500">${escapeHtml(o.type)}</span>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs font-extrabold">${escapeHtml(o.customerName)}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHtml(o.address)}</div>
+          </div>
+          <div class="text-[11px] font-mono bg-slate-500/5 p-2 rounded-lg flex flex-wrap gap-x-3 gap-y-1">
+            <span><strong class="text-slate-400">NAP:</strong> ${escapeHtml(o.napCode || '--')}</span>
+            <span><strong class="text-slate-400">Hora:</strong> ${escapeHtml(o.scheduledTime || '--')}</span>
+            <span class="w-full truncate"><strong class="text-slate-400">Técnico:</strong> ${escapeHtml(o.assignedTechName || 'Sin asignar')}</span>
+          </div>
+          <div class="flex items-center gap-1.5 pt-1">
+            <select ${canAssign ? '' : 'disabled'} onchange="updateOrderField('${escapeHtml(o.id)}', { status: this.value })" class="ops-input px-2 py-1.5 text-[11px] flex-1 outline-none">
+              <option value="pendiente" ${o.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+              <option value="en_camino" ${o.status === 'en_camino' ? 'selected' : ''}>En Camino</option>
+              <option value="en_progreso" ${o.status === 'en_progreso' ? 'selected' : ''}>En Progreso</option>
+              <option value="completada" ${o.status === 'completada' ? 'selected' : ''}>Completada</option>
+            </select>
+            ${o.lat && o.lng ? `<button onclick="focusMapPoint(${o.lat}, ${o.lng})" title="Ubicar en mapa" class="px-2.5 py-1.5 rounded-lg bg-blue-500/15 text-blue-500 hover:bg-blue-500 hover:text-white text-xs font-bold transition"><i class="ri-map-pin-line"></i></button>` : ''}
+            ${canAssign ? `<button onclick="promptReassignOrder('${escapeHtml(o.id)}', '${escapeHtml(o.assignedTechName || '')}')" title="Reasignar técnico" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-500 hover:bg-amber-500 hover:text-white text-xs font-bold transition"><i class="ri-user-shared-line"></i></button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function updateOrderField(id, patch) {
+      try {
+        const res = await fetch(`/api/apartados/installations/${encodeURIComponent(id)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patch)
+        });
+        const json = await res.json();
+        if (json.success) {
+          showToast('Orden actualizada');
+          await refreshOperationsData();
+        } else {
+          showToast(json.message || 'No se pudo actualizar');
+        }
+      } catch {
+        showToast('Error de red al actualizar orden');
+      }
+    }
+
+    let selectedOrderCustomer = null;
+    let reassignOrderId = null;
+
+    function buildTechnicianOptionsHtml(selectedName = '', includeCustom = true) {
+      const crews = Array.isArray(opsData?.crews) ? opsData.crews : [];
+      const techs = Array.isArray(opsData?.technicians) ? opsData.technicians : [];
+      const opts = [];
+      crews.forEach(c => {
+        const isSel = selectedName && c.name.toLowerCase() === selectedName.toLowerCase();
+        opts.push(`<option value="${escapeHtml(c.name)}" ${isSel ? 'selected' : ''}>Cuadrilla: ${escapeHtml(c.name)} (${(c.members || []).length} téc.)</option>`);
+      });
+      techs.forEach(t => {
+        const isSel = selectedName && t.name.toLowerCase() === selectedName.toLowerCase();
+        opts.push(`<option value="${escapeHtml(t.name)}" data-tech-id="${t.id || ''}" ${isSel ? 'selected' : ''}>${escapeHtml(t.name)} — ${escapeHtml(t.roleName || 'Técnico')}</option>`);
+      });
+      opts.push(`<option value="Cuadrilla FTTH" ${selectedName === 'Cuadrilla FTTH' ? 'selected' : ''}>Cuadrilla FTTH (General)</option>`);
+      if (includeCustom) {
+        opts.push(`<option value="__custom__">+ Otro técnico / cuadrilla (escribir)</option>`);
+      }
+      return opts.join('');
+    }
+
+    function toggleCustomTechInput(val) {
+      const customEl = document.getElementById('no-tech-custom');
+      if (customEl) customEl.classList.toggle('hidden', val !== '__custom__');
+    }
+
+    function promptReassignOrder(id, currentTech) {
+      reassignOrderId = id;
+      const sel = document.getElementById('reassign-tech-select');
+      if (sel) sel.innerHTML = buildTechnicianOptionsHtml(currentTech, false);
+      document.getElementById('modal-reassign-order')?.classList.remove('hidden');
+    }
+
+    function closeReassignModal() {
+      reassignOrderId = null;
+      document.getElementById('modal-reassign-order')?.classList.add('hidden');
+    }
+
+    async function confirmReassignOrder() {
+      if (!reassignOrderId) return;
+      const sel = document.getElementById('reassign-tech-select');
+      const opt = sel?.options[sel.selectedIndex];
+      const techName = sel?.value || 'Cuadrilla FTTH';
+      const techId = opt?.getAttribute('data-tech-id');
+      const patch = { assignedTechName: techName };
+      if (techId) patch.assignedTechId = Number(techId);
+      const targetId = reassignOrderId;
+      closeReassignModal();
+      await updateOrderField(targetId, patch);
+    }
+
+    let orderCustomerSearchTimer = null;
+    function searchOrderCustomer(q) {
+      clearTimeout(orderCustomerSearchTimer);
+      const box = document.getElementById('no-customer-results');
+      if (!q || q.trim().length < 2) {
+        if (box) box.classList.add('hidden');
+        return;
+      }
+      orderCustomerSearchTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/apartados/ciz-search?q=${encodeURIComponent(q.trim())}`);
+          const json = await res.json();
+          const list = Array.isArray(json.data) ? json.data.slice(0, 6) : [];
+          if (!box) return;
+          if (list.length === 0) {
+            box.innerHTML = `<div class="p-2.5 text-slate-400">Sin coincidencias</div>`;
+          } else {
+            window.__opsCustomerMatches = list;
+            box.innerHTML = list.map((c, idx) => `
+              <button type="button" onclick="pickOrderCustomer(${idx})" class="w-full text-left p-2.5 hover:bg-amber-500/10 transition flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="font-bold truncate">${escapeHtml(c.name)}</div>
+                  <div class="text-[10px] text-slate-400 truncate">${escapeHtml(c.address)}</div>
+                </div>
+                <span class="font-mono text-[10px] text-amber-500 flex-shrink-0">${escapeHtml(c.cizCode)}</span>
+              </button>
+            `).join('');
+          }
+          box.classList.remove('hidden');
+        } catch {}
+      }, 220);
+    }
+
+    function pickOrderCustomer(idx) {
+      const c = (window.__opsCustomerMatches || [])[idx];
+      if (!c) return;
+      selectedOrderCustomer = c;
+      document.getElementById('no-customer').value = c.name || '';
+      document.getElementById('no-address').value = c.address || '';
+      document.getElementById('no-phone').value = c.phone !== '--' ? (c.phone || '') : '';
+      document.getElementById('no-nap').value = c.napBox ? `${c.napBox} / ${c.napPort || 'Puerto 1'}` : '';
+      document.getElementById('no-plan').value = c.planName || '';
+      document.getElementById('no-customer-search').value = `${c.cizCode} — ${c.name}`;
+      document.getElementById('no-customer-results')?.classList.add('hidden');
+    }
+
+    function openNewOrderModal() {
+      selectedOrderCustomer = null;
+      ['no-customer-search', 'no-customer', 'no-address', 'no-phone', 'no-nap', 'no-plan', 'no-reference', 'no-notes', 'no-tech-custom'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      document.getElementById('no-customer-results')?.classList.add('hidden');
+      document.getElementById('no-tech-custom')?.classList.add('hidden');
+      const dateEl = document.getElementById('no-date');
+      if (dateEl) dateEl.value = opsData?.date || new Date().toISOString().slice(0, 10);
+      const techSel = document.getElementById('no-tech');
+      if (techSel) techSel.innerHTML = buildTechnicianOptionsHtml('', true);
+      document.getElementById('modal-new-order').classList.remove('hidden');
+    }
+    function closeNewOrderModal() {
+      document.getElementById('modal-new-order').classList.add('hidden');
+    }
+
+    async function submitNewOrder() {
+      const customerName = document.getElementById('no-customer').value.trim();
+      const address = document.getElementById('no-address').value.trim();
+      if (!customerName || !address) {
+        showToast('Cliente y dirección son obligatorios');
+        return;
+      }
+      const napRaw = document.getElementById('no-nap').value.trim();
+      const [napCode, napPort] = napRaw.split('/').map(s => s.trim());
+      const techSel = document.getElementById('no-tech');
+      const isCustom = techSel.value === '__custom__';
+      const assignedTechName = isCustom
+        ? (document.getElementById('no-tech-custom').value.trim() || 'Cuadrilla FTTH')
+        : (techSel.value || 'Cuadrilla FTTH');
+      const selectedOpt = !isCustom ? techSel.options[techSel.selectedIndex] : null;
+      const techIdAttr = selectedOpt?.getAttribute('data-tech-id');
+
+      const payload = {
+        type: document.getElementById('no-type').value,
+        priority: document.getElementById('no-priority').value,
+        customerId: selectedOrderCustomer?.id,
+        customerCiz: selectedOrderCustomer?.cizCode,
+        customerDni: selectedOrderCustomer?.documentNumber,
+        lat: selectedOrderCustomer?.lat,
+        lng: selectedOrderCustomer?.lng,
+        customerName,
+        address,
+        reference: document.getElementById('no-reference').value.trim(),
+        planName: document.getElementById('no-plan').value.trim() || 'Fibra Hogar 200 Mbps',
+        customerPhone: document.getElementById('no-phone').value.trim(),
+        napCode: napCode || 'NAP-01',
+        napPort: napPort || 'Puerto 1',
+        assignedTechId: techIdAttr ? Number(techIdAttr) : undefined,
+        assignedTechName,
+        scheduledDate: document.getElementById('no-date').value || undefined,
+        scheduledTime: document.getElementById('no-time').value.trim() || '10:00 AM',
+        notes: document.getElementById('no-notes').value.trim(),
+      };
+      try {
+        const res = await fetch('/api/apartados/installations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          closeNewOrderModal();
+          showToast('Orden operativa creada y despachada');
+          await refreshOperationsData();
+        } else {
+          showToast(json.message || 'Error al crear orden');
+        }
+      } catch {
+        showToast('Error de conexión');
+      }
+    }
+
+    let editingCrewId = null;
+    let selectedCrewMembers = new Map();
+    let selectedCrewLeaderId = null;
+
+    function openCrewBuilderModal(crewId = null) {
+      editingCrewId = crewId;
+      selectedCrewMembers = new Map();
+      selectedCrewLeaderId = null;
+
+      const nameEl = document.getElementById('cb-name');
+      const vehicleEl = document.getElementById('cb-vehicle');
+      const searchEl = document.getElementById('cb-tech-search');
+      const titleEl = document.getElementById('cb-modal-title');
+      const submitEl = document.getElementById('cb-submit-btn');
+
+      if (searchEl) searchEl.value = '';
+      if (vehicleEl) {
+        const vehicles = Array.isArray(opsData?.vehicles) ? opsData.vehicles : [];
+        const opts = ['<option value="">-- Sin carro asignado --</option>'];
+        vehicles.forEach(v => {
+          const plate = v.plateNumber ? `${v.plateNumber} — ` : '';
+          const detail = [v.brand, v.model].filter(Boolean).join(' ');
+          const label = `${plate}${v.name || detail || v.code}${v.status && v.status !== 'operativo' ? ` (${v.status})` : ''}`;
+          opts.push(`<option value="${v.id}" data-name="${escapeHtml(v.name || detail || v.code || '')}" data-plate="${escapeHtml(v.plateNumber || '')}">${escapeHtml(label)}</option>`);
+        });
+        vehicleEl.innerHTML = opts.join('');
+      }
+
+      if (crewId) {
+        const crew = (opsData?.crews || []).find(c => c.id === crewId);
+        if (crew) {
+          if (nameEl) nameEl.value = crew.name || '';
+          if (vehicleEl) vehicleEl.value = crew.vehicleId ? String(crew.vehicleId) : '';
+          selectedCrewLeaderId = crew.leaderId || null;
+          (crew.members || []).forEach(m => {
+            const key = m.name.toLowerCase();
+            selectedCrewMembers.set(key, { id: Number(m.id || 0), name: m.name, roleName: m.roleName || '', phone: m.phone || '' });
+          });
+        }
+        if (titleEl) titleEl.textContent = 'Editar Cuadrilla';
+        if (submitEl) submitEl.textContent = 'Guardar Cambios';
+      } else {
+        if (nameEl) nameEl.value = '';
+        if (vehicleEl) vehicleEl.value = '';
+        if (titleEl) titleEl.textContent = 'Constructor de Cuadrillas';
+        if (submitEl) submitEl.textContent = 'Crear Cuadrilla';
+      }
+
+      renderCrewBuilderTechList();
+      document.getElementById('modal-crew-builder')?.classList.remove('hidden');
+      nameEl?.focus();
+    }
+
+    function closeCrewBuilderModal() {
+      editingCrewId = null;
+      document.getElementById('modal-crew-builder')?.classList.add('hidden');
+    }
+
+    function renderCrewBuilderTechList() {
+      const listEl = document.getElementById('cb-tech-list');
+      const countEl = document.getElementById('cb-selected-count');
+      if (!listEl) return;
+
+      const q = (document.getElementById('cb-tech-search')?.value || '').trim().toLowerCase();
+      const techs = Array.isArray(opsData?.technicians) ? opsData.technicians : [];
+      const filtered = techs.filter(t => {
+        if (!q) return true;
+        return `${t.name} ${t.roleName || ''} ${t.phone || ''}`.toLowerCase().includes(q);
+      });
+
+      if (countEl) {
+        const n = selectedCrewMembers.size;
+        countEl.textContent = `${n} ${n === 1 ? 'seleccionado' : 'seleccionados'}`;
+      }
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="p-4 text-center text-xs text-slate-500 ops-card">${techs.length === 0 ? 'No hay técnicos registrados en el sistema.' : 'Sin técnicos que coincidan con la búsqueda.'}</div>`;
+        return;
+      }
+
+      window.__cbFilteredTechs = filtered;
+      listEl.innerHTML = filtered.map((t, idx) => {
+        const key = String(t.name || '').trim().toLowerCase();
+        const isSelected = selectedCrewMembers.has(key);
+        const isLeader = isSelected && selectedCrewLeaderId && Number(t.id) === Number(selectedCrewLeaderId);
+        return `
+          <div onclick="toggleCrewTech(${idx})" class="ops-card p-2.5 flex items-center justify-between gap-2.5 cursor-pointer transition ${isSelected ? 'ops-badge-brand' : 'hover:border-slate-500/30'}">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleCrewTech(${idx})" class="w-4 h-4 rounded cursor-pointer flex-shrink-0" style="accent-color: var(--brand-primary)">
+              <div class="min-w-0">
+                <div class="text-xs font-bold truncate">${escapeHtml(t.name)}</div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">${escapeHtml(t.roleName || 'Técnico de Campo')}${t.phone ? ' • ' + escapeHtml(t.phone) : ''}</div>
+              </div>
+            </div>
+            ${isSelected && t.id ? `
+              <button type="button" onclick="event.stopPropagation(); setCrewLeader(${Number(t.id)})" title="${isLeader ? 'Líder de cuadrilla' : 'Marcar como líder'}" class="px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 flex-shrink-0 transition ${isLeader ? 'bg-amber-500 text-white' : 'bg-slate-500/15 text-slate-400 hover:text-amber-500'}">
+                <i class="ri-star-${isLeader ? 'fill' : 'line'}"></i>
+                <span>${isLeader ? 'Líder' : 'Líder'}</span>
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleCrewTech(idx) {
+      const t = (window.__cbFilteredTechs || [])[idx];
+      if (!t) return;
+      const key = String(t.name || '').trim().toLowerCase();
+      if (selectedCrewMembers.has(key)) {
+        selectedCrewMembers.delete(key);
+        if (selectedCrewLeaderId && Number(t.id) === Number(selectedCrewLeaderId)) {
+          selectedCrewLeaderId = null;
+        }
+      } else {
+        selectedCrewMembers.set(key, {
+          id: Number(t.id || 0),
+          name: String(t.name).trim(),
+          roleName: t.roleName || '',
+          phone: t.phone || ''
+        });
+      }
+      renderCrewBuilderTechList();
+    }
+
+    function setCrewLeader(techId) {
+      selectedCrewLeaderId = Number(selectedCrewLeaderId) === Number(techId) ? null : Number(techId);
+      renderCrewBuilderTechList();
+    }
+
+    async function submitCrewBuilder() {
+      const name = (document.getElementById('cb-name')?.value || '').trim();
+      const vehicleEl = document.getElementById('cb-vehicle');
+      const vehicleId = vehicleEl?.value ? Number(vehicleEl.value) : null;
+      const selectedVehicleOpt = vehicleEl && vehicleEl.selectedIndex >= 0 ? vehicleEl.options[vehicleEl.selectedIndex] : null;
+      const vehicleName = vehicleId ? (selectedVehicleOpt?.getAttribute('data-name') || '') : null;
+      const vehiclePlate = vehicleId ? (selectedVehicleOpt?.getAttribute('data-plate') || '') : null;
+      const members = Array.from(selectedCrewMembers.values());
+
+      if (!name) {
+        showToast('Ingresa el nombre de la cuadrilla');
+        return;
+      }
+      if (members.length === 0) {
+        showToast('Selecciona al menos un técnico');
+        return;
+      }
+
+      const url = editingCrewId
+        ? `/api/apartados/operaciones/crews/${encodeURIComponent(editingCrewId)}`
+        : '/api/apartados/operaciones/crews';
+      const method = editingCrewId ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            vehicleId,
+            vehicleName,
+            vehiclePlate,
+            leaderId: selectedCrewLeaderId || undefined,
+            members
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          const msg = editingCrewId ? 'Cuadrilla actualizada' : 'Cuadrilla creada';
+          closeCrewBuilderModal();
+          showToast(msg);
+          await refreshOperationsData();
+        } else {
+          showToast(json.message || 'No se pudo guardar la cuadrilla');
+        }
+      } catch {
+        showToast('Error de red al guardar cuadrilla');
+      }
+    }
+
+    async function deleteCrew(crewId) {
+      if (!crewId) return;
+      try {
+        const res = await fetch(`/api/apartados/operaciones/crews/${encodeURIComponent(crewId)}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) {
+          showToast('Cuadrilla eliminada');
+          await refreshOperationsData();
+        } else {
+          showToast(json.message || 'No se pudo eliminar');
+        }
+      } catch {
+        showToast('Error de red al eliminar cuadrilla');
+      }
+    }
+
+    function renderCrews() {
+      const canManage = hasOpsPerm('ops:crews_manage');
+      document.getElementById('btn-create-crew')?.classList.toggle('hidden', !canManage);
+
+      const crews = Array.isArray(opsData.crews) ? opsData.crews : [];
+      const crewsEl = document.getElementById('crews-builder-list');
+      if (crewsEl) {
+        if (crews.length === 0) {
+          crewsEl.innerHTML = `<div class="ops-card p-3.5 text-xs text-slate-500 text-center">No hay cuadrillas creadas. Usa <strong>Crear Cuadrilla</strong> para armar una con tus técnicos.</div>`;
+        } else {
+          crewsEl.innerHTML = crews.map(c => {
+            const members = Array.isArray(c.members) ? c.members : [];
+            return `
+              <div class="ops-card p-3 space-y-2">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="text-xs font-extrabold truncate">${escapeHtml(c.name)}</span>
+                      <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-500">${members.length} téc.</span>
+                      ${c.vehicleName || c.vehiclePlate ? `<span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400"><i class="ri-car-line"></i>${escapeHtml(c.vehiclePlate ? `${c.vehiclePlate} • ${c.vehicleName || ''}` : c.vehicleName)}</span>` : ''}
+                    </div>
+                  </div>
+                  ${canManage ? `
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                      <button onclick="openCrewBuilderModal('${escapeHtml(c.id)}')" title="Editar cuadrilla" class="w-6 h-6 rounded-lg bg-slate-500/10 hover:bg-amber-500/20 text-slate-400 hover:text-amber-500 flex items-center justify-center transition"><i class="ri-pencil-line text-xs"></i></button>
+                      <button onclick="deleteCrew('${escapeHtml(c.id)}')" title="Eliminar cuadrilla" class="w-6 h-6 rounded-lg bg-slate-500/10 hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 flex items-center justify-center transition"><i class="ri-delete-bin-line text-xs"></i></button>
+                    </div>
+                  ` : ''}
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  ${members.map(m => {
+                    const isLeader = c.leaderId && Number(m.id) === Number(c.leaderId);
+                    return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold ${isLeader ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30' : 'bg-slate-500/10 text-slate-300'}">${isLeader ? '<i class="ri-star-fill text-[9px]"></i>' : '<i class="ri-user-line text-[9px]"></i>'}${escapeHtml(m.name)}</span>`;
+                  }).join('')}
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+      document.getElementById('crews-date-label').textContent = opsData.date || '';
+      const att = opsData.todayAttendance || [];
+      const attEl = document.getElementById('crews-attendance-list');
+      if (att.length === 0) {
+        attEl.innerHTML = `<div class="p-4 text-xs text-slate-500 text-center">Sin marcaciones GPS registradas hoy.</div>`;
+      } else {
+        attEl.innerHTML = att.map(r => {
+          const lat = r.location?.latitude;
+          const lng = r.location?.longitude;
+          return `
+            <div class="ops-card p-3 flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-xs font-extrabold truncate">${escapeHtml(r.employeeName || 'Técnico')}</div>
+                <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                  Ent: ${escapeHtml(r.checkInTime || '--')} • Alm: ${escapeHtml(r.lunchStart || '--')} • Sal: ${escapeHtml(r.checkOut || r.checkOutTime || '--')}
+                </div>
+              </div>
+              ${lat && lng ? `<button onclick="focusMapPoint(${lat}, ${lng})" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500 hover:text-white text-[11px] font-bold flex-shrink-0 transition"><i class="ri-map-pin-line"></i> Mapa</button>` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      const orders = opsData.installations || [];
+      const byTech = {};
+      orders.forEach(o => {
+        const k = o.assignedTechName || 'Sin asignar';
+        if (!byTech[k]) byTech[k] = { total: 0, pending: 0, done: 0 };
+        byTech[k].total++;
+        if (o.status === 'completada') byTech[k].done++;
+        else byTech[k].pending++;
+      });
+      const keys = Object.keys(byTech);
+      const workEl = document.getElementById('crews-workload-list');
+      workEl.innerHTML = keys.length === 0
+        ? `<div class="p-4 text-xs text-slate-500 text-center">Sin órdenes asignadas.</div>`
+        : keys.map(name => {
+            const w = byTech[name];
+            return `
+              <div class="ops-card p-2.5 flex items-center justify-between">
+                <div class="text-xs font-bold">${escapeHtml(name)}</div>
+                <div class="flex items-center gap-1.5 font-mono text-[11px]">
+                  <span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-500">${w.pending} pend.</span>
+                  <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-500">${w.done} comp.</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+    }
+
+    function renderNocDevices() {
+      const devices = opsData.networkDevices || [];
+      const canTest = hasOpsPerm('ops:network_control');
+      const el = document.getElementById('noc-devices-list');
+      el.innerHTML = devices.length === 0
+        ? `<div class="p-4 text-xs text-slate-500 text-center">No hay dispositivos de red registrados.</div>`
+        : devices.map(d => `
+            <div class="ops-card p-3 flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-xs font-extrabold truncate">${escapeHtml(d.name || d.host || 'Router/OLT')}</div>
+                <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">${escapeHtml(d.host || d.ip || '--')}</div>
+              </div>
+              ${canTest ? `<button onclick="testNocDevice('${escapeHtml(d.id)}')" class="px-2.5 py-1 rounded-lg bg-cyan-500/15 text-cyan-500 hover:bg-cyan-500 hover:text-white text-[11px] font-bold transition">Test Ping</button>` : ''}
+            </div>
+          `).join('');
+    }
+
+    async function testNocDevice(id) {
+      showToast('Probando conectividad del nodo...');
+      try {
+        const res = await fetch(`/api/network/devices/${encodeURIComponent(id)}/test-connection`, { method: 'POST' });
+        const json = await res.json();
+        showToast(json.message || (json.success ? 'Nodo en línea' : 'Sin respuesta'));
+      } catch {
+        showToast('Error al probar dispositivo');
+      }
+    }
+
+    async function searchCizDiagnostic() {
+      const q = document.getElementById('noc-ciz-input')?.value || '';
+      const res = await fetch(`/api/apartados/ciz-search?q=${encodeURIComponent(q)}`);
+      const json = await res.json();
+      const list = json.data || [];
+      const el = document.getElementById('noc-ciz-results');
+      if (list.length === 0) {
+        el.innerHTML = `<div class="p-4 text-xs text-slate-500 text-center">Sin resultados de abonados.</div>`;
+        return;
+      }
+      el.innerHTML = list.slice(0, 10).map(c => `
+        <div class="ops-card p-2.5 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold">${escapeHtml(c.name)}</span>
+            <span class="font-mono text-[11px] font-bold text-cyan-500">${escapeHtml(c.cizCode)}</span>
+          </div>
+          <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+            Rx: ${escapeHtml(c.opticalRxDbm)} dBm • Ping: ${escapeHtml(c.pingMs)} • ${escapeHtml(c.napBox)}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderActasQa() {
+      const actas = opsData.actas || [];
+      document.getElementById('actas-total-badge').textContent = `${actas.length} actas`;
+      const el = document.getElementById('actas-qa-list');
+      if (actas.length === 0) {
+        el.innerHTML = `<div class="ops-card p-6 text-center text-xs text-slate-500">No hay actas registradas aún.</div>`;
+        return;
+      }
+      el.innerHTML = actas.map(a => `
+        <div class="ops-card p-3 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-xs font-bold text-indigo-500">${escapeHtml(a.folio || a.id)}</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${a.signedAt ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}">${a.signedAt ? 'Firmada' : 'Pendiente'}</span>
+          </div>
+          <div class="text-xs font-extrabold">${escapeHtml(a.customerName || 'Cliente')}</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400">Técnico: ${escapeHtml(a.technicianName || '--')} • ${escapeHtml(a.opticalPower || '--')} dBm</div>
+        </div>
+      `).join('');
+    }
+
+    function exportOperationsCsv() {
+      const orders = opsData?.installations || [];
+      if (orders.length === 0) {
+        showToast('No hay órdenes para exportar');
+        return;
+      }
+      const headers = ['Codigo', 'Tipo', 'Prioridad', 'Estado', 'Cliente', 'Direccion', 'NAP', 'Tecnico', 'Fecha'];
+      const rows = orders.map(o => [o.code, o.type, o.priority, o.status, o.customerName, o.address, o.napCode || '', o.assignedTechName || '', o.scheduledDate || '']);
+      const csv = [headers, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `turboops-ordenes-${opsData.date || 'hoy'}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Reporte CSV descargado');
+    }
+
+    // =========================================================================
+    // MAPA OPERATIVO FULL-SCREEN CON LEAFLET.JS
+    // =========================================================================
+    let opsMap = null;
+    let opsBaseLayer = null;
+    let opsLayerGroup = null;
+    let opsMapPayload = null;
+    let opsBoundsPoints = [];
+
+    const opsMapLayersVisible = {
+      nodes: true,
+      lines: true,
+      orders: true,
+      crews: true,
+      customers: false,
+    };
+
+    const TILE_PROVIDERS = {
+      dark: {
+        url: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        subdomains: ['0', '1', '2', '3'],
+        maxNativeZoom: 20,
+        darkFilter: true,
+        attribution: '&copy; Google Maps',
+      },
+      satellite: {
+        url: 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        subdomains: ['0', '1', '2', '3'],
+        maxNativeZoom: 20,
+        attribution: '&copy; Google Satellite',
+      },
+      streets: {
+        url: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        subdomains: ['0', '1', '2', '3'],
+        maxNativeZoom: 20,
+        attribution: '&copy; Google Maps',
+      },
+    };
+
+    let opsOverlayLayer = null;
+
+    function initLeafletMap() {
+      if (opsMap || typeof L === 'undefined') return;
+      const isDark = document.documentElement.classList.contains('dark');
+      opsMap = L.map('ops-leaflet-map', {
+        center: [-12.0464, -77.0428],
+        zoom: 13,
+        maxZoom: 21,
+        zoomControl: false,
+      });
+      L.control.zoom({ position: 'bottomright' }).addTo(opsMap);
+      opsLayerGroup = L.layerGroup().addTo(opsMap);
+      changeOpsMapStyle(isDark ? 'dark' : 'streets');
+    }
+
+    function changeOpsMapStyle(styleKey) {
+      if (!opsMap) return;
+      const provider = TILE_PROVIDERS[styleKey] || TILE_PROVIDERS.dark;
+      document.getElementById('ops-leaflet-map')?.classList.toggle('ops-dark-tiles', !!provider.darkFilter);
+      if (opsBaseLayer) opsMap.removeLayer(opsBaseLayer);
+      if (opsOverlayLayer) {
+        opsMap.removeLayer(opsOverlayLayer);
+        opsOverlayLayer = null;
+      }
+      const baseOpts = {
+        attribution: provider.attribution,
+        maxZoom: 21,
+        maxNativeZoom: provider.maxNativeZoom || 18,
+      };
+      if (provider.subdomains) baseOpts.subdomains = provider.subdomains;
+      opsBaseLayer = L.tileLayer(provider.url, baseOpts).addTo(opsMap);
+      if (provider.overlayUrl) {
+        opsOverlayLayer = L.tileLayer(provider.overlayUrl, {
+          maxZoom: 21,
+          maxNativeZoom: provider.overlayMaxNativeZoom || 16,
+        }).addTo(opsMap);
+      }
+    }
+
+    async function loadOpsMapData(mapId) {
+      try {
+        const url = mapId ? `/api/maps/data?mapId=${encodeURIComponent(mapId)}` : '/api/maps/data';
+        const res = await fetch(url);
+        const json = await res.json();
+        if (!json.success) return;
+        opsMapPayload = json;
+
+        const projSel = document.getElementById('ops-map-project');
+        if (projSel && Array.isArray(json.maps)) {
+          projSel.innerHTML = json.maps.map(m =>
+            `<option value="${escapeHtml(m.id)}" ${m.id === json.activeMapId ? 'selected' : ''}>${escapeHtml(m.name || m.id)}</option>`
+          ).join('');
+        }
+
+        const center = json.data?.center;
+        if (opsMap && Array.isArray(center) && center.length === 2) {
+          // center en maps.json viene como [lng, lat]
+          opsMap.setView([Number(center[1]), Number(center[0])], json.data?.zoom || 14);
+        }
+        renderOpsMapLayers();
+      } catch {
+        showToast('Error cargando capas del mapa');
+      }
+    }
+
+    function toggleOpsMapLayer(layer, visible) {
+      opsMapLayersVisible[layer] = !!visible;
+      renderOpsMapLayers();
+    }
+
+    function addLeafletMarker(lat, lng, color, iconClass, popupHtml, extraClass = '', onClickPoint = null) {
+      const la = Number(lat);
+      const ln = Number(lng);
+      if (!opsMap || !opsLayerGroup || !Number.isFinite(la) || !Number.isFinite(ln)) return;
+      opsBoundsPoints.push([la, ln]);
+      const icon = L.divIcon({
+        className: '',
+        html: `<div class="${extraClass}" style="width:30px;height:30px;border-radius:9999px;background:${color};color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,0.45);font-size:14px;cursor:pointer;"><i class="${iconClass}"></i></div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      });
+      const marker = L.marker([la, ln], { icon }).bindPopup(popupHtml).addTo(opsLayerGroup);
+      if (typeof onClickPoint === 'function') {
+        marker.on('click', () => onClickPoint());
+      }
+    }
+
+    function openDispatchWithPoint(pointInfo) {
+      if (activeDrawerTab !== 'dispatch') {
+        toggleOpsDrawer('dispatch');
+      }
+      const box = document.getElementById('dispatch-selected-point');
+      if (!box) return;
+
+      const canAssign = hasOpsPerm('ops:orders_assign');
+      const canCreate = hasOpsPerm('ops:orders_create');
+      let bodyHtml = '';
+
+      if (pointInfo.kind === 'order') {
+        const o = pointInfo.data;
+        bodyHtml = `
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="text-[10px] font-mono font-bold uppercase text-amber-500">Orden Seleccionada • ${escapeHtml(o.code)}</div>
+              <div class="text-sm font-extrabold">${escapeHtml(o.customerName)}</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHtml(o.address)}</div>
+            </div>
+            <button onclick="clearSelectedDispatchPoint()" class="w-6 h-6 rounded hover:bg-slate-500/15 flex items-center justify-center text-xs"><i class="ri-close-line"></i></button>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5 text-[11px] font-mono bg-slate-500/10 p-2 rounded-lg">
+            <div><strong class="text-slate-400">Tipo:</strong> ${escapeHtml(o.type)}</div>
+            <div><strong class="text-slate-400">Prioridad:</strong> ${escapeHtml(o.priority)}</div>
+            <div><strong class="text-slate-400">NAP:</strong> ${escapeHtml(o.napCode || '--')}</div>
+            <div><strong class="text-slate-400">Hora:</strong> ${escapeHtml(o.scheduledTime || '--')}</div>
+            <div class="col-span-2 truncate"><strong class="text-slate-400">Técnico:</strong> ${escapeHtml(o.assignedTechName || 'Sin asignar')}</div>
+          </div>
+          ${o.notes ? `<div class="text-[11px] italic text-slate-500 dark:text-slate-400">"${escapeHtml(o.notes)}"</div>` : ''}
+          <div class="flex items-center gap-1.5">
+            <select ${canAssign ? '' : 'disabled'} onchange="updateOrderField('${escapeHtml(o.id)}', { status: this.value })" class="ops-input px-2 py-1.5 text-[11px] flex-1 outline-none">
+              <option value="pendiente" ${o.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+              <option value="en_camino" ${o.status === 'en_camino' ? 'selected' : ''}>En Camino</option>
+              <option value="en_progreso" ${o.status === 'en_progreso' ? 'selected' : ''}>En Progreso</option>
+              <option value="completada" ${o.status === 'completada' ? 'selected' : ''}>Completada</option>
+            </select>
+            ${canAssign ? `<button onclick="promptReassignOrder('${escapeHtml(o.id)}', '${escapeHtml(o.assignedTechName || '')}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500 text-white text-[11px] font-bold">Reasignar</button>` : ''}
+          </div>
+        `;
+      } else if (pointInfo.kind === 'node') {
+        const n = pointInfo.data;
+        bodyHtml = `
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="text-[10px] font-mono font-bold uppercase text-amber-500">Infraestructura FTTH • ${escapeHtml(n.type || 'NAP')}</div>
+              <div class="text-sm font-extrabold">${escapeHtml(n.name || 'Nodo FTTH')}</div>
+              <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">${Number(n.lat).toFixed(5)}, ${Number(n.lng).toFixed(5)}</div>
+            </div>
+            <button onclick="clearSelectedDispatchPoint()" class="w-6 h-6 rounded hover:bg-slate-500/15 flex items-center justify-center text-xs"><i class="ri-close-line"></i></button>
+          </div>
+          ${n.description ? `<p class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHtml(n.description)}</p>` : ''}
+          ${canCreate ? `<button onclick="openNewOrderFromPoint({ napCode: '${escapeHtml(n.name || '')}', lat: ${Number(n.lat)}, lng: ${Number(n.lng)} })" class="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold transition"><i class="ri-add-line"></i> Crear Orden en este Nodo</button>` : ''}
+        `;
+      } else if (pointInfo.kind === 'crew') {
+        const c = pointInfo.data;
+        bodyHtml = `
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="text-[10px] font-mono font-bold uppercase text-emerald-500">Cuadrilla GPS en Vivo</div>
+              <div class="text-sm font-extrabold">${escapeHtml(c.employeeName || 'Técnico')}</div>
+              <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">Entrada: ${escapeHtml(c.checkInTime || '--')} • ${Number(c.location?.latitude).toFixed(5)}, ${Number(c.location?.longitude).toFixed(5)}</div>
+            </div>
+            <button onclick="clearSelectedDispatchPoint()" class="w-6 h-6 rounded hover:bg-slate-500/15 flex items-center justify-center text-xs"><i class="ri-close-line"></i></button>
+          </div>
+          <button onclick="filterDispatchByTech('${escapeHtml(c.employeeName || '')}')" class="w-full py-1.5 rounded-xl bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500 hover:text-white text-xs font-bold transition">Ver órdenes de este técnico</button>
+        `;
+      } else if (pointInfo.kind === 'customer') {
+        const cu = pointInfo.data;
+        bodyHtml = `
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="text-[10px] font-mono font-bold uppercase text-cyan-500">Cliente Abonado</div>
+              <div class="text-sm font-extrabold">${escapeHtml(cu.name || 'Cliente')}</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHtml(cu.address || '')}</div>
+            </div>
+            <button onclick="clearSelectedDispatchPoint()" class="w-6 h-6 rounded hover:bg-slate-500/15 flex items-center justify-center text-xs"><i class="ri-close-line"></i></button>
+          </div>
+          ${canCreate ? `<button onclick="openNewOrderFromPoint({ customerName: '${escapeHtml(cu.name || '')}', address: '${escapeHtml(cu.address || '')}', phone: '${escapeHtml(cu.phone || '')}', lat: ${Number(cu.lat ?? cu.latitude)}, lng: ${Number(cu.lng ?? cu.longitude)} })" class="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold transition"><i class="ri-add-line"></i> Crear Orden para Cliente</button>` : ''}
+        `;
+      }
+
+      box.innerHTML = bodyHtml;
+      box.classList.remove('hidden');
+    }
+
+    function clearSelectedDispatchPoint() {
+      const box = document.getElementById('dispatch-selected-point');
+      if (box) {
+        box.innerHTML = '';
+        box.classList.add('hidden');
+      }
+    }
+
+    function filterDispatchByTech(name) {
+      const inp = document.getElementById('dispatch-search');
+      if (inp) {
+        inp.value = name;
+        renderDispatchList();
+      }
+    }
+
+    function openNewOrderFromPoint(prefill) {
+      openNewOrderModal();
+      if (prefill.napCode) document.getElementById('no-nap').value = prefill.napCode;
+      if (prefill.customerName) document.getElementById('no-customer').value = prefill.customerName;
+      if (prefill.address) document.getElementById('no-address').value = prefill.address;
+      if (prefill.phone) document.getElementById('no-phone').value = prefill.phone;
+      if (prefill.lat && prefill.lng) {
+        selectedOrderCustomer = { ...(selectedOrderCustomer || {}), lat: prefill.lat, lng: prefill.lng };
+      }
+    }
+
+    function renderOpsMapLayers() {
+      if (!opsMap || !opsLayerGroup) return;
+      opsLayerGroup.clearLayers();
+      opsBoundsPoints = [];
+
+      const mapData = opsMapPayload?.data || {};
+      const nodes = Array.isArray(mapData.nodes) ? mapData.nodes : [];
+      const lines = Array.isArray(mapData.lines) ? mapData.lines : [];
+      const areas = Array.isArray(mapData.areas) ? mapData.areas : [];
+      const customers = Array.isArray(opsMapPayload?.customers) ? opsMapPayload.customers : [];
+      const orders = Array.isArray(opsData?.installations) ? opsData.installations : [];
+      const crews = Array.isArray(opsData?.todayAttendance) ? opsData.todayAttendance : [];
+
+      document.getElementById('map-count-nodes').textContent = nodes.length;
+      document.getElementById('map-count-lines').textContent = lines.length;
+      document.getElementById('map-count-orders').textContent = orders.length;
+      document.getElementById('map-count-crews').textContent = crews.length;
+      document.getElementById('map-count-customers').textContent = customers.length;
+
+      // Áreas de cobertura ([lng, lat] -> [lat, lng])
+      areas.forEach(a => {
+        if (!Array.isArray(a.coordinates) || a.coordinates.length < 3) return;
+        const latLngs = a.coordinates.map(c => [Number(c[1]), Number(c[0])]);
+        L.polygon(latLngs, {
+          color: a.color || '#f59e0b',
+          weight: 2,
+          fillOpacity: 0.14,
+        }).bindPopup(`<div style="color:#0f172a;font-size:12px"><strong>${escapeHtml(a.name || 'Zona')}</strong></div>`).addTo(opsLayerGroup);
+      });
+
+      // Trazado de fibra
+      if (opsMapLayersVisible.lines) {
+        lines.forEach(l => {
+          if (!Array.isArray(l.coordinates) || l.coordinates.length < 2) return;
+          const latLngs = l.coordinates.map(c => [Number(c[1]), Number(c[0])]);
+          L.polyline(latLngs, {
+            color: l.color || '#3b82f6',
+            weight: 3,
+          }).bindPopup(`<div style="color:#0f172a;font-size:12px"><strong>${escapeHtml(l.name || 'Fibra')}</strong></div>`).addTo(opsLayerGroup);
+        });
+      }
+
+      // Nodos FTTH
+      if (opsMapLayersVisible.nodes) {
+        nodes.forEach(n => {
+          addLeafletMarker(
+            n.lat,
+            n.lng,
+            n.color || '#f59e0b',
+            'ri-router-line',
+            `<div style="color:#0f172a;font-size:12px"><strong>${escapeHtml(n.name || 'Nodo')}</strong><br/>Tipo: ${escapeHtml(n.type || 'NAP')}</div>`,
+            '',
+            () => openDispatchWithPoint({ kind: 'node', data: n })
+          );
+        });
+      }
+
+      // Órdenes de campo
+      if (opsMapLayersVisible.orders) {
+        orders.forEach(o => {
+          const color = o.status === 'completada' ? '#10b981' : (o.priority === 'urgente' ? '#ef4444' : '#f59e0b');
+          addLeafletMarker(
+            o.lat,
+            o.lng,
+            color,
+            'ri-tools-line',
+            `<div style="color:#0f172a;font-size:12px;min-width:170px">
+              <strong>${escapeHtml(o.code)} • ${escapeHtml(o.customerName)}</strong><br/>
+              Estado: <b>${escapeHtml(o.status)}</b><br/>
+              NAP: ${escapeHtml(o.napCode || '--')}<br/>
+              Técnico: ${escapeHtml(o.assignedTechName || '--')}
+            </div>`,
+            '',
+            () => openDispatchWithPoint({ kind: 'order', data: o })
+          );
+        });
+      }
+
+      // Cuadrillas GPS
+      if (opsMapLayersVisible.crews) {
+        crews.forEach(c => {
+          addLeafletMarker(
+            c.location?.latitude,
+            c.location?.longitude,
+            '#10b981',
+            'ri-user-location-line',
+            `<div style="color:#0f172a;font-size:12px"><strong>${escapeHtml(c.employeeName || 'Técnico')}</strong><br/>Entrada GPS: ${escapeHtml(c.checkInTime || '--')}</div>`,
+            'ops-gps-pulse',
+            () => openDispatchWithPoint({ kind: 'crew', data: c })
+          );
+        });
+      }
+
+      // Clientes abonados
+      if (opsMapLayersVisible.customers) {
+        customers.forEach(cu => {
+          addLeafletMarker(
+            cu.lat ?? cu.latitude,
+            cu.lng ?? cu.longitude,
+            '#06b6d4',
+            'ri-home-wifi-line',
+            `<div style="color:#0f172a;font-size:12px"><strong>${escapeHtml(cu.name || 'Cliente')}</strong><br/>${escapeHtml(cu.address || '')}</div>`,
+            '',
+            () => openDispatchWithPoint({ kind: 'customer', data: cu })
+          );
+        });
+      }
+    }
+
+    function focusMapPoint(lat, lng) {
+      if (!opsMap || !Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return;
+      opsMap.flyTo([Number(lat), Number(lng)], 17, { duration: 0.7 });
+      if (window.innerWidth < 640) closeOpsDrawer();
+    }
+
+    function fitOpsMapBounds() {
+      if (!opsMap || opsBoundsPoints.length === 0) return;
+      opsMap.fitBounds(opsBoundsPoints, { padding: [70, 70], maxZoom: 16 });
+    }
+
+    initOperationsApp();
+  </script>
+</body>
+</html>

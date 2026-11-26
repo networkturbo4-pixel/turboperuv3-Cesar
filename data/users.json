@@ -25,33 +25,8 @@
     "expectedCheckInTime": "08:00",
     "expectedCheckOutTime": "17:00",
     "assignedTenantId": "turbonetwork",
-    "pinHash": "scrypt$74644012430c11fea537e76746ea4bdd$8bb70f5178f2db8d701794ca535499d802378c7a417de9ab21fc91be29a6b221",
-    "pinLookup": "fabf002d4610fbb4b25d006c436fa6ede1474ff8596628625830cd3cb756a640"
-  },
-  {
-    "id": 1794348071929,
-    "name": "pepito",
-    "email": "das@adsadf.com",
-    "roleId": 1,
-    "roleName": "Superadministrador",
-    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=pepito",
-    "isActive": true,
-    "createdAt": "2026-11-10T22:01:11.929Z",
-    "isSuperAdmin": false,
-    "assignedTenantId": "turbonetwork",
-    "allowedTenants": [
-      "turbonetwork"
-    ],
-    "workSchedule": "08:00 - 17:00",
-    "expectedCheckInTime": "08:00",
-    "expectedCheckOutTime": "17:00",
-    "scheduleStartDate": "",
-    "scheduleEndDate": "",
-    "hireDate": "",
-    "birthDate": "",
-    "preferences": {},
-    "requireTotp": false,
-    "pinHash": "scrypt$d0ba5ff7f22c65bed6dc11b80b6ccc2f$bc87fe4ae33eb9523593748866298547f6a750494a11569b2ac249422c5a8007",
-    "pinLookup": "6396422a01e83916291c55fa6f4ca7bfd843982401eda66b9816bf5a6f951fa8"
+    "pinHash": "scrypt$bca58130a62fa50a81bbd88433c1841b$3916da0bf72711168a11116d78a07f89d887f066ad3f0114976e25373d8d4278",
+    "pinLookup": "8bff2436599003916307be758ba52b653d85bdc49d4debfbd209c473398497a3",
+    "biometricPin": "1"
   }
 ]

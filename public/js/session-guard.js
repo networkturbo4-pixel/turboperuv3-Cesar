@@ -83,6 +83,9 @@
       p === "/almacen" ||
       p.indexOf("/almacen/") === 0 ||
       p.indexOf("/almacen.html") === 0 ||
+      p === "/operaciones" ||
+      p.indexOf("/operaciones/") === 0 ||
+      p.indexOf("/operaciones.html") === 0 ||
       p === "/tech" ||
       p.indexOf("/tech/") === 0 ||
       p.indexOf("/tech.html") === 0 ||

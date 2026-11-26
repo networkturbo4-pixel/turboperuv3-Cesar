@@ -200,34 +200,85 @@ export const DEFAULT_ROLES: Role[] = [
     ],
     allowedModules: ["inventory", "mochila"],
   },
-];
-
-let rolesStore: Role[] = [...DEFAULT_ROLES];
-
-function ensureAlmaceneroFixedRole(roles: Role[]): { roles: Role[]; changed: boolean } {
-  const hasAlmacenero = roles.some(
-    (r) =>
-      String(r.slug || "").toLowerCase() === "almacenero" ||
-      String(r.name || "").trim().toLowerCase() === "almacenero"
-  );
-  if (hasAlmacenero) return { roles, changed: false };
-  const id5Taken = roles.some((r) => Number(r.id) === 5);
-  const nextId = id5Taken ? Math.max(0, ...roles.map((r) => Number(r.id) || 0)) + 1 : 5;
-  const fixedRole: Role = {
-    id: nextId,
-    name: "Almacenero",
-    slug: "almacenero",
-    description: "Rol fijo de almacén con acceso exclusivo al Apartado Almacén POS (/almacen)",
+  {
+    id: 6,
+    name: "Jefe de Operaciones",
+    slug: "operaciones",
+    description: "Rol fijo operativo con acceso exclusivo al Apartado Operaciones (/operaciones)",
     permissions: [
+      "customers:view",
+      "customers:edit",
+      "network:view",
+      "network:control",
       "inventory:view",
-      "inventory:manage",
       "backpack:view",
       "backpack:manage",
       "rrhh:attendance",
     ],
-    allowedModules: ["inventory", "mochila"],
-  };
-  return { roles: [...roles, fixedRole], changed: true };
+    allowedModules: ["dashboard", "customers", "inventory", "mochila", "network", "rrhh", "maps", "actas"],
+  },
+];
+
+let rolesStore: Role[] = [...DEFAULT_ROLES];
+
+function ensureFixedApartadoRoles(roles: Role[]): { roles: Role[]; changed: boolean } {
+  let list = [...roles];
+  let changed = false;
+
+  const hasAlmacenero = list.some(
+    (r) =>
+      String(r.slug || "").toLowerCase() === "almacenero" ||
+      String(r.name || "").trim().toLowerCase() === "almacenero"
+  );
+  if (!hasAlmacenero) {
+    const id5Taken = list.some((r) => Number(r.id) === 5);
+    const nextId = id5Taken ? Math.max(0, ...list.map((r) => Number(r.id) || 0)) + 1 : 5;
+    list.push({
+      id: nextId,
+      name: "Almacenero",
+      slug: "almacenero",
+      description: "Rol fijo de almacén con acceso exclusivo al Apartado Almacén POS (/almacen)",
+      permissions: [
+        "inventory:view",
+        "inventory:manage",
+        "backpack:view",
+        "backpack:manage",
+        "rrhh:attendance",
+      ],
+      allowedModules: ["inventory", "mochila"],
+    });
+    changed = true;
+  }
+
+  const hasOperaciones = list.some(
+    (r) =>
+      String(r.slug || "").toLowerCase() === "operaciones" ||
+      String(r.name || "").trim().toLowerCase().includes("operaciones")
+  );
+  if (!hasOperaciones) {
+    const id6Taken = list.some((r) => Number(r.id) === 6);
+    const nextId = id6Taken ? Math.max(0, ...list.map((r) => Number(r.id) || 0)) + 1 : 6;
+    list.push({
+      id: nextId,
+      name: "Jefe de Operaciones",
+      slug: "operaciones",
+      description: "Rol fijo operativo con acceso exclusivo al Apartado Operaciones (/operaciones)",
+      permissions: [
+        "customers:view",
+        "customers:edit",
+        "network:view",
+        "network:control",
+        "inventory:view",
+        "backpack:view",
+        "backpack:manage",
+        "rrhh:attendance",
+      ],
+      allowedModules: ["dashboard", "customers", "inventory", "mochila", "network", "rrhh", "maps", "actas"],
+    });
+    changed = true;
+  }
+
+  return { roles: list, changed };
 }
 
 export function loadRolesForTenant(tenantId: string): Role[] {
@@ -245,7 +296,7 @@ export function loadRolesForTenant(tenantId: string): Role[] {
               ? r.allowedModules
               : [...ALL_MODULE_IDS],
         }));
-        const ensured = ensureAlmaceneroFixedRole(normalized);
+        const ensured = ensureFixedApartadoRoles(normalized);
         if (ensured.changed) {
           saveRolesForTenant(safeTenant, ensured.roles);
         }
@@ -317,7 +368,7 @@ export function loadRolesForTenant(tenantId: string): Role[] {
     } catch {}
   }
 
-  const ensuredInitial = ensureAlmaceneroFixedRole(initialRoles);
+  const ensuredInitial = ensureFixedApartadoRoles(initialRoles);
   saveRolesForTenant(safeTenant, ensuredInitial.roles);
   return ensuredInitial.roles;
 }

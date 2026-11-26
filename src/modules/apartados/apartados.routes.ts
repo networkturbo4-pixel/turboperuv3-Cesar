@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from "fastify";
 import fs from "fs";
 import path from "path";
 import { resolveTenantId, getTenantFilePath, loadTenantsFromDisk } from "../tenants/tenants.service";
+import { getAssets } from "../inventory/inventory.service";
 
 export interface ApartadoAppPermission {
   id: string;
@@ -17,7 +18,7 @@ export interface ApartadoAppDefinition {
   icon: string;
   color: string;
   badge: string;
-  scope?: "tecnicos" | "almacen";
+  scope?: "tecnicos" | "almacen" | "operaciones";
   permissions: ApartadoAppPermission[];
 }
 
@@ -299,6 +300,107 @@ export const APARTADO_APPS_CATALOG: ApartadoAppDefinition[] = [
       { id: "almacen:print_labels", name: "Imprimir Etiquetas de Barras", description: "Generar etiquetas térmicas de SKU/código de barras para estantes y unidades" },
     ],
   },
+  // =========================================================================
+  // APPS DEL APARTADO OPERACIONES (TurboOps)
+  // =========================================================================
+  {
+    id: "ops_dispatch",
+    name: "Despacho y Órdenes de Campo",
+    shortName: "Despacho",
+    description: "Creación, asignación a cuadrillas, reprogramación y seguimiento en vivo de instalaciones, averías y migraciones FTTH.",
+    icon: "clipboard-list",
+    color: "amber",
+    badge: "Despacho",
+    scope: "operaciones",
+    permissions: [
+      { id: "ops:orders_view", name: "Ver Órdenes de Campo", description: "Consultar agenda completa de instalaciones, averías y migraciones" },
+      { id: "ops:orders_create", name: "Crear Órdenes Operativas", description: "Programar nuevas órdenes de instalación, soporte o migración" },
+      { id: "ops:orders_assign", name: "Asignar y Cambiar Estados", description: "Reasignar técnicos/cuadrillas, prioridad y estado de órdenes" },
+    ],
+  },
+  {
+    id: "ops_crews",
+    name: "Cuadrillas y Asistencia GPS",
+    shortName: "Cuadrillas",
+    description: "Monitoreo en tiempo real de técnicos activos en campo, marcaciones GPS de entrada/almuerzo/salida y carga operativa.",
+    icon: "users-gps",
+    color: "emerald",
+    badge: "GPS Live",
+    scope: "operaciones",
+    permissions: [
+      { id: "ops:crews_view", name: "Monitorear Cuadrillas en Vivo", description: "Ver asistencia GPS del día, ubicación y carga de órdenes por técnico" },
+      { id: "ops:crews_manage", name: "Coordinar Turnos y Rutas", description: "Rebalancear órdenes entre técnicos disponibles en campo" },
+    ],
+  },
+  {
+    id: "ops_materials_approvals",
+    name: "Aprobación de Material y Viáticos",
+    shortName: "Aprobaciones",
+    description: "Bandeja de autorización rápida para pedidos/devoluciones de material y adelantos o viáticos enviados desde TurboTech.",
+    icon: "check-double",
+    color: "blue",
+    badge: "Autorizaciones",
+    scope: "operaciones",
+    permissions: [
+      { id: "ops:materials_approve", name: "Aprobar / Rechazar Material", description: "Resolver solicitudes y devoluciones de material de campo" },
+      { id: "ops:advances_approve", name: "Aprobar / Rechazar Viáticos", description: "Autorizar adelantos de comisión, combustible y gastos de campo" },
+    ],
+  },
+  {
+    id: "ops_noc_network",
+    name: "Supervisión NOC y Red FTTH",
+    shortName: "Red & NOC",
+    description: "Estado de routers MikroTik/OLTs, pruebas rápidas de conectividad y diagnóstico de abonados por CIZ/DNI.",
+    icon: "server-noc",
+    color: "cyan",
+    badge: "NOC",
+    scope: "operaciones",
+    permissions: [
+      { id: "ops:network_view", name: "Ver Equipos y Diagnóstico CIZ", description: "Consultar routers/OLTs y ficha óptica de clientes por CIZ" },
+      { id: "ops:network_control", name: "Ejecutar Test de Conexión", description: "Probar conectividad y estado operativo de nodos de red" },
+    ],
+  },
+  {
+    id: "ops_actas_qa",
+    name: "Actas y Control de Calidad",
+    shortName: "Actas & QA",
+    description: "Auditoría de actas de instalación y soporte: folios, firmas digitales de conformidad y potencia óptica de cierre.",
+    icon: "file-check",
+    color: "indigo",
+    badge: "Calidad",
+    scope: "operaciones",
+    permissions: [
+      { id: "ops:actas_view", name: "Auditar Actas de Campo", description: "Revisar folios, firmas de clientes y parámetros ópticos registrados" },
+      { id: "ops:actas_manage", name: "Gestionar Observaciones QA", description: "Validar cierres técnicos y seguimiento de actas pendientes" },
+    ],
+  },
+  {
+    id: "ops_sla_reports",
+    name: "Tablero SLA y Productividad",
+    shortName: "SLA & Métricas",
+    description: "Indicadores clave de operaciones: cumplimiento diario, averías urgentes, tiempos de cierre y exportación CSV.",
+    icon: "chart-bar",
+    color: "rose",
+    badge: "KPIs",
+    scope: "operaciones",
+    permissions: [
+      { id: "ops:sla_view", name: "Ver Tablero SLA", description: "Visualizar métricas de cumplimiento, pendientes y productividad" },
+      { id: "ops:sla_export", name: "Exportar Reporte Operativo", description: "Descargar resumen de órdenes y cumplimiento en CSV" },
+    ],
+  },
+  {
+    id: "ops_map",
+    name: "Mapa Operativo & FTTH",
+    shortName: "Mapa",
+    description: "Mapa interactivo con nodos NAP/OLT, trazado de fibra, áreas de cobertura, órdenes de campo y cuadrillas GPS en vivo.",
+    icon: "map-pin",
+    color: "teal",
+    badge: "Mapa Live",
+    scope: "operaciones",
+    permissions: [
+      { id: "ops:map_view", name: "Ver Mapa Operativo", description: "Visualizar infraestructura FTTH, órdenes de campo y cuadrillas GPS" },
+    ],
+  },
 ];
 
 function getDefaultAlmacenApartado(): ApartadoConfig {
@@ -322,8 +424,29 @@ function getDefaultAlmacenApartado(): ApartadoConfig {
   };
 }
 
+function getDefaultOperacionesApartado(): ApartadoConfig {
+  const opsApps = APARTADO_APPS_CATALOG.filter((a) => a.scope === "operaciones");
+  return {
+    id: "apt-operaciones",
+    slug: "operaciones",
+    name: "Apartado Operaciones (TurboOps)",
+    subtitle: "Centro de Control Operativo, Cuadrillas & NOC",
+    description: "Portal de coordinación operativa para jefes de operaciones y supervisores: despacho de órdenes, monitoreo GPS de cuadrillas, aprobaciones de material/viáticos, actas QA, NOC y métricas SLA.",
+    icon: "activity",
+    themeColor: "#f59e0b",
+    routePath: "/operaciones",
+    isActive: true,
+    exclusiveAccess: true,
+    assignedRoleIds: [6],
+    assignedUserIds: [],
+    enabledApps: opsApps.map((a) => a.id),
+    enabledPermissions: opsApps.flatMap((a) => a.permissions.map((p) => p.id)),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 function getDefaultApartados(): ApartadoConfig[] {
-  const techApps = APARTADO_APPS_CATALOG.filter((a) => a.scope !== "almacen");
+  const techApps = APARTADO_APPS_CATALOG.filter((a) => !a.scope || a.scope === "tecnicos");
   const allAppIds = techApps.map((a) => a.id);
   const allPermIds = techApps.flatMap((a) => a.permissions.map((p) => p.id));
 
@@ -346,6 +469,7 @@ function getDefaultApartados(): ApartadoConfig[] {
       updatedAt: new Date().toISOString(),
     },
     getDefaultAlmacenApartado(),
+    getDefaultOperacionesApartado(),
   ];
 }
 
@@ -355,10 +479,28 @@ export function loadApartadosForTenant(tenantId: string): ApartadoConfig[] {
     if (fs.existsSync(filePath)) {
       const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8"));
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Garantizar que los tenants existentes reciban automáticamente el nuevo Apartado Almacén POS
+        let changed = false;
+        // Garantizar que los tenants existentes reciban automáticamente Almacén POS y Operaciones
         const hasAlmacen = parsed.some((a: ApartadoConfig) => a.id === "apt-almacen" || a.slug === "almacen");
         if (!hasAlmacen) {
           parsed.push(getDefaultAlmacenApartado());
+          changed = true;
+        }
+        const hasOperaciones = parsed.some((a: ApartadoConfig) => a.id === "apt-operaciones" || a.slug === "operaciones");
+        if (!hasOperaciones) {
+          parsed.push(getDefaultOperacionesApartado());
+          changed = true;
+        } else {
+          const opsApt = parsed.find((a: ApartadoConfig) => a.id === "apt-operaciones" || a.slug === "operaciones");
+          if (opsApt && Array.isArray(opsApt.enabledApps) && !opsApt.enabledApps.includes("ops_map")) {
+            opsApt.enabledApps.push("ops_map");
+            if (Array.isArray(opsApt.enabledPermissions) && !opsApt.enabledPermissions.includes("ops:map_view")) {
+              opsApt.enabledPermissions.push("ops:map_view");
+            }
+            changed = true;
+          }
+        }
+        if (changed) {
           saveApartadosForTenant(tenantId, parsed);
         }
         return parsed;
@@ -429,10 +571,12 @@ function loadCustomersForSeed(tenantId: string): any[] {
       const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8"));
       if (Array.isArray(parsed)) return parsed;
     }
-    const rootCustomers = path.resolve(process.cwd(), "data", "customers.json");
-    if (fs.existsSync(rootCustomers)) {
-      const parsed = JSON.parse(fs.readFileSync(rootCustomers, "utf-8"));
-      if (Array.isArray(parsed)) return parsed;
+    if (tenantId === "turbonetwork") {
+      const rootCustomers = path.resolve(process.cwd(), "data", "customers.json");
+      if (fs.existsSync(rootCustomers)) {
+        const parsed = JSON.parse(fs.readFileSync(rootCustomers, "utf-8"));
+        if (Array.isArray(parsed)) return parsed;
+      }
     }
   } catch {}
   return [];
@@ -748,7 +892,7 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
     const tenantId = resolveTenantId(request);
     const { id } = request.params as { id: string };
     const apartados = loadApartadosForTenant(tenantId);
-    if (id === "apt-tecnicos" || id === "apt-almacen") {
+    if (id === "apt-tecnicos" || id === "apt-almacen" || id === "apt-operaciones") {
       return reply.status(400).send({
         success: false,
         message: "Los Apartados principales del sistema no pueden eliminarse, pero puedes configurar o desactivar sus aplicaciones.",
@@ -1133,6 +1277,326 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
       success: true,
       message,
       data: record,
+    });
+  });
+
+  // E2. CONSTRUCTOR DE CUADRILLAS (CREWS)
+  interface OpsCrewMember {
+    id: number;
+    name: string;
+    roleName?: string;
+    phone?: string;
+  }
+
+  interface OpsCrew {
+    id: string;
+    name: string;
+    vehicleId?: number;
+    vehicleName?: string;
+    vehiclePlate?: string;
+    leaderId?: number;
+    leaderName?: string;
+    members: OpsCrewMember[];
+    createdAt: string;
+    updatedAt: string;
+  }
+
+  function loadCrewsForTenant(tenantId: string): OpsCrew[] {
+    const filePath = getTenantFilePath(tenantId, "apartado_crews.json");
+    try {
+      if (fs.existsSync(filePath)) {
+        const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  }
+
+  function saveCrewsForTenant(tenantId: string, list: OpsCrew[]): void {
+    const filePath = getTenantFilePath(tenantId, "apartado_crews.json");
+    try {
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(filePath, JSON.stringify(list, null, 2), "utf-8");
+    } catch (err) {
+      console.error(`[Apartados] Error guardando cuadrillas para ${tenantId}:`, err);
+    }
+  }
+
+  fastify.get("/apartados/operaciones/crews", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    return reply.send({ success: true, data: loadCrewsForTenant(tenantId) });
+  });
+
+  fastify.post("/apartados/operaciones/crews", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const body = (request.body || {}) as {
+      name?: string;
+      vehicleId?: number;
+      vehicleName?: string;
+      vehiclePlate?: string;
+      leaderId?: number;
+      members?: OpsCrewMember[];
+    };
+    const name = String(body.name || "").trim();
+    if (!name) {
+      return reply.status(400).send({ success: false, message: "El nombre de la cuadrilla es obligatorio" });
+    }
+    const members = Array.isArray(body.members)
+      ? body.members
+          .filter((m) => m && String(m.name || "").trim())
+          .map((m) => ({
+            id: Number(m.id || 0),
+            name: String(m.name).trim(),
+            roleName: m.roleName ? String(m.roleName).trim() : undefined,
+            phone: m.phone ? String(m.phone).trim() : undefined,
+          }))
+      : [];
+    if (members.length === 0) {
+      return reply.status(400).send({ success: false, message: "Selecciona al menos un técnico para la cuadrilla" });
+    }
+
+    const leaderId = body.leaderId ? Number(body.leaderId) : undefined;
+    const leader = leaderId ? members.find((m) => m.id === leaderId) : undefined;
+    const vehicleId = body.vehicleId ? Number(body.vehicleId) : undefined;
+    const now = new Date().toISOString();
+    const crew: OpsCrew = {
+      id: `CREW-${Date.now().toString(36).toUpperCase()}`,
+      name,
+      vehicleId: vehicleId || undefined,
+      vehicleName: body.vehicleName ? String(body.vehicleName).trim() : undefined,
+      vehiclePlate: body.vehiclePlate ? String(body.vehiclePlate).trim() : undefined,
+      leaderId: leader ? leader.id : undefined,
+      leaderName: leader ? leader.name : undefined,
+      members,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const list = loadCrewsForTenant(tenantId);
+    list.unshift(crew);
+    saveCrewsForTenant(tenantId, list);
+    return reply.status(201).send({ success: true, data: crew });
+  });
+
+  fastify.put<{ Params: { id: string } }>("/apartados/operaciones/crews/:id", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const list = loadCrewsForTenant(tenantId);
+    const idx = list.findIndex((c) => c.id === request.params.id);
+    if (idx === -1) {
+      return reply.status(404).send({ success: false, message: "Cuadrilla no encontrada" });
+    }
+    const body = (request.body || {}) as {
+      name?: string;
+      vehicleId?: number | null;
+      vehicleName?: string | null;
+      vehiclePlate?: string | null;
+      leaderId?: number;
+      members?: OpsCrewMember[];
+    };
+    const name = body.name !== undefined ? String(body.name).trim() : list[idx].name;
+    if (!name) {
+      return reply.status(400).send({ success: false, message: "El nombre de la cuadrilla es obligatorio" });
+    }
+    const members = Array.isArray(body.members)
+      ? body.members
+          .filter((m) => m && String(m.name || "").trim())
+          .map((m) => ({
+            id: Number(m.id || 0),
+            name: String(m.name).trim(),
+            roleName: m.roleName ? String(m.roleName).trim() : undefined,
+            phone: m.phone ? String(m.phone).trim() : undefined,
+          }))
+      : list[idx].members;
+    if (members.length === 0) {
+      return reply.status(400).send({ success: false, message: "Selecciona al menos un técnico para la cuadrilla" });
+    }
+    const leaderId = body.leaderId !== undefined ? Number(body.leaderId) : list[idx].leaderId;
+    const leader = leaderId ? members.find((m) => m.id === leaderId) : undefined;
+
+    list[idx] = {
+      ...list[idx],
+      name,
+      vehicleId: body.vehicleId !== undefined ? (body.vehicleId ? Number(body.vehicleId) : undefined) : list[idx].vehicleId,
+      vehicleName: body.vehicleName !== undefined ? (body.vehicleName ? String(body.vehicleName).trim() : undefined) : list[idx].vehicleName,
+      vehiclePlate: body.vehiclePlate !== undefined ? (body.vehiclePlate ? String(body.vehiclePlate).trim() : undefined) : list[idx].vehiclePlate,
+      leaderId: leader ? leader.id : undefined,
+      leaderName: leader ? leader.name : undefined,
+      members,
+      updatedAt: new Date().toISOString(),
+    };
+    saveCrewsForTenant(tenantId, list);
+    return reply.send({ success: true, data: list[idx] });
+  });
+
+  fastify.delete<{ Params: { id: string } }>("/apartados/operaciones/crews/:id", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const list = loadCrewsForTenant(tenantId);
+    const filtered = list.filter((c) => c.id !== request.params.id);
+    if (filtered.length === list.length) {
+      return reply.status(404).send({ success: false, message: "Cuadrilla no encontrada" });
+    }
+    saveCrewsForTenant(tenantId, filtered);
+    return reply.send({ success: true });
+  });
+
+  // F. RESUMEN OPERATIVO PARA APARTADO OPERACIONES (TurboOps)
+  fastify.get("/apartados/operaciones/overview", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const installations = loadInstallationsForTenant(tenantId);
+    const materialRequests = loadMaterialRequestsForTenant(tenantId);
+    const advances = loadAdvancesForTenant(tenantId);
+    const crews = loadCrewsForTenant(tenantId);
+
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Lima",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+
+    // Cargar asistencia GPS de hoy filtrada por tenant
+    let todayAttendance: any[] = [];
+    try {
+      const attFile = path.resolve(process.cwd(), "data", "attendance.json");
+      if (fs.existsSync(attFile)) {
+        const parsed = JSON.parse(fs.readFileSync(attFile, "utf-8"));
+        if (Array.isArray(parsed)) {
+          todayAttendance = parsed.filter((r) => {
+            if (r.date !== today) return false;
+            const recTenant = String(r.tenantId || "turbonetwork").trim().toLowerCase();
+            return recTenant === tenantId || r.isShared === true;
+          });
+        }
+      }
+    } catch {}
+
+    // Cargar técnicos / usuarios del sistema y colaboradores RRHH filtrados por tenant
+    const techMap = new Map<string, { id: number; name: string; roleName: string; phone?: string }>();
+    try {
+      const usersFile = path.resolve(process.cwd(), "data", "users.json");
+      if (fs.existsSync(usersFile)) {
+        const parsed = JSON.parse(fs.readFileSync(usersFile, "utf-8"));
+        if (Array.isArray(parsed)) {
+          for (const u of parsed) {
+            if (!u || u.isActive === false) continue;
+            const uTenant = String(u.assignedTenantId || "*").trim().toLowerCase();
+            if (uTenant !== "*" && uTenant !== "shared" && uTenant !== tenantId) continue;
+            const isTech = Number(u.roleId) === 4 || /tecnic|campo|cuadrilla|instalador/i.test(String(u.roleName || ""));
+            if (!isTech) continue;
+            const name = String(u.name || u.username || "Técnico").trim();
+            techMap.set(name.toLowerCase(), {
+              id: Number(u.id),
+              name,
+              roleName: String(u.roleName || "Soporte Técnico en Campo"),
+              phone: u.phone || "",
+            });
+          }
+        }
+      }
+    } catch {}
+    try {
+      const tenantEmpFile = getTenantFilePath(tenantId, "employees.json");
+      const rootEmpFile = path.resolve(process.cwd(), "data", "employees.json");
+      const empFile = fs.existsSync(tenantEmpFile)
+        ? tenantEmpFile
+        : tenantId === "turbonetwork"
+          ? rootEmpFile
+          : "";
+      if (empFile && fs.existsSync(empFile)) {
+        const parsed = JSON.parse(fs.readFileSync(empFile, "utf-8"));
+        if (Array.isArray(parsed)) {
+          for (const e of parsed) {
+            if (!e || e.status === "inactive" || e.status === "cesado") continue;
+            const cargo = String(e.position || e.role || e.area || "");
+            if (!/tecnic|campo|cuadrilla|instalador|planta|fibra/i.test(cargo)) continue;
+            const name = String(e.name || e.fullName || "").trim();
+            if (!name || techMap.has(name.toLowerCase())) continue;
+            techMap.set(name.toLowerCase(), {
+              id: Number(e.id || 0),
+              name,
+              roleName: cargo || "Técnico de Campo",
+              phone: e.phone || "",
+            });
+          }
+        }
+      }
+    } catch {}
+    const technicians = Array.from(techMap.values());
+
+    // Cargar dispositivos de red del tenant
+    let networkDevices: any[] = [];
+    try {
+      const netFile = getTenantFilePath(tenantId, "network_devices.json");
+      const fallbackNet = path.resolve(process.cwd(), "data", "network_devices.json");
+      const targetNet = fs.existsSync(netFile)
+        ? netFile
+        : tenantId === "turbonetwork"
+          ? fallbackNet
+          : "";
+      if (targetNet && fs.existsSync(targetNet)) {
+        const parsed = JSON.parse(fs.readFileSync(targetNet, "utf-8"));
+        if (Array.isArray(parsed)) networkDevices = parsed;
+      }
+    } catch {}
+
+    // Cargar actas del tenant
+    let actas: any[] = [];
+    try {
+      const actasFile = getTenantFilePath(tenantId, "actas.json");
+      if (fs.existsSync(actasFile)) {
+        const parsed = JSON.parse(fs.readFileSync(actasFile, "utf-8"));
+        if (Array.isArray(parsed)) actas = parsed;
+      }
+    } catch {}
+
+    const pendingOrders = installations.filter((i) => i.status !== "completada");
+    const completedToday = installations.filter(
+      (i) => i.status === "completada" && (i.completedAt || "").slice(0, 10) === today
+    );
+    const urgentOrders = pendingOrders.filter((i) => i.priority === "urgente" || i.priority === "alta");
+
+    let vehicles: any[] = [];
+    try {
+      vehicles = getAssets(tenantId, "vehiculo").map((v) => ({
+        id: v.id,
+        code: v.code,
+        name: v.name,
+        brand: v.brand,
+        model: v.model,
+        plateNumber: v.plateNumber,
+        status: v.status,
+      }));
+    } catch {}
+
+    return reply.send({
+      success: true,
+      tenantId,
+      date: today,
+      kpis: {
+        totalOrders: installations.length,
+        pendingOrders: pendingOrders.length,
+        inProgressOrders: installations.filter((i) => i.status === "en_progreso" || i.status === "en_camino").length,
+        completedToday: completedToday.length,
+        completedTotal: installations.filter((i) => i.status === "completada").length,
+        urgentOrders: urgentOrders.length,
+        pendingMaterialRequests: materialRequests.filter((m) => m.status === "pendiente").length,
+        pendingAdvances: advances.filter((a) => a.status === "pendiente").length,
+        activeCrewsToday: todayAttendance.length,
+        crewsCount: crews.length,
+        techniciansCount: technicians.length,
+        networkDevicesCount: networkDevices.length,
+        actasCount: actas.length,
+      },
+      installations,
+      materialRequests,
+      advances,
+      todayAttendance,
+      technicians,
+      crews,
+      vehicles,
+      networkDevices,
+      actas: actas.slice(0, 50),
     });
   });
 };

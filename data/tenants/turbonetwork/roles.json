@@ -116,5 +116,44 @@
       "network",
       "rrhh"
     ]
+  },
+  {
+    "id": 5,
+    "name": "Almacenero",
+    "slug": "almacenero",
+    "description": "Rol fijo de almacén con acceso exclusivo al Apartado Almacén POS (/almacen)",
+    "permissions": [
+      "inventory:view",
+      "inventory:manage",
+      "backpack:view",
+      "backpack:manage",
+      "rrhh:attendance"
+    ],
+    "allowedModules": [
+      "inventory",
+      "mochila"
+    ]
+  },
+  {
+    "id": 6,
+    "name": "OPERACIONES",
+    "slug": "operaciones",
+    "description": "Rol fijo operativo con acceso exclusivo al Apartado Operaciones (/operaciones)",
+    "permissions": [
+      "customers:view",
+      "customers:edit",
+      "inventory:view",
+      "backpack:view",
+      "backpack:manage",
+      "rrhh:attendance"
+    ],
+    "allowedModules": [
+      "customers",
+      "inventory",
+      "mochila",
+      "maps",
+      "dashboard",
+      "rrhh"
+    ]
   }
 ]

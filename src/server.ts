@@ -277,10 +277,38 @@ export async function buildApp() {
       return serveDynamicAlmacenHtml(req, reply, tenantSlug);
     });
 
+    // 1.1b3 Rutas de Apartado Operaciones (TurboOps Standalone App)
+    const serveDynamicOperacionesHtml = (req: any, reply: any, tenantSlug?: string) => {
+      const rawHtml = readPublicHtmlCached("operaciones.html");
+      if (!rawHtml) {
+        return reply.status(404).send("operaciones.html not found");
+      }
+      const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost:3000";
+      const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
+      const baseUrl = `${proto}://${host}`;
+      const currentUrl = `${baseUrl}${req.url}`;
+      const tenant = resolveTenantFromRequest(req, tenantSlug);
+      const processedHtml = injectOpenGraphHtml(rawHtml, tenant, currentUrl, baseUrl);
+      return reply.type("text/html; charset=utf-8").send(processedHtml);
+    };
+
+    fastify.get("/operaciones", async (req, reply) => {
+      return serveDynamicOperacionesHtml(req, reply);
+    });
+
+    fastify.get("/t/:tenantSlug/operaciones", async (req, reply) => {
+      const { tenantSlug } = req.params as { tenantSlug: string };
+      return serveDynamicOperacionesHtml(req, reply, tenantSlug);
+    });
+
     fastify.get("/apartado/:slug", async (req, reply) => {
       const { slug } = req.params as { slug: string };
-      if ((slug || "").toLowerCase() === "almacen") {
+      const normalized = (slug || "").toLowerCase();
+      if (normalized === "almacen") {
         return serveDynamicAlmacenHtml(req, reply);
+      }
+      if (normalized === "operaciones") {
+        return serveDynamicOperacionesHtml(req, reply);
       }
       return serveDynamicTechHtml(req, reply);
     });

@@ -1,0 +1,28 @@
+[
+  {
+    "id": "CREW-MWX55WIU",
+    "name": "EQUIPO MARAVILLA",
+    "vehicleId": 501,
+    "vehicleName": "Camioneta Técnica Toyota Hilux 4x4 Cuadrilla 1",
+    "vehiclePlate": "ABC-123",
+    "members": [
+      {
+        "id": 43899608,
+        "name": "ABAD SILVA JULIO VICTOR",
+        "roleName": "Tecnico 1"
+      },
+      {
+        "id": 41657725,
+        "name": "ABAD SILVA ISMAEL RAUL",
+        "roleName": "Tecnico 2"
+      },
+      {
+        "id": 25866717,
+        "name": "GONZA PRADO JUAN CARLOS",
+        "roleName": "Tecnico 3"
+      }
+    ],
+    "createdAt": "2026-11-26T05:58:22.182Z",
+    "updatedAt": "2026-11-26T05:58:22.182Z"
+  }
+]

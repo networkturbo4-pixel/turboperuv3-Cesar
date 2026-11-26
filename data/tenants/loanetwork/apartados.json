@@ -1,0 +1,132 @@
+[
+  {
+    "id": "apt-tecnicos",
+    "slug": "tecnicos",
+    "name": "Apartado Técnico Móvil (TurboTech)",
+    "subtitle": "Super-App de Campo FTTH & Soporte",
+    "description": "Portal móvil exclusivo con accesos directos rápidos para técnicos instaladores y cuadrillas de planta externa, sin acceso al panel administrativo general.",
+    "icon": " smartphone",
+    "themeColor": "#2563eb",
+    "routePath": "/tech",
+    "isActive": true,
+    "exclusiveAccess": true,
+    "assignedRoleIds": [
+      4
+    ],
+    "assignedUserIds": [],
+    "enabledApps": [
+      "attendance_gps",
+      "commissions_advances",
+      "nearby_naps",
+      "my_stock",
+      "qr_scanner",
+      "material_requests",
+      "my_installations",
+      "ciz_search"
+    ],
+    "enabledPermissions": [
+      "attendance:checkin",
+      "attendance:lunch",
+      "attendance:history",
+      "commissions:view",
+      "advances:request",
+      "advances:history",
+      "naps:view",
+      "naps:ports",
+      "naps:navigate",
+      "stock:view",
+      "stock:serials",
+      "qr:scan_verify",
+      "qr:assign_client",
+      "materials:request",
+      "materials:return",
+      "installations:view",
+      "installations:complete",
+      "installations:consume_stock",
+      "ciz:search",
+      "ciz:diagnostics",
+      "ciz:reactivate"
+    ],
+    "updatedAt": "2026-11-26T06:03:37.537Z"
+  },
+  {
+    "id": "apt-almacen",
+    "slug": "almacen",
+    "name": "Apartado Almacén POS (TurboAlmacén)",
+    "subtitle": "Terminal Rápida de Almacén, Pistola & Tickets",
+    "description": "Interfaz ágil tipo caja/supermercado para PC, laptop y móvil con lector láser/cámara, despacho a técnicos, devoluciones, compras, transferencias, control de EPP e impresión térmica.",
+    "icon": "warehouse",
+    "themeColor": "#10b981",
+    "routePath": "/almacen",
+    "isActive": true,
+    "exclusiveAccess": true,
+    "assignedRoleIds": [
+      5
+    ],
+    "assignedUserIds": [],
+    "enabledApps": [
+      "almacen_dispatch",
+      "almacen_returns",
+      "almacen_purchases",
+      "almacen_transfers",
+      "almacen_epp",
+      "almacen_verify_labels"
+    ],
+    "enabledPermissions": [
+      "almacen:dispatch",
+      "almacen:approve_requests",
+      "almacen:print_ticket",
+      "almacen:return",
+      "almacen:purchase",
+      "almacen:transfer_tech",
+      "almacen:transfer_node",
+      "almacen:epp_view",
+      "almacen:epp_inspect",
+      "almacen:verify",
+      "almacen:print_labels"
+    ],
+    "updatedAt": "2026-11-26T06:03:37.537Z"
+  },
+  {
+    "id": "apt-operaciones",
+    "slug": "operaciones",
+    "name": "Apartado Operaciones (TurboOps)",
+    "subtitle": "Centro de Control Operativo, Cuadrillas & NOC",
+    "description": "Portal de coordinación operativa para jefes de operaciones y supervisores: despacho de órdenes, monitoreo GPS de cuadrillas, aprobaciones de material/viáticos, actas QA, NOC y métricas SLA.",
+    "icon": "activity",
+    "themeColor": "#f59e0b",
+    "routePath": "/operaciones",
+    "isActive": true,
+    "exclusiveAccess": true,
+    "assignedRoleIds": [
+      6
+    ],
+    "assignedUserIds": [],
+    "enabledApps": [
+      "ops_dispatch",
+      "ops_crews",
+      "ops_materials_approvals",
+      "ops_noc_network",
+      "ops_actas_qa",
+      "ops_sla_reports",
+      "ops_map"
+    ],
+    "enabledPermissions": [
+      "ops:orders_view",
+      "ops:orders_create",
+      "ops:orders_assign",
+      "ops:crews_view",
+      "ops:crews_manage",
+      "ops:materials_approve",
+      "ops:advances_approve",
+      "ops:network_view",
+      "ops:network_control",
+      "ops:actas_view",
+      "ops:actas_manage",
+      "ops:sla_view",
+      "ops:sla_export",
+      "ops:map_view"
+    ],
+    "updatedAt": "2026-11-26T06:03:37.537Z"
+  }
+]
