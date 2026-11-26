@@ -1,5 +1,5 @@
 // TurboNetwork PWA - High Performance Service Worker
-const CACHE_NAME = 'turbonetwork-pwa-v17';
+const CACHE_NAME = 'turbonetwork-pwa-v18';
 
 const STATIC_SHELL = [
   '/',
@@ -60,8 +60,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Ignorar protocolos no soportados por Cache Storage (extensiones chrome-extension://, moz-extension://, data:, blob:)
-  if (!url.protocol.startsWith('http:') && !url.protocol.startsWith('https:')) {
+  // Ignorar protocolos no soportados y orígenes externos (mapas, CDNs)
+  if ((!url.protocol.startsWith('http:') && !url.protocol.startsWith('https:')) || url.origin !== self.location.origin) {
     return;
   }
 
