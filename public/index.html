@@ -17210,8 +17210,8 @@
   <!-- ======================================================== -->
   <!-- MODAL 5: DESGLOSE DE UNIDADES INDIVIDUALES Y SKUs / CÓDIGOS -->
   <!-- ======================================================== -->
-  <div id="inventory-product-units-modal" class="fixed inset-0 z-[290] hidden flex items-center justify-center bg-black/85 backdrop-blur-md px-3 sm:px-4 py-4 sm:py-6 overflow-y-auto">
-    <div class="pro-card max-w-5xl w-full p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col max-h-[92vh] my-auto overflow-hidden bg-white dark:bg-slate-900">
+  <div id="inventory-product-units-modal" class="fixed inset-0 z-[290] hidden flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md px-0 sm:px-4 py-0 sm:py-6 overflow-hidden sm:overflow-y-auto">
+    <div class="pro-card max-w-5xl w-full p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative flex flex-col max-h-[92dvh] my-0 sm:my-auto overflow-y-auto sm:overflow-hidden bg-white dark:bg-slate-900">
       
       <!-- HEADER -->
       <div class="flex items-start justify-between pb-4 border-b border-slate-200 dark:border-white/10 flex-shrink-0 gap-3">
@@ -17242,7 +17242,7 @@
       </div>
 
       <!-- KPIS RAPIDOS -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-3 flex-shrink-0">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-3 sm:flex-shrink-0">
         <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 flex items-center justify-between">
           <div>
             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Total Unidades</span>
@@ -17274,7 +17274,7 @@
       </div>
 
       <!-- TOOLBAR DE ACCIONES -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pb-3 flex-shrink-0">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pb-3 sm:flex-shrink-0">
         <!-- Buscador -->
         <div class="relative flex-1">
           <svg class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -17288,12 +17288,12 @@
         </div>
 
         <!-- Filtros de Estado -->
-        <div class="flex items-center gap-1 overflow-x-auto scrollbar-none text-[11px]">
-          <button type="button" id="units-filter-all" onclick="filterUnitsByStatus('all')" class="px-2.5 py-1 rounded-lg font-bold bg-purple-600 text-white transition shadow-2xs">Todos</button>
-          <button type="button" id="units-filter-available" onclick="filterUnitsByStatus('disponible')" class="px-2.5 py-1 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition">Disponibles</button>
-          <button type="button" id="units-filter-installed" onclick="filterUnitsByStatus('instalado')" class="px-2.5 py-1 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition">Instalados / Salidas</button>
-          <button type="button" id="units-filter-assigned" onclick="filterUnitsByStatus('asignado')" class="px-2.5 py-1 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition">Asignados</button>
-          <button type="button" id="units-filter-used" onclick="filterUnitsByStatus('en_uso')" class="px-2.5 py-1 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition">En Uso / Bajas</button>
+        <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none text-[11px] flex-nowrap whitespace-nowrap pb-0.5">
+          <button type="button" id="units-filter-all" onclick="filterUnitsByStatus('all')" class="px-2.5 py-1.5 rounded-lg font-bold bg-purple-600 text-white transition shadow-2xs shrink-0">Todos</button>
+          <button type="button" id="units-filter-available" onclick="filterUnitsByStatus('disponible')" class="px-2.5 py-1.5 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition shrink-0">Disponibles</button>
+          <button type="button" id="units-filter-installed" onclick="filterUnitsByStatus('instalado')" class="px-2.5 py-1.5 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition shrink-0">Instalados / Salidas</button>
+          <button type="button" id="units-filter-assigned" onclick="filterUnitsByStatus('asignado')" class="px-2.5 py-1.5 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition shrink-0">Asignados</button>
+          <button type="button" id="units-filter-used" onclick="filterUnitsByStatus('en_uso')" class="px-2.5 py-1.5 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:text-white transition shrink-0">En Uso / Bajas</button>
         </div>
 
         <!-- Botones de Acción Masivos -->
@@ -17320,7 +17320,7 @@
       </div>
 
       <!-- TABLA DE UNIDADES INDIVIDUALES -->
-      <div class="flex-1 overflow-y-auto border border-slate-200 dark:border-white/10 rounded-xl custom-palette-scroll max-h-[52vh]">
+      <div class="flex-1 overflow-x-auto overflow-y-auto border border-slate-200 dark:border-white/10 rounded-xl custom-palette-scroll min-h-[240px] sm:min-h-0 max-h-[52dvh]">
         <table class="w-full text-left text-xs">
           <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 text-[10.5px] uppercase font-bold sticky top-0 backdrop-blur-xs border-b border-slate-200 dark:border-white/10 z-10">
             <tr>

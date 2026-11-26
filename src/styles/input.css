@@ -266,3 +266,109 @@
   width: 100%;
   min-width: 0;
 }
+
+/* ========================================================
+   MOBILE-NATIVE & GLOBAL RESPONSIVE MODALS (APPLE / EMIL)
+   ======================================================== */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
+button,
+a,
+[role="button"],
+summary {
+  touch-action: manipulation;
+  user-select: none;
+}
+
+button:active:not(:disabled),
+[role="button"]:active:not(:disabled) {
+  transform: scale(0.97);
+  transition: transform 100ms var(--ease-out);
+}
+
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Bottom-sheet & scrollable container for all system modals on mobile */
+  .fixed[id*="modal"],
+  .fixed[id^="modal-"],
+  .fixed[id$="-modal"],
+  .fixed[role="dialog"] {
+    align-items: flex-end !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .fixed[id*="modal"] > .pro-card,
+  .fixed[id^="modal-"] > .pro-card,
+  .fixed[id$="-modal"] > .pro-card,
+  .fixed[id*="modal"] > div,
+  .fixed[id^="modal-"] > div,
+  .fixed[id$="-modal"] > div,
+  .fixed[role="dialog"] > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh !important;
+    margin: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-top-left-radius: 1.25rem !important;
+    border-top-right-radius: 1.25rem !important;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+    animation: tnSheetIn 260ms var(--ease-drawer) both;
+  }
+
+  /* Keep inner tables/scroll areas usable instead of crushing to 0px */
+  .fixed[id*="modal"] .flex-1.overflow-y-auto,
+  .fixed[id^="modal-"] .flex-1.overflow-y-auto,
+  .fixed[id$="-modal"] .flex-1.overflow-y-auto {
+    flex: 0 0 auto !important;
+    min-height: 240px !important;
+    max-height: 55dvh !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ensure dialog elements also respect safe areas & 92dvh */
+  dialog[open] {
+    max-height: 92dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
+@keyframes tnSheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
