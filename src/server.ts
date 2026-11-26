@@ -36,6 +36,7 @@ import { apartadosRoutes } from "./modules/apartados/apartados.routes";
 import { actasRoutes } from "./modules/actas/actas.routes";
 import { findActaByPublicToken, renderPublicActaHtml } from "./modules/actas/actas.service";
 import { scannerRoutes } from "./modules/scanner/scanner.routes";
+import { mobileRoutes } from "./modules/mobile/mobile.routes";
 import { initWhatsAppQrEngineOnBoot } from "./modules/messages/whatsapp-qr-service";
 import { SecurityService } from "./modules/security/security.service";
 import { startWhatsAppSendQueueWorker } from "./modules/messages/send-queue";
@@ -82,7 +83,12 @@ export async function buildApp() {
       if (!origin || allowedOrigins.length === 0) {
         return cb(null, true);
       }
-      if (allowedOrigins.includes(origin)) {
+      if (
+        origin === "capacitor://localhost" ||
+        origin === "http://localhost" ||
+        origin === "https://localhost" ||
+        allowedOrigins.includes(origin)
+      ) {
         return cb(null, true);
       }
       return cb(new Error("Origen no permitido por CORS"), false);
@@ -466,6 +472,7 @@ export async function buildApp() {
   await fastify.register(apartadosRoutes, { prefix: "/api" });
   await fastify.register(actasRoutes, { prefix: "/api" });
   await fastify.register(scannerRoutes, { prefix: "/api" });
+  await fastify.register(mobileRoutes, { prefix: "/api/mobile" });
 
   // Multimedia de la Bandeja Omnicanal (stickers, fotos, audios, videos, documentos) guardada en data/media.
   // Solo accesible con sesión válida (cookie tn_session / Bearer). Soporta Range para audio y video.

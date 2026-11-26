@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>TurboNetwork • Sin Conexión</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0b1120;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, sans-serif;
+      text-align: center;
+      padding: 24px;
+    }
+    .card {
+      max-width: 360px;
+      background: #111827;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 20px;
+      padding: 28px 22px;
+    }
+    h1 { font-size: 20px; margin: 0 0 8px; }
+    p { font-size: 14px; color: #94a3b8; margin: 0 0 20px; line-height: 1.5; }
+    button {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 0;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>TurboNetwork</h1>
+    <p>No se pudo conectar con el servidor. Verifica tu conexión a Internet o datos móviles e intenta nuevamente.</p>
+    <button onclick="window.location.reload()">Reintentar conexión</button>
+  </div>
+</body>
+</html>

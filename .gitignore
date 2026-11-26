@@ -50,3 +50,13 @@ data/media/
 data/omnichannel-db/
 data/omnichannel-db.corrupt-*/
 data/whatsapp-qr-session/
+
+# Mobile (Capacitor / Android) & Firebase secrets
+firebase-service-account.json
+mobile/node_modules/
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/local.properties
+mobile/android/app/google-services.json
+mobile/android/capacitor-cordova-android-plugins/build/
