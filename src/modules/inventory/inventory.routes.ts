@@ -131,11 +131,22 @@ export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
       search?: string;
       status?: string;
       includeDeleted?: string;
+      compact?: string;
     };
-    const products = getInventoryProducts(tenantId, {
+    let products = getInventoryProducts(tenantId, {
       ...query,
       includeDeleted: query.includeDeleted === "true",
     });
+    if (query.compact === "true") {
+      products = products.map((p: any) => ({
+        ...p,
+        unitCount: Array.isArray(p.itemUnits) ? p.itemUnits.length : 0,
+        imageCount: Array.isArray(p.images) ? p.images.length : 0,
+        images: Array.isArray(p.images) && p.images.length > 0 ? [p.images[0]] : [],
+        itemUnits: undefined,
+        _isCompact: true,
+      }));
+    }
     return { success: true, count: products.length, data: products };
   });
 
