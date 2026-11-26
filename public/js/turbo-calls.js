@@ -113,6 +113,8 @@
 
     init(opts = {}) {
       this.options = Object.assign(this.options, opts);
+      if (this._initialized) return;
+      this._initialized = true;
       this.injectUI();
       this.bindGlobalEvents();
       console.log('⚡ [TurboCalls] Módulo de llamadas WebRTC inicializado');

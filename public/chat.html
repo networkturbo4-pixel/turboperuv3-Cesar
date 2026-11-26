@@ -3227,7 +3227,11 @@ function initMessagesRealtime() {
   const tenant = (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork';
 
   if (messagesEventSource) {
-    if (messagesEventSource._connectedUserId === myId && messagesEventSource.readyState !== EventSource.CLOSED) return;
+    if (
+      messagesEventSource._connectedUserId === myId &&
+      messagesEventSource._connectedTenantId === tenant &&
+      messagesEventSource.readyState !== EventSource.CLOSED
+    ) return;
     try { messagesEventSource.close(); } catch (_) {}
     messagesEventSource = null;
   }
@@ -3238,6 +3242,16 @@ function initMessagesRealtime() {
       : `/api/messages/events?tenantId=${encodeURIComponent(tenant)}`;
     messagesEventSource = new EventSource(sseUrl);
     messagesEventSource._connectedUserId = myId;
+    messagesEventSource._connectedTenantId = tenant;
+
+    messagesEventSource.addEventListener('reconnect', () => {
+      if (messagesEventSource) {
+        try { messagesEventSource.close(); } catch (_) {}
+        messagesEventSource = null;
+      }
+      clearTimeout(messagesSseReconnectTimer);
+      messagesSseReconnectTimer = setTimeout(initMessagesRealtime, 250);
+    });
 
     if (window.TurboCalls && typeof window.TurboCalls.init === 'function') {
       window.TurboCalls.init({

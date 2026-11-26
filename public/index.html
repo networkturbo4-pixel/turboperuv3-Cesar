@@ -21649,6 +21649,9 @@
         loadSavedSettings();
         currentUsersFilterTenant = tenantId;
         currentPersonnelFilterTenant = tenantId;
+        if (typeof populateAssignedTenantSelects === 'function') {
+          await populateAssignedTenantSelects(true);
+        }
         await Promise.all([
           loadCustomers(),
           loadInvoices(),
@@ -21658,19 +21661,19 @@
           loadSystemMetrics(),
           refreshTodayAttendanceForActiveTenant(),
           loadInventoryModule(),
-          loadConfigModule(),
-          loadEmployees()
+          loadConfigModule(tenantId),
+          loadEmployees(tenantId)
         ]);
         updateRbacCompanyHeader();
         populateAttendanceTenantFilter();
+        if (typeof initMessagesRealtime === 'function') {
+          initMessagesRealtime();
+        }
         if (typeof activeTabId !== 'undefined' && activeTabId === 'rrhh') {
           loadAttendance();
           if (typeof loadPayrollModule === 'function') loadPayrollModule();
           if (typeof loadLeavesModule === 'function') loadLeavesModule();
           if (typeof loadCommissionsModule === 'function') loadCommissionsModule();
-        }
-        if (typeof populateAssignedTenantSelects === 'function') {
-          populateAssignedTenantSelects(true);
         }
         if (typeof activeConfigSubTab !== 'undefined' && activeConfigSubTab === 'company') {
           loadCompanyInfo(activeTenantId);
@@ -29435,7 +29438,7 @@ Estamos atentos para brindarle asistencia inmediata.
 
       [filterSelect, rrhhFilterSelect].forEach(sel => {
         if (sel) {
-          const curFilter = sel.value || currentUsersFilterTenant;
+          const curFilter = forceActive ? (activeTenantId || '') : (sel.value || currentUsersFilterTenant || activeTenantId || '');
           sel.innerHTML = filterHtml;
           if (curFilter && (curFilter === 'all' || tenants.some(t => t.id === curFilter))) {
             sel.value = curFilter;
@@ -33637,13 +33640,17 @@ function copyRemoteScannerLink() {
       loadEmployees();
     }
 
-    async function loadEmployees() {
+    async function loadEmployees(forcedTenant = null) {
       try {
         if (typeof populateAssignedTenantSelects === 'function') {
-          await populateAssignedTenantSelects();
+          await populateAssignedTenantSelects(Boolean(forcedTenant));
         }
         const filterEl = document.getElementById('personnel-filter-tenant');
-        const targetTenant = (filterEl && filterEl.value) ? filterEl.value : (currentPersonnelFilterTenant || activeTenantId || '');
+        const targetTenant = forcedTenant
+          || ((filterEl && filterEl.value) ? filterEl.value : (currentPersonnelFilterTenant || activeTenantId || ''));
+        if (forcedTenant && filterEl && Array.from(filterEl.options).some(o => o.value === forcedTenant)) {
+          filterEl.value = forcedTenant;
+        }
         const res = await fetch(`/api/rrhh/employees?tenantId=${encodeURIComponent(targetTenant)}`, {
           headers: { 'x-tenant-id': activeTenantId || '' }
         });
@@ -53695,7 +53702,11 @@ function initMessagesRealtime() {
   const tenant = (typeof activeTenantId !== 'undefined' && activeTenantId) ? activeTenantId : 'turbonetwork';
 
   if (messagesEventSource) {
-    if (messagesEventSource._connectedUserId === myId && messagesEventSource.readyState !== EventSource.CLOSED) return;
+    if (
+      messagesEventSource._connectedUserId === myId &&
+      messagesEventSource._connectedTenantId === tenant &&
+      messagesEventSource.readyState !== EventSource.CLOSED
+    ) return;
     try { messagesEventSource.close(); } catch (_) {}
     messagesEventSource = null;
   }
@@ -53704,6 +53715,16 @@ function initMessagesRealtime() {
     const sseUrl = `/api/messages/events?userId=${encodeURIComponent(myId)}&tenantId=${encodeURIComponent(tenant)}`;
     messagesEventSource = new EventSource(sseUrl);
     messagesEventSource._connectedUserId = myId;
+    messagesEventSource._connectedTenantId = tenant;
+
+    messagesEventSource.addEventListener('reconnect', () => {
+      if (messagesEventSource) {
+        try { messagesEventSource.close(); } catch (_) {}
+        messagesEventSource = null;
+      }
+      clearTimeout(messagesSseReconnectTimer);
+      messagesSseReconnectTimer = setTimeout(initMessagesRealtime, 250);
+    });
 
     if (window.TurboCalls && typeof window.TurboCalls.init === 'function') {
       window.TurboCalls.init({

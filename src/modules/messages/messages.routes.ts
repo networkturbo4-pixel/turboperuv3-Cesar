@@ -794,10 +794,18 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     const query = request.query as { userId?: string; currentUserId?: string } | undefined;
     const currentUserId = query?.userId || query?.currentUserId || (request.headers["x-user-id"] as string);
 
-    // Cabeceras HTTP estándar para Server-Sent Events compatibles con HTTP/1.1 y HTTP/2
+    // Desactivar timeout de socket en Node y habilitar TCP keep-alive para evitar cortes abruptos
+    try {
+      request.socket?.setTimeout(0);
+      request.socket?.setKeepAlive(true, 15000);
+      request.socket?.setNoDelay(true);
+    } catch (_) {}
+
+    // Cabeceras HTTP estándar para Server-Sent Events compatibles con HTTP/1.1, HTTP/2 y proxies inversos (Nginx/Apache/Cloudflare)
     const headers: Record<string, string> = {
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform, no-store, must-revalidate",
+      "Content-Encoding": "identity",
       "Access-Control-Allow-Origin": "*",
       "X-Accel-Buffering": "no", // Desactiva el buffering de proxy en Nginx
     };
@@ -818,10 +826,13 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     let cleanedUp = false;
+    let heartbeatTimer: NodeJS.Timeout | undefined;
+    let maxLifeTimer: NodeJS.Timeout | undefined;
     const cleanup = () => {
       if (cleanedUp) return;
       cleanedUp = true;
-      clearInterval(heartbeatTimer);
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      if (maxLifeTimer) clearTimeout(maxLifeTimer);
       messageClients.delete(client);
       try {
         if (!reply.raw.writableEnded && !reply.raw.destroyed) {
@@ -854,21 +865,21 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
       console.log(`🔌 [SSE CONNECT] Usuario ${currentUserId} conectado al bus de mensajería (Tenant: ${tenantId}, Total: ${messageClients.size})`);
     }
 
-    // Evento inicial de confirmación de conexión
+    // Padding inicial (2KB) + retry + evento de confirmación para forzar el flush inmediato en proxies (Nginx/Apache/Cloudflare)
     try {
       if (!reply.raw.writableEnded && !reply.raw.destroyed) {
-        reply.raw.write(`data: ${JSON.stringify({ type: "connected", tenantId, userId: currentUserId, time: new Date().toISOString() })}\n\n`);
+        reply.raw.write(`:${" ".repeat(2048)}\nretry: 2000\ndata: ${JSON.stringify({ type: "connected", tenantId, userId: currentUserId, time: new Date().toISOString() })}\n\n`);
       }
     } catch (_) {
       cleanup();
       return;
     }
 
-    // Latido / Heartbeat cada 15 segundos para mantener viva la conexión HTTP/2
-    const heartbeatTimer = setInterval(() => {
+    // Latido / Heartbeat cada 15 segundos para mantener viva la conexión
+    heartbeatTimer = setInterval(() => {
       try {
         if (!reply.raw.writableEnded && !reply.raw.destroyed) {
-          reply.raw.write(`: heartbeat\n\n`);
+          reply.raw.write(`: heartbeat ${Date.now()}\n\n`);
         } else {
           cleanup();
         }
@@ -876,6 +887,17 @@ export const messagesRoutes: FastifyPluginAsync = async (fastify) => {
         cleanup();
       }
     }, 15000);
+
+    // Rotación ordenada a los 45s (antes del proxy_read_timeout de 60s de Nginx/Apache/Cloudflare)
+    // Así se cierra el chunked stream con el chunk terminal 0\r\n\r\n y se evita net::ERR_INCOMPLETE_CHUNKED_ENCODING
+    maxLifeTimer = setTimeout(() => {
+      try {
+        if (!reply.raw.writableEnded && !reply.raw.destroyed) {
+          reply.raw.write(`event: reconnect\ndata: {"reason":"cycle"}\n\n`);
+        }
+      } catch (_) {}
+      cleanup();
+    }, 45000);
 
     request.raw.on("close", cleanup);
     request.raw.on("error", cleanup);
