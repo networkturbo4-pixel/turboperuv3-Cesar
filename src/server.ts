@@ -35,6 +35,17 @@ import { databaseRoutes } from "./modules/database/database.routes";
 import { apartadosRoutes } from "./modules/apartados/apartados.routes";
 import { actasRoutes } from "./modules/actas/actas.routes";
 import { findActaByPublicToken, renderPublicActaHtml } from "./modules/actas/actas.service";
+import {
+  findSharedDocumentByToken,
+  verifySharePassword,
+  buildUnlockCookieName,
+  signUnlockCookieValue,
+  verifyUnlockCookieValue,
+  incrementShareViews,
+  renderModernDocumentHtml,
+  renderDocumentPasswordGateHtml,
+} from "./modules/invoices/document-share.service";
+import { SecurityService } from "./modules/security/security.service";
 import { scannerRoutes } from "./modules/scanner/scanner.routes";
 import { mobileRoutes } from "./modules/mobile/mobile.routes";
 import { initWhatsAppQrEngineOnBoot } from "./modules/messages/whatsapp-qr-service";
@@ -165,6 +176,73 @@ export async function buildApp() {
     const baseUrl = `${protocol}://${host}`;
     const html = await renderPublicActaHtml(found.tenantId, found.acta, baseUrl, q.print === "1");
     return reply.type("text/html; charset=utf-8").send(html);
+  });
+
+  // Vista Pública de Orden de Compra / Factura / Recibo (con soporte de contraseña opcional)
+  fastify.get("/doc/:token", async (req, reply) => {
+    const { token } = req.params as { token: string };
+    const q = (req.query || {}) as { print?: string };
+    const found = findSharedDocumentByToken(token);
+    if (!found || !found.share.enabled) {
+      return reply.status(404).type("text/html; charset=utf-8").send(`
+        <div style="font-family:Inter,sans-serif;text-align:center;padding:60px 20px;background:#0b0f19;color:#fff;min-height:100vh;">
+          <h1 style="color:#f43f5e;margin-bottom:8px;">Documento No Disponible</h1>
+          <p style="color:#94a3b8;font-size:14px;">El enlace público no existe, ha sido desactivado o expiró.</p>
+        </div>
+      `);
+    }
+
+    if (found.share.hasPassword) {
+      const cookieName = buildUnlockCookieName(found.share.token);
+      const cookieVal = SecurityService.parseCookie(req.headers.cookie, cookieName);
+      if (!verifyUnlockCookieValue(found.share.token, found.share.passwordHash, cookieVal)) {
+        const gateHtml = renderDocumentPasswordGateHtml({
+          tenantId: found.tenantId,
+          token: found.share.token,
+          docType: found.share.docType,
+          docNumber: found.share.docNumber,
+        });
+        return reply.type("text/html; charset=utf-8").send(gateHtml);
+      }
+    }
+
+    incrementShareViews(found.tenantId, found.share.token);
+    const host = req.headers.host || "localhost:3000";
+    const protocol = req.protocol || "http";
+    const publicUrl = `${protocol}://${host}/doc/${found.share.token}`;
+    const html = await renderModernDocumentHtml({
+      tenantId: found.tenantId,
+      docType: found.share.docType,
+      doc: found.doc,
+      publicUrl,
+      autoPrint: q.print === "1",
+    });
+    return reply.type("text/html; charset=utf-8").send(html);
+  });
+
+  fastify.post("/doc/:token/unlock", async (req, reply) => {
+    const { token } = req.params as { token: string };
+    const body = (req.body as { password?: string }) || {};
+    const found = findSharedDocumentByToken(token);
+    if (!found || !found.share.enabled) {
+      return reply.status(404).send({ success: false, message: "Enlace no disponible." });
+    }
+    if (!verifySharePassword(found.share, String(body.password || ""))) {
+      return reply.status(401).send({ success: false, message: "Contraseña incorrecta. Intenta nuevamente." });
+    }
+    const cookieName = buildUnlockCookieName(found.share.token);
+    const cookieVal = signUnlockCookieValue(found.share.token, found.share.passwordHash);
+    const isSecure = req.protocol === "https" || req.headers["x-forwarded-proto"] === "https";
+    const cookieHeader = [
+      `${cookieName}=${encodeURIComponent(cookieVal)}`,
+      "Path=/doc",
+      "HttpOnly",
+      "SameSite=Lax",
+      "Max-Age=43200",
+      ...(isSecure ? ["Secure"] : []),
+    ].join("; ");
+    reply.header("Set-Cookie", cookieHeader);
+    return reply.send({ success: true });
   });
 
   // Servir frontend estático con caché inteligente en RAM y renderizado dinámico de Open Graph por Negocio

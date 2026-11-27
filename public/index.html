@@ -35,6 +35,7 @@
   <script src="/js/session-guard.js"></script>
   <script src="/js/native-bridge.js"></script>
   <script src="/js/tesseract.min.js"></script>
+  <script src="/js/finance-security-purchases.js?v=2" defer></script>
   <link rel="stylesheet" href="/assets/mapbox-gl.css">
   <script src="/js/mapbox-gl.js"></script>
   <script src="/js/turbo-calls.js"></script>
@@ -4001,6 +4002,27 @@
               </div>
             </div>
 
+            <!-- Barra de Sub-vistas (Compras Registradas vs Órdenes de Compra) + Estado 2FA -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <button type="button" id="btn-compras-inner-purchases" onclick="window.ComprasPro && window.ComprasPro.switchComprasInnerTab('purchases')" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold shadow-xs transition cursor-pointer">
+                  📦 Compras & Facturas
+                </button>
+                <button type="button" id="btn-compras-inner-orders" onclick="window.ComprasPro && window.ComprasPro.switchComprasInnerTab('orders')" class="px-3.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-white/10 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5">
+                  <span>📋 Órdenes de Compra (OC)</span>
+                  <span id="purchases-oc-count-badge" class="px-1.5 py-0.2 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-[10px] font-mono font-bold">0</span>
+                </button>
+              </div>
+              <div class="flex items-center flex-wrap gap-2">
+                <div id="purchases-2fa-status-badge"></div>
+                <button type="button" onclick="window.ComprasPro && window.ComprasPro.openOrderModal()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer active:scale-95">
+                  <span>📋 + Nueva Orden de Compra</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- SUB-VISTA A: COMPRAS REGISTRADAS -->
+            <div id="compras-inner-view-purchases" class="space-y-4">
             <!-- Barra de Filtros y Botón de Registro -->
             <div class="pro-card p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs space-y-3">
               <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -4049,7 +4071,7 @@
                     class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-sm transition whitespace-nowrap cursor-pointer active:scale-95"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                    <span>+ Registrar Compra</span>
+                    <span>+ Registrar Compra (OCR)</span>
                   </button>
                 </div>
               </div>
@@ -4079,6 +4101,38 @@
                   </thead>
                   <tbody id="purchases-table-body" class="divide-y divide-slate-100 dark:divide-white/5 mobile-fast-render"></tbody>
                 </table>
+              </div>
+            </div>
+            </div>
+
+            <!-- SUB-VISTA B: ÓRDENES DE COMPRA (OC) -->
+            <div id="compras-inner-view-orders" class="space-y-4 hidden">
+              <div class="pro-card rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-xs">
+                <div class="p-4 border-b border-slate-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50 dark:bg-white/[0.02]">
+                  <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Órdenes de Compra (OC) Conectadas a Inventario</h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Genera formatos oficiales de compra y al recibir el pedido sube la factura con OCR para ingresar el stock e historial automáticamente.</p>
+                  </div>
+                  <button type="button" onclick="window.ComprasPro && window.ComprasPro.openOrderModal()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition cursor-pointer whitespace-nowrap">
+                    + Crear Orden de Compra
+                  </button>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-100/70 dark:bg-white/5 text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider text-[10px] border-b border-slate-200 dark:border-white/5">
+                      <tr>
+                        <th class="px-4 py-3">N° Orden</th>
+                        <th class="px-4 py-3">Proveedor</th>
+                        <th class="px-4 py-3">Productos Solicitados</th>
+                        <th class="px-4 py-3">Fecha</th>
+                        <th class="px-4 py-3">Total Estimado</th>
+                        <th class="px-4 py-3">Estado</th>
+                        <th class="px-4 py-3 text-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody id="purchase-orders-table-body" class="divide-y divide-slate-100 dark:divide-white/5"></tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -15488,34 +15542,115 @@
       </div>
 
       <div class="space-y-3.5">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
+        <!-- Banner de Orden de Compra vinculada -->
+        <div id="pch-linked-oc-banner" class="hidden p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300">
+          <span id="pch-linked-oc-text" class="font-bold">📋 Vinculado a Orden de Compra</span>
+          <button type="button" onclick="window.ComprasPro && window.ComprasPro.clearActiveOrder()" class="text-[10px] underline hover:text-rose-500 cursor-pointer">Desvincular</button>
+        </div>
+
+        <!-- Comprobante / Factura Digital con OCR Automático -->
+        <div class="p-3 rounded-xl bg-indigo-500/[0.04] border border-indigo-500/20 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+              <span>Subir Factura / Boleta (Autorelleno OCR)</span>
+            </label>
+            <span class="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 text-[10px] font-bold">OCR Inteligente</span>
+          </div>
+
+          <input type="file" id="pch-doc-file" accept="image/*,.pdf,.xml" class="hidden" onchange="handlePurchaseFileSelected(event)" />
+
+          <!-- Dropzone -->
+          <div id="pch-doc-dropzone" onclick="document.getElementById('pch-doc-file').click()" ondragover="event.preventDefault(); this.classList.add('border-indigo-500')" ondragleave="this.classList.remove('border-indigo-500')" ondrop="handlePurchaseFileDrop(event)" class="border-2 border-dashed border-indigo-300 dark:border-indigo-500/30 hover:border-indigo-500 rounded-xl p-3 text-center cursor-pointer transition bg-white/70 dark:bg-black/20 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 group">
+            <div class="flex flex-col items-center justify-center space-y-1">
+              <div class="w-7 h-7 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              </div>
+              <div class="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                Sube o arrastra la factura para leer datos automáticamente con OCR
+              </div>
+              <div class="text-[10px] text-slate-400">
+                PDF, Foto (JPG/PNG) o Factura Electrónica XML SUNAT (máx. 15 MB)
+              </div>
+            </div>
+          </div>
+
+          <!-- Previsualización -->
+          <div id="pch-doc-preview" class="hidden p-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between gap-2">
+            <div class="flex items-center space-x-2.5 overflow-hidden">
+              <div id="pch-doc-preview-icon" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                PDF
+              </div>
+              <div class="overflow-hidden">
+                <div id="pch-doc-preview-name" class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[180px]">factura.pdf</div>
+                <div id="pch-doc-preview-size" class="text-[10px] text-slate-400 font-mono">0 KB</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button type="button" onclick="window.ComprasPro && window.ComprasPro.runInvoiceOcr(selectedPurchaseDoc)" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold transition cursor-pointer">
+                🔍 Leer OCR
+              </button>
+              <button type="button" onclick="removePurchaseDocSelected()" class="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition flex items-center justify-center cursor-pointer" title="Quitar archivo">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Estado OCR -->
+          <div id="pch-ocr-status" class="hidden"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Proveedor *</label>
             <input type="text" id="pch-supplier" placeholder="Ej: Huawei Enterprise, OptoFibre..." class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">N° Comprobante / Factura *</label>
-            <input type="text" id="pch-invoice-num" placeholder="Ej: F001-002891" class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">RUC Proveedor</label>
+            <input type="text" id="pch-supplier-ruc" maxlength="11" placeholder="2060..." class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Categoría</label>
-            <select id="pch-category" class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40">
-              <option value="Equipos de Red">Equipos de Red & ONTs</option>
-              <option value="Fibra Óptica & Pasivos">Fibra Óptica & Pasivos</option>
-              <option value="Ferretería & Conectividad">Ferretería & Conectividad</option>
-              <option value="Tránsito IP & Servicios">Tránsito IP & Servicios</option>
-              <option value="Herramientas & EPP">Herramientas & EPP</option>
-              <option value="Otro">Otro Gasto</option>
-            </select>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">N° Comprobante / Factura *</label>
+            <input type="text" id="pch-invoice-num" placeholder="Ej: F001-002891" class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fecha de Compra</label>
             <input type="date" id="pch-date" class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
           </div>
         </div>
+
+        <!-- Conexión directa con Inventario -->
+        <div class="p-3 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/20 space-y-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-bold text-emerald-700 dark:text-emerald-300 mb-1">📦 Vincular Producto de Inventario</label>
+              <select id="pch-inventory-product" onchange="window.ComprasPro && window.ComprasPro.onPurchaseInventoryProductChange(this.value)" class="w-full bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
+                <option value="">-- Sin vincular (gasto general) --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Categoría</label>
+              <select id="pch-category" class="w-full bg-white dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40">
+                <option value="Equipos de Red">Equipos de Red & ONTs</option>
+                <option value="Fibra Óptica & Pasivos">Fibra Óptica & Pasivos</option>
+                <option value="Ferretería & Conectividad">Ferretería & Conectividad</option>
+                <option value="Tránsito IP & Servicios">Tránsito IP & Servicios</option>
+                <option value="Herramientas & EPP">Herramientas & EPP</option>
+                <option value="Otro">Otro Gasto</option>
+              </select>
+            </div>
+          </div>
+          <label class="flex items-center gap-2 text-[11px] font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+            <input type="checkbox" id="pch-add-to-inventory" checked class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+            <span>Sumar stock automáticamente al Inventario y registrar en el Historial de Compras del producto</span>
+          </label>
+        </div>
+
+        <!-- Banner multi-ítems (cuando viene de OC o factura XML/OCR con varios productos) -->
+        <div id="pch-multi-items-banner" class="hidden p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20"></div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Producto o Concepto de Compra *</label>
@@ -15557,50 +15692,6 @@
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Notas / Observaciones</label>
           <input type="text" id="pch-notes" placeholder="Ej: Compra de lote con garantía de 12 meses..." class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
         </div>
-
-        <!-- Comprobante / Factura Digital (PDF o Imagen) -->
-        <div class="pt-2 border-t border-slate-100 dark:border-white/5 space-y-1.5">
-          <div class="flex items-center justify-between">
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
-              <span>Comprobante Digital (PDF, Foto o Documento)</span>
-            </label>
-            <span class="text-[10px] text-slate-400 font-normal">Opcional</span>
-          </div>
-
-          <input type="file" id="pch-doc-file" accept="image/*,.pdf,.xml,.doc,.docx" class="hidden" onchange="handlePurchaseFileSelected(event)" />
-
-          <!-- Dropzone -->
-          <div id="pch-doc-dropzone" onclick="document.getElementById('pch-doc-file').click()" ondragover="event.preventDefault(); this.classList.add('border-indigo-500')" ondragleave="this.classList.remove('border-indigo-500')" ondrop="handlePurchaseFileDrop(event)" class="border-2 border-dashed border-slate-300 dark:border-white/10 hover:border-indigo-500/60 dark:hover:border-indigo-400/60 rounded-xl p-3 text-center cursor-pointer transition bg-slate-50/50 dark:bg-white/[0.01] hover:bg-indigo-50/30 dark:hover:bg-indigo-500/5 group">
-            <div class="flex flex-col items-center justify-center space-y-1">
-              <div class="w-7 h-7 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-              </div>
-              <div class="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                Arrastra o haz clic para subir factura o boleta
-              </div>
-              <div class="text-[10px] text-slate-400">
-                PDF, JPG, PNG o Factura Electrónica XML (máx. 15 MB)
-              </div>
-            </div>
-          </div>
-
-          <!-- Previsualización -->
-          <div id="pch-doc-preview" class="hidden p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between">
-            <div class="flex items-center space-x-2.5 overflow-hidden">
-              <div id="pch-doc-preview-icon" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                PDF
-              </div>
-              <div class="overflow-hidden">
-                <div id="pch-doc-preview-name" class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[220px]">factura.pdf</div>
-                <div id="pch-doc-preview-size" class="text-[10px] text-slate-400 font-mono">0 KB</div>
-              </div>
-            </div>
-            <button type="button" onclick="removePurchaseDocSelected()" class="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition flex items-center justify-center cursor-pointer" title="Quitar archivo">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-        </div>
       </div>
 
       <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center gap-2 flex-shrink-0">
@@ -15610,6 +15701,94 @@
         <button type="button" onclick="submitRegisterPurchase()" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md active:scale-95 cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
           <span>Guardar Compra</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: NUEVA ORDEN DE COMPRA (OC) CONECTADA A INVENTARIO -->
+  <!-- ======================================================== -->
+  <div id="purchase-order-modal" class="fixed inset-0 z-[345] hidden flex items-center justify-center bg-black/80 backdrop-blur-md px-3 py-4 overflow-y-auto">
+    <div class="pro-card max-w-3xl w-full p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl relative my-auto flex flex-col max-h-[92vh] overflow-y-auto space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Nueva Orden de Compra (OC)</h3>
+            <p class="text-[11px] text-slate-400">Genera el formato oficial de requerimiento vinculado a tu Inventario</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.ComprasPro && window.ComprasPro.closeOrderModal()" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Proveedor *</label>
+            <input type="text" id="oc-supplier" placeholder="Razón Social o Proveedor..." class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">RUC Proveedor</label>
+            <input type="text" id="oc-supplier-ruc" maxlength="11" placeholder="2060..." class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-100" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Contacto / Teléfono</label>
+            <input type="text" id="oc-supplier-contact" placeholder="Ej: Juan Pérez - 999..." class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fecha de Emisión</label>
+            <input type="date" id="oc-date" class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-100" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fecha Estimada Entrega</label>
+            <input type="date" id="oc-expected-date" class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-100" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Condición de Pago</label>
+            <select id="oc-payment-terms" class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100">
+              <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+              <option value="Contado / Efectivo">Contado / Efectivo</option>
+              <option value="Crédito 15 días">Crédito 15 días</option>
+              <option value="Crédito 30 días">Crédito 30 días</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-slate-700 dark:text-slate-200">Ítems a Solicitar</label>
+            <button type="button" onclick="window.ComprasPro && window.ComprasPro.addOcDraftItem()" class="px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-600 dark:text-indigo-300 text-xs font-bold transition cursor-pointer">
+              + Agregar Producto
+            </button>
+          </div>
+          <div id="oc-items-container" class="space-y-2 max-h-[34vh] overflow-y-auto pr-1"></div>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+          <span class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Total Estimado de la Orden</span>
+          <span id="oc-estimated-total" class="text-lg font-black font-mono text-indigo-600 dark:text-indigo-400">S/ 0.00</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Observaciones / Dirección de Entrega</label>
+          <input type="text" id="oc-notes" placeholder="Ej: Entregar en almacén central con guía de remisión..." class="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100" />
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center gap-2 flex-shrink-0">
+        <button type="button" onclick="window.ComprasPro && window.ComprasPro.closeOrderModal()" class="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 transition cursor-pointer">
+          Cancelar
+        </button>
+        <button type="button" onclick="window.ComprasPro && window.ComprasPro.submitPurchaseOrder()" class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-md cursor-pointer">
+          ✓ Guardar Orden de Compra
         </button>
       </div>
     </div>
@@ -21652,9 +21831,23 @@
         if (typeof populateAssignedTenantSelects === 'function') {
           await populateAssignedTenantSelects(true);
         }
+        // Resetear estados financieros y privacidad al cambiar de empresa (evitar cruce de datos)
+        currentInvoices = [];
+        currentBillingSummary = null;
+        currentSettlementSummary = null;
+        currentPurchases = [];
+        currentPurchasesSummary = null;
+        if (window.ComprasPro && typeof window.ComprasPro.resetOnTenantSwitch === 'function') {
+          window.ComprasPro.resetOnTenantSwitch();
+        }
+        if (typeof activeBillingSubTab !== 'undefined' && activeBillingSubTab === 'purchases') {
+          if (!window.PurchasesTabGate || !window.PurchasesTabGate.isUnlocked(tenantId)) {
+            if (typeof switchBillingSubTab === 'function') switchBillingSubTab('invoices');
+          }
+        }
         await Promise.all([
           loadCustomers(),
-          loadInvoices(),
+          loadBillingModule(),
           loadDevices(),
           loadPlans(),
           loadTenantBranding(),
@@ -26027,6 +26220,15 @@ Estamos atentos para brindarle asistencia inmediata.
 
     // 1. Navegación entre Sub-Pestañas del Módulo
     window.switchBillingSubTab = function(subTab) {
+      if (subTab === 'purchases' && window.PurchasesTabGate && typeof window.PurchasesTabGate.requireAccess === 'function') {
+        if (!window.PurchasesTabGate.isUnlocked(activeTenantId)) {
+          window.PurchasesTabGate.requireAccess(() => {
+            window.switchBillingSubTab('purchases');
+          });
+          return;
+        }
+      }
+
       activeBillingSubTab = subTab;
       if (typeof haptic === 'function') haptic('light');
 
@@ -26056,7 +26258,9 @@ Estamos atentos para brindarle asistencia inmediata.
       } else if (subTab === 'settlement') {
         loadSettlementSummary();
       } else if (subTab === 'purchases') {
+        if (window.PurchasesTabGate) window.PurchasesTabGate.updateBadge();
         loadPurchasesModule();
+        if (window.ComprasPro) window.ComprasPro.loadPurchaseOrders();
       }
     };
 
@@ -26353,6 +26557,12 @@ Estamos atentos para brindarle asistencia inmediata.
               </td>
               <td class="px-5 py-3.5 text-right whitespace-nowrap">
                 <div class="flex items-center justify-end gap-1.5">
+                  <button type="button" onclick="window.DocumentShareUI && window.DocumentShareUI.openFormat('invoice', '${inv.id}')" title="Ver / Imprimir Factura Moderna A4 (con Logo)" class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  </button>
+                  <button type="button" onclick="window.DocumentShareUI && window.DocumentShareUI.openShareModal('invoice', '${inv.id}', '${escapeHtml(inv.invoiceNumber)}')" title="Compartir Factura (Enlace Público / Contraseña)" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/10 transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                  </button>
                   <button type="button" onclick="openThermalTicketModal(${inv.id})" title="Imprimir Ticket Térmico POS (80mm/58mm)" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer">
                     <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                   </button>
@@ -27475,9 +27685,17 @@ Estamos atentos para brindarle asistencia inmediata.
                 ${getPurchaseDocBadge(p)}
               </td>
               <td class="px-5 py-3.5 text-right whitespace-nowrap">
-                <button type="button" onclick="${p.documentUrl ? `openPurchaseDocModal('${escapeHtml(p.id)}')` : `openAttachDocModal('${escapeHtml(p.id)}')`}" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-500/10 transition cursor-pointer" title="${p.documentUrl ? 'Ver Comprobante' : 'Adjuntar Comprobante'}">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                </button>
+                <div class="inline-flex items-center justify-end gap-1">
+                  <button type="button" onclick="window.DocumentShareUI && window.DocumentShareUI.openFormat('purchase', '${escapeHtml(p.id)}')" class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 transition cursor-pointer" title="Ver / Imprimir Formato Moderno A4 (con Logo)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  </button>
+                  <button type="button" onclick="window.DocumentShareUI && window.DocumentShareUI.openShareModal('purchase', '${escapeHtml(p.id)}', '${escapeHtml(p.invoiceNumber)}')" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/10 transition cursor-pointer" title="Compartir Factura (Enlace Público / Contraseña)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                  </button>
+                  <button type="button" onclick="${p.documentUrl ? `openPurchaseDocModal('${escapeHtml(p.id)}')` : `openAttachDocModal('${escapeHtml(p.id)}')`}" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-500/10 transition cursor-pointer" title="${p.documentUrl ? 'Ver Comprobante Adjunto' : 'Adjuntar Comprobante'}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  </button>
+                </div>
               </td>
             </tr>
           `;
@@ -27578,6 +27796,9 @@ Estamos atentos para brindarle asistencia inmediata.
       processSelectedFile(file, (doc) => {
         selectedPurchaseDoc = doc;
         updateDocPreviewUI('pch', doc);
+        if (window.ComprasPro && typeof window.ComprasPro.runInvoiceOcr === 'function') {
+          window.ComprasPro.runInvoiceOcr(doc);
+        }
       });
     };
 
@@ -27590,6 +27811,9 @@ Estamos atentos para brindarle asistencia inmediata.
       processSelectedFile(file, (doc) => {
         selectedPurchaseDoc = doc;
         updateDocPreviewUI('pch', doc);
+        if (window.ComprasPro && typeof window.ComprasPro.runInvoiceOcr === 'function') {
+          window.ComprasPro.runInvoiceOcr(doc);
+        }
       });
     };
 
@@ -27599,13 +27823,17 @@ Estamos atentos para brindarle asistencia inmediata.
       if (fileInput) fileInput.value = '';
       const preview = document.getElementById('pch-doc-preview');
       const dropzone = document.getElementById('pch-doc-dropzone');
+      const ocrStatus = document.getElementById('pch-ocr-status');
       if (preview) preview.classList.add('hidden');
       if (dropzone) dropzone.classList.remove('hidden');
+      if (ocrStatus) ocrStatus.classList.add('hidden');
     };
 
-    // Modal de Registro de Compra
-    window.openRegisterPurchaseModal = function() {
+    // Modal de Registro de Compra (con soporte OC, Inventario y OCR)
+    window.openRegisterPurchaseModal = async function(opts) {
+      const fromOrder = opts && opts.fromOrder ? opts.fromOrder : null;
       const supInput = document.getElementById('pch-supplier');
+      const rucInput = document.getElementById('pch-supplier-ruc');
       const invInput = document.getElementById('pch-invoice-num');
       const catInput = document.getElementById('pch-category');
       const dateInput = document.getElementById('pch-date');
@@ -27615,17 +27843,42 @@ Estamos atentos para brindarle asistencia inmediata.
       const totInput = document.getElementById('pch-total-cost');
       const refInput = document.getElementById('pch-reference');
       const notesInput = document.getElementById('pch-notes');
+      const addInvChk = document.getElementById('pch-add-to-inventory');
+      const ocBanner = document.getElementById('pch-linked-oc-banner');
+      const ocText = document.getElementById('pch-linked-oc-text');
 
-      if (supInput) supInput.value = '';
+      if (!fromOrder && window.ComprasPro) {
+        window.ComprasPro.clearActiveOrder();
+        window.ComprasPro.clearMultiItems();
+      }
+
+      const firstItem = fromOrder && Array.isArray(fromOrder.items) && fromOrder.items[0] ? fromOrder.items[0] : null;
+      if (window.ComprasPro && typeof window.ComprasPro.populatePurchaseInventorySelect === 'function') {
+        await window.ComprasPro.populatePurchaseInventorySelect(firstItem ? firstItem.productId : null);
+      }
+
+      if (supInput) supInput.value = fromOrder ? (fromOrder.supplier || '') : '';
+      if (rucInput) rucInput.value = fromOrder ? (fromOrder.supplierRuc || '') : '';
       if (invInput) invInput.value = '';
-      if (catInput) catInput.value = 'Equipos de Red';
+      if (catInput) catInput.value = firstItem?.category || 'Equipos de Red';
       if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-      if (prodInput) prodInput.value = '';
-      if (qtyInput) qtyInput.value = '1';
-      if (unitInput) unitInput.value = '';
-      if (totInput) totInput.value = '0.00';
+      if (prodInput) prodInput.value = firstItem ? (firstItem.productName || '') : '';
+      if (qtyInput) qtyInput.value = firstItem ? String(firstItem.quantity || 1) : '1';
+      if (unitInput) unitInput.value = firstItem ? Number(firstItem.estimatedUnitCost || 0).toFixed(2) : '';
+      if (totInput) totInput.value = firstItem ? (Number(firstItem.quantity || 1) * Number(firstItem.estimatedUnitCost || 0)).toFixed(2) : '0.00';
       if (refInput) refInput.value = '';
-      if (notesInput) notesInput.value = '';
+      if (notesInput) notesInput.value = fromOrder ? `Recepción de ${fromOrder.orderNumber}${fromOrder.notes ? ' • ' + fromOrder.notes : ''}` : '';
+      if (addInvChk) addInvChk.checked = true;
+
+      if (ocBanner && ocText) {
+        if (fromOrder) {
+          ocText.textContent = `📋 Recibiendo Orden de Compra ${fromOrder.orderNumber} (${(fromOrder.items || []).length} ítem/s)`;
+          ocBanner.classList.remove('hidden');
+          if (window.ComprasPro) window.ComprasPro.renderMultiItemsBanner();
+        } else {
+          ocBanner.classList.add('hidden');
+        }
+      }
 
       removePurchaseDocSelected();
 
@@ -27649,10 +27902,14 @@ Estamos atentos para brindarle asistencia inmediata.
 
     window.submitRegisterPurchase = async function() {
       const supplier = (document.getElementById('pch-supplier')?.value || '').trim();
+      const supplierRuc = (document.getElementById('pch-supplier-ruc')?.value || '').trim();
       const invoiceNumber = (document.getElementById('pch-invoice-num')?.value || '').trim();
       const category = document.getElementById('pch-category')?.value || 'Equipos de Red';
       const date = document.getElementById('pch-date')?.value || new Date().toISOString().split('T')[0];
       const productName = (document.getElementById('pch-product-name')?.value || '').trim();
+      const invProductVal = document.getElementById('pch-inventory-product')?.value || '';
+      const productId = invProductVal ? parseInt(invProductVal, 10) : null;
+      const addToInventory = document.getElementById('pch-add-to-inventory')?.checked !== false;
       const quantity = parseFloat(document.getElementById('pch-quantity')?.value || 0);
       const unitCost = parseFloat(document.getElementById('pch-unit-cost')?.value || 0);
       const totalCost = quantity * unitCost;
@@ -27666,19 +27923,30 @@ Estamos atentos para brindarle asistencia inmediata.
       }
 
       try {
+        const activeOrder = window.ComprasPro ? window.ComprasPro.getActiveOrder() : null;
+        const multiItems = window.ComprasPro ? window.ComprasPro.getMultiItems() : [];
         const payload = {
           supplier,
+          supplierRuc,
           invoiceNumber,
           category,
           date,
+          productId: Number.isFinite(productId) ? productId : null,
           productName,
           quantity,
           unitCost,
           totalCost,
           paymentMethod,
           referenceNumber,
-          notes
+          notes,
+          addToInventory,
+          purchaseOrderId: activeOrder ? activeOrder.id : null,
+          purchaseOrderNumber: activeOrder ? activeOrder.orderNumber : null,
         };
+
+        if (Array.isArray(multiItems) && multiItems.length > 1) {
+          payload.items = multiItems;
+        }
 
         if (selectedPurchaseDoc) {
           payload.documentData = selectedPurchaseDoc.dataUrl;
@@ -27696,8 +27964,14 @@ Estamos atentos para brindarle asistencia inmediata.
         if (data.success) {
           if (typeof haptic === 'function') haptic('success');
           showToast(data.message || "Compra registrada con éxito", "success");
+          if (window.ComprasPro) {
+            window.ComprasPro.clearActiveOrder();
+            window.ComprasPro.clearMultiItems();
+          }
           closeRegisterPurchaseModal();
           await loadPurchasesModule();
+          if (window.ComprasPro) await window.ComprasPro.loadPurchaseOrders();
+          if (typeof loadInventoryModule === 'function') loadInventoryModule();
         } else {
           showToast(data.message || "Error al registrar la compra", "error");
         }
@@ -38431,13 +38705,16 @@ function copyRemoteScannerLink() {
       const periodInp = document.getElementById('comm-filter-period');
       const period = (periodInp && periodInp.value) ? periodInp.value : new Date().toISOString().slice(0, 7);
 
-      // Poblar selector de vendedores manteniendo selección
-      if (vendorSel && currentEmployees && currentEmployees.length > 0) {
+      // Poblar selector de vendedores siempre desde los empleados del tenant activo
+      if (vendorSel) {
         const prevVal = vendorSel.value || 'all';
+        const scopedEmps = Array.isArray(currentEmployees) ? currentEmployees : [];
         vendorSel.innerHTML = `<option value="all">👥 Todos los Vendedores (Vista Global)</option>` +
-          currentEmployees.map(e => `<option value="${e.id}">👤 ${escapeHtml(e.name)} (${escapeHtml(e.position || 'Vendedor')})</option>`).join('');
+          scopedEmps.map(e => `<option value="${e.id}">👤 ${escapeHtml(e.name)} (${escapeHtml(e.position || 'Vendedor')})</option>`).join('');
         if ([...vendorSel.options].some(o => o.value === prevVal)) {
           vendorSel.value = prevVal;
+        } else {
+          vendorSel.value = 'all';
         }
       }
 

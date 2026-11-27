@@ -3955,10 +3955,14 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     productTypeLabel: s.productTypeLabel || s.ruleName || s.productType || "Producto",
   });
 
-  fastify.get("/rrhh/commissions/rules", async (_request, reply) => {
-    const rules = loadCommissionRulesFromDisk().map(normalizeCommissionRule);
+  fastify.get("/rrhh/commissions/rules", async (request, reply) => {
+    const activeTenant = (((request.query as any)?.tenantId || resolveTenantId(request)) || "turbonetwork").toLowerCase();
+    const rules = loadCommissionRulesFromDisk()
+      .filter((r: any) => !r.tenantId || String(r.tenantId).toLowerCase() === activeTenant)
+      .map(normalizeCommissionRule);
     return reply.send({
       success: true,
+      tenantId: activeTenant,
       count: rules.length,
       data: rules,
     });
@@ -3966,6 +3970,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post("/rrhh/commissions/rules", async (request, reply) => {
     const body = (request.body as any) || {};
+    const activeTenant = ((body.tenantId || (request.query as any)?.tenantId || resolveTenantId(request)) || "turbonetwork").toLowerCase();
     const ruleName = body.name || body.label;
     const pct = body.percentageOnMargin ?? body.marginPercentage;
     if (!ruleName || pct == null) {
@@ -3981,6 +3986,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     const ruleObj: any = {
       id: ruleId,
+      tenantId: activeTenant,
       name: String(ruleName).trim(),
       label: String(ruleName).trim(),
       productType: body.productType || "general",
@@ -4009,12 +4015,17 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   const handleGetCommissions = async (request: any, reply: any) => {
-    const { employeeId, period } = request.query as { employeeId?: string; period?: string };
+    const { employeeId, period, tenantId } = request.query as { employeeId?: string; period?: string; tenantId?: string };
     const { peruDate } = getPeruDateTime();
     const targetPeriod = period || peruDate.slice(0, 7);
+    const activeTenant = ((tenantId || resolveTenantId(request)) || "turbonetwork").toLowerCase();
 
-    const rules = loadCommissionRulesFromDisk().map(normalizeCommissionRule);
-    let sales = loadCommissionsFromDisk().map(normalizeCommissionSale);
+    const rules = loadCommissionRulesFromDisk()
+      .filter((r: any) => !r.tenantId || String(r.tenantId).toLowerCase() === activeTenant)
+      .map(normalizeCommissionRule);
+    let sales = loadCommissionsFromDisk()
+      .filter((s: any) => String(s.tenantId || "").toLowerCase() === activeTenant)
+      .map(normalizeCommissionSale);
 
     if (targetPeriod && targetPeriod !== "all") {
       sales = sales.filter((s) => s.period === targetPeriod);
@@ -4191,15 +4202,17 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   const handleGetIncidents = async (request: any, reply: any) => {
-    const { period, employeeId } = request.query as { period?: string; employeeId?: string };
+    const { period, employeeId, tenantId } = request.query as { period?: string; employeeId?: string; tenantId?: string };
     const { peruDate } = getPeruDateTime();
     const targetPeriod = period || peruDate.slice(0, 7);
-    const activeTenant = resolveTenantId(request).toLowerCase();
+    const activeTenant = ((tenantId || resolveTenantId(request)) || "turbonetwork").toLowerCase();
 
     // Sincronizar automáticamente daños de herramientas/EPP desde Almacén
     syncDamagedInventoryAssignmentsToPayroll(activeTenant, targetPeriod);
 
-    let list = loadIncidentsFromDisk().map(normalizeIncident);
+    let list = loadIncidentsFromDisk()
+      .filter((i: any) => String(i.tenantId || "").toLowerCase() === activeTenant)
+      .map(normalizeIncident);
     if (targetPeriod && targetPeriod !== "all") {
       list = list.filter((i) => i.period === targetPeriod);
     }
@@ -4210,6 +4223,7 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     return reply.send({
       success: true,
+      tenantId: activeTenant,
       count: list.length,
       data: list,
     });
@@ -4323,9 +4337,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     employeesStore = loadEmployeesFromDisk();
     attendanceStore = loadAttendanceFromDisk();
-    const leaves = loadLeavesFromDisk();
-    const commissions = loadCommissionsFromDisk();
-    const incidents = loadIncidentsFromDisk();
+    const leaves = loadLeavesFromDisk().filter((l: any) => String(l.tenantId || "").toLowerCase() === activeTenant);
+    const commissions = loadCommissionsFromDisk().filter((c: any) => String(c.tenantId || "").toLowerCase() === activeTenant);
+    const incidents = loadIncidentsFromDisk().filter((inc: any) => String(inc.tenantId || "").toLowerCase() === activeTenant);
 
     const scopedPayrollEmps = employeesStore.filter((e) => employeeBelongsToTenant(e, activeTenant));
     const enrichedEmployees = scopedPayrollEmps.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
@@ -4800,24 +4814,24 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     if (!period || !employeeId) {
       return reply.status(400).send({ success: false, message: "Periodo y Colaborador requeridos." });
     }
+    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
 
     employeesStore = loadEmployeesFromDisk();
     attendanceStore = loadAttendanceFromDisk();
-    const leaves = loadLeavesFromDisk();
-    const commissions = loadCommissionsFromDisk();
-    const incidents = loadIncidentsFromDisk();
+    const leaves = loadLeavesFromDisk().filter((l: any) => String(l.tenantId || "").toLowerCase() === activeTenant);
+    const commissions = loadCommissionsFromDisk().filter((c: any) => String(c.tenantId || "").toLowerCase() === activeTenant);
+    const incidents = loadIncidentsFromDisk().filter((inc: any) => String(inc.tenantId || "").toLowerCase() === activeTenant);
 
     const initialCalculated = calculateMonthlyPayroll({
       period,
-      tenantId: "default",
-      employees: employeesStore,
+      tenantId: activeTenant,
+      employees: employeesStore.filter((e) => employeeBelongsToTenant(e, activeTenant)),
       attendances: attendanceStore,
       leaves,
       commissions,
       incidents,
     });
 
-    const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
     const updated = saveMonthlyPayrollItem(period, body, initialCalculated, activeTenant);
     return reply.send({
       success: true,
@@ -4865,9 +4879,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
 
     employeesStore = loadEmployeesFromDisk();
     attendanceStore = loadAttendanceFromDisk();
-    const leaves = loadLeavesFromDisk();
-    const commissions = loadCommissionsFromDisk();
-    const incidents = loadIncidentsFromDisk();
+    const leaves = loadLeavesFromDisk().filter((l: any) => String(l.tenantId || "").toLowerCase() === activeTenant);
+    const commissions = loadCommissionsFromDisk().filter((c: any) => String(c.tenantId || "").toLowerCase() === activeTenant);
+    const incidents = loadIncidentsFromDisk().filter((inc: any) => String(inc.tenantId || "").toLowerCase() === activeTenant);
 
     const scopedPayrollEmps = employeesStore.filter((e) => employeeBelongsToTenant(e, activeTenant));
     const enrichedEmployees = scopedPayrollEmps.map((e) => enrichEmployeeExpediente(e, leaves, peruDate));
@@ -4939,9 +4953,9 @@ export const rrhhRoutes: FastifyPluginAsync = async (fastify) => {
     const activeTenant = (body.tenantId || resolveTenantId(request)).toLowerCase();
     employeesStore = loadEmployeesFromDisk();
     attendanceStore = loadAttendanceFromDisk();
-    const leaves = loadLeavesFromDisk();
-    const commissions = loadCommissionsFromDisk();
-    const incidents = loadIncidentsFromDisk();
+    const leaves = loadLeavesFromDisk().filter((l: any) => String(l.tenantId || "").toLowerCase() === activeTenant);
+    const commissions = loadCommissionsFromDisk().filter((c: any) => String(c.tenantId || "").toLowerCase() === activeTenant);
+    const incidents = loadIncidentsFromDisk().filter((inc: any) => String(inc.tenantId || "").toLowerCase() === activeTenant);
 
     // Cargar planilla existente o calcularla base
     const currentPeriodData = getMonthlyPayrollForTenant(activeTenant, period);
