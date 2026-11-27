@@ -1,24 +1,18 @@
 import { FastifyInstance } from "fastify";
-import fs from "fs";
-import path from "path";
 import { z } from "zod";
-import { resolveTenantId, getTenantFilePath } from "../tenants/tenants.service";
+import { resolveTenantId } from "../tenants/tenants.service";
 import { MobilePushService } from "./push.service";
-
-export interface TechnicianTelemetryRecord {
-  userId: number;
-  userName: string;
-  roleName: string;
-  latitude: number;
-  longitude: number;
-  accuracy?: number;
-  speed?: number;
-  heading?: number;
-  batteryLevel?: number;
-  isMoving?: boolean;
-  source: "background_gps" | "foreground_gps";
-  updatedAt: string;
-}
+import {
+  loadJsonArray,
+  saveJsonArray,
+  registerOrTouchDevice,
+  listMobileDevices,
+  updateDeviceStatus,
+  recordTechnicianLocation,
+  getLiveLocations,
+  getTelemetryHistory,
+  subscribeTelemetryStream,
+} from "./telemetry.service";
 
 export interface NearbyCheckinRecord {
   id: string;
@@ -33,24 +27,12 @@ export interface NearbyCheckinRecord {
   detectedAt: string;
 }
 
-function loadJsonArray<T>(tenantId: string, filename: string): T[] {
-  const filePath = getTenantFilePath(tenantId, filename);
-  try {
-    if (fs.existsSync(filePath)) {
-      const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-      return Array.isArray(parsed) ? parsed : [];
-    }
-  } catch {
-    // ignore
+function resolveClientIp(request: any): string {
+  const fwd = request.headers?.["x-forwarded-for"];
+  if (typeof fwd === "string" && fwd.trim()) {
+    return fwd.split(",")[0].trim();
   }
-  return [];
-}
-
-function saveJsonArray<T>(tenantId: string, filename: string, data: T[]): void {
-  const filePath = getTenantFilePath(tenantId, filename);
-  const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+  return String(request.ip || "");
 }
 
 export async function mobileRoutes(fastify: FastifyInstance) {
@@ -115,7 +97,95 @@ export async function mobileRoutes(fastify: FastifyInstance) {
     return { success: true, data: result };
   });
 
-  // 4. Recibir coordenadas GPS en segundo plano (Foreground Service Android)
+  // 3b. Registrar/vincular dispositivo del técnico (Device Binding Fase 1)
+  fastify.post("/devices/register", async (request, reply) => {
+    const schema = z.object({
+      deviceId: z.string().min(6).max(120),
+      platform: z.enum(["android", "ios", "web"]).default("android"),
+      deviceModel: z.string().max(120).optional(),
+      appVersion: z.string().max(40).optional(),
+    });
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ success: false, message: "deviceId inválido" });
+    }
+
+    const tenantId = resolveTenantId(request);
+    const user = request.authUser;
+    if (!user) {
+      return reply.status(401).send({ success: false, message: "Sesión requerida" });
+    }
+
+    const result = registerOrTouchDevice(tenantId, {
+      deviceId: parsed.data.deviceId,
+      userId: user.sub,
+      userName: user.name,
+      roleName: user.roleName,
+      platform: parsed.data.platform,
+      deviceModel: parsed.data.deviceModel,
+      appVersion: parsed.data.appVersion,
+      lastIp: resolveClientIp(request),
+    });
+
+    return {
+      success: true,
+      data: result.device,
+      isNew: result.isNew,
+      requiresApproval: result.requiresApproval,
+    };
+  });
+
+  // 3c. Listar dispositivos vinculados del tenant (para Operaciones / Supervisores)
+  fastify.get("/devices", async (request, reply) => {
+    const user = request.authUser;
+    if (!user) {
+      return reply.status(401).send({ success: false, message: "Sesión requerida" });
+    }
+    const tenantId = resolveTenantId(request);
+    return { success: true, data: listMobileDevices(tenantId) };
+  });
+
+  // 3d. Aprobar o revocar dispositivo de un técnico
+  fastify.patch<{ Params: { deviceId: string } }>("/devices/:deviceId", async (request, reply) => {
+    const user = request.authUser;
+    if (!user) {
+      return reply.status(401).send({ success: false, message: "Sesión requerida" });
+    }
+    const perms = new Set(user.permissions || []);
+    const canManage =
+      user.isSuperAdmin ||
+      user.roleId === 1 ||
+      perms.has("ops:crews_manage") ||
+      perms.has("users:manage") ||
+      perms.has("system:config");
+    if (!canManage) {
+      return reply.status(403).send({ success: false, message: "No tienes permiso para autorizar o revocar dispositivos." });
+    }
+
+    const schema = z.object({
+      status: z.enum(["authorized", "pending", "revoked"]),
+      revokeOthersForUser: z.boolean().optional(),
+    });
+    const parsed = schema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ success: false, message: "Estado de dispositivo inválido" });
+    }
+
+    const tenantId = resolveTenantId(request);
+    const updated = updateDeviceStatus(
+      tenantId,
+      request.params.deviceId,
+      parsed.data.status,
+      user.name,
+      Boolean(parsed.data.revokeOthersForUser)
+    );
+    if (!updated) {
+      return reply.status(404).send({ success: false, message: "Dispositivo no encontrado" });
+    }
+    return { success: true, data: updated };
+  });
+
+  // 4. Recibir coordenadas GPS en tiempo real (APK Foreground Service o Fallback PWA)
   fastify.post("/telemetry/location", async (request, reply) => {
     const schema = z.object({
       latitude: z.number().min(-90).max(90),
@@ -123,9 +193,12 @@ export async function mobileRoutes(fastify: FastifyInstance) {
       accuracy: z.number().optional(),
       speed: z.number().optional(),
       heading: z.number().optional(),
-      batteryLevel: z.number().optional(),
+      batteryLevel: z.number().min(0).max(100).optional(),
       isMoving: z.boolean().optional(),
-      source: z.enum(["background_gps", "foreground_gps"]).default("background_gps"),
+      deviceId: z.string().min(6).max(120).optional(),
+      platform: z.enum(["android", "ios", "web"]).optional(),
+      deviceModel: z.string().max(120).optional(),
+      source: z.enum(["background_gps", "foreground_gps", "pwa_gps", "teltonika"]).default("background_gps"),
     });
 
     const parsed = schema.safeParse(request.body);
@@ -139,32 +212,101 @@ export async function mobileRoutes(fastify: FastifyInstance) {
       return reply.status(401).send({ success: false, message: "Sesión requerida" });
     }
 
-    const locations = loadJsonArray<TechnicianTelemetryRecord>(tenantId, "mobile_telemetry.json");
-    const now = new Date().toISOString();
-    const nextRecord: TechnicianTelemetryRecord = {
+    const result = recordTechnicianLocation(tenantId, {
       userId: user.sub,
       userName: user.name,
       roleName: user.roleName,
       ...parsed.data,
-      updatedAt: now,
-    };
+      lastIp: resolveClientIp(request),
+    });
 
-    const idx = locations.findIndex((l) => l.userId === user.sub);
-    if (idx >= 0) {
-      locations[idx] = nextRecord;
-    } else {
-      locations.unshift(nextRecord);
+    if (result.blocked) {
+      return reply.status(403).send({
+        success: false,
+        code: "DEVICE_NOT_AUTHORIZED",
+        deviceStatus: result.deviceStatus,
+        message:
+          result.deviceStatus === "pending"
+            ? "Este segundo celular requiere aprobación del administrador en Operaciones."
+            : "Este dispositivo fue revocado por el administrador.",
+      });
     }
 
-    saveJsonArray(tenantId, "mobile_telemetry.json", locations);
-    return { success: true, data: nextRecord };
+    return { success: true, data: result.record, deviceStatus: result.deviceStatus };
   });
 
   // 5. Consultar última ubicación en vivo de técnicos/cuadrillas (para operaciones.html)
   fastify.get("/telemetry/locations", async (request) => {
     const tenantId = resolveTenantId(request);
-    const locations = loadJsonArray<TechnicianTelemetryRecord>(tenantId, "mobile_telemetry.json");
+    const locations = getLiveLocations(tenantId);
     return { success: true, data: locations };
+  });
+
+  // 5b. Consultar recorrido del día (breadcrumbs) por técnico o cuadrilla
+  fastify.get("/telemetry/history", async (request) => {
+    const tenantId = resolveTenantId(request);
+    const query = (request.query || {}) as { userId?: string; crewId?: string; date?: string };
+    const points = getTelemetryHistory(tenantId, {
+      userId: query.userId ? Number(query.userId) : undefined,
+      crewId: query.crewId || undefined,
+      date: query.date || undefined,
+    });
+    return { success: true, data: points };
+  });
+
+  // 5c. Stream SSE en tiempo real para mapa tipo Uber/inDrive
+  fastify.get("/telemetry/stream", async (request, reply) => {
+    const tenantId = resolveTenantId(request);
+    const user = request.authUser;
+    if (!user) {
+      return reply.status(401).send({ success: false, message: "Sesión requerida" });
+    }
+
+    reply.hijack();
+    const raw = reply.raw;
+    raw.writeHead(200, {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    });
+
+    const writeEvent = (event: string, data: unknown) => {
+      try {
+        raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+      } catch {
+        // ignore closed socket
+      }
+    };
+
+    // Snapshot inicial
+    writeEvent("snapshot", {
+      locations: getLiveLocations(tenantId),
+      devices: listMobileDevices(tenantId),
+      ts: new Date().toISOString(),
+    });
+
+    const unsubscribe = subscribeTelemetryStream(tenantId, (event, data) => {
+      writeEvent(event, data);
+    });
+
+    const heartbeat = setInterval(() => {
+      try {
+        raw.write(`: ping ${Date.now()}\n\n`);
+      } catch {
+        clearInterval(heartbeat);
+      }
+    }, 25000);
+
+    request.raw.on("close", () => {
+      clearInterval(heartbeat);
+      unsubscribe();
+      try {
+        raw.end();
+      } catch {
+        // ignore
+      }
+    });
   });
 
   // 6. Registrar detección de dispositivo cercano / Beacon BLE (almacén, vehículo, oficina)
@@ -198,7 +340,6 @@ export async function mobileRoutes(fastify: FastifyInstance) {
       detectedAt: new Date().toISOString(),
     };
     checkins.unshift(entry);
-    // Conservar los últimos 500 registros de proximidad por tenant
     saveJsonArray(tenantId, "mobile_nearby_checkins.json", checkins.slice(0, 500));
 
     return { success: true, data: entry };
@@ -209,11 +350,11 @@ export async function mobileRoutes(fastify: FastifyInstance) {
     return {
       success: true,
       data: {
-        version: "1.0.0",
-        versionCode: 1,
+        version: "1.1.0",
+        versionCode: 2,
         minSupportedVersion: "1.0.0",
         apkUrl: "/downloads/turbonetwork-latest.apk",
-        releaseNotes: "Versión inicial nativa Android con Push FCM, GPS en segundo plano y Dispositivos Cercanos.",
+        releaseNotes: "Rastreo GPS en tiempo real (Fase 1), Device Binding y Push FCM.",
       },
     };
   });

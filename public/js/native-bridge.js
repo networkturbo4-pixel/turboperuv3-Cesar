@@ -1,8 +1,9 @@
 /**
- * TurboNetwork Native Bridge (Capacitor Android/iOS)
- * Conecta el sistema web con capacidades nativas:
+ * TurboNetwork Native & Live GPS Bridge (Capacitor Android/iOS + Fallback PWA)
+ * Conecta el sistema web con capacidades nativas y rastreo en tiempo real Fase 1:
+ *  - Identificación persistente de dispositivo (Device Binding por deviceId)
+ *  - Auto-inicio de rastreo GPS al iniciar sesión (APK Foreground Service + PWA watchPosition)
  *  - Push Notifications (FCM + Canales de alta prioridad)
- *  - Ubicación GPS en segundo plano (Foreground Service)
  *  - Dispositivos Cercanos (Bluetooth / BLE / Beacons / Impresoras térmicas)
  *  - Botón físico Atrás, Deep Linking y Haptics
  */
@@ -13,14 +14,79 @@
   var isNative = Boolean(cap && typeof cap.isNativePlatform === "function" && cap.isNativePlatform());
   var Plugins = (cap && cap.Plugins) || {};
 
+  function getOrCreateDeviceId() {
+    var key = "turbonetwork_device_id";
+    try {
+      var existing = localStorage.getItem(key);
+      if (existing && existing.length >= 10) return existing;
+      var generated =
+        "tn-dev-" +
+        (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10));
+      localStorage.setItem(key, generated);
+      return generated;
+    } catch (_) {
+      return "tn-dev-" + Date.now().toString(36);
+    }
+  }
+
+  function detectDeviceModel() {
+    try {
+      var ua = navigator.userAgent || "";
+      var androidMatch = ua.match(/Android\s+[\d.]+;\s*([^;)]+)/i);
+      if (androidMatch && androidMatch[1]) {
+        return androidMatch[1].replace(/\s*Build\/.*$/i, "").trim().slice(0, 80);
+      }
+      if (/iPhone|iPad/i.test(ua)) return "Apple iOS";
+      return (navigator.platform || "Web Browser").slice(0, 60);
+    } catch (_) {
+      return "Dispositivo";
+    }
+  }
+
   var state = {
     isNative: isNative,
     platform: cap && typeof cap.getPlatform === "function" ? cap.getPlatform() : "web",
-    fcmToken: localStorage.getItem("turbonetwork_fcm_token") || "",
+    deviceId: getOrCreateDeviceId(),
+    deviceModel: detectDeviceModel(),
+    deviceStatus: "unknown", // "authorized" | "pending" | "revoked" | "unknown"
+    fcmToken: "",
     bgWatcherId: null,
+    pwaWatchId: null,
     lastPingAt: 0,
-    lastPrinterDeviceId: localStorage.getItem("turbonetwork_bt_printer_id") || "",
+    lastSentLat: null,
+    lastSentLng: null,
+    trackingActive: false,
+    trackingMode: "idle", // "apk_bg" | "pwa_fg" | "idle"
+    lastError: "",
+    lastPrinterDeviceId: "",
   };
+
+  try {
+    state.fcmToken = localStorage.getItem("turbonetwork_fcm_token") || "";
+    state.lastPrinterDeviceId = localStorage.getItem("turbonetwork_bt_printer_id") || "";
+  } catch (_) {}
+
+  function emitGpsStatus() {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("turbonetwork:gps-status", {
+          detail: {
+            isNative: state.isNative,
+            platform: state.platform,
+            deviceId: state.deviceId,
+            deviceModel: state.deviceModel,
+            deviceStatus: state.deviceStatus,
+            trackingActive: state.trackingActive,
+            trackingMode: state.trackingMode,
+            lastPingAt: state.lastPingAt,
+            lastError: state.lastError,
+          },
+        })
+      );
+    } catch (_) {}
+  }
 
   function hasSession() {
     try {
@@ -30,10 +96,63 @@
     }
   }
 
+  function isTechOrMobileContext() {
+    try {
+      var p = (window.location.pathname || "").toLowerCase();
+      if (isNative) return true;
+      return p.indexOf("/tech") === 0 || p.indexOf("tech.html") >= 0;
+    } catch (_) {
+      return isNative;
+    }
+  }
+
   async function apiFetch(url, options) {
     var opts = options || {};
     opts.headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
     return fetch(url, opts);
+  }
+
+  async function readBatteryLevel() {
+    try {
+      if (navigator && typeof navigator.getBattery === "function") {
+        var b = await navigator.getBattery();
+        if (b && typeof b.level === "number") {
+          return Math.round(b.level * 100);
+        }
+      }
+    } catch (_) {}
+    return undefined;
+  }
+
+  // =========================================================================
+  // 0. REGISTRO DE DISPOSITIVO (DEVICE BINDING FASE 1)
+  // =========================================================================
+  async function registerCurrentDevice() {
+    if (!hasSession()) return { ok: false, reason: "no_session" };
+    try {
+      var res = await apiFetch("/api/mobile/devices/register", {
+        method: "POST",
+        body: JSON.stringify({
+          deviceId: state.deviceId,
+          platform: state.platform === "ios" ? "ios" : state.isNative ? "android" : "web",
+          deviceModel: state.deviceModel,
+          appVersion: "1.1.0",
+        }),
+      });
+      if (!res.ok) return { ok: false, status: res.status };
+      var json = await res.json();
+      if (json && json.data && json.data.status) {
+        state.deviceStatus = json.data.status;
+        emitGpsStatus();
+      }
+      return {
+        ok: true,
+        device: json && json.data,
+        requiresApproval: Boolean(json && json.requiresApproval),
+      };
+    } catch (err) {
+      return { ok: false, error: String(err && err.message ? err.message : err) };
+    }
   }
 
   // =========================================================================
@@ -87,7 +206,8 @@
                 body: JSON.stringify({
                   fcmToken: state.fcmToken,
                   platform: state.platform,
-                  appVersion: "1.0.0",
+                  deviceName: state.deviceModel,
+                  appVersion: "1.1.0",
                 }),
               });
             } catch (_) {}
@@ -129,15 +249,105 @@
   }
 
   // =========================================================================
-  // 2. UBICACIÓN GPS EN SEGUNDO PLANO (FOREGROUND SERVICE)
+  // 2. UBICACIÓN GPS EN TIEMPO REAL (APK FOREGROUND SERVICE + FALLBACK PWA)
   // =========================================================================
+  async function sendTelemetryPing(coords, source) {
+    if (!hasSession() || !coords) return;
+    var lat = Number(coords.latitude);
+    var lng = Number(coords.longitude);
+    if (!isFinite(lat) || !isFinite(lng)) return;
+
+    var now = Date.now();
+    var speed = typeof coords.speed === "number" && isFinite(coords.speed) && coords.speed >= 0 ? coords.speed : undefined;
+    var moving = typeof speed === "number" ? speed > 0.8 : true;
+    var minInterval = moving ? 5000 : 30000;
+
+    if (now - state.lastPingAt < minInterval) return;
+    state.lastPingAt = now;
+    state.lastSentLat = lat;
+    state.lastSentLng = lng;
+
+    var batteryLevel = await readBatteryLevel();
+
+    try {
+      var res = await apiFetch("/api/mobile/telemetry/location", {
+        method: "POST",
+        body: JSON.stringify({
+          latitude: lat,
+          longitude: lng,
+          accuracy: typeof coords.accuracy === "number" && isFinite(coords.accuracy) ? coords.accuracy : undefined,
+          speed: speed,
+          heading:
+            typeof coords.bearing === "number" && isFinite(coords.bearing) && coords.bearing >= 0
+              ? coords.bearing
+              : typeof coords.heading === "number" && isFinite(coords.heading) && coords.heading >= 0
+              ? coords.heading
+              : undefined,
+          batteryLevel: batteryLevel,
+          isMoving: moving,
+          deviceId: state.deviceId,
+          platform: state.platform === "ios" ? "ios" : state.isNative ? "android" : "web",
+          deviceModel: state.deviceModel,
+          source: source,
+        }),
+      });
+      var json = await res.json().catch(function () {
+        return {};
+      });
+      if (res.status === 403 && json && json.code === "DEVICE_NOT_AUTHORIZED") {
+        state.deviceStatus = json.deviceStatus || "pending";
+        state.lastError = json.message || "Dispositivo pendiente de aprobación";
+      } else if (res.ok) {
+        state.deviceStatus = (json && json.deviceStatus) || "authorized";
+        state.lastError = "";
+      }
+      emitGpsStatus();
+    } catch (_) {}
+  }
+
+  async function startPwaForegroundTracking() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      return { ok: false, reason: "geolocation_unavailable" };
+    }
+    if (state.pwaWatchId !== null) {
+      return { ok: true, mode: "pwa_fg", watcherId: state.pwaWatchId };
+    }
+
+    try {
+      state.pwaWatchId = navigator.geolocation.watchPosition(
+        function (pos) {
+          state.trackingActive = true;
+          state.trackingMode = "pwa_fg";
+          state.lastError = "";
+          sendTelemetryPing(pos.coords, "pwa_gps");
+        },
+        function (err) {
+          state.lastError = err && err.message ? err.message : "Permiso GPS denegado";
+          emitGpsStatus();
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 4000,
+          timeout: 15000,
+        }
+      );
+      state.trackingActive = true;
+      state.trackingMode = "pwa_fg";
+      emitGpsStatus();
+      return { ok: true, mode: "pwa_fg", watcherId: state.pwaWatchId };
+    } catch (err) {
+      return { ok: false, error: String(err && err.message ? err.message : err) };
+    }
+  }
+
   async function startBackgroundTracking() {
     var BgGeo = Plugins.BackgroundGeolocation;
     if (!isNative || !BgGeo) {
-      return { ok: false, reason: "plugin_unavailable" };
+      // Fallback automático para PWA/Web en portal técnico
+      return startPwaForegroundTracking();
     }
     if (state.bgWatcherId) {
-      return { ok: true, watcherId: state.bgWatcherId };
+      return { ok: true, mode: "apk_bg", watcherId: state.bgWatcherId };
     }
 
     try {
@@ -147,42 +357,36 @@
           backgroundTitle: "Rastreo Operativo Activo",
           requestPermissions: true,
           stale: false,
-          distanceFilter: 25,
+          distanceFilter: 10,
         },
         async function (location, error) {
           if (error) {
+            state.lastError = error.code || "GPS error";
+            emitGpsStatus();
             if (error.code === "NOT_AUTHORIZED" && window.confirm("TurboNetwork necesita permiso de ubicación 'Permitir todo el tiempo' para el seguimiento de cuadrilla. ¿Abrir ajustes?")) {
               BgGeo.openSettings();
             }
             return;
           }
           if (!location || !hasSession()) return;
-
-          var now = Date.now();
-          if (now - state.lastPingAt < 12000) return;
-          state.lastPingAt = now;
-
-          try {
-            await apiFetch("/api/mobile/telemetry/location", {
-              method: "POST",
-              body: JSON.stringify({
-                latitude: location.latitude,
-                longitude: location.longitude,
-                accuracy: location.accuracy,
-                speed: location.speed,
-                heading: location.bearing,
-                source: "background_gps",
-              }),
-            });
-          } catch (_) {}
+          state.trackingActive = true;
+          state.trackingMode = "apk_bg";
+          sendTelemetryPing(location, "background_gps");
         }
       );
 
       state.bgWatcherId = watcherId;
-      localStorage.setItem("turbonetwork_bg_gps_enabled", "1");
-      return { ok: true, watcherId: watcherId };
+      state.trackingActive = true;
+      state.trackingMode = "apk_bg";
+      try {
+        localStorage.setItem("turbonetwork_bg_gps_enabled", "1");
+      } catch (_) {}
+      emitGpsStatus();
+      return { ok: true, mode: "apk_bg", watcherId: watcherId };
     } catch (err) {
-      return { ok: false, error: String(err && err.message ? err.message : err) };
+      state.lastError = String(err && err.message ? err.message : err);
+      emitGpsStatus();
+      return { ok: false, error: state.lastError };
     }
   }
 
@@ -193,8 +397,19 @@
         await BgGeo.removeWatcher({ id: state.bgWatcherId });
       } catch (_) {}
     }
+    if (state.pwaWatchId !== null && typeof navigator !== "undefined" && navigator.geolocation) {
+      try {
+        navigator.geolocation.clearWatch(state.pwaWatchId);
+      } catch (_) {}
+    }
     state.bgWatcherId = null;
-    localStorage.removeItem("turbonetwork_bg_gps_enabled");
+    state.pwaWatchId = null;
+    state.trackingActive = false;
+    state.trackingMode = "idle";
+    try {
+      localStorage.removeItem("turbonetwork_bg_gps_enabled");
+    } catch (_) {}
+    emitGpsStatus();
     return { ok: true };
   }
 
@@ -338,18 +553,25 @@
     };
   }
 
-  function bootstrap() {
-    if (!isNative) return;
-    setupSystemListeners();
+  async function bootstrap() {
+    if (isNative) {
+      setupSystemListeners();
+    }
     if (hasSession()) {
-      initPushNotifications(false);
-      if (localStorage.getItem("turbonetwork_bg_gps_enabled") === "1") {
-        startBackgroundTracking();
+      // 1. Registrar dispositivo automáticamente (Device Binding)
+      if (isTechOrMobileContext()) {
+        await registerCurrentDevice();
+        // 2. Arrancar rastreo GPS automáticamente apenas inicia sesión
+        await startBackgroundTracking();
       }
-      if (!localStorage.getItem("turbonetwork_native_onboarded")) {
-        setTimeout(openPermissionsWizard, 900);
+      if (isNative) {
+        initPushNotifications(false);
+        if (!localStorage.getItem("turbonetwork_native_onboarded")) {
+          setTimeout(openPermissionsWizard, 900);
+        }
       }
     }
+    emitGpsStatus();
   }
 
   if (document.readyState === "loading") {
@@ -361,6 +583,21 @@
   window.TurboNative = {
     isNative: isNative,
     platform: state.platform,
+    getDeviceId: function () { return state.deviceId; },
+    getStatus: function () {
+      return {
+        isNative: state.isNative,
+        platform: state.platform,
+        deviceId: state.deviceId,
+        deviceModel: state.deviceModel,
+        deviceStatus: state.deviceStatus,
+        trackingActive: state.trackingActive,
+        trackingMode: state.trackingMode,
+        lastPingAt: state.lastPingAt,
+        lastError: state.lastError,
+      };
+    },
+    registerCurrentDevice: registerCurrentDevice,
     initPushNotifications: initPushNotifications,
     startBackgroundTracking: startBackgroundTracking,
     stopBackgroundTracking: stopBackgroundTracking,

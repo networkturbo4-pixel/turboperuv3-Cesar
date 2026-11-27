@@ -435,6 +435,17 @@
         <div id="crews-builder-list" class="space-y-2"></div>
 
         <div class="pt-2 border-t border-slate-500/15 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <i class="ri-smartphone-line text-emerald-500"></i>
+              <span>Dispositivos GPS (Fase 1)</span>
+            </h3>
+            <span id="live-gps-stream-badge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-500">EN VIVO</span>
+          </div>
+          <div id="crews-devices-list" class="space-y-2"></div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-500/15 space-y-2.5">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Marcaciones GPS del Día</span>
             <span id="crews-date-label" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-500"></span>
@@ -696,8 +707,20 @@
           <input id="cb-name" type="text" placeholder="Ej. Cuadrilla FTTH Norte" class="ops-input w-full px-3 py-2 outline-none">
         </div>
         <div>
-          <label class="block font-semibold mb-1">Carro Asignado (opcional)</label>
+          <label class="block font-semibold mb-1">Carro / Moto Asignado (opcional)</label>
           <select id="cb-vehicle" class="ops-input w-full px-3 py-2 outline-none"></select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Tipo de Vehículo (Ícono Mapa)</label>
+          <select id="cb-vehicle-type" class="ops-input w-full px-3 py-2 outline-none">
+            <option value="auto">Auto / Sedán</option>
+            <option value="moto">Moto</option>
+            <option value="camioneta">Camioneta / Furgón</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">IMEI GPS Teltonika (Fase 2, opcional)</label>
+          <input id="cb-tracker-imei" type="text" placeholder="Ej. 352093081234567" class="ops-input w-full px-3 py-2 font-mono outline-none">
         </div>
       </div>
 
@@ -969,6 +992,7 @@
 
         initLeafletMap();
         await Promise.all([refreshOperationsData(), loadOpsMapData()]);
+        initLiveTelemetryStream();
         searchCizDiagnostic();
       } catch (err) {
         console.error('Error iniciando TurboOps:', err);
@@ -1340,6 +1364,10 @@
         if (crew) {
           if (nameEl) nameEl.value = crew.name || '';
           if (vehicleEl) vehicleEl.value = crew.vehicleId ? String(crew.vehicleId) : '';
+          const vTypeEl = document.getElementById('cb-vehicle-type');
+          const imeiEl = document.getElementById('cb-tracker-imei');
+          if (vTypeEl) vTypeEl.value = crew.vehicleType || 'auto';
+          if (imeiEl) imeiEl.value = crew.trackerImei || '';
           selectedCrewLeaderId = crew.leaderId || null;
           (crew.members || []).forEach(m => {
             const key = m.name.toLowerCase();
@@ -1351,6 +1379,10 @@
       } else {
         if (nameEl) nameEl.value = '';
         if (vehicleEl) vehicleEl.value = '';
+        const vTypeEl = document.getElementById('cb-vehicle-type');
+        const imeiEl = document.getElementById('cb-tracker-imei');
+        if (vTypeEl) vTypeEl.value = 'auto';
+        if (imeiEl) imeiEl.value = '';
         if (titleEl) titleEl.textContent = 'Constructor de Cuadrillas';
         if (submitEl) submitEl.textContent = 'Crear Cuadrilla';
       }
@@ -1444,6 +1476,8 @@
       const selectedVehicleOpt = vehicleEl && vehicleEl.selectedIndex >= 0 ? vehicleEl.options[vehicleEl.selectedIndex] : null;
       const vehicleName = vehicleId ? (selectedVehicleOpt?.getAttribute('data-name') || '') : null;
       const vehiclePlate = vehicleId ? (selectedVehicleOpt?.getAttribute('data-plate') || '') : null;
+      const vehicleType = document.getElementById('cb-vehicle-type')?.value || 'auto';
+      const trackerImei = (document.getElementById('cb-tracker-imei')?.value || '').trim() || null;
       const members = Array.from(selectedCrewMembers.values());
 
       if (!name) {
@@ -1469,6 +1503,8 @@
             vehicleId,
             vehicleName,
             vehiclePlate,
+            vehicleType,
+            trackerImei,
             leaderId: selectedCrewLeaderId || undefined,
             members
           })
@@ -1545,6 +1581,7 @@
       }
 
       document.getElementById('crews-date-label').textContent = opsData.date || '';
+      renderLiveDevicesList();
       const att = opsData.todayAttendance || [];
       const attEl = document.getElementById('crews-attendance-list');
       if (att.length === 0) {
@@ -1690,8 +1727,17 @@
     let opsMap = null;
     let opsBaseLayer = null;
     let opsLayerGroup = null;
+    let opsLiveGpsLayer = null;
+    let opsRouteTrailLayer = null;
     let opsMapPayload = null;
     let opsBoundsPoints = [];
+
+    // Estado de Rastreo GPS en Vivo (Fase 1 - Estilo Uber/inDrive)
+    const liveTelemetryMap = new Map(); // userId -> TechnicianTelemetryRecord
+    const liveGpsMarkers = new Map(); // userId -> { marker, lat, lng, heading, animId, data }
+    let liveDevicesList = [];
+    let liveEventSource = null;
+    let liveStreamReconnectTimer = null;
 
     const opsMapLayersVisible = {
       nodes: true,
@@ -1736,6 +1782,8 @@
       });
       L.control.zoom({ position: 'bottomright' }).addTo(opsMap);
       opsLayerGroup = L.layerGroup().addTo(opsMap);
+      opsRouteTrailLayer = L.layerGroup().addTo(opsMap);
+      opsLiveGpsLayer = L.layerGroup().addTo(opsMap);
       changeOpsMapStyle(isDark ? 'dark' : 'streets');
     }
 
@@ -2002,9 +2050,11 @@
         });
       }
 
-      // Cuadrillas GPS
+      // Cuadrillas GPS (Asistencia estática solo como respaldo para quienes aún no reportan telemetría en vivo)
       if (opsMapLayersVisible.crews) {
         crews.forEach(c => {
+          const empId = Number(c.employeeId || c.userId || 0);
+          if (empId && liveTelemetryMap.has(empId)) return;
           addLeafletMarker(
             c.location?.latitude,
             c.location?.longitude,
@@ -2016,6 +2066,8 @@
           );
         });
       }
+      syncLiveGpsLayerVisibility();
+      updateLiveCrewsMapCount();
 
       // Clientes abonados
       if (opsMapLayersVisible.customers) {
@@ -2031,6 +2083,346 @@
           );
         });
       }
+    }
+
+    // =========================================================================
+    // MOTOR DE RASTREO GPS EN VIVO (FASE 1 - ESTILO UBER / INDRIVE + DEVICE BINDING)
+    // =========================================================================
+    function updateLiveCrewsMapCount() {
+      const countEl = document.getElementById('map-count-crews');
+      if (!countEl) return;
+      const att = Array.isArray(opsData?.todayAttendance) ? opsData.todayAttendance : [];
+      const uniqueIds = new Set();
+      liveTelemetryMap.forEach((_, uid) => uniqueIds.add(`u:${uid}`));
+      att.forEach((a, i) => {
+        const uid = Number(a.employeeId || a.userId || 0);
+        uniqueIds.add(uid ? `u:${uid}` : `a:${i}`);
+      });
+      countEl.textContent = String(uniqueIds.size);
+    }
+
+    function syncLiveGpsLayerVisibility() {
+      if (!opsMap || !opsLiveGpsLayer) return;
+      if (opsMapLayersVisible.crews) {
+        if (!opsMap.hasLayer(opsLiveGpsLayer)) opsLiveGpsLayer.addTo(opsMap);
+      } else {
+        if (opsMap.hasLayer(opsLiveGpsLayer)) opsMap.removeLayer(opsLiveGpsLayer);
+      }
+    }
+
+    function getLiveMarkerColor(record) {
+      const ageMs = Date.now() - new Date(record.updatedAt || 0).getTime();
+      if (ageMs > 10 * 60 * 1000) return '#64748b'; // sin señal > 10m
+      if (record.isMoving || (typeof record.speed === 'number' && record.speed > 0.8)) return '#10b981'; // en movimiento
+      return '#f59e0b'; // detenido reciente
+    }
+
+    function getUserInitials(name) {
+      const parts = String(name || 'TC').trim().split(/\s+/).filter(Boolean);
+      return ((parts[0]?.[0] || 'T') + (parts[1]?.[0] || parts[0]?.[1] || 'C')).toUpperCase();
+    }
+
+    function buildLiveVehicleDivIcon(record) {
+      const color = getLiveMarkerColor(record);
+      const heading = typeof record.heading === 'number' && isFinite(record.heading) ? record.heading : 0;
+      const vType = record.vehicleType || 'auto';
+      const iconClass = vType === 'moto' ? 'ri-motorbike-fill' : (vType === 'camioneta' ? 'ri-truck-fill' : 'ri-car-fill');
+      const displayName = record.userName || record.crewName || 'Técnico';
+      const label = escapeHtml(displayName.slice(0, 18));
+      const speedKmh = typeof record.speed === 'number' && isFinite(record.speed) ? Math.round(record.speed * 3.6) : 0;
+      const isActiveMoving = color === '#10b981';
+      const initials = escapeHtml(getUserInitials(displayName));
+      const avatarUrl = record.avatar ? escapeHtml(record.avatar) : '';
+
+      const avatarInner = avatarUrl
+        ? `<img src="${avatarUrl}" alt="${label}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#1e293b;color:#fff;font-size:13px;font-weight:800;">${initials}</span>`
+        : `<span style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;background:#1e293b;color:#fff;font-size:13px;font-weight:800;">${initials}</span>`;
+
+      return L.divIcon({
+        className: 'ops-live-gps-marker',
+        html: `
+          <div style="position:relative;display:flex;flex-direction:column;align-items:center;pointer-events:auto;">
+            <div style="background:rgba(15,23,42,0.92);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;white-space:nowrap;border:1px solid ${color};box-shadow:0 2px 8px rgba(0,0,0,0.45);margin-bottom:4px;">
+              ${label}${speedKmh > 2 ? ` · ${speedKmh} km/h` : ''}
+            </div>
+            <div style="position:relative;width:46px;height:46px;display:flex;align-items:center;justify-content:center;">
+              ${isActiveMoving ? `<div class="ops-gps-pulse" style="position:absolute;inset:2px;border-radius:999px;background:${color};opacity:0.35;"></div>` : ''}
+              <div style="position:absolute;inset:-2px;transform:rotate(${heading}deg);transition:transform 0.6s ease;display:flex;align-items:flex-start;justify-content:center;pointer-events:none;">
+                <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid ${color};margin-top:-5px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.7));"></div>
+              </div>
+              <div style="position:relative;width:40px;height:40px;border-radius:999px;overflow:hidden;border:3px solid ${color};box-shadow:0 4px 14px rgba(0,0,0,0.5), 0 0 0 2px #fff;background:#0f172a;">
+                ${avatarInner}
+              </div>
+              <div style="position:absolute;bottom:-1px;right:-1px;width:18px;height:18px;border-radius:999px;background:${color};border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;box-shadow:0 2px 5px rgba(0,0,0,0.45);">
+                <i class="${iconClass}"></i>
+              </div>
+            </div>
+          </div>
+        `,
+        iconSize: [120, 68],
+        iconAnchor: [60, 46],
+        popupAnchor: [0, -40],
+      });
+    }
+
+    function buildLivePopupHtml(record) {
+      const speedKmh = typeof record.speed === 'number' && isFinite(record.speed) ? (record.speed * 3.6).toFixed(1) : '0.0';
+      const updated = record.updatedAt ? new Date(record.updatedAt).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--';
+      const sourceLabel = record.source === 'teltonika' ? 'GPS Teltonika' : (record.source === 'background_gps' ? 'APK 2do Plano' : 'PWA Navegador');
+      const initials = escapeHtml(getUserInitials(record.userName || 'Técnico'));
+      const avatarThumb = record.avatar
+        ? `<img src="${escapeHtml(record.avatar)}" alt="" style="width:34px;height:34px;border-radius:999px;object-fit:cover;border:2px solid #10b981;flex-shrink:0;" onerror="this.style.display='none'" />`
+        : `<div style="width:34px;height:34px;border-radius:999px;background:#0f172a;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #10b981;flex-shrink:0;">${initials}</div>`;
+      return `
+        <div style="color:#0f172a;font-size:12px;min-width:220px;line-height:1.45">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            ${avatarThumb}
+            <div style="min-width:0">
+              <div style="font-weight:800;font-size:13px;line-height:1.2">${escapeHtml(record.userName || 'Técnico')}</div>
+              ${record.crewName ? `<div style="color:#2563eb;font-weight:700;font-size:11px">${escapeHtml(record.crewName)}</div>` : ''}
+            </div>
+          </div>
+          ${record.vehiclePlate || record.vehicleName ? `<div style="font-size:11px;color:#334155">Vehículo: <b>${escapeHtml([record.vehiclePlate, record.vehicleName].filter(Boolean).join(' • '))}</b></div>` : ''}
+          <div style="margin-top:6px;padding-top:5px;border-top:1px solid #e2e8f0;font-size:11px;display:grid;grid-template-columns:1fr 1fr;gap:4px">
+            <span>Vel: <b>${speedKmh} km/h</b></span>
+            <span>Bat: <b>${record.batteryLevel != null ? record.batteryLevel + '%' : '--'}</b></span>
+            <span>Fuente: <b>${sourceLabel}</b></span>
+            <span>Hora: <b>${updated}</b></span>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:6px">
+            <button onclick="showTechnicianRouteToday(${Number(record.userId)}, '${escapeHtml(record.userName || 'Técnico').replace(/'/g, "\\'")}')" style="flex:1;padding:5px 8px;border-radius:8px;border:0;background:#2563eb;color:#fff;font-size:11px;font-weight:700;cursor:pointer">Ver recorrido de hoy</button>
+            <button onclick="clearTechnicianRouteTrail()" style="padding:5px 8px;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;color:#334155;font-size:11px;font-weight:700;cursor:pointer">Limpiar</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function upsertLiveGpsMarker(record) {
+      if (!record || !Number.isFinite(Number(record.latitude)) || !Number.isFinite(Number(record.longitude))) return;
+      const uid = Number(record.userId);
+      const targetLat = Number(record.latitude);
+      const targetLng = Number(record.longitude);
+      liveTelemetryMap.set(uid, record);
+
+      if (!opsMap || !opsLiveGpsLayer) return;
+
+      const existing = liveGpsMarkers.get(uid);
+      if (!existing) {
+        const marker = L.marker([targetLat, targetLng], {
+          icon: buildLiveVehicleDivIcon(record),
+          zIndexOffset: 900,
+        }).bindPopup(buildLivePopupHtml(record));
+        marker.addTo(opsLiveGpsLayer);
+        liveGpsMarkers.set(uid, {
+          marker,
+          lat: targetLat,
+          lng: targetLng,
+          heading: record.heading || 0,
+          animId: null,
+          data: record,
+        });
+      } else {
+        // Interpolación suave tipo Uber/inDrive (~1.4s)
+        if (existing.animId) cancelAnimationFrame(existing.animId);
+        const startLat = existing.lat;
+        const startLng = existing.lng;
+        const startTime = performance.now();
+        const duration = 1400;
+
+        existing.marker.setIcon(buildLiveVehicleDivIcon(record));
+        existing.marker.setPopupContent(buildLivePopupHtml(record));
+        existing.data = record;
+
+        const step = (now) => {
+          const t = Math.min(1, (now - startTime) / duration);
+          const eased = 1 - Math.pow(1 - t, 3);
+          const curLat = startLat + (targetLat - startLat) * eased;
+          const curLng = startLng + (targetLng - startLng) * eased;
+          existing.marker.setLatLng([curLat, curLng]);
+          existing.lat = curLat;
+          existing.lng = curLng;
+          if (t < 1) {
+            existing.animId = requestAnimationFrame(step);
+          } else {
+            existing.animId = null;
+          }
+        };
+        existing.animId = requestAnimationFrame(step);
+      }
+
+      syncLiveGpsLayerVisibility();
+      updateLiveCrewsMapCount();
+      renderLiveDevicesList();
+    }
+
+    async function showTechnicianRouteToday(userId, userName) {
+      if (!opsMap || !opsRouteTrailLayer) return;
+      try {
+        const res = await fetch(`/api/mobile/telemetry/history?userId=${encodeURIComponent(userId)}`);
+        const json = await res.json();
+        const points = Array.isArray(json.data) ? json.data : [];
+        opsRouteTrailLayer.clearLayers();
+        if (points.length < 2) {
+          showToast(`Sin suficientes puntos de recorrido hoy para ${userName || 'el técnico'}`);
+          return;
+        }
+        const latLngs = points.map((p) => [Number(p.lat), Number(p.lng)]);
+        const line = L.polyline(latLngs, {
+          color: '#3b82f6',
+          weight: 4,
+          opacity: 0.85,
+          dashArray: '6, 6',
+        }).addTo(opsRouteTrailLayer);
+        L.circleMarker(latLngs[0], { radius: 6, color: '#10b981', fillColor: '#10b981', fillOpacity: 1 })
+          .bindTooltip(`Inicio: ${new Date(points[0].ts).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`)
+          .addTo(opsRouteTrailLayer);
+        opsMap.fitBounds(line.getBounds(), { padding: [60, 60], maxZoom: 17 });
+        showToast(`Mostrando recorrido de hoy (${points.length} puntos)`);
+      } catch {
+        showToast('Error al cargar el recorrido diario');
+      }
+    }
+
+    function clearTechnicianRouteTrail() {
+      if (opsRouteTrailLayer) opsRouteTrailLayer.clearLayers();
+    }
+
+    async function updateMobileDeviceStatus(deviceId, status, revokeOthersForUser) {
+      try {
+        const res = await fetch(`/api/mobile/devices/${encodeURIComponent(deviceId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status, revokeOthersForUser: Boolean(revokeOthersForUser) }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          showToast(status === 'authorized' ? 'Dispositivo autorizado correctamente' : 'Dispositivo revocado');
+          await refreshLiveDevicesAndLocations();
+        } else {
+          showToast(json.message || 'No se pudo actualizar el dispositivo');
+        }
+      } catch {
+        showToast('Error de red al actualizar dispositivo');
+      }
+    }
+
+    function renderLiveDevicesList() {
+      const container = document.getElementById('crews-devices-list');
+      if (!container) return;
+      const canManage = hasOpsPerm('ops:crews_manage');
+
+      if (!Array.isArray(liveDevicesList) || liveDevicesList.length === 0) {
+        container.innerHTML = `<div class="ops-card p-3 text-xs text-slate-500 text-center">Aún no hay celulares registrados. Cuando un técnico inicie sesión en la APK/PWA aparecerá aquí automáticamente.</div>`;
+        return;
+      }
+
+      container.innerHTML = liveDevicesList.map((d) => {
+        const live = liveTelemetryMap.get(Number(d.userId));
+        const statusBadge =
+          d.status === 'authorized'
+            ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-500">Autorizado</span>'
+            : d.status === 'pending'
+            ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-500 animate-pulse">2do Celular • Pendiente</span>'
+            : '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-500">Revocado</span>';
+
+        return `
+          <div class="ops-card p-2.5 space-y-1.5">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-xs font-extrabold truncate">${escapeHtml(d.userName || 'Técnico')}</span>
+                  ${statusBadge}
+                </div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  ${escapeHtml(d.deviceModel || d.platform || 'Celular')} · ${escapeHtml(d.crewName || 'Sin cuadrilla')}${d.vehiclePlate ? ` (${escapeHtml(d.vehiclePlate)})` : ''}
+                </div>
+                <div class="text-[10px] font-mono text-slate-400 truncate">
+                  ID: ${escapeHtml(d.deviceId.slice(0, 18))}… ${d.lastIp ? `· IP: ${escapeHtml(d.lastIp)}` : ''}
+                </div>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                ${live ? `<button onclick="focusMapPoint(${Number(live.latitude)}, ${Number(live.longitude)})" title="Ubicar en mapa" class="w-7 h-7 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-500 flex items-center justify-center"><i class="ri-map-pin-2-fill text-xs"></i></button>` : ''}
+                ${canManage && d.status !== 'authorized' ? `<button onclick="updateMobileDeviceStatus('${escapeHtml(d.deviceId)}', 'authorized', true)" title="Aprobar este celular (reemplaza anterior)" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold">Aprobar</button>` : ''}
+                ${canManage && d.status === 'authorized' ? `<button onclick="updateMobileDeviceStatus('${escapeHtml(d.deviceId)}', 'revoked', false)" title="Revocar acceso GPS" class="w-7 h-7 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 flex items-center justify-center"><i class="ri-forbid-line text-xs"></i></button>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function refreshLiveDevicesAndLocations() {
+      try {
+        const [locRes, devRes] = await Promise.all([
+          fetch('/api/mobile/telemetry/locations'),
+          fetch('/api/mobile/devices'),
+        ]);
+        if (devRes.ok) {
+          const devJson = await devRes.json();
+          if (devJson.success && Array.isArray(devJson.data)) {
+            liveDevicesList = devJson.data;
+            renderLiveDevicesList();
+          }
+        }
+        if (locRes.ok) {
+          const locJson = await locRes.json();
+          if (locJson.success && Array.isArray(locJson.data)) {
+            locJson.data.forEach((rec) => upsertLiveGpsMarker(rec));
+          }
+        }
+      } catch {
+        // ignore transient network errors
+      }
+    }
+
+    function initLiveTelemetryStream() {
+      refreshLiveDevicesAndLocations();
+      if (typeof EventSource === 'undefined') return;
+      if (liveEventSource) {
+        try { liveEventSource.close(); } catch {}
+      }
+
+      const badge = document.getElementById('live-gps-stream-badge');
+      liveEventSource = new EventSource('/api/mobile/telemetry/stream');
+
+      liveEventSource.addEventListener('snapshot', (ev) => {
+        try {
+          const payload = JSON.parse(ev.data);
+          if (Array.isArray(payload.devices)) {
+            liveDevicesList = payload.devices;
+            renderLiveDevicesList();
+          }
+          if (Array.isArray(payload.locations)) {
+            payload.locations.forEach((rec) => upsertLiveGpsMarker(rec));
+          }
+          if (badge) {
+            badge.textContent = 'EN VIVO';
+            badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-500';
+          }
+        } catch {}
+      });
+
+      liveEventSource.addEventListener('location', (ev) => {
+        try {
+          const record = JSON.parse(ev.data);
+          upsertLiveGpsMarker(record);
+        } catch {}
+      });
+
+      liveEventSource.addEventListener('device', () => {
+        refreshLiveDevicesAndLocations();
+      });
+
+      liveEventSource.onerror = () => {
+        if (badge) {
+          badge.textContent = 'RECONECTANDO';
+          badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-500';
+        }
+        try { liveEventSource.close(); } catch {}
+        liveEventSource = null;
+        if (liveStreamReconnectTimer) clearTimeout(liveStreamReconnectTimer);
+        liveStreamReconnectTimer = setTimeout(initLiveTelemetryStream, 5000);
+      };
     }
 
     function focusMapPoint(lat, lng) {

@@ -167,6 +167,16 @@
     <!-- CONTENIDO PRINCIPAL -->
     <main class="flex-1 px-4 pt-4 space-y-4">
 
+      <!-- ALERTA DE DISPOSITIVO PENDIENTE / REVOCADO (DEVICE BINDING FASE 1) -->
+      <div id="tech-device-alert" class="hidden rounded-2xl border border-amber-500/40 bg-amber-500/15 px-3.5 py-2.5 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+        <span class="text-base leading-none mt-0.5">📱</span>
+        <div class="min-w-0 flex-1">
+          <div id="tech-device-alert-title" class="font-bold">Dispositivo pendiente de aprobación</div>
+          <p id="tech-device-alert-desc" class="text-[11px] opacity-90 mt-0.5">Este segundo celular requiere aprobación del administrador en Operaciones para reportar GPS.</p>
+          <p id="tech-device-alert-id" class="text-[10px] font-mono opacity-75 mt-1 truncate"></p>
+        </div>
+      </div>
+
       <!-- WIDGET HERO: RESUMEN OPERATIVO EN VIVO -->
       <section class="relative overflow-hidden rounded-2xl bg-[#111827] border border-white/10 p-4 text-white">
         <div class="flex items-center justify-between mb-3">
@@ -1875,7 +1885,57 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', bootstrapTechPortal);
+    function updateTechLiveGpsBadge(detail) {
+      if (!detail) return;
+      const dot = document.getElementById('tech-gps-dot');
+      const pill = document.getElementById('tech-attendance-pill');
+      const alertBox = document.getElementById('tech-device-alert');
+      const alertTitle = document.getElementById('tech-device-alert-title');
+      const alertDesc = document.getElementById('tech-device-alert-desc');
+      const alertId = document.getElementById('tech-device-alert-id');
+
+      const blocked = detail.deviceStatus === 'pending' || detail.deviceStatus === 'revoked';
+      if (alertBox) {
+        alertBox.classList.toggle('hidden', !blocked);
+        if (blocked) {
+          if (alertTitle) {
+            alertTitle.textContent = detail.deviceStatus === 'revoked'
+              ? 'Dispositivo revocado por administración'
+              : 'Segundo dispositivo pendiente de aprobación';
+          }
+          if (alertDesc) {
+            alertDesc.textContent = detail.deviceStatus === 'revoked'
+              ? 'Este celular fue desautorizado. Comunícate con Operaciones para rehabilitarlo.'
+              : 'Ya tienes otro celular autorizado. Pide a Operaciones que apruebe este dispositivo para activar el rastreo.';
+          }
+          if (alertId) alertId.textContent = `ID: ${detail.deviceId || ''}`;
+        }
+      }
+
+      if (dot) {
+        dot.className = 'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-white dark:ring-[#111827] ' + (
+          blocked ? 'bg-amber-500' : (detail.trackingActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400')
+        );
+      }
+      if (pill) {
+        if (blocked) {
+          pill.textContent = detail.deviceStatus === 'revoked' ? 'Equipo Revocado' : 'Pendiente Aprob.';
+          pill.className = 'px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/20 text-amber-600 dark:text-amber-300';
+        } else if (detail.trackingActive) {
+          pill.textContent = detail.trackingMode === 'apk_bg' ? 'GPS Vivo (APK)' : 'GPS Vivo (PWA)';
+          pill.className = 'px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400';
+        }
+      }
+    }
+
+    window.addEventListener('turbonetwork:gps-status', (ev) => updateTechLiveGpsBadge(ev.detail));
+
+    document.addEventListener('DOMContentLoaded', () => {
+      bootstrapTechPortal();
+      if (window.TurboNative && typeof window.TurboNative.getStatus === 'function') {
+        updateTechLiveGpsBadge(window.TurboNative.getStatus());
+      }
+    });
   </script>
 </body>
 </html>

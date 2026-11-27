@@ -1294,6 +1294,9 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
     vehicleId?: number;
     vehicleName?: string;
     vehiclePlate?: string;
+    vehicleType?: "auto" | "moto" | "camioneta";
+    trackerImei?: string;
+    trackerModel?: string;
     leaderId?: number;
     leaderName?: string;
     members: OpsCrewMember[];
@@ -1335,6 +1338,9 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
       vehicleId?: number;
       vehicleName?: string;
       vehiclePlate?: string;
+      vehicleType?: "auto" | "moto" | "camioneta";
+      trackerImei?: string;
+      trackerModel?: string;
       leaderId?: number;
       members?: OpsCrewMember[];
     };
@@ -1366,6 +1372,9 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
       vehicleId: vehicleId || undefined,
       vehicleName: body.vehicleName ? String(body.vehicleName).trim() : undefined,
       vehiclePlate: body.vehiclePlate ? String(body.vehiclePlate).trim() : undefined,
+      vehicleType: body.vehicleType && ["auto", "moto", "camioneta"].includes(body.vehicleType) ? body.vehicleType : undefined,
+      trackerImei: body.trackerImei ? String(body.trackerImei).trim() : undefined,
+      trackerModel: body.trackerModel ? String(body.trackerModel).trim() : undefined,
       leaderId: leader ? leader.id : undefined,
       leaderName: leader ? leader.name : undefined,
       members,
@@ -1391,6 +1400,9 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
       vehicleId?: number | null;
       vehicleName?: string | null;
       vehiclePlate?: string | null;
+      vehicleType?: "auto" | "moto" | "camioneta" | null;
+      trackerImei?: string | null;
+      trackerModel?: string | null;
       leaderId?: number;
       members?: OpsCrewMember[];
     };
@@ -1420,6 +1432,9 @@ export const apartadosRoutes: FastifyPluginAsync = async (fastify) => {
       vehicleId: body.vehicleId !== undefined ? (body.vehicleId ? Number(body.vehicleId) : undefined) : list[idx].vehicleId,
       vehicleName: body.vehicleName !== undefined ? (body.vehicleName ? String(body.vehicleName).trim() : undefined) : list[idx].vehicleName,
       vehiclePlate: body.vehiclePlate !== undefined ? (body.vehiclePlate ? String(body.vehiclePlate).trim() : undefined) : list[idx].vehiclePlate,
+      vehicleType: body.vehicleType !== undefined ? (body.vehicleType && ["auto", "moto", "camioneta"].includes(body.vehicleType) ? body.vehicleType : undefined) : list[idx].vehicleType,
+      trackerImei: body.trackerImei !== undefined ? (body.trackerImei ? String(body.trackerImei).trim() : undefined) : list[idx].trackerImei,
+      trackerModel: body.trackerModel !== undefined ? (body.trackerModel ? String(body.trackerModel).trim() : undefined) : list[idx].trackerModel,
       leaderId: leader ? leader.id : undefined,
       leaderName: leader ? leader.name : undefined,
       members,
